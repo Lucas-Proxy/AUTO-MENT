@@ -136,6 +136,14 @@ main{position:relative;z-index:1;min-height:100vh;padding:48px 40px;display:flex
 .floating-sidebar::-webkit-scrollbar{width:4px}
 .floating-sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
+/* ── FIRE TRANSITION OVERLAY ───────────────────── */
+#fireOverlay{
+  position:fixed;inset:0;z-index:9999;
+  pointer-events:none;opacity:0;
+  transition:opacity .3s;
+}
+#fireOverlay.burning{pointer-events:all}
+
 /* ── THEME TOGGLE ──────────────────────────────── */
 .theme-toggle{
   position:fixed;top:20px;right:24px;
@@ -427,6 +435,9 @@ input::placeholder{color:var(--text3)}
 </style>
 </head>
 <body>
+
+<!-- FIRE OVERLAY -->
+<canvas id="fireOverlay"></canvas>
 
 <!-- THEME TOGGLE -->
 <button class="theme-toggle" id="themeToggle" title="Alternar tema" aria-label="Alternar entre tema claro e escuro">
@@ -760,100 +771,210 @@ function setupAudioVisualizer(){if(isAudioSetup)return;const canvas=$('audioVisu
 function drawVisualizer(){requestAnimationFrame(drawVisualizer);if(!canvasCtx)return;const canvas=$('audioVisualizer');canvasCtx.clearRect(0,0,canvas.width,canvas.height);const buf=90,bw=canvas.width/buf;let x=0;const playing=!DOM.mPlayer.paused&&DOM.mPlayer.currentTime>0;const dark=document.documentElement.getAttribute('data-theme')==='dark';for(let i=0;i<buf;i++){const tgt=playing?(0.08+Math.random()*.45)*(canvas.height-4):2;visualizerData[i]+=(tgt-visualizerData[i])*.12;const pct=i/buf;let r,g,b;if(dark){r=Math.round(59+pct*14);g=Math.round(158-pct*30);b=Math.round(255-pct*55)}else{r=Math.round(26+pct*14);g=Math.round(111+pct*47);b=Math.round(219-pct*43)}canvasCtx.fillStyle=`rgba(${r},${g},${b},0.5)`;canvasCtx.fillRect(x,canvas.height-visualizerData[i],Math.max(bw-1,1),visualizerData[i]);x+=bw}}
 /* ── FLAME ENGINE ─────────────────────────────── */
 (function(){
+  // ── botão local ────────────────────────────────
   const canvas = document.getElementById('flameCanvas');
   const btn    = document.getElementById('btnFarmarAura');
   const ctx    = canvas.getContext('2d');
-  let W, H, particles = [], raf;
-  let active = false;
+  let W, H, particles = [], isActive = false;
 
   function resize(){
     const r = btn.getBoundingClientRect();
     W = canvas.width  = r.width;
     H = canvas.height = 160;
   }
-
   function isDark(){ return document.documentElement.getAttribute('data-theme') === 'dark'; }
 
   function spawnParticle(){
-    const x = W * (0.1 + Math.random() * 0.8);
-    const speed = active ? (2.2 + Math.random()*2.8) : (1.4 + Math.random()*1.8);
-    const size  = active ? (6  + Math.random()*10)   : (4   + Math.random()*7);
-    particles.push({
-      x, y: H * 0.62,
-      vx: (Math.random()-0.5)*1.4,
-      vy: -(speed),
-      life: 1, decay: active ? 0.012+Math.random()*0.014 : 0.018+Math.random()*0.018,
-      size, wobble: Math.random()*Math.PI*2, wobbleSpeed: 0.08+Math.random()*0.08
+    const x = W*(0.1+Math.random()*0.8);
+    const spd = isActive?(2.2+Math.random()*2.8):(1.4+Math.random()*1.8);
+    const sz  = isActive?(6+Math.random()*10):(4+Math.random()*7);
+    particles.push({ x, y:H*0.62, vx:(Math.random()-.5)*1.4, vy:-spd,
+      life:1, decay:isActive?(.012+Math.random()*.014):(.018+Math.random()*.018),
+      size:sz, wobble:Math.random()*Math.PI*2, wobbleSpeed:.08+Math.random()*.08 });
+  }
+  function getColor(life, dark){
+    if(dark){
+      if(life>.7) return `rgba(30,80,255,${life})`;
+      if(life>.4) return `rgba(100,160,255,${life})`;
+      if(life>.2) return `rgba(200,230,255,${life*.9})`;
+      return `rgba(240,248,255,${life*.6})`;
+    } else {
+      if(life>.7) return `rgba(255,220,30,${life})`;
+      if(life>.45)return `rgba(255,120,0,${life})`;
+      if(life>.2) return `rgba(220,30,0,${life*.9})`;
+      return `rgba(80,0,0,${life*.5})`;
+    }
+  }
+  function tickLocal(){
+    requestAnimationFrame(tickLocal);
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<(isActive?5:3);i++) spawnParticle();
+    const dark = isDark();
+    ctx.globalCompositeOperation='lighter';
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.life-=p.decay; if(p.life<=0){particles.splice(i,1);continue;}
+      p.wobble+=p.wobbleSpeed; p.x+=p.vx+Math.sin(p.wobble)*.7; p.y+=p.vy;
+      const r=p.size*p.life;
+      const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2.2);
+      g.addColorStop(0,getColor(p.life*.9,dark));
+      g.addColorStop(.4,getColor(p.life*.55,dark));
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.beginPath(); ctx.arc(p.x,p.y,r*2.2,0,Math.PI*2);
+      ctx.fillStyle=g; ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+  }
+  window.addEventListener('resize',resize);
+  resize(); tickLocal();
+
+  // ── OVERLAY DE TRANSFORMAÇÃO ───────────────────
+  const ov    = document.getElementById('fireOverlay');
+  const ovCtx = ov.getContext('2d');
+  let ovW, ovH, ovParts=[], ovRunning=false, ovPhase='idle';
+  // phase: 'rising' → chamas sobem do chão
+  //        'covering' → cobre a tela inteira
+  //        'fading'   → some revelando o tema escuro
+
+  function resizeOv(){
+    ovW = ov.width  = window.innerWidth;
+    ovH = ov.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeOv);
+  resizeOv();
+
+  function spawnOvParticle(yBase, big){
+    const x = ovW*(Math.random());
+    const spd = big?(6+Math.random()*10):(3+Math.random()*6);
+    const sz  = big?(18+Math.random()*32):(8+Math.random()*18);
+    ovParts.push({
+      x, y:yBase??ovH, vx:(Math.random()-.5)*3,
+      vy:-(spd), life:1,
+      decay:big?(.006+Math.random()*.008):(.01+Math.random()*.012),
+      size:sz, wobble:Math.random()*Math.PI*2,
+      wobbleSpeed:.04+Math.random()*.07,
+      blue: false  // começa laranja, fica azul ao cobrir
     });
   }
 
-  function getColor(life, dark){
-    if(dark){
-      // azul → branco: fantasma motoqueiro
-      if(life > 0.7) return `rgba(30,80,255,${life})`;
-      if(life > 0.4) return `rgba(100,160,255,${life})`;
-      if(life > 0.2) return `rgba(200,230,255,${life*0.9})`;
-      return `rgba(240,248,255,${life*0.6})`;
+  function getOvColor(life, blue){
+    if(blue){
+      if(life>.7)return `rgba(20,60,255,${life*.9})`;
+      if(life>.4)return `rgba(80,140,255,${life*.85})`;
+      if(life>.2)return `rgba(180,220,255,${life*.8})`;
+      return `rgba(230,245,255,${life*.6})`;
     } else {
-      // amarelo → laranja → vermelho: fogo real
-      if(life > 0.7) return `rgba(255,220,30,${life})`;
-      if(life > 0.45) return `rgba(255,120,0,${life})`;
-      if(life > 0.2) return `rgba(220,30,0,${life*0.9})`;
-      return `rgba(80,0,0,${life*0.5})`;
+      if(life>.7)return `rgba(255,220,20,${life*.9})`;
+      if(life>.45)return `rgba(255,100,0,${life*.85})`;
+      if(life>.2)return `rgba(200,20,0,${life*.8})`;
+      return `rgba(60,0,0,${life*.5})`;
     }
   }
 
-  function tick(){
-    raf = requestAnimationFrame(tick);
-    ctx.clearRect(0,0,W,H);
+  let ovStartTime=0, coverDone=false, fadeDone=false;
 
-    const spawnCount = active ? 5 : 3;
-    for(let i=0;i<spawnCount;i++) spawnParticle();
+  function tickOv(){
+    if(!ovRunning){ ovCtx.clearRect(0,0,ovW,ovH); return; }
+    requestAnimationFrame(tickOv);
 
-    const dark = isDark();
-    ctx.globalCompositeOperation = 'lighter';
+    const elapsed = Date.now()-ovStartTime;
 
-    for(let i = particles.length-1; i >= 0; i--){
-      const p = particles[i];
-      p.life -= p.decay;
-      if(p.life <= 0){ particles.splice(i,1); continue; }
-      p.wobble += p.wobbleSpeed;
-      p.x += p.vx + Math.sin(p.wobble) * 0.7;
-      p.y += p.vy;
+    // Fase 1 (0-800ms): chamas laranja sobem da base
+    // Fase 2 (800-1800ms): azul toma conta — muda tema
+    // Fase 3 (1800-2800ms): fade out revelando tema escuro
 
-      const r = p.size * p.life;
-      const grad = ctx.createRadialGradient(p.x,p.y,0, p.x,p.y,r*2.2);
-      grad.addColorStop(0, getColor(p.life * 0.9, dark));
-      grad.addColorStop(0.4, getColor(p.life * 0.55, dark));
-      grad.addColorStop(1, 'rgba(0,0,0,0)');
+    const phase = elapsed<800?'rising': elapsed<1800?'covering':'fading';
 
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r*2.2, 0, Math.PI*2);
-      ctx.fillStyle = grad;
-      ctx.fill();
+    // spawn
+    if(phase==='rising'){
+      for(let i=0;i<18;i++) spawnOvParticle(ovH, false);
+    } else if(phase==='covering'){
+      for(let i=0;i<24;i++){
+        const p = spawnOvParticle(ovH, true);
+        // no meio da cobertura troca o tema
+        if(!coverDone && elapsed>1100){
+          coverDone=true;
+          document.documentElement.setAttribute('data-theme','dark');
+          document.getElementById('toggleLabel').textContent='Tema Escuro';
+          try{localStorage.setItem('noc-theme','dark')}catch(e){}
+          // vira azul
+          ovParts.forEach(p=>p.blue=true);
+        }
+      }
+    } else {
+      // fading — não spawna mais
+      if(!fadeDone){
+        fadeDone=true;
+        setTimeout(()=>{
+          ovRunning=false;
+          ov.style.opacity='0';
+          ov.classList.remove('burning');
+          ovParts=[];
+          ovCtx.clearRect(0,0,ovW,ovH);
+          // ativa a chama local no botão
+          isActive=true;
+        },900);
+      }
     }
-    ctx.globalCompositeOperation = 'source-over';
+
+    // fill escuro por baixo conforme sobe
+    const coverProgress = Math.min(1, Math.max(0,(elapsed-800)/1000));
+    ovCtx.clearRect(0,0,ovW,ovH);
+
+    // fundo negro cresce de baixo
+    if(coverProgress>0){
+      const fillH = ovH*coverProgress;
+      ovCtx.fillStyle=`rgba(5,12,20,${Math.min(1,coverProgress*1.4)})`;
+      ovCtx.fillRect(0,ovH-fillH,ovW,fillH);
+    }
+
+    // partículas
+    ovCtx.globalCompositeOperation='lighter';
+    for(let i=ovParts.length-1;i>=0;i--){
+      const p=ovParts[i];
+      p.life-=p.decay;
+      if(p.life<=0){ovParts.splice(i,1);continue;}
+      p.wobble+=p.wobbleSpeed;
+      p.x+=p.vx+Math.sin(p.wobble)*1.2;
+      p.y+=p.vy;
+      const r=p.size*p.life;
+      const g=ovCtx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2.5);
+      g.addColorStop(0,getOvColor(p.life*.95,p.blue));
+      g.addColorStop(.4,getOvColor(p.life*.6,p.blue));
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ovCtx.beginPath();ovCtx.arc(p.x,p.y,r*2.5,0,Math.PI*2);
+      ovCtx.fillStyle=g;ovCtx.fill();
+    }
+    ovCtx.globalCompositeOperation='source-over';
+
+    // fade out final
+    if(phase==='fading'){
+      const fadeP=Math.min(1,(elapsed-1800)/900);
+      ovCtx.fillStyle=`rgba(5,12,20,${fadeP*.85})`;
+      ovCtx.fillRect(0,0,ovW,ovH);
+    }
   }
 
-  // sync com estado do botão
-  const origPlay = window.playMusic;
+  function startFireTransition(){
+    // só dispara se tema for claro
+    if(document.documentElement.getAttribute('data-theme')==='dark'){
+      isActive=!isActive; return;
+    }
+    ovRunning=true; coverDone=false; fadeDone=false;
+    ovParts=[]; ovStartTime=Date.now();
+    ov.style.opacity='1';
+    ov.classList.add('burning');
+    tickOv();
+  }
+
+  // sobrescreve playMusic para setar isActive
+  const _origPlay = window.playMusic;
   window.playMusic = function(track, btnEl){
-    origPlay(track, btnEl);
-    active = (track == 13);
+    _origPlay(track, btnEl);
+    if(track==13){ startFireTransition(); }
+    else { isActive=false; }
   };
-  const origStop = document.getElementById('btnStopMusic');
-  origStop.addEventListener('click', ()=>{ active = false; });
-
-  // também observar clique direto no botão aura
-  btn.addEventListener('click', ()=>{
-    active = btn.classList.contains('active');
-    // pequeno delay pra classe .active ser adicionada
-    setTimeout(()=>{ active = btn.classList.contains('active'); }, 50);
-  });
-
-  window.addEventListener('resize', resize);
-  resize();
-  tick();
+  document.getElementById('btnStopMusic').addEventListener('click',()=>{ isActive=false; });
 })();
 </script>
 </body>
