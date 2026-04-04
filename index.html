@@ -466,6 +466,98 @@
             gap: 4px
         }
 
+        .music-player-wrap {
+            display: flex;
+            flex-direction: row;
+            /* Garante ordem da esquerda para a direita */
+            gap: 8px;
+            align-items: flex-end;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .music-controls {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 10px;
+            background: var(--bg2);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .vol-wrap {
+            position: fixed;
+            top: 72px;
+            /* Abaixo do Theme Toggle (que está em 20px + altura) */
+            right: 20px;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .vol-wrap:hover {
+            background: var(--bg3);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .vol-slider-container {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            padding: 12px 8px;
+            border-radius: 14px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1001;
+        }
+
+        .vol-wrap:hover .vol-slider-container {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .vol-slider-vert {
+            appearance: slider-vertical;
+            width: 6px;
+            height: 100px;
+            cursor: pointer;
+            outline: none;
+            background: var(--bg3);
+        }
+
+        .vol-icon {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            transition: transform 0.2s;
+        }
+
+        .vol-wrap:hover .vol-icon {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
         .port-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -629,6 +721,36 @@
             background: var(--red-l);
             color: var(--red);
             opacity: 1
+        }
+
+        /* tremor de tela para transformação */
+        .screen-shake {
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+            transform: translate3d(0, 0, 0);
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-2px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(4px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-6px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(6px, 0, 0);
+            }
         }
 
         .hidden {
@@ -953,14 +1075,13 @@
             box-shadow: 0 0 16px rgba(80, 130, 255, .45)
         }
 
-        /* quando tocando: texto bem visível com sombra de contraste */
+        /* quando tocando: texto preto com sombra preta profunda sobrepondo tudo */
         #btnFarmarAura.active {
-            color: #fff !important;
+            color: #000 !important;
             text-shadow:
-                0 0 1px #000,
-                0 0 3px #000,
-                0 0 10px currentColor,
-                0 0 20px currentColor !important;
+                0 0 2px #000,
+                0 0 4px #000,
+                0 0 8px rgba(0, 0, 0, 0.5) !important;
         }
 
         #btnFarmarAura .btn-label {
@@ -1016,14 +1137,15 @@
             /* Abaixo das letras (20) */
             opacity: 0;
             transition: opacity .5s ease;
-            /* Máscara radial para formato oval e bordas suaves */
-            -webkit-mask-image: radial-gradient(ellipse 50% 60% at 50% 50%, black 30%, transparent 70%);
-            mask-image: radial-gradient(ellipse 50% 60% at 50% 50%, black 30%, transparent 70%);
+            /* Máscara radial alongada para formato 'pontudo' (teardrop/flame style) */
+            -webkit-mask-image: radial-gradient(ellipse 40% 90% at 50% 80%, black 20%, transparent 75%);
+            mask-image: radial-gradient(ellipse 40% 90% at 50% 80%, black 20%, transparent 75%);
         }
 
         #btnFarmarAura.active #flameCanvas {
             opacity: 1;
-            pointer-events: auto; /* Permite clicar na chama ativa */
+            pointer-events: auto;
+            /* Permite clicar na chama ativa */
             cursor: pointer;
         }
 
@@ -1332,6 +1454,13 @@
         <span class="toggle-label" id="toggleLabel">Tema Claro</span>
     </button>
 
+    <div class="vol-wrap">
+        <div class="vol-slider-container">
+            <input type="range" id="volSlider" class="vol-slider-vert" min="0" max="1" step="0.05" value="0.5">
+        </div>
+        <span class="vol-icon">🔊</span>
+    </div>
+
     <div id="toast" class="toast"></div>
 
     <!-- MODAL -->
@@ -1358,25 +1487,27 @@
     <canvas id="audioVisualizer" class="ambient-visualizer"></canvas>
 
     <!-- MUSIC -->
-    <div class="music-controls" id="musicControls">
-        <button class="m-btn" data-track="1">01</button>
-        <button class="m-btn" data-track="2">02</button>
-        <button class="m-btn" data-track="3">03</button>
-        <button class="m-btn" data-track="4">04</button>
-        <button class="m-btn" data-track="5">05</button>
-        <button class="m-btn" data-track="6">06</button>
-        <button class="m-btn" data-track="7">07</button>
-        <button class="m-btn" data-track="8">08</button>
-        <button class="m-btn" data-track="9">09</button>
-        <button class="m-btn" data-track="10">10</button>
-        <button class="m-btn" data-track="11">11</button>
-        <button class="m-btn" data-track="12">12</button>
-        <button class="m-btn" id="btnStopMusic">■ Stop</button>
-        <button class="m-btn" id="btnFarmarAura" data-track="13">
-            <canvas id="borderSparkCanvas"></canvas>
-            <canvas id="flameCanvas"></canvas>
-            <span class="btn-label">🔥 FARMAR AURA</span>
-        </button>
+    <div class="music-player-wrap">
+        <div id="mControls" class="music-controls">
+            <button class="m-btn" data-track="01">01</button>
+            <button class="m-btn" data-track="02">02</button>
+            <button class="m-btn" data-track="03">03</button>
+            <button class="m-btn" data-track="04">04</button>
+            <button class="m-btn" data-track="05">05</button>
+            <button class="m-btn" data-track="06">06</button>
+            <button class="m-btn" data-track="07">07</button>
+            <button class="m-btn" data-track="08">08</button>
+            <button class="m-btn" data-track="09">09</button>
+            <button class="m-btn" data-track="10">10</button>
+            <button class="m-btn" data-track="11">11</button>
+            <button class="m-btn" data-track="12">12</button>
+            <button class="m-btn" id="btnStopMusic" style="grid-column: span 4;">■ Stop</button>
+            <button class="m-btn" id="btnFarmarAura" data-track="13" style="grid-column: span 4;">
+                <canvas id="borderSparkCanvas"></canvas>
+                <canvas id="flameCanvas"></canvas>
+                <span class="btn-label">🔥 FARMAR AURA</span>
+            </button>
+        </div>
     </div>
     <audio id="mPlayer" loop></audio>
 
@@ -1571,7 +1702,9 @@
             boxBuscaCTO: $('boxBuscaCTO'), boxPortas: $('boxPortas'), previewRamal: $('previewRamal'),
             inputCoordenada: $('inputCoordenada'), btnBuscarCabo: $('btnBuscarCabo'), statusBar: $('statusBar'), resultadoCabos: $('resultadoCabos'),
             btnGerarOS: $('btnGerarOS'), btnGerarOSMetro: $('btnGerarOSMetro'), btnLimparTudo: $('btnLimparTudo'), btnLimparTudo2: $('btnLimparTudo2'),
-            mPlayer: $('mPlayer'), wrapper: $('wrapper'), sidebar: $('sidebar'), musicControls: $('musicControls')
+            mPlayer: $('mPlayer'),
+            mVol: $('volSlider'),
+            wrapper: $('wrapper'), sidebar: $('sidebar'), musicControls: $('mControls')
         };
 
         /* ════════════════════════════════════════════════
@@ -1582,12 +1715,13 @@
             document.documentElement.setAttribute('data-theme', saved);
             $('toggleLabel').textContent = saved === 'dark' ? 'Tema Escuro' : 'Tema Claro';
         })();
-        $('themeToggle').addEventListener('click', () => {
+        function toggleTheme() {
             const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', next);
             $('toggleLabel').textContent = next === 'dark' ? 'Tema Escuro' : 'Tema Claro';
             try { localStorage.setItem('noc-theme', next) } catch (e) { }
-        });
+        }
+        $('themeToggle').addEventListener('click', toggleTheme);
 
         /* ════════════════════════════════════════════════
            TOAST
@@ -1650,6 +1784,24 @@
         DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn => {
             if (btn.id === 'btnFarmarAura') return;
             btn.addEventListener('click', function () { playTrack(this.dataset.track, this) });
+        });
+
+        // volume e persistência
+        try {
+            const savedVol = localStorage.getItem('player-vol');
+            if (savedVol !== null) {
+                DOM.mPlayer.volume = savedVol;
+                DOM.mVol.value = savedVol;
+            } else {
+                DOM.mPlayer.volume = 0.5;
+                DOM.mVol.value = 0.5;
+            }
+        } catch (e) { }
+
+        DOM.mVol.addEventListener('input', (e) => {
+            const v = e.target.value;
+            DOM.mPlayer.volume = v;
+            try { localStorage.setItem('player-vol', v) } catch (err) { }
         });
 
         function stopMusica() {
@@ -1746,37 +1898,44 @@
 
             /* ── CHAMA SAIYAJIN (envolvente) ── */
             function spawnFlame() {
-                const spd = 3.5 + Math.random() * 5, sz = 12 + Math.random() * 20;
+                // Aumento agressivo de velocidade e dispersão lateral
+                const spd = 6 + Math.random() * 8, sz = 18 + Math.random() * 30;
                 fParts.push({
-                    x: fW * (0.25 + Math.random() * .5), // Spawn mais centralizado
-                    y: fH * (0.55 + Math.random() * .15),
-                    vx: (Math.random() - .5) * 2.2, vy: -spd,
-                    life: 1, decay: .008 + Math.random() * .012,
-                    size: sz, w: Math.random() * Math.PI * 2, ws: .09 + Math.random() * .12
+                    x: fW * (0.35 + Math.random() * .3),
+                    y: fH * (0.65 + Math.random() * .1),
+                    vx: (Math.random() - .5) * 8, // Aumentado de 2.5 para 8 (movimento lateral louco)
+                    vy: -spd,
+                    life: 1, decay: .006 + Math.random() * .01,
+                    size: sz, w: Math.random() * Math.PI * 2, ws: .15 + Math.random() * .25 // Oscilação mais rápida
                 });
             }
             function flameCol(life, dark) {
                 if (dark) {
-                    if (life > .7) return `rgba(40,100,255,${life * 0.8})`;
-                    if (life > .4) return `rgba(100,180,255,${life * 0.7})`;
-                    if (life > .2) return `rgba(200,240,255,${life * 0.5})`;
-                    return `rgba(255,255,255,${life * 0.3})`;
+                    // Azul Super Saiyajin: Tons saturados para evitar o efeito "branco"
+                    if (life > .8) return `rgba(100,200,255,0.9)`; // Ciano vibrante
+                    if (life > .5) return `rgba(0,100,255,0.85)`;  // Azul royal
+                    if (life > .25) return `rgba(0,50,200,0.7)`;   // Azul profundo
+                    return `rgba(0,20,150,${life * 0.5})`;        // Rastro escuro
                 }
-                if (life > .7) return `rgba(255,180,0,${life * 0.8})`;
-                if (life > .45) return `rgba(255,80,0,${life * 0.7})`;
-                if (life > .2) return `rgba(200,20,0,${life * 0.5})`;
-                return `rgba(100,0,0,${life * 0.3})`;
+                // Modo claro permanece quente, mas mais saturado
+                if (life > .8) return `rgba(255,200,50,0.9)`;
+                if (life > .5) return `rgba(255,100,0,0.85)`;
+                if (life > .25) return `rgba(200,20,0,0.7)`;
+                return `rgba(100,0,0,${life * 0.5})`;
             }
             function drawFlame() {
                 flameCtx.clearRect(0, 0, fW, fH);
                 if (!flameActive) { fParts = []; return; }
-                for (let i = 0; i < 6; i++) spawnFlame();
+                for (let i = 0; i < 10; i++) spawnFlame(); // Aumentado de 6 para 10 por frame
                 const dark = isDark();
                 flameCtx.globalCompositeOperation = 'lighter';
                 for (let i = fParts.length - 1; i >= 0; i--) {
                     const p = fParts[i]; p.life -= p.decay;
                     if (p.life <= 0) { fParts.splice(i, 1); continue; }
-                    p.w += p.ws; p.x += p.vx + Math.sin(p.w) * .85; p.y += p.vy;
+                    // Movimento 'maluco': soma vx com uma oscilação senoidal forte
+                    p.w += p.ws;
+                    p.x += p.vx + Math.sin(p.w) * 5; // Aumentado de 0.85 para 5 (zigue-zague intenso)
+                    p.y += p.vy;
                     const r = p.size * p.life;
                     const g = flameCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.3);
                     g.addColorStop(0, flameCol(p.life * .95, dark));
@@ -1803,18 +1962,37 @@
         (function () {
             const ov = $('fireOverlay');
             const ctx = ov.getContext('2d');
-            let W, H, parts = [], running = false, start = 0, switched = false, done = false;
+            let W, H, parts = [], running = false, start = 0, switched = false;
+            let shockwaves = [], speedLines = [];
 
             function resize() { W = ov.width = window.innerWidth; H = ov.height = window.innerHeight; }
             window.addEventListener('resize', resize); resize();
 
+            function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+
+            function spawnShockwave() {
+                shockwaves.push({ r: 0, opacity: 1, color: isDark() ? '80, 150, 255' : '255, 180, 0' });
+            }
+
+            function spawnSpeedLines() {
+                speedLines = [];
+                for (let i = 0; i < 40; i++) {
+                    speedLines.push({
+                        angle: Math.random() * Math.PI * 2,
+                        len: 100 + Math.random() * 300,
+                        dist: Math.random() * 500,
+                        speed: 15 + Math.random() * 25
+                    });
+                }
+            }
+
             function spawn(big, blue) {
-                const spd = big ? (7 + Math.random() * 11) : (3 + Math.random() * 6);
-                const sz = big ? (22 + Math.random() * 36) : (9 + Math.random() * 20);
+                const spd = big ? (10 + Math.random() * 15) : (5 + Math.random() * 8);
+                const sz = big ? (30 + Math.random() * 50) : (15 + Math.random() * 25);
                 parts.push({
-                    x: W * Math.random(), y: H, vx: (Math.random() - .5) * 3.5, vy: -spd,
-                    life: 1, decay: big ? (.005 + Math.random() * .006) : (.009 + Math.random() * .01),
-                    size: sz, w: Math.random() * Math.PI * 2, ws: .04 + Math.random() * .07, blue
+                    x: W * Math.random(), y: H + 50, vx: (Math.random() - .5) * 5, vy: -spd,
+                    life: 1, decay: big ? (.004 + Math.random() * .006) : (.007 + Math.random() * .01),
+                    size: sz, blue
                 });
             }
             function col(life, blue) {
@@ -1830,72 +2008,91 @@
                 return `rgba(50,0,0,${life * .5})`;
             }
 
-            function frame() {
+            function draw(el) {
                 if (!running) return;
-                requestAnimationFrame(frame);
-                const el = Date.now() - start;
                 ctx.clearRect(0, 0, W, H);
+                if (!start) start = el;
+                const elapsed = el - start;
+                const blue = isDark();
 
-                // fase 1 (0-700): laranja sobe
-                if (el < 700) {
-                    for (let i = 0; i < 22; i++)spawn(false, false);
-                }
-                // fase 2 (700-1700): azul cobre tudo + muda tema
-                else if (el < 1700) {
-                    for (let i = 0; i < 30; i++)spawn(true, true);
-                    const prog = Math.min(1, (el - 700) / 1000);
-                    ctx.fillStyle = `rgba(5,12,20,${Math.min(1, prog * 1.6)})`;
-                    ctx.fillRect(0, H * (1 - prog), W, H * prog);
-                    if (!switched && el > 1000) {
-                        switched = true;
-                        document.documentElement.setAttribute('data-theme', 'dark');
-                        $('toggleLabel').textContent = 'Tema Escuro';
-                        try { localStorage.setItem('noc-theme', 'dark') } catch (e) { }
-                        parts.forEach(p => { p.blue = true; });
-                    }
-                }
-                // fase 3 (1700-2600): some
-                else {
-                    if (!done) {
-                        done = true;
-                        setTimeout(() => {
-                            running = false;
-                            ov.style.display = 'none';
-                            parts = [];
-                            ctx.clearRect(0, 0, W, H);
-                            flameActive = true;
-                            setActiveBtn($('btnFarmarAura'));
-                            DOM.musicControls.classList.add('aura-active');
-                        }, 700);
-                    }
-                    const fp = Math.min(1, (el - 1700) / 700);
-                    ctx.fillStyle = `rgba(5,12,20,${fp})`;
+                // 1. Flash Inicial (Branco/Azul)
+                if (elapsed < 200) {
+                    const flashOpacity = 1 - (elapsed / 200);
+                    ctx.fillStyle = `rgba(${blue ? '150,220,255' : '255,255,255'}, ${flashOpacity})`;
                     ctx.fillRect(0, 0, W, H);
                 }
 
-                // partículas
+                // 2. Shockwaves (Ondas de Choque)
+                ctx.lineWidth = 5;
+                for (let i = shockwaves.length - 1; i >= 0; i--) {
+                    const sw = shockwaves[i];
+                    sw.r += 28; sw.opacity -= 0.035;
+                    if (sw.opacity <= 0) { shockwaves.splice(i, 1); continue; }
+                    ctx.strokeStyle = `rgba(${sw.color}, ${sw.opacity})`;
+                    ctx.beginPath(); ctx.arc(W / 2, H / 2, sw.r, 0, Math.PI * 2); ctx.stroke();
+                }
+
+                // 3. Linhas de Velocidade (Anime Style)
+                ctx.strokeStyle = blue ? 'rgba(100,200,255,0.6)' : 'rgba(255,200,0,0.6)';
+                ctx.lineWidth = 3;
+                speedLines.forEach(l => {
+                    l.dist += l.speed;
+                    const x1 = W / 2 + Math.cos(l.angle) * l.dist;
+                    const y1 = H / 2 + Math.sin(l.angle) * l.dist;
+                    const x2 = W / 2 + Math.cos(l.angle) * (l.dist + l.len);
+                    const y2 = H / 2 + Math.sin(l.angle) * (l.dist + l.len);
+                    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+                });
+
+                // 4. Partículas de Fogo Massivas
+                if (elapsed < 650) {
+                    for (let i = 0; i < 20; i++) spawn(Math.random() < .4, blue);
+                }
+
                 ctx.globalCompositeOperation = 'lighter';
                 for (let i = parts.length - 1; i >= 0; i--) {
                     const p = parts[i]; p.life -= p.decay;
                     if (p.life <= 0) { parts.splice(i, 1); continue; }
-                    p.w += p.ws; p.x += p.vx + Math.sin(p.w) * 1.5; p.y += p.vy;
+                    p.x += p.vx; p.y += p.vy;
                     const r = p.size * p.life;
-                    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.7);
+                    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.5);
                     g.addColorStop(0, col(p.life * .95, p.blue));
-                    g.addColorStop(.4, col(p.life * .55, p.blue));
+                    g.addColorStop(.3, col(p.life * .6, p.blue));
                     g.addColorStop(1, 'rgba(0,0,0,0)');
-                    ctx.beginPath(); ctx.arc(p.x, p.y, r * 2.7, 0, Math.PI * 2);
+                    ctx.beginPath(); ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2);
                     ctx.fillStyle = g; ctx.fill();
                 }
                 ctx.globalCompositeOperation = 'source-over';
+
+                // Troca de tema no pico (400ms)
+                if (elapsed > 400 && !switched) {
+                    switched = true; toggleTheme();
+                    parts.forEach(p => { p.blue = isDark(); });
+                    spawnShockwave(); // Segunda onda no impacto do tema
+                }
+
+                if (elapsed < 900) {
+                    requestAnimationFrame(draw);
+                } else {
+                    ctx.clearRect(0, 0, W, H);
+                    running = false;
+                    flameActive = true;
+                    if ($('btnFarmarAura')) setActiveBtn($('btnFarmarAura'));
+                    if (DOM.musicControls) DOM.musicControls.classList.add('aura-active');
+                    document.body.classList.remove('screen-shake');
+                    ov.style.display = 'none';
+                }
             }
 
-            function startTransition() {
+            window.startTransition = function () {
                 if (running) return;
-                running = true; start = Date.now(); switched = false; done = false; parts = [];
+                running = true; start = 0; switched = false; parts = []; shockwaves = [];
                 ov.style.display = 'block';
-                frame();
-            }
+                spawnShockwave();
+                spawnSpeedLines();
+                document.body.classList.add('screen-shake');
+                requestAnimationFrame(draw);
+            };
 
             // Farmar Aura
             $('btnFarmarAura').addEventListener('click', function () {
@@ -1903,7 +2100,7 @@
                 const dark = document.documentElement.getAttribute('data-theme') === 'dark';
                 if (dark) {
                     flameActive = true;
-                    DOM.musicControls.classList.add('aura-active');
+                    if (DOM.musicControls) DOM.musicControls.classList.add('aura-active');
                 } else {
                     startTransition();
                 }
@@ -1964,9 +2161,49 @@
         function fetchCaboMetro() { if (AppState.cacheRedes['METRO']) return; AppState.cacheRedes['METRO'] = 'LOADING'; renderStatusBar(); const s = document.createElement('script'); s.src = `${GAS_URL}?callback=cbMetro`; s.onerror = () => { AppState.cacheRedes['METRO'] = 'ERRO'; renderStatusBar(); }; document.body.appendChild(s); window.cbMetro = d => { const n = d.map(x => ({ ozmap: x.col1 || x.ozmap, localizacao: x.col2 || x.localizacao, tipo: x.col3 || x.tipo, nivel: x.col4 || x.nivel, comprimento: x.col5 || x.comprimento, ...x })); AppState.cacheRedes['METRO'] = n; renderStatusBar(); }; }
         function renderStatusBar() { const s = AppState.cacheRedes['METRO']; if (s === 'LOADING') DOM.statusBar.innerHTML = `<div class="progress-wrap"><div class="progress-label">Carregando...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`; else if (s === 'ERRO') DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--red)">Falha ao carregar cabos.</div>`; else if (Array.isArray(s)) DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--teal)">✓ ${s.length} cabos carregados.</div>`; else DOM.statusBar.innerHTML = ''; }
         function haversine(a, b, c, d) { const R = 6371000, e = (c - a) * Math.PI / 180, f = (d - b) * Math.PI / 180, g = Math.sin(e / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(f / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(g), Math.sqrt(1 - g)); }
+        function distToSegment(u, p1, p2) {
+            const dx = p2.lng - p1.lng, dy = p2.lat - p1.lat;
+            if (dx === 0 && dy === 0) return haversine(u.lat, u.lng, p1.lat, p1.lng);
+            let t = ((u.lng - p1.lng) * dx + (u.lat - p1.lat) * dy) / (dx * dx + dy * dy);
+            t = Math.max(0, Math.min(1, t));
+            return haversine(u.lat, u.lng, p1.lat + t * dy, p1.lng + t * dx);
+        }
         function parseCoordenada(s) { s = s.trim(); let m = s.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/); if (m) return { lat: +m[1], lng: +m[2] }; m = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) return { lat: +m[1], lng: +m[2] }; m = s.match(/[?&]q=(-?\d+\.\d+)[,+](-?\d+\.\d+)/); if (m) return { lat: +m[1], lng: +m[2] }; return null; }
         function extrairCoordsCabo(str) { str = String(str || '').trim(); if (!str || str === 'undefined') return []; if (str.includes(';')) { const c = []; str.split(',').forEach(p => { const x = p.trim().split(';'); if (x.length >= 2) { const la = +x[0], ln = +x[1]; if (!isNaN(la) && !isNaN(ln)) c.push({ lat: la, lng: ln }); } }); if (c.length) return c; } return [...str.matchAll(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/g)].map(m => ({ lat: +m[2], lng: +m[1] })); }
-        function buscarCabosProximos() { const coord = parseCoordenada(DOM.inputCoordenada.value); if (!coord) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Coordenada inválida.</div>`; return; } const dm = AppState.cacheRedes['METRO']; if (!Array.isArray(dm)) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Banco ainda carregando...</div>`; return; } const RAIO = 20, cv = new Map(); dm.forEach(row => { const nome = String(row.ozmap || row.cto || '').trim(), coords = String(row.localizacao || row.lat || '').trim(), tipo = String(row.tipo || row.lng || '').trim(), nivel = String(row.nivel || '').trim(), comp = String(row.comprimento || '').trim(); const pts = extrairCoordsCabo(coords); if (!pts.length) return; let best = Infinity; pts.forEach(p => { const d = haversine(coord.lat, coord.lng, p.lat, p.lng); if (d < best) best = d; }); if (best <= RAIO && !cv.has(nome)) cv.set(nome, { nome, tipo, nivel, comp, dist: best }); }); const enc = Array.from(cv.values()).sort((a, b) => a.dist - b.dist); if (!enc.length) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Nenhum cabo no raio de ${RAIO}m.</div>`; return; } const ci = DOM.inputCoordenada.value.trim(); DOM.resultadoCabos.innerHTML = enc.map(c => `<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp || '-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join(''); }
+        function buscarCabosProximos() {
+            const coord = parseCoordenada(DOM.inputCoordenada.value);
+            if (!coord) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Coordenada inválida.</div>`; return; }
+            const dm = AppState.cacheRedes['METRO'];
+            if (!Array.isArray(dm)) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Banco ainda carregando...</div>`; return; }
+            const RAIO = 30, cv = new Map();
+            dm.forEach(row => {
+                const nome = String(row.ozmap || row.cto || '').trim();
+                const coords = String(row.localizacao || row.lat || '').trim();
+                const pts = extrairCoordsCabo(coords);
+                if (!pts.length) return;
+                let best = Infinity;
+                if (pts.length === 1) {
+                    best = haversine(coord.lat, coord.lng, pts[0].lat, pts[0].lng);
+                } else {
+                    for (let i = 0; i < pts.length - 1; i++) {
+                        const d = distToSegment(coord, pts[i], pts[i + 1]);
+                        if (d < best) best = d;
+                    }
+                }
+                if (best <= RAIO && !cv.has(nome)) {
+                    cv.set(nome, {
+                        nome, dist: best,
+                        tipo: String(row.tipo || row.lng || '').trim(),
+                        nivel: String(row.nivel || '').trim(),
+                        comp: String(row.comprimento || '').trim()
+                    });
+                }
+            });
+            const enc = Array.from(cv.values()).sort((a, b) => a.dist - b.dist);
+            if (!enc.length) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Nenhum cabo no raio de ${RAIO}m.</div>`; return; }
+            const ci = DOM.inputCoordenada.value.trim();
+            DOM.resultadoCabos.innerHTML = enc.map(c => `<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp || '-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
+        }
         function renderTecnosCabo() { const emp = DOM.empresaMetro.value; if (!emp) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione empresa.</div>'; return; } const lista = tecnicosDB[emp] || []; if (!lista.length) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Nenhum técnico.</div>'; return; } DOM.listaTecsCabo.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.f}" data-nome="${t.n}" style="display:none"><label for="tc${i}">${t.n}</label></div>`).join(''); }
         function normalizar(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[\s-]/g, ''); }
         function getPrefixFromCTO(n) { const u = n.toUpperCase(); return knownPrefixes.find(p => u.includes(p)) || ''; }
