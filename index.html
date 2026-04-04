@@ -745,6 +745,162 @@
             opacity: 0.45;
         }
 
+        /* MODAL MELHORADO */
+        .copy-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .copy-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .copy-modal-content {
+            background: var(--bg2);
+            border: 2px solid var(--gold);
+            border-radius: 6px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 60px rgba(245, 166, 35, 0.3);
+            transform: scale(0.9) translateY(40px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .copy-modal.active .copy-modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        @keyframes modalPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.85) translateY(60px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .copy-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.6rem;
+            color: var(--gold2);
+            letter-spacing: 3px;
+            padding: 24px;
+            border-bottom: 2px solid var(--border2);
+            background: linear-gradient(135deg, rgba(245, 166, 35, 0.1) 0%, transparent 100%);
+        }
+
+        .copy-modal-text {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text);
+            white-space: pre-wrap;
+            line-height: 1.8;
+            background: var(--bg);
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            border: 1px solid var(--border);
+            margin: 20px 20px 0 20px;
+            border-radius: 4px;
+            word-break: break-word;
+        }
+
+        .copy-modal-text::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .copy-modal-text::-webkit-scrollbar-track {
+            background: var(--bg3);
+            border-radius: 3px;
+        }
+
+        .copy-modal-text::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px;
+        }
+
+        .copy-modal-text::-webkit-scrollbar-thumb:hover {
+            background: var(--gold);
+        }
+
+        .copy-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            background: rgba(211, 47, 47, 0.05);
+        }
+
+        .copy-modal-footer button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: var(--tr);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-seguir {
+            background: linear-gradient(180deg, #e53935 0%, #b71c1c 100%);
+            color: #fff;
+            border-top: 1px solid #ff6b6b;
+            border-bottom: 3px solid #7f0000;
+            box-shadow: 0 4px 16px rgba(211, 47, 47, 0.4);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+        }
+
+        .btn-seguir:hover {
+            background: linear-gradient(180deg, #ff5252 0%, #c62828 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(211, 47, 47, 0.6);
+        }
+
+        .btn-editar {
+            background: transparent;
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            box-shadow: 0 0 16px rgba(245, 166, 35, 0.2);
+        }
+
+        .btn-editar:hover {
+            background: rgba(245, 166, 35, 0.1);
+            border-color: var(--gold2);
+            color: var(--gold2);
+            box-shadow: 0 0 24px rgba(245, 166, 35, 0.3);
+        }
+
         @media(max-width:1024px) {
             main {
                 padding: 28px 14px;
@@ -774,11 +930,38 @@
             .logo-band {
                 font-size: 2.8rem;
             }
+
+            .copy-modal-content {
+                width: 95%;
+                max-height: 90vh;
+            }
         }
     </style>
 </head>
 
 <body>
+    <div id="copyModal" class="copy-modal">
+        <div class="copy-modal-content">
+            <div class="copy-modal-header">
+                <span>✅ ORDEM DE SERVIÇO COPIADA</span>
+            </div>
+            <pre id="copyModalText" class="copy-modal-text"></pre>
+            <div style="padding: 0 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                <label for="operadorSelect"
+                    style="display: block; font-size: 0.75rem; color: var(--gold); margin-bottom: 8px; letter-spacing: 2px; text-transform: uppercase;">Operador
+                    (Opcional)</label>
+                <select id="operadorSelect"
+                    style="width: 100%; padding: 10px 12px; background: #100c0c; border: 1px solid var(--border2); border-bottom: 2px solid var(--gold); border-radius: 2px; color: var(--text); font-family: 'Oswald', sans-serif; font-size: 0.9rem;">
+                    <option value="">-- Nenhum operador --</option>
+                </select>
+            </div>
+            <div class="copy-modal-footer">
+                <button class="btn-seguir" id="btnSeguir">➤ ENVIAR & SEGUIR</button>
+                <button class="btn-editar" id="btnEditarOS">✎ EDITAR</button>
+            </div>
+        </div>
+    </div>
+
     <canvas id="audioVisualizer" class="ambient-visualizer"></canvas>
     <div class="music-controls" id="musicControls">
         <button class="m-btn" data-track="1">01</button>
@@ -791,7 +974,7 @@
         <button class="m-btn" data-track="8">08</button>
         <button class="m-btn" data-track="9">09</button>
         <button class="m-btn" data-track="10">10</button>
-        <button class="m-btn" id="btnStopMusic">&#9632; STOP</button>
+        <button class="m-btn" id="btnStopMusic">■ STOP</button>
     </div>
     <audio id="mPlayer" loop></audio>
 
@@ -806,7 +989,7 @@
                 <div class="divider"></div>
 
                 <div class="form-group">
-                    <label for="rede">&#9658; Rede de Atuacao</label>
+                    <label for="rede">▶ Rede de Atuacao</label>
                     <select id="rede">
                         <option value="" disabled selected>-- Selecione uma rede --</option>
                         <option value="FIBER">FIBER NETWORK</option>
@@ -819,7 +1002,7 @@
                 <!-- BOX METRO -->
                 <div id="boxMetro" class="hidden">
                     <div class="metro-card">
-                        <div class="metro-title">&#9658; CONSULTA DE CABOS</div>
+                        <div class="metro-title">▶ CONSULTA DE CABOS</div>
                         <div class="form-group" style="margin-bottom:10px;">
                             <label>Coordenada ou Link Google Maps</label>
                             <div class="cable-search-box">
@@ -832,7 +1015,7 @@
                     </div>
 
                     <div class="form-group" style="margin-top:20px;">
-                        <label for="problemaMetro">&#9658; Tipo de Problema</label>
+                        <label for="problemaMetro">▶ Tipo de Problema</label>
                         <select id="problemaMetro">
                             <option value="" disabled selected>-- Selecione o problema --</option>
                             <option value="Troca de poste">Troca de poste</option>
@@ -841,7 +1024,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="empresaMetro">&#9658; Empresa Executante</label>
+                        <label for="empresaMetro">▶ Empresa Executante</label>
                         <select id="empresaMetro">
                             <option value="" disabled selected>-- Selecione --</option>
                             <option value="IMAIS">IMAIS</option>
@@ -851,13 +1034,13 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>&#9658; Tecnicos Disponiveis</label>
+                        <label>▶ Tecnicos Disponiveis</label>
                         <div id="listaTecsCabo" class="stack-list">
                             <div class="info-msg">Selecione a empresa.</div>
                         </div>
                     </div>
                     <div class="button-group">
-                        <button class="btn btn-main" id="btnGerarOSMetro">&#9654; GERAR ORDEM DE SERVICO</button>
+                        <button class="btn btn-main" id="btnGerarOSMetro">▶ GERAR ORDEM DE SERVICO</button>
                         <button class="btn btn-clear" id="btnLimparTudo">LIMPAR</button>
                     </div>
                 </div>
@@ -865,7 +1048,7 @@
                 <!-- BOX REDE -->
                 <div id="boxRede">
                     <div class="form-group">
-                        <label for="tipo">&#9658; Tipo de Acionamento</label>
+                        <label for="tipo">▶ Tipo de Acionamento</label>
                         <select id="tipo">
                             <option value="" disabled selected>-- O que esta acontecendo? --</option>
                             <option value="REDE DE ACESSO - ATENUACAO">ATENUACAO NA REDE</option>
@@ -874,7 +1057,7 @@
                         </select>
                     </div>
                     <div id="boxDetalheAtenuacao" class="form-group hidden">
-                        <label for="detalheAtenuacao">&#9658; Especificacao da Atenuacao</label>
+                        <label for="detalheAtenuacao">▶ Especificacao da Atenuacao</label>
                         <select id="detalheAtenuacao">
                             <option value="" disabled selected>-- Selecione --</option>
                             <option value="CTO ATENUADA">CTO ATENUADA (No geral)</option>
@@ -883,32 +1066,32 @@
                         </select>
                     </div>
                     <div id="boxFamilia" class="form-group hidden">
-                        <label for="inputFamilia">&#9658; Prefixo ou Ramal Afetado</label>
+                        <label for="inputFamilia">▶ Prefixo ou Ramal Afetado</label>
                         <input type="text" id="inputFamilia" placeholder="Ex: PAR12, 12-1, AUT04...">
                         <div class="info-msg" style="margin-top:7px;">O sistema agrupara todas as CTOs que contenham
                             este texto.</div>
                     </div>
                     <div id="boxBuscaCTO" class="form-group">
-                        <label for="filtro">&#9658; Buscar e Selecionar CTO</label>
+                        <label for="filtro">▶ Buscar e Selecionar CTO</label>
                         <input type="text" id="filtro" placeholder="Digite para filtrar...">
                         <div id="listaCTOs" class="cto-picker">
                             <div class="info-msg">Selecione uma Rede primeiro.</div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="empresa">&#9658; Empresa Executante</label>
+                        <label for="empresa">▶ Empresa Executante</label>
                         <select id="empresa">
                             <option value="" disabled selected>Aguardando rede...</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>&#9658; Tecnicos Disponiveis</label>
+                        <label>▶ Tecnicos Disponiveis</label>
                         <div id="listaTecs" class="stack-list">
                             <div class="info-msg">Selecione empresa e CTOs.</div>
                         </div>
                     </div>
                     <div class="button-group">
-                        <button class="btn btn-main" id="btnGerarOS">&#9654; GERAR ORDEM DE SERVICO</button>
+                        <button class="btn btn-main" id="btnGerarOS">▶ GERAR ORDEM DE SERVICO</button>
                         <button class="btn btn-clear" id="btnLimparTudo2">LIMPAR</button>
                     </div>
                 </div>
@@ -933,9 +1116,8 @@
     </main>
 
     <script>
-        // Backend unificado de cabos
         const GAS_URL = 'https://script.google.com/a/macros/clickip.com.br/s/AKfycbyDuRIIlq07rOsFy_ufrIWhI7qKGordXz1ZzG0JLjBo9UzfXZ0RUbFI5WD4-Hknriz-2g/exec';
-        const AppState = { baseDados: [], cacheRedes: {}, multiSelectAllowed: true };
+        const AppState = { baseDados: [], cacheRedes: {}, multiSelectAllowed: true, operadores: [], conteudoCopiado: '' };
 
         const tecnicosDB = {
             "CONNECT": [{ n: "DANIEL SALES", f: "559294943897" }, { n: "Esequias", f: "559285532071" }, { n: "Igor", f: "559286442408" }, { n: "Sidcley", f: "559292373997" }, { n: "JESSE", f: "559292433704" }],
@@ -965,7 +1147,7 @@
             musicControls: $('musicControls'), mPlayer: $('mPlayer'), wrapper: $('wrapper'), sidebar: $('sidebar')
         };
 
-        document.addEventListener('DOMContentLoaded', () => { gerarGridPortas(); bindEvents(); renderStatusBar(); });
+        document.addEventListener('DOMContentLoaded', () => { gerarGridPortas(); bindEvents(); renderStatusBar(); carregarOperadores(); });
 
         function bindEvents() {
             DOM.rede.addEventListener('change', aoMudarRede);
@@ -986,6 +1168,8 @@
                 btn.addEventListener('click', e => playMusic(e.target.dataset.track, e.target));
             });
             $('btnStopMusic').addEventListener('click', () => { DOM.mPlayer.pause(); DOM.mPlayer.currentTime = 0; currentTrack = null; updateActiveMusicBtn(null); });
+            $('btnSeguir').addEventListener('click', abrirURLHubsoft);
+            $('btnEditarOS').addEventListener('click', fecharModal);
         }
 
         function gerarGridPortas() {
@@ -1014,9 +1198,9 @@
             if (AppState.cacheRedes[rede]) { AppState.baseDados = AppState.cacheRedes[rede]; renderListaCTOs(AppState.baseDados); renderTecnicos(); return; }
             const cbName = `dataHandler_${rede}`; const s = document.createElement('script');
             s.src = `${GAS_URL}?aba=${rede}&callback=${cbName}`; document.body.appendChild(s);
-            window[cbName] = dados => { 
-                const normal = dados.map(d => ({ cto: d.col1 || d.cto, ...d }));
-                AppState.cacheRedes[rede] = normal; AppState.baseDados = normal; renderListaCTOs(normal); renderTecnicos(); 
+            window[cbName] = dados => {
+                const normal = dados.map(d => ({ cto: d.col1 || d.cto, lat: d.col2 || d.lat, lng: d.col3 || d.lng, ...d }));
+                AppState.cacheRedes[rede] = normal; AppState.baseDados = normal; renderListaCTOs(normal); renderTecnicos();
             };
         }
 
@@ -1026,9 +1210,9 @@
             const cbName = `dataHandler_METRO`; const s = document.createElement('script');
             s.src = `${GAS_URL}?callback=${cbName}`;
             s.onerror = () => { AppState.cacheRedes['METRO'] = 'ERRO'; renderStatusBar(); }; document.body.appendChild(s);
-            window[cbName] = dados => { 
-                const normal = dados.map(d => ({ ozmap: d.col1||d.ozmap, localizacao: d.col2||d.localizacao, tipo: d.col3||d.tipo, nivel: d.col4||d.nivel, comprimento: d.col5||d.comprimento, ...d }));
-                AppState.cacheRedes['METRO'] = normal; renderStatusBar(); 
+            window[cbName] = dados => {
+                const normal = dados.map(d => ({ ozmap: d.col1 || d.ozmap, localizacao: d.col2 || d.localizacao, tipo: d.col3 || d.tipo, nivel: d.col4 || d.nivel, comprimento: d.col5 || d.comprimento, ...d }));
+                AppState.cacheRedes['METRO'] = normal; renderStatusBar();
             };
         }
 
@@ -1173,6 +1357,106 @@
         function desmarcarTudo(name) { document.querySelectorAll(`input[name="${name}"]:checked`).forEach(c => c.checked = false); }
         function desmarcarTudoPortas() { DOM.gridPortas.querySelectorAll('input:checked').forEach(c => c.checked = false); }
 
+        function exibirModal(conteudo) {
+            $('copyModalText').textContent = conteudo;
+            AppState.conteudoCopiado = conteudo;
+
+            // Resetar select de operadores
+            const select = $('operadorSelect');
+            if (select) {
+                select.value = '';
+            }
+
+            $('copyModal').classList.add('active');
+        }
+
+        function carregarOperadores() {
+            const cbName = `dataHandler_OPERADORES`;
+            const s = document.createElement('script');
+            s.src = `${GAS_URL}?aba=OPERADOR&callback=${cbName}`;
+            s.onerror = () => console.warn('Erro ao carregar operadores');
+            document.body.appendChild(s);
+            window[cbName] = dados => {
+                console.log('Operadores carregados:', dados);
+                const operadores = dados.map(d => ({
+                    nome: d.col1 || '',
+                    funcao: d.col2 || ''
+                })).filter(op => op.nome.trim());
+                AppState.operadores = operadores;
+                console.log('Operadores processados:', AppState.operadores);
+                renderOperadores();
+            };
+        }
+
+        function renderOperadores() {
+            const select = $('operadorSelect');
+            if (!select) {
+                console.error('❌ Select de operadores NÃO encontrado no DOM!');
+                return;
+            }
+            console.log('✅ Select encontrado, renderizando operadores...');
+            select.innerHTML = '<option value="">-- Nenhum operador --</option>';
+            AppState.operadores.forEach((op, idx) => {
+                const option = document.createElement('option');
+                option.value = idx;
+                option.textContent = `${op.nome} (${op.funcao})`;
+                select.appendChild(option);
+                console.log(`  ✅ Adicionado: ${op.nome} (${op.funcao})`);
+            });
+            console.log(`✅ Total de operadores renderizados: ${AppState.operadores.length}`);
+        }
+
+        function construirMensagemComOperador() {
+            const selectIdx = $('operadorSelect').value;
+            let mensagem = AppState.conteudoCopiado;
+
+            if (selectIdx && AppState.operadores[selectIdx]) {
+                const op = AppState.operadores[selectIdx];
+                const header = `_*${op.nome} (${op.funcao}):*_\n`;
+                mensagem = header + mensagem;
+            }
+
+            return mensagem;
+        }
+
+        function enviarWhatsApp() {
+            const mensagem = construirMensagemComOperador();
+            const grupoLink = 'https://chat.whatsapp.com/KUdiGIzbRhdIERbci99BeT';
+
+            console.log('Mensagem para WhatsApp:', mensagem);
+
+            // Codificar a mensagem para URL
+            const mensagemCodificada = encodeURIComponent(mensagem);
+
+            // Abrir WhatsApp Web com o grupo e mensagem
+            window.open(`https://web.whatsapp.com/send?text=${mensagemCodificada}`, '_blank');
+
+            // Abrir o grupo como fallback
+            setTimeout(() => {
+                window.open(grupoLink, '_blank');
+            }, 500);
+        }
+
+        function abrirURLHubsoft() {
+            const rede = DOM.rede.value;
+            const url = rede === 'WIRE' ? 'https://clickip.hubsoft.com.br/rede/rede/pop' :
+                rede === 'FIBER' ? 'https://fibernetwork.hubsoft.com.br/rede/rede/pop' :
+                    'https://intlink.hubsoft.com.br/rede/rede/pop';
+
+            // Enviar WhatsApp
+            enviarWhatsApp();
+
+            // Abrir Hubsoft
+            setTimeout(() => {
+                window.open(url, '_blank');
+                fecharModal();
+            }, 500);
+        }
+
+        function fecharModal() {
+            $('copyModal').classList.remove('active');
+        }
+
         async function gerarOS() {
             try {
                 const btn = DOM.btnGerarOS; btn.innerHTML = 'GERANDO...'; btn.disabled = true;
@@ -1198,10 +1482,10 @@
                 const problema = tipo + (det ? ` - ${det}` : '') + (portas ? ` | Portas: ${portas}` : '');
                 const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', ');
 
-                let corpo = `\uD83D\uDEA7 Acionamento REDE: ${rede}\n`;
-                corpo += `\u26A0\uFE0F Problema: ${problema}\n`;
-                corpo += `\uD83C\uDFE2 Empresa: ${emp}\n`;
-                corpo += `\uD83D\uDEE0\uFE0F TEC: ${tecsStr}\n`;
+                let corpo = `🚧 Acionamento REDE: ${rede}\n`;
+                corpo += `⚠️ Problema: ${problema}\n`;
+                corpo += `🏢 Empresa: ${emp}\n`;
+                corpo += `🔧 TEC: ${tecsStr}\n`;
 
                 if (det === 'RAMAL GPON ATENUADO') {
                     corpo += `\nRamal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n`;
@@ -1209,17 +1493,15 @@
 
                 ctos.forEach(info => {
                     const link = (info.lat && info.lng) ? `https://www.google.com/maps?q=${info.lat},${info.lng}` : 'Sem coordenadas';
-                    corpo += `\uD83D\uDCCD CTO: ${info.cto}\n`;
-                    corpo += `\uD83C\uDF0E Localizacao da CTO: ${link}\n`;
+                    corpo += `📍 CTO: ${info.cto}\n`;
+                    corpo += `🌎 Localizacao da CTO: ${link}\n`;
                 });
 
-                await navigator.clipboard.writeText(corpo); btn.innerHTML = 'COPIADO!';
-                setTimeout(() => {
-                    btn.innerHTML = '&#9654; GERAR ORDEM DE SERVICO'; btn.disabled = false;
-                    const url = rede === 'WIRE' ? 'https://clickip.hubsoft.com.br/rede/rede/pop' : rede === 'FIBER' ? 'https://fibernetwork.hubsoft.com.br/rede/rede/pop' : 'https://intlink.hubsoft.com.br/rede/rede/pop';
-                    window.open(url, '_blank');
-                }, 1500);
-            } catch (err) { alert(err.message); DOM.btnGerarOS.innerHTML = '&#9654; GERAR ORDEM DE SERVICO'; DOM.btnGerarOS.disabled = false; }
+                await navigator.clipboard.writeText(corpo);
+                exibirModal(corpo);
+                btn.innerHTML = '▶ GERAR ORDEM DE SERVICO';
+                btn.disabled = false;
+            } catch (err) { alert(err.message); DOM.btnGerarOS.innerHTML = '▶ GERAR ORDEM DE SERVICO'; DOM.btnGerarOS.disabled = false; }
         }
 
         async function gerarOSMetro() {
@@ -1239,10 +1521,10 @@
                 const coordParsed = parseCoordenada(coordRaw);
                 const locLink = coordParsed ? `https://www.google.com/maps?q=${coordParsed.lat},${coordParsed.lng}` : coordRaw;
 
-                let corpo = `\uD83D\uDEA7 Acionamento para atividade em campo.\n`;
-                corpo += `\u26A0\uFE0F Problema: ${problema}\n`;
-                corpo += `\uD83C\uDFE2 Empresa: ${emp}\n`;
-                corpo += `\uD83D\uDEE0\uFE0F TEC: ${tecsStr}\n\n`;
+                let corpo = `🚧 Acionamento para atividade em campo.\n`;
+                corpo += `⚠️ Problema: ${problema}\n`;
+                corpo += `🏢 Empresa: ${emp}\n`;
+                corpo += `🔧 TEC: ${tecsStr}\n\n`;
 
                 cards.forEach(card => {
                     const rows = {};
@@ -1259,22 +1541,23 @@
                     const caboNome = caboEl ? (caboEl.textContent.replace(badgeTxt, '').trim()) : '-';
                     const abaLabel = badgeTxt ? ` (${badgeTxt})` : '';
 
-                    // FIX: extrair dist do elemento correto
                     const distEl = card.querySelector('.cabo-dist');
                     const dist = distEl ? distEl.textContent.trim() : '';
 
-                    corpo += `\u26D3\uFE0F\u200D\uD83D\uDCA5Cabo: ${caboNome}${abaLabel}\n`;
-                    corpo += `\uD83D\uDCCC Localizacao: ${locLink}\n`;
-                    if (rows['tipo']) corpo += `\u2699\uFE0F Tipo: ${rows['tipo']}\n`;
-                    if (rows['nivel']) corpo += `\uD83C\uDF10 Nivel: ${rows['nivel']}\n`;
-                    if (rows['comprimento']) corpo += `\uD83D\uDCCF Comprimento: ${rows['comprimento']}\n`;
-                    if (dist) corpo += `\uD83D\uDCD0 ${dist}\n`;
+                    corpo += `⚡‍💥Cabo: ${caboNome}${abaLabel}\n`;
+                    corpo += `📌 Localizacao: ${locLink}\n`;
+                    if (rows['tipo']) corpo += `⚙️ Tipo: ${rows['tipo']}\n`;
+                    if (rows['nivel']) corpo += `🌐 Nivel: ${rows['nivel']}\n`;
+                    if (rows['comprimento']) corpo += `📋 Comprimento: ${rows['comprimento']}\n`;
+                    if (dist) corpo += `📐 ${dist}\n`;
                     corpo += '\n';
                 });
 
-                await navigator.clipboard.writeText(corpo); btn.innerHTML = 'COPIADO!';
-                setTimeout(() => { btn.innerHTML = '&#9654; GERAR ORDEM DE SERVICO'; btn.disabled = false; }, 1500);
-            } catch (err) { alert(err.message); DOM.btnGerarOSMetro.innerHTML = '&#9654; GERAR ORDEM DE SERVICO'; DOM.btnGerarOSMetro.disabled = false; }
+                await navigator.clipboard.writeText(corpo);
+                exibirModal(corpo);
+                btn.innerHTML = '▶ GERAR ORDEM DE SERVICO';
+                btn.disabled = false;
+            } catch (err) { alert(err.message); DOM.btnGerarOSMetro.innerHTML = '▶ GERAR ORDEM DE SERVICO'; DOM.btnGerarOSMetro.disabled = false; }
         }
 
         function limparTudo() {
