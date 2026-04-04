@@ -1014,7 +1014,10 @@
             if (AppState.cacheRedes[rede]) { AppState.baseDados = AppState.cacheRedes[rede]; renderListaCTOs(AppState.baseDados); renderTecnicos(); return; }
             const cbName = `dataHandler_${rede}`; const s = document.createElement('script');
             s.src = `${GAS_URL}?aba=${rede}&callback=${cbName}`; document.body.appendChild(s);
-            window[cbName] = dados => { AppState.cacheRedes[rede] = dados; AppState.baseDados = dados; renderListaCTOs(dados); renderTecnicos(); };
+            window[cbName] = dados => { 
+                const normal = dados.map(d => ({ cto: d.col1 || d.cto, ...d }));
+                AppState.cacheRedes[rede] = normal; AppState.baseDados = normal; renderListaCTOs(normal); renderTecnicos(); 
+            };
         }
 
         function fetchCaboMetro() {
@@ -1023,7 +1026,10 @@
             const cbName = `dataHandler_METRO`; const s = document.createElement('script');
             s.src = `${GAS_URL}?callback=${cbName}`;
             s.onerror = () => { AppState.cacheRedes['METRO'] = 'ERRO'; renderStatusBar(); }; document.body.appendChild(s);
-            window[cbName] = dados => { AppState.cacheRedes['METRO'] = dados; renderStatusBar(); };
+            window[cbName] = dados => { 
+                const normal = dados.map(d => ({ ozmap: d.col1||d.ozmap, localizacao: d.col2||d.localizacao, tipo: d.col3||d.tipo, nivel: d.col4||d.nivel, comprimento: d.col5||d.comprimento, ...d }));
+                AppState.cacheRedes['METRO'] = normal; renderStatusBar(); 
+            };
         }
 
         function renderStatusBar() {
