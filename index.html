@@ -1,299 +1,526 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AXYOS PROXY</title>
+    <title>ANALISTA DE REDES — NOC</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"
         rel="stylesheet">
     <style>
-        :root {
-            --bg: #0a0808;
-            --bg2: #130e0e;
-            --bg3: #1c1212;
-            --red: #d32f2f;
-            --red2: #ff5252;
-            --gold: #f5a623;
-            --gold2: #ffd600;
-            --border: #3d1f1f;
-            --border2: #6b3020;
-            --text: #f0e6d3;
-            --text2: #c9a87c;
-            --text3: #7a5a3a;
-            --tr: all 0.25s ease;
+        /* ── TOKENS ────────────────────────────────────── */
+        [data-theme="light"] {
+            --bg: #eef2f7;
+            --bg2: #ffffff;
+            --bg3: #f5f8fc;
+            --bg4: #e8f0fd;
+            --blue: #1a6fdb;
+            --blue2: #2d84f0;
+            --blue-l: #e8f0fd;
+            --blue-b: #c7dcfb;
+            --teal: #0e9e7e;
+            --teal-l: #e6f7f3;
+            --amber: #d97706;
+            --amber-l: #fef3c7;
+            --red: #dc2626;
+            --red-l: #fee2e2;
+            --border: #d1dce9;
+            --border2: #b8ccdf;
+            --text: #1a2636;
+            --text2: #4a647d;
+            --text3: #8fa8be;
+            --shadow: 0 1px 3px rgba(26, 111, 219, .08), 0 4px 16px rgba(26, 111, 219, .06);
+            --shadow2: 0 2px 8px rgba(26, 111, 219, .12), 0 8px 32px rgba(26, 111, 219, .08);
+            --music-bg: #ffffff;
+            --toggle-track: #d1dce9;
+            --toggle-thumb: #ffffff;
+            --toggle-icon-l: #f59e0b;
+            --toggle-icon-d: #94a3b8;
         }
 
-        * {
+        [data-theme="dark"] {
+            --bg: #050c14;
+            --bg2: #0a1828;
+            --bg3: #0e2038;
+            --bg4: #122848;
+            --blue: #3b9eff;
+            --blue2: #60b4ff;
+            --blue-l: rgba(59, 158, 255, .12);
+            --blue-b: rgba(59, 158, 255, .25);
+            --teal: #2dd4a4;
+            --teal-l: rgba(45, 212, 164, .1);
+            --amber: #fbbf24;
+            --amber-l: rgba(251, 191, 36, .1);
+            --red: #f87171;
+            --red-l: rgba(248, 113, 113, .1);
+            --border: rgba(59, 158, 255, .14);
+            --border2: rgba(59, 158, 255, .28);
+            --text: #cce8f4;
+            --text2: #6aafcc;
+            --text3: #2a5570;
+            --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
+            --shadow2: 0 2px 8px rgba(0, 0, 0, .5), 0 8px 32px rgba(0, 0, 0, .4);
+            --music-bg: #0a1828;
+            --toggle-track: #1a3a5c;
+            --toggle-thumb: #3b9eff;
+            --toggle-icon-l: #94a3b8;
+            --toggle-icon-d: #93c5fd;
+        }
+
+        /* ── RESET ─────────────────────────────────────── */
+        *,
+        *::before,
+        *::after {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            box-sizing: border-box
         }
 
         html,
         body {
             width: 100%;
-            min-height: 100%;
+            min-height: 100%
         }
 
         body {
-            font-family: 'Oswald', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.5;
             overflow-x: hidden;
+            transition: background .35s ease, color .35s ease;
         }
 
-        body::before {
+        /* ── BG GLOW ───────────────────────────────────── */
+        [data-theme="light"] body::before {
             content: '';
             position: fixed;
             inset: 0;
             background:
-                repeating-linear-gradient(175deg, transparent, transparent 3px, rgba(255, 255, 255, 0.012) 3px, rgba(255, 255, 255, 0.012) 4px),
-                repeating-linear-gradient(85deg, transparent, transparent 8px, rgba(0, 0, 0, 0.06) 8px, rgba(0, 0, 0, 0.06) 9px);
+                radial-gradient(ellipse 80% 50% at 50% -10%, rgba(26, 111, 219, .07) 0%, transparent 65%),
+                radial-gradient(ellipse 40% 30% at 90% 10%, rgba(14, 158, 126, .05) 0%, transparent 60%);
             z-index: 0;
             pointer-events: none;
         }
 
-        body::after {
+        [data-theme="dark"] body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(59, 158, 255, .025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 158, 255, .025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: gridMove 25s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        [data-theme="dark"] body::after {
             content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 340px;
-            background: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(211, 47, 47, 0.22) 0%, transparent 70%);
+            height: 400px;
+            background:
+                radial-gradient(ellipse 60% 40% at 50% -5%, rgba(59, 158, 255, .1) 0%, transparent 70%),
+                radial-gradient(ellipse 30% 20% at 85% 0%, rgba(45, 212, 164, .06) 0%, transparent 60%);
             z-index: 0;
             pointer-events: none;
         }
 
+        @keyframes gridMove {
+            0% {
+                background-position: 0 0
+            }
+
+            100% {
+                background-position: 40px 40px
+            }
+        }
+
+        /* ── LAYOUT ────────────────────────────────────── */
         main {
             position: relative;
             z-index: 1;
             min-height: 100vh;
-            padding: 55px 48px;
+            padding: 48px 40px;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-start
         }
 
         .wrapper {
             width: 100%;
-            max-width: 1400px;
+            max-width: 1380px;
             display: flex;
-            gap: 48px;
-            align-items: flex-start;
+            gap: 32px;
+            align-items: flex-start
         }
 
         .wrapper.metro-mode {
-            max-width: 1060px;
-            justify-content: center;
+            max-width: 1020px;
+            justify-content: center
         }
 
         .wrapper.metro-mode .card {
-            max-width: 730px;
-            width: 100%;
+            max-width: 700px;
+            width: 100%
         }
 
         .wrapper.metro-mode .floating-sidebar {
             position: fixed;
-            right: -520px;
+            right: -500px;
             top: 0;
-            width: 500px;
+            width: 480px;
             height: 100vh;
             max-height: 100vh;
             border-radius: 0;
             overflow-y: auto;
-            transition: right 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+            transition: right .4s cubic-bezier(.23, 1, .32, 1);
             z-index: 999;
-            padding: 65px 42px;
-            border-left: 2px solid var(--border2);
+            padding: 60px 36px;
+            border-left: 1px solid var(--border2)
         }
 
         .wrapper.metro-mode .floating-sidebar.visible {
-            right: 0;
+            right: 0
         }
 
+        /* ── CARD ──────────────────────────────────────── */
         .card {
             background: var(--bg2);
             border: 1px solid var(--border);
-            border-top: 4px solid var(--red);
-            border-radius: 3px;
-            padding: 52px 48px;
+            border-radius: 14px;
+            padding: 0;
             position: relative;
             flex: 1;
-            max-width: 650px;
+            max-width: 640px;
+            box-shadow: var(--shadow2);
+            overflow: hidden;
+            transition: background .35s, border-color .35s, box-shadow .35s;
         }
 
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 0;
-            height: 0;
-            border-style: solid;
-            border-width: 0 40px 40px 0;
-            border-color: transparent var(--red) transparent transparent;
+        .card-top-bar {
+            height: 4px;
+            background: linear-gradient(90deg, var(--blue), var(--teal))
         }
 
-        .card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 0;
-            height: 0;
-            border-style: solid;
-            border-width: 0 36px 36px 0;
-            border-color: transparent var(--bg) transparent transparent;
+        .card-inner {
+            padding: 40px 44px 44px
         }
 
+        /* ── SIDEBAR ───────────────────────────────────── */
         .floating-sidebar {
-            flex: 0 0 490px;
+            flex: 0 0 460px;
             background: var(--bg2);
             border: 1px solid var(--border);
-            border-top: 4px solid var(--gold);
-            border-radius: 3px;
-            padding: 44px;
+            border-radius: 14px;
+            padding: 0;
             position: sticky;
-            top: 55px;
-            max-height: calc(100vh - 110px);
+            top: 48px;
+            max-height: calc(100vh - 96px);
             overflow-y: auto;
+            overflow-x: hidden;
+            box-shadow: var(--shadow);
+            transition: background .35s, border-color .35s;
+        }
+
+        .sidebar-top-bar {
+            height: 4px;
+            background: linear-gradient(90deg, var(--teal), var(--blue))
+        }
+
+        .sidebar-inner {
+            padding: 32px
         }
 
         .floating-sidebar::-webkit-scrollbar {
-            width: 3px;
-        }
-
-        .floating-sidebar::-webkit-scrollbar-track {
-            background: transparent;
+            width: 4px
         }
 
         .floating-sidebar::-webkit-scrollbar-thumb {
             background: var(--border2);
+            border-radius: 2px
         }
 
-        .logo-area {
-            margin-bottom: 38px;
-        }
-
-        .logo-band {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 3.8rem;
-            letter-spacing: 6px;
-            color: var(--text);
-            line-height: 1;
-            text-shadow: 0 0 40px rgba(211, 47, 47, 0.5), 0 2px 0 #000;
-        }
-
-        .logo-band span {
-            color: var(--red2);
-        }
-
-        .logo-sub {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.68rem;
-            letter-spacing: 5px;
-            color: var(--gold);
-            text-transform: uppercase;
-            margin-top: 4px;
+        /* ── THEME TOGGLE ──────────────────────────────── */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 24px;
+            z-index: 200;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 9px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 6px 12px 6px 8px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            user-select: none;
+            transition: background .3s, border-color .3s, box-shadow .3s;
         }
 
-        .logo-sub::before,
-        .logo-sub::after {
+        .theme-toggle:hover {
+            box-shadow: var(--shadow2)
+        }
+
+        .toggle-icons {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px
+        }
+
+        .icon-sun {
+            color: var(--toggle-icon-l);
+            transition: color .3s
+        }
+
+        .icon-moon {
+            color: var(--toggle-icon-d);
+            transition: color .3s
+        }
+
+        .toggle-track {
+            width: 36px;
+            height: 20px;
+            border-radius: 10px;
+            background: var(--toggle-track);
+            position: relative;
+            transition: background .3s;
+        }
+
+        .toggle-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--toggle-thumb);
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), background .3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+        }
+
+        [data-theme="dark"] .toggle-thumb {
+            transform: translateX(16px)
+        }
+
+        [data-theme="dark"] .toggle-track {
+            background: var(--blue)
+        }
+
+        .toggle-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text2);
+            letter-spacing: .3px;
+            transition: color .3s;
+            white-space: nowrap;
+        }
+
+        /* ── LOGO ──────────────────────────────────────── */
+        .logo-area {
+            margin-bottom: 32px;
+            text-align: center;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+            margin: 0 auto 16px;
+            box-shadow: 0 4px 20px rgba(26, 111, 219, .35);
+            transition: box-shadow .35s;
+        }
+
+        [data-theme="dark"] .logo-badge {
+            box-shadow: 0 4px 24px rgba(59, 158, 255, .3)
+        }
+
+        .logo-badge svg {
+            width: 34px;
+            height: 34px
+        }
+
+        .logo-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2rem;
+            letter-spacing: 5px;
+            color: var(--text);
+            line-height: 1.1;
+            text-transform: uppercase;
+        }
+
+        .logo-title .hl {
+            color: var(--blue)
+        }
+
+        .logo-chips {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            font-family: 'Share Tech Mono', monospace;
+            transition: background .35s, color .35s;
+        }
+
+        .chip-blue {
+            background: var(--blue-l);
+            color: var(--blue)
+        }
+
+        .chip-teal {
+            background: var(--teal-l);
+            color: var(--teal)
+        }
+
+        .chip-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease-in-out infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .25
+            }
+        }
+
+        /* ── SECTION LABEL ─────────────────────────────── */
+        .section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text3);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-family: 'Share Tech Mono', monospace;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-label::after {
             content: '';
             flex: 1;
             height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            background: var(--border)
         }
 
+        /* ── FORM ──────────────────────────────────────── */
         .divider {
-            height: 2px;
-            margin: 0 0 34px;
-            background: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 8px, transparent 8px, transparent 12px);
-            opacity: 0.6;
-        }
-
-        .form-group {
-            margin-bottom: 26px;
+            height: 1px;
+            margin: 0 0 28px;
+            background: var(--border)
         }
 
         label {
             display: block;
-            font-size: 0.7rem;
-            font-weight: 500;
-            color: var(--gold);
-            margin-bottom: 7px;
-            letter-spacing: 3px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 6px;
+            letter-spacing: .4px;
             text-transform: uppercase;
-            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .form-group {
+            margin-bottom: 20px
         }
 
         input[type="text"],
         select {
             width: 100%;
-            padding: 12px 14px;
-            background: #100c0c;
-            border: 1px solid var(--border2);
-            border-bottom: 2px solid var(--red);
-            border-radius: 2px;
+            padding: 10px 14px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             color: var(--text);
-            font-family: 'Oswald', sans-serif;
-            font-size: 1rem;
-            font-weight: 400;
-            transition: var(--tr);
+            font-family: 'Inter', sans-serif;
+            font-size: .92rem;
+            font-weight: 500;
+            transition: border-color .2s, background .2s, box-shadow .2s, color .35s;
             outline: none;
             -webkit-appearance: none;
         }
 
         input[type="text"]:focus,
         select:focus {
-            border-color: var(--red2);
-            border-bottom-color: var(--gold);
-            background: #160f0f;
-            box-shadow: 0 2px 12px rgba(211, 47, 47, 0.15);
+            border-color: var(--blue2);
+            background: var(--bg2);
+            box-shadow: 0 0 0 3px rgba(59, 158, 255, .15);
         }
 
         select option {
-            background: #160f0f;
-            color: var(--text);
+            background: var(--bg2);
+            color: var(--text)
         }
 
         input::placeholder {
-            color: var(--text3);
+            color: var(--text3)
         }
 
+        /* ── PICKERS ───────────────────────────────────── */
         .cto-picker,
         .stack-list,
         .port-grid,
         .preview-list {
-            background: #100c0c;
+            background: var(--bg3);
             border: 1px solid var(--border);
-            border-radius: 2px;
-            padding: 12px;
+            border-radius: 8px;
+            padding: 10px;
             display: flex;
             flex-wrap: wrap;
-            gap: 7px;
-            max-height: 320px;
+            gap: 6px;
+            max-height: 260px;
             overflow-y: auto;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         .preview-list {
             flex-direction: column;
-            gap: 5px;
+            gap: 4px
         }
 
         .port-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 7px;
+            gap: 6px
         }
 
         .pill-item label,
@@ -302,57 +529,58 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 8px 13px;
-            background: var(--bg3);
+            padding: 7px 13px;
+            background: var(--bg2);
             border: 1px solid var(--border);
-            border-radius: 2px;
+            border-radius: 7px;
             cursor: pointer;
-            font-size: 0.88rem;
+            font-size: .8rem;
             font-weight: 600;
             color: var(--text2);
-            transition: var(--tr);
+            transition: all .2s;
             margin: 0;
-            font-family: 'Oswald', sans-serif;
-            letter-spacing: 1px;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: .3px;
             text-transform: uppercase;
         }
 
         .pill-item label:hover,
         .stack-item label:hover,
         .port-item label:hover {
-            border-color: var(--red2);
-            color: var(--text);
-            background: #1f1010;
+            border-color: var(--blue2);
+            color: var(--blue);
+            background: var(--blue-l)
         }
 
         .pill-item input:checked+label,
         .stack-item input:checked+label,
         .port-item input:checked+label {
-            background: var(--red);
-            border-color: var(--red2);
-            color: #fff;
+            background: var(--blue-l);
+            border-color: var(--blue2);
+            color: var(--blue);
             font-weight: 700;
-            box-shadow: 0 0 16px rgba(211, 47, 47, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 2px var(--blue-b)
         }
 
+        /* ── BUTTONS ───────────────────────────────────── */
         .button-group {
             display: flex;
-            gap: 12px;
-            margin-top: 40px;
+            gap: 10px;
+            margin-top: 30px
         }
 
         .btn {
             flex: 1;
-            padding: 14px 22px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 2px;
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1.1rem;
-            letter-spacing: 3px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: .88rem;
+            font-weight: 700;
+            letter-spacing: .4px;
             text-transform: uppercase;
             cursor: pointer;
-            transition: var(--tr);
+            transition: all .2s;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -360,378 +588,413 @@
         }
 
         .btn-main {
-            background: linear-gradient(180deg, #e53935 0%, #b71c1c 100%);
+            background: linear-gradient(135deg, var(--blue2) 0%, var(--blue) 100%);
             color: #fff;
-            border-top: 1px solid #ff6b6b;
-            border-bottom: 3px solid #7f0000;
-            box-shadow: 0 4px 20px rgba(211, 47, 47, 0.35);
-            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 2px 10px rgba(26, 111, 219, .4);
         }
 
         .btn-main:hover {
-            background: linear-gradient(180deg, #ff5252 0%, #c62828 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(211, 47, 47, 0.5);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 18px rgba(26, 111, 219, .5)
         }
 
         .btn-main:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
+            transform: translateY(0)
+        }
+
+        .btn-main:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none
         }
 
         .btn-clear {
-            background: transparent;
-            border: 1px solid var(--border2);
+            background: var(--bg3);
+            border: 1px solid var(--border);
             color: var(--text2);
-            font-size: 1rem;
-            letter-spacing: 2px;
+            font-size: .82rem
         }
 
         .btn-clear:hover {
-            border-color: var(--gold);
-            color: var(--gold);
+            border-color: var(--border2);
+            color: var(--text);
+            background: var(--bg4)
         }
 
+        /* ── TAGS ──────────────────────────────────────── */
         .tag-container {
             display: flex;
             flex-direction: column;
-            gap: 7px;
+            gap: 6px
         }
 
         .tag {
-            background: rgba(211, 47, 47, 0.12);
-            border: 1px solid rgba(211, 47, 47, 0.4);
-            border-left: 4px solid var(--red2);
-            color: var(--text);
-            padding: 10px 14px;
-            border-radius: 2px;
+            background: var(--blue-l);
+            border: 1px solid var(--blue-b);
+            color: var(--blue);
+            padding: 9px 12px;
+            border-radius: 8px;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: .85rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            animation: slideIn 0.2s ease-out;
-            font-family: 'Oswald', sans-serif;
-            letter-spacing: 1px;
+            animation: slideIn .15s ease-out;
+            font-family: 'Inter', sans-serif
         }
 
         .tag.warning {
-            background: rgba(245, 166, 35, 0.1);
-            border-color: rgba(245, 166, 35, 0.4);
-            border-left-color: var(--gold2);
-            color: var(--gold2);
+            background: var(--amber-l);
+            border-color: rgba(217, 119, 6, .25);
+            color: var(--amber)
         }
 
         @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateX(-8px)
+                transform: translateY(-4px)
             }
 
             to {
                 opacity: 1;
-                transform: translateX(0)
+                transform: translateY(0)
             }
         }
 
         .btn-remove {
             cursor: pointer;
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 2px;
-            transition: var(--tr);
+            border-radius: 5px;
+            transition: all .2s;
             font-weight: 700;
             background: transparent;
             color: currentColor;
-            font-size: 1rem;
+            font-size: .85rem;
+            border: none;
+            opacity: .6
         }
 
         .btn-remove:hover {
-            background: rgba(255, 82, 82, 0.25);
-            color: #ff5252;
+            background: var(--red-l);
+            color: var(--red);
+            opacity: 1
         }
 
+        /* ── MISC ──────────────────────────────────────── */
         .hidden {
-            display: none !important;
+            display: none !important
         }
 
         .info-msg {
             color: var(--text3);
-            font-size: 0.82rem;
+            font-size: .78rem;
             display: flex;
             align-items: flex-start;
-            gap: 8px;
+            gap: 6px;
             line-height: 1.5;
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'Share Tech Mono', monospace
         }
 
         .loading-text {
-            color: var(--gold);
+            color: var(--blue);
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.88rem;
-            font-family: 'Share Tech Mono', monospace;
+            font-size: .82rem
         }
 
         .port-section {
-            margin-top: 32px;
-            padding-top: 26px;
-            border-top: 1px solid var(--border);
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border)
         }
 
         .preview-item {
-            background: var(--bg3);
+            background: var(--bg2);
             border: 1px solid var(--border);
-            border-left: 3px solid var(--border2);
-            border-radius: 2px;
-            padding: 9px 12px;
-            font-size: 0.9rem;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: .85rem;
             color: var(--text2);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             font-weight: 500;
-            transition: var(--tr);
-            font-family: 'Oswald', sans-serif;
+            transition: all .2s
         }
 
         .preview-item:hover {
-            border-left-color: var(--red);
-            color: var(--text);
+            border-color: var(--blue2);
+            color: var(--blue)
         }
 
         .sidebar-title {
             font-family: 'Bebas Neue', cursive;
-            font-size: 1.8rem;
-            color: var(--gold2);
+            font-size: 1.5rem;
+            color: var(--text);
             letter-spacing: 4px;
-            margin-bottom: 6px;
-            text-shadow: 0 0 20px rgba(255, 214, 0, 0.3);
+            margin-bottom: 4px
         }
 
         .sidebar-divider {
-            height: 2px;
-            margin-bottom: 22px;
-            background: repeating-linear-gradient(90deg, var(--gold) 0px, var(--gold) 6px, transparent 6px, transparent 10px);
-            opacity: 0.5;
-        }
-
-        .metro-card {
-            background: #100c0c;
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--gold);
-            border-radius: 2px;
-            padding: 20px;
-        }
-
-        .metro-title {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1.1rem;
-            color: var(--gold2);
-            margin-bottom: 14px;
-            letter-spacing: 3px;
-        }
-
-        .cable-search-box {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .cable-search-box input {
-            flex: 1;
-        }
-
-        .btn-buscar-cabo {
-            background: linear-gradient(180deg, var(--gold) 0%, #c17a0c 100%);
-            color: #0a0808;
-            border: none;
-            border-radius: 2px;
-            padding: 12px 18px;
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1rem;
-            letter-spacing: 2px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: var(--tr);
-            border-bottom: 2px solid #8b5500;
-        }
-
-        .btn-buscar-cabo:hover {
-            background: linear-gradient(180deg, var(--gold2) 0%, var(--gold) 100%);
-            transform: translateY(-1px);
-        }
-
-        .cabo-card {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--border2);
-            border-radius: 2px;
-            padding: 13px;
-            margin-bottom: 9px;
-            animation: slideIn 0.2s ease-out;
-            transition: var(--tr);
-        }
-
-        .cabo-card:hover {
-            border-left-color: var(--red2);
-        }
-
-        .cabo-card:last-child {
-            margin-bottom: 0;
-        }
-
-        .cabo-card-row {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            margin-bottom: 6px;
-        }
-
-        .cabo-card-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .cabo-label {
-            font-size: 0.65rem;
-            font-weight: 500;
-            color: var(--text3);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-family: 'Share Tech Mono', monospace;
-        }
-
-        .cabo-value {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--text);
-            word-break: break-all;
-            font-family: 'Oswald', sans-serif;
-        }
-
-        .cabo-dist {
-            font-size: 0.78rem;
-            color: var(--gold);
-            font-weight: 600;
-            margin-top: 5px;
-            font-family: 'Share Tech Mono', monospace;
-        }
-
-        .aba-badge {
-            display: inline-block;
-            font-size: 0.6rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 2px;
-            margin-left: 6px;
-            background: var(--red);
-            color: #fff;
-            letter-spacing: 1px;
-            font-family: 'Share Tech Mono', monospace;
-        }
-
-        .progress-wrap {
-            margin-top: 8px;
-        }
-
-        .progress-label {
-            font-size: 0.65rem;
-            color: var(--text3);
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-family: 'Share Tech Mono', monospace;
-        }
-
-        .progress-track {
-            background: rgba(211, 47, 47, 0.1);
-            border-radius: 1px;
-            height: 3px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--red), var(--gold));
-            transition: width 0.4s ease;
+            height: 1px;
+            margin-bottom: 18px;
+            background: var(--border)
         }
 
         .sect {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.65rem;
-            color: var(--gold);
-            letter-spacing: 3px;
+            font-size: .65rem;
+            font-weight: 600;
+            color: var(--text3);
+            letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            font-family: 'Share Tech Mono', monospace
         }
 
         .sect::after {
             content: '';
             flex: 1;
             height: 1px;
-            background: linear-gradient(90deg, var(--border2), transparent);
+            background: var(--border)
         }
 
+        /* ── METRO ─────────────────────────────────────── */
+        .metro-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px
+        }
+
+        .metro-title {
+            font-size: .8rem;
+            font-weight: 700;
+            color: var(--blue);
+            margin-bottom: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Share Tech Mono', monospace
+        }
+
+        .cable-search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px
+        }
+
+        .cable-search-box input {
+            flex: 1
+        }
+
+        .btn-buscar-cabo {
+            background: linear-gradient(135deg, var(--blue2), var(--blue));
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: .82rem;
+            font-weight: 700;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all .2s;
+            box-shadow: 0 2px 8px rgba(26, 111, 219, .3)
+        }
+
+        .btn-buscar-cabo:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(26, 111, 219, .4)
+        }
+
+        .cabo-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            animation: slideIn .15s ease-out;
+            transition: all .2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .04)
+        }
+
+        .cabo-card:hover {
+            border-color: var(--blue2)
+        }
+
+        .cabo-card:last-child {
+            margin-bottom: 0
+        }
+
+        .cabo-card-row {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 6px
+        }
+
+        .cabo-card-row:last-child {
+            margin-bottom: 0
+        }
+
+        .cabo-label {
+            font-size: .6rem;
+            font-weight: 600;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Share Tech Mono', monospace
+        }
+
+        .cabo-value {
+            font-size: .88rem;
+            font-weight: 600;
+            color: var(--text);
+            word-break: break-all
+        }
+
+        .cabo-dist {
+            font-size: .72rem;
+            color: var(--teal);
+            font-weight: 700;
+            margin-top: 4px;
+            font-family: 'Share Tech Mono', monospace
+        }
+
+        .progress-wrap {
+            margin-top: 6px
+        }
+
+        .progress-label {
+            font-size: .6rem;
+            font-weight: 600;
+            color: var(--text3);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Share Tech Mono', monospace
+        }
+
+        .progress-track {
+            background: var(--border);
+            border-radius: 4px;
+            height: 3px;
+            overflow: hidden
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--blue), var(--teal));
+            transition: width .4s ease;
+            border-radius: 4px
+        }
+
+        /* ── MUSIC ─────────────────────────────────────── */
         .music-controls {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
+            bottom: 24px;
+            right: 24px;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
+            gap: 3px;
             z-index: 100;
-            background: var(--bg2);
+            background: var(--music-bg);
             padding: 10px;
-            border: 1px solid var(--border2);
-            border-top: 3px solid var(--red);
-            border-radius: 3px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border);
+            border-top: 3px solid var(--blue);
+            border-radius: 12px;
+            box-shadow: var(--shadow2);
+            transition: background .35s, border-color .35s;
         }
 
         .m-btn {
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             border: 1px solid var(--border);
             background: var(--bg3);
-            color: var(--text2);
-            border-radius: 2px;
+            color: var(--text3);
+            border-radius: 6px;
             cursor: pointer;
             font-weight: 700;
-            font-size: 0.75rem;
-            transition: var(--tr);
+            font-size: .7rem;
+            transition: all .2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'Share Tech Mono', monospace
         }
 
         .m-btn:hover {
-            border-color: var(--red2);
-            color: var(--text);
+            border-color: var(--blue2);
+            color: var(--blue);
+            background: var(--blue-l)
         }
 
         .m-btn.active {
-            background: var(--red);
-            border-color: var(--red2);
-            color: #fff;
-            box-shadow: 0 0 10px rgba(211, 47, 47, 0.5);
+            background: var(--blue-l);
+            border-color: var(--blue2);
+            color: var(--blue);
+            box-shadow: 0 0 0 2px var(--blue-b)
         }
 
         #btnStopMusic {
-            grid-column: span 5;
+            grid-column: span 6;
             width: 100%;
-            font-family: 'Bebas Neue', cursive;
-            font-size: 0.85rem;
-            letter-spacing: 2px;
-            color: var(--text2);
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text2)
+        }
+
+        .volume-control {
+            grid-column: span 6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding: 4px 8px;
+            background: var(--bg3);
+            border-radius: 8px;
+            border: 1px solid var(--border)
+        }
+
+        .volume-control i {
+            font-size: 0.8rem;
+            color: var(--text3)
+        }
+
+        .volume-control input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none
+        }
+
+        .volume-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--blue);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease
+        }
+
+        .volume-control input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2)
         }
 
         .ambient-visualizer {
@@ -739,20 +1002,17 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 120px;
+            height: 80px;
             z-index: 0;
             pointer-events: none;
-            opacity: 0.45;
+            opacity: .3
         }
 
-        /* MODAL MELHORADO */
+        /* ── MODAL ─────────────────────────────────────── */
         .copy-modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            inset: 0;
+            background: rgba(10, 20, 35, .5);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             z-index: 1000;
@@ -761,162 +1021,198 @@
             justify-content: center;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.4s ease, visibility 0.4s ease;
+            transition: all .28s ease
         }
 
         .copy-modal.active {
             opacity: 1;
-            visibility: visible;
+            visibility: visible
         }
 
         .copy-modal-content {
             background: var(--bg2);
-            border: 2px solid var(--gold);
-            border-radius: 6px;
+            border: 1px solid var(--border);
+            border-top: 3px solid var(--blue);
+            border-radius: 14px;
             width: 90%;
-            max-width: 700px;
-            max-height: 80vh;
+            max-width: 650px;
+            max-height: 88vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 60px rgba(245, 166, 35, 0.3);
-            transform: scale(0.9) translateY(40px);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, .2);
+            transform: scale(.95) translateY(20px);
+            transition: all .35s cubic-bezier(.175, .885, .32, 1.275);
+            overflow: hidden
         }
 
         .copy-modal.active .copy-modal-content {
-            transform: scale(1) translateY(0);
-        }
-
-        @keyframes modalPop {
-            0% {
-                opacity: 0;
-                transform: scale(0.85) translateY(60px);
-            }
-
-            100% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
+            transform: scale(1) translateY(0)
         }
 
         .copy-modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg3)
+        }
+
+        .copy-modal-header span {
             font-family: 'Bebas Neue', cursive;
-            font-size: 1.6rem;
-            color: var(--gold2);
-            letter-spacing: 3px;
-            padding: 24px;
-            border-bottom: 2px solid var(--border2);
-            background: linear-gradient(135deg, rgba(245, 166, 35, 0.1) 0%, transparent 100%);
+            font-size: 1.25rem;
+            color: var(--text);
+            letter-spacing: 3px
+        }
+
+        .copy-modal-header button {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text3);
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: .85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s
+        }
+
+        .copy-modal-header button:hover {
+            border-color: var(--red);
+            color: var(--red);
+            background: var(--red-l)
         }
 
         .copy-modal-text {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 0.9rem;
+            font-size: .82rem;
             color: var(--text);
             white-space: pre-wrap;
             line-height: 1.8;
-            background: var(--bg);
-            padding: 20px;
+            background: var(--bg3);
+            padding: 18px;
             overflow-y: auto;
             flex: 1;
             border: 1px solid var(--border);
-            margin: 20px 20px 0 20px;
-            border-radius: 4px;
-            word-break: break-word;
+            margin: 16px 22px 0;
+            border-radius: 8px;
+            word-break: break-word
         }
 
-        .copy-modal-text::-webkit-scrollbar {
-            width: 6px;
+        .copy-modal-operator {
+            padding: 14px 22px;
+            border-bottom: 1px solid var(--border)
         }
 
-        .copy-modal-text::-webkit-scrollbar-track {
-            background: var(--bg3);
-            border-radius: 3px;
-        }
-
-        .copy-modal-text::-webkit-scrollbar-thumb {
-            background: var(--border2);
-            border-radius: 3px;
-        }
-
-        .copy-modal-text::-webkit-scrollbar-thumb:hover {
-            background: var(--gold);
+        .copy-modal-operator label {
+            font-size: .65rem;
+            color: var(--text2);
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
+            display: block
         }
 
         .copy-modal-footer {
             display: flex;
-            gap: 12px;
-            padding: 20px;
-            border-top: 1px solid var(--border);
-            background: rgba(211, 47, 47, 0.05);
-        }
-
-        .copy-modal-footer button {
-            flex: 1;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 4px;
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1.1rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: var(--tr);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            padding: 18px 22px;
+            background: var(--bg3)
         }
 
         .btn-seguir {
-            background: linear-gradient(180deg, #e53935 0%, #b71c1c 100%);
-            color: #fff;
-            border-top: 1px solid #ff6b6b;
-            border-bottom: 3px solid #7f0000;
-            box-shadow: 0 4px 16px rgba(211, 47, 47, 0.4);
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+            background: linear-gradient(135deg, var(--teal) 0%, #0c8069 100%) !important;
+            color: #fff !important;
+            border: none !important;
+            box-shadow: 0 2px 10px rgba(14, 158, 126, .35) !important;
+            flex: 2;
+            font-size: .88rem !important;
+            font-weight: 700 !important;
+            letter-spacing: .4px !important;
+            border-radius: 8px !important
         }
 
         .btn-seguir:hover {
-            background: linear-gradient(180deg, #ff5252 0%, #c62828 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(211, 47, 47, 0.6);
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 18px rgba(14, 158, 126, .45) !important
         }
 
         .btn-editar {
-            background: transparent;
-            border: 2px solid var(--gold);
-            color: var(--gold);
-            box-shadow: 0 0 16px rgba(245, 166, 35, 0.2);
+            background: var(--bg2) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text2) !important;
+            flex: 1;
+            font-size: .85rem !important;
+            border-radius: 8px !important
         }
 
         .btn-editar:hover {
-            background: rgba(245, 166, 35, 0.1);
-            border-color: var(--gold2);
-            color: var(--gold2);
-            box-shadow: 0 0 24px rgba(245, 166, 35, 0.3);
+            border-color: var(--border2) !important;
+            color: var(--text) !important;
+            background: var(--bg4) !important
         }
 
+        /* ── TOAST ─────────────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--teal);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: .8rem;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: 8px;
+            z-index: 2000;
+            opacity: 0;
+            transition: all .25s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: var(--shadow)
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0)
+        }
+
+        .toast.error {
+            border-left-color: var(--red);
+            color: var(--red)
+        }
+
+        /* ── RESPONSIVE ────────────────────────────────── */
         @media(max-width:1024px) {
             main {
-                padding: 28px 14px;
+                padding: 16px 12px
             }
 
             .wrapper {
                 flex-direction: column;
-                gap: 22px;
+                gap: 16px
             }
 
             .card,
             .floating-sidebar {
                 flex: 1;
                 position: static;
-                max-height: none;
-                padding: 28px 20px;
+                max-height: none
+            }
+
+            .card-inner {
+                padding: 24px 20px
+            }
+
+            .sidebar-inner {
+                padding: 20px
             }
 
             .wrapper.metro-mode .floating-sidebar {
@@ -924,46 +1220,72 @@
                 position: static;
                 width: 100%;
                 height: auto;
-                border-radius: 3px;
+                border-radius: 12px
             }
 
-            .logo-band {
-                font-size: 2.8rem;
+            .logo-title {
+                font-size: 1.7rem
             }
 
             .copy-modal-content {
-                width: 95%;
-                max-height: 90vh;
+                width: 96%;
+                max-height: 93vh
+            }
+
+            .music-controls {
+                bottom: 8px;
+                right: 8px
+            }
+
+            .theme-toggle {
+                top: 12px;
+                right: 12px
             }
         }
     </style>
 </head>
 
 <body>
+
+    <!-- THEME TOGGLE -->
+    <button class="theme-toggle" id="themeToggle" title="Alternar tema" aria-label="Alternar entre tema claro e escuro">
+        <div class="toggle-icons">
+            <span class="icon-sun">☀</span>
+        </div>
+        <div class="toggle-track">
+            <div class="toggle-thumb"></div>
+        </div>
+        <div class="toggle-icons">
+            <span class="icon-moon">☽</span>
+        </div>
+        <span class="toggle-label" id="toggleLabel">Tema Claro</span>
+    </button>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- MODAL -->
     <div id="copyModal" class="copy-modal">
         <div class="copy-modal-content">
             <div class="copy-modal-header">
-                <span>✅ ORDEM DE SERVIÇO COPIADA</span>
+                <span>✦ Ordem de Serviço Gerada</span>
+                <button id="btnFecharModal" title="Fechar">✕</button>
             </div>
             <pre id="copyModalText" class="copy-modal-text"></pre>
-            <div style="padding: 0 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
-                <label for="operadorSelect"
-                    style="display: block; font-size: 0.75rem; color: var(--gold); margin-bottom: 8px; letter-spacing: 2px; text-transform: uppercase;">Operador
-                    (Opcional)</label>
-                <select id="operadorSelect"
-                    style="width: 100%; padding: 10px 12px; background: #100c0c; border: 1px solid var(--border2); border-bottom: 2px solid var(--gold); border-radius: 2px; color: var(--text); font-family: 'Oswald', sans-serif; font-size: 0.9rem;">
-                    <option value="">-- Nenhum operador --</option>
+            <div class="copy-modal-operator">
+                <label for="operadorSelect">Operador (Opcional)</label>
+                <select id="operadorSelect">
+                    <option value="">— Nenhum operador —</option>
                 </select>
             </div>
             <div class="copy-modal-footer">
-                <button class="btn-seguir" id="btnSeguir">➤ ENVIAR & SEGUIR</button>
-                <button class="btn-editar" id="btnEditarOS">✎ EDITAR</button>
+                <button class="btn btn-seguir" id="btnSeguir">▶ Enviar & Abrir Hubsoft</button>
+                <button class="btn btn-editar" id="btnEditarOS">← Voltar</button>
             </div>
         </div>
     </div>
 
     <canvas id="audioVisualizer" class="ambient-visualizer"></canvas>
-    <div class="music-controls" id="musicControls">
+    <div class="music-controls" id="musicControls" style="grid-template-columns: repeat(6, 1fr);">
         <button class="m-btn" data-track="1">01</button>
         <button class="m-btn" data-track="2">02</button>
         <button class="m-btn" data-track="3">03</button>
@@ -974,158 +1296,211 @@
         <button class="m-btn" data-track="8">08</button>
         <button class="m-btn" data-track="9">09</button>
         <button class="m-btn" data-track="10">10</button>
-        <button class="m-btn" id="btnStopMusic">■ STOP</button>
+        <button class="m-btn" data-track="11">11</button>
+        <button class="m-btn" data-track="12">12</button>
+        <button class="m-btn stop-btn" id="btnStopMusic">■ Stop</button>
+        <div class="volume-control">
+            <span style="font-size:10px; color:var(--text3)">🔈</span>
+            <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="1">
+            <span style="font-size:10px; color:var(--text3)">🔊</span>
+        </div>
     </div>
     <audio id="mPlayer" loop></audio>
 
     <main>
         <div class="wrapper" id="wrapper">
             <section class="card">
+                <div class="card-top-bar"></div>
+                <div class="card-inner">
 
-                <div class="logo-area">
-                    <div class="logo-band">AX<span>Y</span>OS <span>PRO</span>XY</div>
-                    <div class="logo-sub">SISTEMA DE ACIONAMENTO</div>
-                </div>
-                <div class="divider"></div>
+                    <div class="logo-area">
+                        <div class="logo-badge">
+                            <svg viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="17" cy="17" r="14" stroke="rgba(255,255,255,.35)" stroke-width="1.5" />
+                                <circle cx="17" cy="17" r="8" stroke="rgba(255,255,255,.55)" stroke-width="1.5" />
+                                <circle cx="17" cy="17" r="3" fill="white" />
+                                <line x1="17" y1="3" x2="17" y2="11" stroke="white" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                                <line x1="17" y1="23" x2="17" y2="31" stroke="white" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                                <line x1="3" y1="17" x2="11" y2="17" stroke="white" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                                <line x1="23" y1="17" x2="31" y2="17" stroke="white" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                                <circle cx="24" cy="11" r="2" fill="rgba(255,255,255,.75)" />
+                            </svg>
+                        </div>
+                        <div class="logo-title"><span class="hl">Analista</span> de Redes</div>
+                        <div class="logo-chips">
+                            <span class="chip chip-blue"><span class="chip-dot"></span>NOC Online</span>
+                            <span class="chip chip-teal">Sistema de Acionamento</span>
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label for="rede">▶ Rede de Atuacao</label>
-                    <select id="rede">
-                        <option value="" disabled selected>-- Selecione uma rede --</option>
-                        <option value="FIBER">FIBER NETWORK</option>
-                        <option value="INTLINK">INTLINK</option>
-                        <option value="WIRE">WIRE</option>
-                        <option value="METRO">REDE METRO</option>
-                    </select>
-                </div>
+                    <div class="section-label">Configuração do Acionamento</div>
 
-                <!-- BOX METRO -->
-                <div id="boxMetro" class="hidden">
-                    <div class="metro-card">
-                        <div class="metro-title">▶ CONSULTA DE CABOS</div>
-                        <div class="form-group" style="margin-bottom:10px;">
-                            <label>Coordenada ou Link Google Maps</label>
-                            <div class="cable-search-box">
-                                <input type="text" id="inputCoordenada" placeholder="Ex: -3.09869, -60.01261">
-                                <button class="btn-buscar-cabo" id="btnBuscarCabo">BUSCAR</button>
+                    <div class="form-group">
+                        <label for="rede">Rede de Atuação</label>
+                        <select id="rede">
+                            <option value="" disabled selected>Selecione uma rede...</option>
+                            <option value="FIBER">Fiber Network</option>
+                            <option value="INTLINK">Intlink</option>
+                            <option value="WIRE">Wire</option>
+                            <option value="METRO">Rede Metro</option>
+                        </select>
+                    </div>
+
+                    <!-- BOX METRO -->
+                    <div id="boxMetro" class="hidden">
+                        <div class="metro-card">
+                            <div class="metro-title">Consulta de Cabos</div>
+                            <div class="form-group" style="margin-bottom:10px">
+                                <label>Coordenada ou Link Google Maps</label>
+                                <div class="cable-search-box">
+                                    <input type="text" id="inputCoordenada" placeholder="Ex: -3.09869, -60.01261">
+                                    <button class="btn-buscar-cabo" id="btnBuscarCabo">Buscar</button>
+                                </div>
+                            </div>
+                            <div id="statusBar"></div>
+                            <div id="resultadoCabos" style="margin-top:10px"></div>
+                        </div>
+                        <div class="form-group" style="margin-top:18px">
+                            <label for="problemaMetro">Tipo de Problema</label>
+                            <select id="problemaMetro">
+                                <option value="" disabled selected>Selecione o problema...</option>
+                                <option value="Troca de poste">Troca de Poste</option>
+                                <option value="Fiscalizacao">Fiscalização</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="empresaMetro">Empresa Executante</label>
+                            <select id="empresaMetro">
+                                <option value="" disabled selected>Selecione...</option>
+                                <option value="IMAIS">IMAIS</option>
+                                <option value="CONNECT">CONNECT</option>
+                                <option value="EXTRA SERVICOS">EXTRA SERVICOS</option>
+                                <option value="IC - SERVICOS">IC - SERVICOS</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Técnicos Disponíveis</label>
+                            <div id="listaTecsCabo" class="stack-list">
+                                <div class="info-msg">Selecione a empresa.</div>
                             </div>
                         </div>
-                        <div id="statusBar"></div>
-                        <div id="resultadoCabos" style="margin-top:12px;"></div>
-                    </div>
-
-                    <div class="form-group" style="margin-top:20px;">
-                        <label for="problemaMetro">▶ Tipo de Problema</label>
-                        <select id="problemaMetro">
-                            <option value="" disabled selected>-- Selecione o problema --</option>
-                            <option value="Troca de poste">Troca de poste</option>
-                            <option value="Fiscalizacao">Fiscalizacao</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="empresaMetro">▶ Empresa Executante</label>
-                        <select id="empresaMetro">
-                            <option value="" disabled selected>-- Selecione --</option>
-                            <option value="IMAIS">IMAIS</option>
-                            <option value="CONNECT">CONNECT</option>
-                            <option value="EXTRA SERVICOS">EXTRA SERVICOS</option>
-                            <option value="IC - SERVICOS">IC - SERVICOS</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>▶ Tecnicos Disponiveis</label>
-                        <div id="listaTecsCabo" class="stack-list">
-                            <div class="info-msg">Selecione a empresa.</div>
+                        <div class="button-group">
+                            <button class="btn btn-main" id="btnGerarOSMetro">Gerar Ordem de Serviço</button>
+                            <button class="btn btn-clear" id="btnLimparTudo">Limpar</button>
                         </div>
                     </div>
-                    <div class="button-group">
-                        <button class="btn btn-main" id="btnGerarOSMetro">▶ GERAR ORDEM DE SERVICO</button>
-                        <button class="btn btn-clear" id="btnLimparTudo">LIMPAR</button>
-                    </div>
-                </div>
 
-                <!-- BOX REDE -->
-                <div id="boxRede">
-                    <div class="form-group">
-                        <label for="tipo">▶ Tipo de Acionamento</label>
-                        <select id="tipo">
-                            <option value="" disabled selected>-- O que esta acontecendo? --</option>
-                            <option value="REDE DE ACESSO - ATENUACAO">ATENUACAO NA REDE</option>
-                            <option value="REDE DE ACESSO - CTO DOWN">CTO DOWN / OFFLINE</option>
-                            <option value="REDE DE ACESSO - HIGIENIZACAO DE CTO">HIGIENIZACAO DE CTO</option>
-                        </select>
-                    </div>
-                    <div id="boxDetalheAtenuacao" class="form-group hidden">
-                        <label for="detalheAtenuacao">▶ Especificacao da Atenuacao</label>
-                        <select id="detalheAtenuacao">
-                            <option value="" disabled selected>-- Selecione --</option>
-                            <option value="CTO ATENUADA">CTO ATENUADA (No geral)</option>
-                            <option value="PORTA CTO ATENUADA">PORTA ESPECIFICA DA CTO ATENUADA</option>
-                            <option value="RAMAL GPON ATENUADO">RAMAL GPON ATENUADO (Multiplas CTOs)</option>
-                        </select>
-                    </div>
-                    <div id="boxFamilia" class="form-group hidden">
-                        <label for="inputFamilia">▶ Prefixo ou Ramal Afetado</label>
-                        <input type="text" id="inputFamilia" placeholder="Ex: PAR12, 12-1, AUT04...">
-                        <div class="info-msg" style="margin-top:7px;">O sistema agrupara todas as CTOs que contenham
-                            este texto.</div>
-                    </div>
-                    <div id="boxBuscaCTO" class="form-group">
-                        <label for="filtro">▶ Buscar e Selecionar CTO</label>
-                        <input type="text" id="filtro" placeholder="Digite para filtrar...">
-                        <div id="listaCTOs" class="cto-picker">
-                            <div class="info-msg">Selecione uma Rede primeiro.</div>
+                    <!-- BOX REDE -->
+                    <div id="boxRede">
+                        <div class="form-group">
+                            <label for="tipo">Tipo de Acionamento</label>
+                            <select id="tipo">
+                                <option value="" disabled selected>O que está acontecendo?</option>
+                                <option value="REDE DE ACESSO - ATENUACAO">Atenuação na Rede</option>
+                                <option value="REDE DE ACESSO - CTO DOWN">CTO Down / Offline</option>
+                                <option value="REDE DE ACESSO - HIGIENIZACAO DE CTO">Higienização de CTO</option>
+                                <option value="REDE DE ACESSO - PREVENTIVA">Preventiva</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="empresa">▶ Empresa Executante</label>
-                        <select id="empresa">
-                            <option value="" disabled selected>Aguardando rede...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>▶ Tecnicos Disponiveis</label>
-                        <div id="listaTecs" class="stack-list">
-                            <div class="info-msg">Selecione empresa e CTOs.</div>
+                        <div id="boxPreventiva" class="form-group hidden">
+                            <label for="detalhePreventiva">Detalhe da Preventiva</label>
+                            <select id="detalhePreventiva">
+                                <option value="" disabled selected>O que precisa ser feito?</option>
+                                <option value="CTO SEM TAMPA">CTO Sem Tampa</option>
+                                <option value="CTO DESFIXADA">CTO Desfixada</option>
+                                <option value="CTO DANIFICADA">CTO Danificada</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="button-group">
-                        <button class="btn btn-main" id="btnGerarOS">▶ GERAR ORDEM DE SERVICO</button>
-                        <button class="btn btn-clear" id="btnLimparTudo2">LIMPAR</button>
+                        <div id="boxDetalheAtenuacao" class="form-group hidden">
+                            <label for="detalheAtenuacao">Especificação da Atenuação</label>
+                            <select id="detalheAtenuacao">
+                                <option value="" disabled selected>Selecione...</option>
+                                <option value="CTO ATENUADA">CTO Atenuada (no geral)</option>
+                                <option value="PORTA CTO ATENUADA">Porta específica da CTO atenuada</option>
+                                <option value="RAMAL GPON ATENUADO">Ramal GPON atenuado (múltiplas CTOs)</option>
+                            </select>
+                        </div>
+                        <div id="boxFamilia" class="form-group hidden">
+                            <label for="inputFamilia">Prefixo ou Ramal Afetado</label>
+                            <input type="text" id="inputFamilia" placeholder="Ex: PAR12, 12-1, AUT04...">
+                            <div class="info-msg" style="margin-top:6px">O sistema agrupará todas as CTOs com este
+                                texto.</div>
+                        </div>
+                        <div id="boxBuscaCTO" class="form-group">
+                            <label for="filtro">Buscar e Selecionar CTO</label>
+                            <input type="text" id="filtro" placeholder="Digite para filtrar...">
+                            <div id="listaCTOs" class="cto-picker">
+                                <div class="info-msg">Selecione uma rede primeiro.</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="empresa">Empresa Executante</label>
+                            <select id="empresa">
+                                <option value="" disabled selected>Aguardando rede...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Técnicos Disponíveis</label>
+                            <div id="listaTecs" class="stack-list">
+                                <div class="info-msg">Selecione empresa e CTOs.</div>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-main" id="btnGerarOS">Gerar Ordem de Serviço</button>
+                            <button class="btn btn-clear" id="btnLimparTudo2">Limpar</button>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <aside class="floating-sidebar" id="sidebar">
-                <div class="sidebar-title">SELECAO</div>
-                <div class="sidebar-divider"></div>
-                <div id="resumoCTOs" class="tag-container">
-                    <div class="info-msg">Nenhuma CTO selecionada.</div>
-                </div>
-                <div id="boxPortas" class="port-section hidden">
-                    <div class="sect">Portas Afetadas</div>
-                    <div class="port-grid" id="gridPortas"></div>
-                </div>
-                <div id="previewRamal" class="port-section hidden">
-                    <div class="sect">Ramal Identificado</div>
-                    <div id="listaPreview" class="preview-list"></div>
+                <div class="sidebar-top-bar"></div>
+                <div class="sidebar-inner">
+                    <div class="sidebar-title">Seleção</div>
+                    <div class="sidebar-divider"></div>
+                    <div id="resumoCTOs" class="tag-container">
+                        <div class="info-msg">Nenhuma CTO selecionada.</div>
+                    </div>
+                    <div id="boxPortas" class="port-section hidden">
+                        <div class="sect">Portas Afetadas</div>
+                        <div class="port-grid" id="gridPortas"></div>
+                    </div>
+                    <div id="previewRamal" class="port-section hidden">
+                        <div class="sect">Ramal Identificado</div>
+                        <div id="listaPreview" class="preview-list"></div>
+                    </div>
                 </div>
             </aside>
         </div>
     </main>
 
     <script>
+        /* ── THEME ─────────────────────────────────────── */
+        const html = document.documentElement;
+        const saved = localStorage.getItem('noc-theme') || 'light';
+        html.setAttribute('data-theme', saved);
+        document.getElementById('toggleLabel').textContent = saved === 'dark' ? 'Tema Escuro' : 'Tema Claro';
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', next);
+            document.getElementById('toggleLabel').textContent = next === 'dark' ? 'Tema Escuro' : 'Tema Claro';
+            try { localStorage.setItem('noc-theme', next) } catch (e) { }
+        });
+
+        /* ── APP ───────────────────────────────────────── */
         const GAS_URL = 'https://script.google.com/a/macros/clickip.com.br/s/AKfycbyDuRIIlq07rOsFy_ufrIWhI7qKGordXz1ZzG0JLjBo9UzfXZ0RUbFI5WD4-Hknriz-2g/exec';
         const AppState = { baseDados: [], cacheRedes: {}, multiSelectAllowed: true, operadores: [], conteudoCopiado: '' };
-
         const tecnicosDB = {
             "CONNECT": [{ n: "DANIEL SALES", f: "559294943897" }, { n: "Esequias", f: "559285532071" }, { n: "Igor", f: "559286442408" }, { n: "Sidcley", f: "559292373997" }, { n: "JESSE", f: "559292433704" }],
             "EXTRA SERVICOS": [{ n: "Alex Martins", f: "559296312707" }, { n: "Breno", f: "559284320443" }, { n: "Daniel Marinho", f: "559293587046" }],
             "IMAIS": [{ n: "RUDINEY", f: "559292314609" }, { n: "Marclay Alves", f: "559292682983" }, { n: "Franciney", f: "5592984318390" }, { n: "Vagner", f: "559293359035" }, { n: "Marcos Pereira", f: "559291984778" }, { n: "Rodrigo Cruz", f: "559292612372" }, { n: "Adriano Guedes", f: "559294768563" }, { n: "Jose Jadson", f: "559294473466" }, { n: "Wuanderson Freire", f: "559294955975" }, { n: "Andre Ferreira", f: "559192091500" }, { n: "Wendell", f: "559392452646" }, { n: "Alexsandro", f: "559294969396" }, { n: "Alcicley Castro", f: "559292126593" }, { n: "CAIO VICTOR", f: "559293805028" }, { n: "Adrielson", f: "559392286738" }, { n: "Filipe Rafael", f: "559294633743" }],
             "IC - SERVICOS": [{ n: "Ivo Coelho", f: "559291157728" }]
         };
-
         const imaisPrefixMap = {
             "NA": ["Marclay Alves", "Wuanderson Freire", "Adriano Guedes", "Alexsandro"], "MPU": ["Marclay Alves", "Wuanderson Freire", "Adriano Guedes", "Alexsandro"],
             "PAR": ["RUDINEY"], "MS": ["Jose Jadson"], "AUT": ["Rodrigo Cruz"], "TS": ["Wendell"], "OX": ["Andre Ferreira"],
@@ -1141,14 +1516,14 @@
             inputFamilia: $('inputFamilia'), filtro: $('filtro'), listaCTOs: $('listaCTOs'), listaTecs: $('listaTecs'), listaTecsCabo: $('listaTecsCabo'),
             resumoCTOs: $('resumoCTOs'), gridPortas: $('gridPortas'), listaPreview: $('listaPreview'),
             boxMetro: $('boxMetro'), boxRede: $('boxRede'), boxDetalheAtenuacao: $('boxDetalheAtenuacao'), boxFamilia: $('boxFamilia'),
+            boxPreventiva: $('boxPreventiva'), detalhePreventiva: $('detalhePreventiva'),
             boxBuscaCTO: $('boxBuscaCTO'), boxPortas: $('boxPortas'), previewRamal: $('previewRamal'),
             inputCoordenada: $('inputCoordenada'), btnBuscarCabo: $('btnBuscarCabo'), statusBar: $('statusBar'), resultadoCabos: $('resultadoCabos'),
             btnGerarOS: $('btnGerarOS'), btnGerarOSMetro: $('btnGerarOSMetro'), btnLimparTudo: $('btnLimparTudo'), btnLimparTudo2: $('btnLimparTudo2'),
             musicControls: $('musicControls'), mPlayer: $('mPlayer'), wrapper: $('wrapper'), sidebar: $('sidebar')
         };
-
-        document.addEventListener('DOMContentLoaded', () => { gerarGridPortas(); bindEvents(); renderStatusBar(); carregarOperadores(); });
-
+        function showToast(msg, type = 'ok', dur = 2800) { const t = $('toast'); t.textContent = msg; t.className = 'toast' + (type === 'error' ? ' error' : ''); t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), dur) }
+        document.addEventListener('DOMContentLoaded', () => { gerarGridPortas(); bindEvents(); renderStatusBar(); carregarOperadores() });
         function bindEvents() {
             DOM.rede.addEventListener('change', aoMudarRede);
             DOM.tipo.addEventListener('change', handleAcionamentoChange);
@@ -1162,448 +1537,75 @@
             DOM.btnGerarOSMetro.addEventListener('click', gerarOSMetro);
             DOM.btnLimparTudo.addEventListener('click', limparTudo);
             DOM.btnLimparTudo2.addEventListener('click', limparTudo);
-            DOM.listaCTOs.addEventListener('change', e => { if (e.target.name === 'ctoCheck') handleCTOToggle(e.target); });
+            DOM.listaCTOs.addEventListener('change', e => { if (e.target.name === 'ctoCheck') handleCTOToggle(e.target) });
             DOM.gridPortas.addEventListener('change', atualizarResumo);
-            DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn => {
-                btn.addEventListener('click', e => playMusic(e.target.dataset.track, e.target));
-            });
-            $('btnStopMusic').addEventListener('click', () => { DOM.mPlayer.pause(); DOM.mPlayer.currentTime = 0; currentTrack = null; updateActiveMusicBtn(null); });
-            $('btnSeguir').addEventListener('click', abrirURLHubsoft);
+            $('btnFecharModal').addEventListener('click', fecharModal);
             $('btnEditarOS').addEventListener('click', fecharModal);
+            $('copyModal').addEventListener('click', e => { if (e.target === $('copyModal')) fecharModal() });
+            $('btnSeguir').addEventListener('click', () => {
+                const rede = DOM.rede.value, mensagem = construirMensagemComOperador();
+                const waUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+                let hubUrl = null;
+                if (rede === 'WIRE') hubUrl = 'https://clickip.hubsoft.com.br/rede/rede/pop';
+                else if (rede === 'FIBER') hubUrl = 'https://fibernetwork.hubsoft.com.br/rede/rede/pop';
+                else if (rede === 'INTLINK') hubUrl = 'https://intlink.hubsoft.com.br/rede/rede/pop';
+                fecharModal();
+                const waWin = window.open(waUrl, '_blank');
+                if (hubUrl) setTimeout(() => window.open(hubUrl, '_blank'), 350);
+                if (!waWin) showToast('Popup bloqueado! Permita popups para este site.', 'error', 5000);
+                else showToast('✓ WhatsApp e Hubsoft abertos!');
+            });
+            DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn => { btn.addEventListener('click', e => playMusic(e.currentTarget.dataset.track, e.currentTarget)) });
+            $('btnStopMusic').addEventListener('click', () => { DOM.mPlayer.pause(); DOM.mPlayer.currentTime = 0; currentTrack = null; updateActiveMusicBtn(null) });
+            $('volumeControl').addEventListener('input', e => { DOM.mPlayer.volume = e.target.value });
         }
-
-        function gerarGridPortas() {
-            DOM.gridPortas.innerHTML = Array.from({ length: 16 }, (_, i) => i + 1).map(i => `<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('');
-        }
-
-        function aoMudarRede() {
-            const rede = DOM.rede.value; const isMetro = rede === 'METRO';
-            DOM.wrapper.classList.toggle('metro-mode', isMetro);
-            DOM.sidebar.classList.toggle('visible', isMetro);
-            DOM.sidebar.style.display = isMetro ? 'none' : '';
-            if (isMetro) {
-                DOM.boxMetro.classList.remove('hidden'); DOM.boxRede.classList.add('hidden');
-                if (!AppState.cacheRedes['METRO']) fetchCaboMetro(); else renderStatusBar();
-            } else { DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); carregarCTOs(rede); }
-            atualizarResumo();
-        }
-
+        function gerarGridPortas() { DOM.gridPortas.innerHTML = Array.from({ length: 16 }, (_, i) => i + 1).map(i => `<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('') }
+        function aoMudarRede() { const r = DOM.rede.value, m = r === 'METRO'; DOM.wrapper.classList.toggle('metro-mode', m); DOM.sidebar.classList.toggle('visible', m); DOM.sidebar.style.display = m ? 'none' : ''; if (m) { DOM.boxMetro.classList.remove('hidden'); DOM.boxRede.classList.add('hidden'); if (!AppState.cacheRedes['METRO']) fetchCaboMetro(); else renderStatusBar(); } else { DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); carregarCTOs(r); } atualizarResumo() }
         function carregarCTOs(rede) {
             DOM.listaCTOs.innerHTML = '<div class="loading-text">Carregando...</div>';
-            let emps = ['IMAIS'];
-            if (rede === 'FIBER') emps.push('CONNECT'); if (rede === 'INTLINK') emps.push('EXTRA SERVICOS'); if (rede === 'WIRE') emps.push('IC - SERVICOS');
-            DOM.empresa.innerHTML = '<option value="" disabled selected>Selecione...</option>';
-            emps.sort().forEach(e => DOM.empresa.insertAdjacentHTML('beforeend', `<option value="${e}">${e}</option>`));
+            let emps = ['IMAIS']; if (rede === 'FIBER') emps.push('CONNECT'); if (rede === 'INTLINK') emps.push('EXTRA SERVICOS'); if (rede === 'WIRE') emps.push('IC - SERVICOS');
+            DOM.empresa.innerHTML = '<option value="" disabled selected>Selecione...</option>'; emps.sort().forEach(e => DOM.empresa.insertAdjacentHTML('beforeend', `<option value="${e}">${e}</option>`));
             desmarcarTudo('ctoCheck'); atualizarResumo();
-            if (AppState.cacheRedes[rede]) { AppState.baseDados = AppState.cacheRedes[rede]; renderListaCTOs(AppState.baseDados); renderTecnicos(); return; }
-            const cbName = `dataHandler_${rede}`; const s = document.createElement('script');
-            s.src = `${GAS_URL}?aba=${rede}&callback=${cbName}`; document.body.appendChild(s);
-            window[cbName] = dados => {
-                const normal = dados.map(d => ({ cto: d.col1 || d.cto, lat: d.col2 || d.lat, lng: d.col3 || d.lng, ...d }));
-                AppState.cacheRedes[rede] = normal; AppState.baseDados = normal; renderListaCTOs(normal); renderTecnicos();
-            };
+            if (AppState.cacheRedes[rede]) { AppState.baseDados = AppState.cacheRedes[rede]; renderListaCTOs(AppState.baseDados); renderTecnicos(); return }
+            const cbName = `dataHandler_${rede}`, s = document.createElement('script');
+            s.src = `${GAS_URL}?aba=${rede}&callback=${cbName}`; s.onerror = () => { DOM.listaCTOs.innerHTML = '<div class="info-msg">Erro ao carregar CTOs.</div>' }; document.body.appendChild(s);
+            window[cbName] = d => { const n = d.map(x => ({ cto: x.col1 || x.cto, lat: x.col2 || x.lat, lng: x.col3 || x.lng, ...x })); AppState.cacheRedes[rede] = n; AppState.baseDados = n; renderListaCTOs(n); renderTecnicos() };
         }
-
-        function fetchCaboMetro() {
-            if (AppState.cacheRedes['METRO']) return;
-            AppState.cacheRedes['METRO'] = 'LOADING'; renderStatusBar();
-            const cbName = `dataHandler_METRO`; const s = document.createElement('script');
-            s.src = `${GAS_URL}?callback=${cbName}`;
-            s.onerror = () => { AppState.cacheRedes['METRO'] = 'ERRO'; renderStatusBar(); }; document.body.appendChild(s);
-            window[cbName] = dados => {
-                const normal = dados.map(d => ({ ozmap: d.col1 || d.ozmap, localizacao: d.col2 || d.localizacao, tipo: d.col3 || d.tipo, nivel: d.col4 || d.nivel, comprimento: d.col5 || d.comprimento, ...d }));
-                AppState.cacheRedes['METRO'] = normal; renderStatusBar();
-            };
-        }
-
-        function renderStatusBar() {
-            const status = AppState.cacheRedes['METRO'];
-            if (status === 'LOADING') {
-                DOM.statusBar.innerHTML = `<div class="progress-wrap"><div class="progress-label">CARREGANDO DADOS...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;
-            } else if (status === 'ERRO') {
-                DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--red)">Falha ao carregar cabos do servidor.</div>`;
-            } else if (Array.isArray(status)) {
-                DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--gold)">Bancos sincronizados com sucesso (${status.length} cabos).</div>`;
-            } else {
-                DOM.statusBar.innerHTML = '';
-            }
-        }
-
-        function haversine(lat1, lng1, lat2, lng2) {
-            const R = 6371000, dLat = (lat2 - lat1) * Math.PI / 180, dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        }
-
-        function parseCoordenada(input) {
-            input = input.trim();
-            let m = input.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/); if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
-            m = input.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
-            m = input.match(/[?&]q=(-?\d+\.\d+)[,+](-?\d+\.\d+)/); if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
-            return null;
-        }
-
-        function extrairCoordsCabo(str) {
-            str = String(str || '').trim(); if (!str || str === 'undefined') return [];
-            if (str.includes(';')) { const coords = []; str.split(',').forEach(par => { const p = par.trim().split(';'); if (p.length >= 2) { const lat = parseFloat(p[0].trim()); const lng = parseFloat(p[1].trim()); if (!isNaN(lat) && !isNaN(lng)) coords.push({ lat, lng }); } }); if (coords.length) return coords; }
-            return [...str.matchAll(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/g)].map(m => ({ lat: parseFloat(m[2]), lng: parseFloat(m[1]) }));
-        }
-
-        function buscarCabosProximos() {
-            const coord = parseCoordenada(DOM.inputCoordenada.value);
-            if (!coord) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Coordenada invalida.</div>`; return; }
-            const dadosMetros = AppState.cacheRedes['METRO'];
-            if (!Array.isArray(dadosMetros)) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Carregando bancos...</div>`; return; }
-            const RAIO = 20; const cabosVistos = new Map();
-            dadosMetros.forEach(row => {
-                const nome = String(row.ozmap || row.cto || '').trim(); const coords = String(row.localizacao || row.lat || '').trim();
-                const tipo = String(row.tipo || row.lng || '').trim(); const nivel = String(row.nivel || '').trim(); const comp = String(row.comprimento || '').trim();
-                const pontos = extrairCoordsCabo(coords); if (!pontos.length) return;
-                let melhor = Infinity; pontos.forEach(p => { const d = haversine(coord.lat, coord.lng, p.lat, p.lng); if (d < melhor) melhor = d; });
-                if (melhor <= RAIO) { const ceboData = { nome, coords, tipo, nivel, comp, dist: melhor }; if (!cabosVistos.has(nome)) cabosVistos.set(nome, ceboData); }
-            });
-            const enc = Array.from(cabosVistos.values()).sort((a, b) => a.dist - b.dist);
-            if (!enc.length) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Nenhum cabo encontrado no raio de ${RAIO}m.</div>`; return; }
-            const coordInput = DOM.inputCoordenada.value.trim();
-            DOM.resultadoCabos.innerHTML = enc.map(c => `<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localizacao</span><span class="cabo-value">${coordInput}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nivel</span><span class="cabo-value">${c.nivel || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp || '-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
-        }
-
-        function renderTecnosCabo() {
-            const emp = DOM.empresaMetro.value;
-            if (!emp) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione empresa.</div>'; return; }
-            const lista = tecnicosDB[emp] || [];
-            if (!lista.length) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Nenhum tecnico.</div>'; return; }
-            DOM.listaTecsCabo.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.f}" data-nome="${t.n}" style="display:none"><label for="tc${i}">${t.n}</label></div>`).join('');
-        }
-
-        function normalizar(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[\s-]/g, ''); }
-        function getPrefixFromCTO(nome) { const u = nome.toUpperCase(); return knownPrefixes.find(p => u.includes(p)) || ''; }
-        function buscarCTOsPorFragmento(frag) { const fn = normalizar(frag); if (!fn) return []; return AppState.baseDados.filter(c => normalizar(c.cto).includes(fn)); }
-        function getSelectedCTOs() {
-            if (DOM.tipo.value === 'REDE DE ACESSO - ATENUACAO' && DOM.detalheAtenuacao.value === 'RAMAL GPON ATENUADO') return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim());
-            return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb => AppState.baseDados.find(b => b.cto === cb.value)).filter(Boolean);
-        }
-
-        function handleAcionamentoChange() {
-            const tipo = DOM.tipo.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas();
-            DOM.boxDetalheAtenuacao.classList.toggle('hidden', tipo !== 'REDE DE ACESSO - ATENUACAO');
-            if (tipo === 'REDE DE ACESSO - ATENUACAO') DOM.detalheAtenuacao.value = '';
-            DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden');
-            DOM.boxBuscaCTO.classList.remove('hidden'); DOM.boxPortas.classList.add('hidden');
-            AppState.multiSelectAllowed = true; atualizarResumo(); renderTecnicos();
-        }
-
-        function handleDetalheAtenuacaoChange() {
-            const d = DOM.detalheAtenuacao.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas();
-            DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden');
-            DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden');
-            AppState.multiSelectAllowed = true;
-            if (d === 'PORTA CTO ATENUADA') { DOM.boxPortas.classList.remove('hidden'); AppState.multiSelectAllowed = false; }
-            else if (d === 'RAMAL GPON ATENUADO') { DOM.boxFamilia.classList.remove('hidden'); DOM.previewRamal.classList.remove('hidden'); DOM.boxBuscaCTO.classList.add('hidden'); atualizarPreviewRamal(); }
-            atualizarResumo(); renderTecnicos();
-        }
-
-        function handleCTOToggle(cb) {
-            const d = DOM.detalheAtenuacao.value;
-            if (DOM.tipo.value !== 'REDE DE ACESSO - ATENUACAO') { atualizarResumo(); renderTecnicos(); return; }
-            if (d === 'PORTA CTO ATENUADA' && cb.checked) DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c => { if (c !== cb) c.checked = false; });
-            else if (d === 'RAMAL GPON ATENUADO' && cb.checked) { alert('CTOs automaticas no modo RAMAL GPON.'); cb.checked = false; return; }
-            atualizarResumo(); renderTecnicos();
-        }
-
-        function renderListaCTOs(lista) {
-            if (!lista || !lista.length) { DOM.listaCTOs.innerHTML = '<div class="info-msg">Nenhuma CTO.</div>'; return; }
-            DOM.listaCTOs.innerHTML = lista.sort((a, b) => a.cto.localeCompare(b.cto, undefined, { numeric: true })).map((item, i) => `<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join('');
-        }
-
-        function renderTecnicos() {
-            const rede = DOM.rede.value, tipo = DOM.tipo.value;
-            let emps = ['IMAIS'];
-            if (rede === 'FIBER') emps.push('CONNECT'); if (rede === 'INTLINK') emps.push('EXTRA SERVICOS'); if (rede === 'WIRE') emps.push('IC - SERVICOS');
-            const ctosSel = getSelectedCTOs(); const prefs = new Set(ctosSel.map(c => getPrefixFromCTO(c.cto)).filter(Boolean));
-            if ([...prefs].some(p => imaisPrefixMap[p])) emps = emps.filter(e => e !== 'CONNECT' && e !== 'IC - SERVICOS');
-            const prev = DOM.empresa.value; DOM.empresa.innerHTML = '<option value="" disabled selected>Selecione...</option>';
-            emps.sort().forEach(e => DOM.empresa.insertAdjacentHTML('beforeend', `<option value="${e}">${e}</option>`));
-            DOM.empresa.value = emps.includes(prev) ? prev : '';
-            const emp = DOM.empresa.value;
-            if (!emp) { DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione empresa.</div>'; return; }
-            let lista = [...(tecnicosDB[emp] || [])];
-            if (emp === 'CONNECT') lista = tipo.includes('HIGIENIZACAO') ? lista.filter(t => t.n === 'JESSE') : lista.filter(t => t.n !== 'JESSE');
-            if (emp === 'IMAIS') { if (!ctosSel.length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione CTOs.</div>'; return; } const nomes = new Set(); prefs.forEach(p => (imaisPrefixMap[p] || []).forEach(n => nomes.add(n))); lista = lista.filter(t => nomes.has(t.n)); }
-            if (!lista.length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Nenhum tecnico.</div>'; return; }
-            DOM.listaTecs.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.f}" data-nome="${t.n}" style="display:none"><label for="t${i}">${t.n}</label></div>`).join('');
-        }
-
-        function atualizarPreviewRamal() {
-            if (DOM.detalheAtenuacao.value !== 'RAMAL GPON ATENUADO') return;
-            const frag = DOM.inputFamilia.value; const enc = buscarCTOsPorFragmento(frag);
-            if (!frag.trim()) DOM.listaPreview.innerHTML = '<div class="info-msg">Digite prefixo.</div>';
-            else if (!enc.length) DOM.listaPreview.innerHTML = `<div class="preview-item">Nenhuma CTO</div>`;
-            else DOM.listaPreview.innerHTML = enc.map(c => `<div class="preview-item">${c.cto}</div>`).join('');
-            atualizarResumo(); renderTecnicos();
-        }
-
-        function atualizarResumo() {
-            const sel = Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked'));
-            let html = sel.map(c => `<div class="tag"><span>${c.value}</span><span class="btn-remove" onclick="removerCTO('${c.id}')">x</span></div>`).join('');
-            const tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value;
-            if (tipo === 'REDE DE ACESSO - ATENUACAO' && det === 'RAMAL GPON ATENUADO') { const frag = DOM.inputFamilia.value.trim(); if (frag) { const enc = buscarCTOsPorFragmento(frag); html += `<div class="tag warning"><span>${frag} (${enc.length})</span></div>`; } }
-            if (tipo === 'REDE DE ACESSO - ATENUACAO' && det === 'PORTA CTO ATENUADA') { const portas = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (portas.length) html += `<div class="tag"><span>Portas: ${portas.join(', ')}</span></div>`; }
-            DOM.resumoCTOs.innerHTML = html || '<div class="info-msg">Nenhuma selecao.</div>';
-        }
-
-        window.removerCTO = id => { const el = $(id); if (el) el.checked = false; atualizarResumo(); renderTecnicos(); };
-        function filtrarCTOs() { const v = normalizar(DOM.filtro.value); DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it => { it.style.display = normalizar(it.textContent).includes(v) ? '' : 'none'; }); }
-        function desmarcarTudo(name) { document.querySelectorAll(`input[name="${name}"]:checked`).forEach(c => c.checked = false); }
-        function desmarcarTudoPortas() { DOM.gridPortas.querySelectorAll('input:checked').forEach(c => c.checked = false); }
-
-        function exibirModal(conteudo) {
-            $('copyModalText').textContent = conteudo;
-            AppState.conteudoCopiado = conteudo;
-
-            // Resetar select de operadores
-            const select = $('operadorSelect');
-            if (select) {
-                select.value = '';
-            }
-
-            $('copyModal').classList.add('active');
-        }
-
-        function carregarOperadores() {
-            const cbName = `dataHandler_OPERADORES`;
-            const s = document.createElement('script');
-            s.src = `${GAS_URL}?aba=OPERADOR&callback=${cbName}`;
-            s.onerror = () => console.warn('Erro ao carregar operadores');
-            document.body.appendChild(s);
-            window[cbName] = dados => {
-                console.log('Operadores carregados:', dados);
-                const operadores = dados.map(d => ({
-                    nome: d.col1 || '',
-                    funcao: d.col2 || ''
-                })).filter(op => op.nome.trim());
-                AppState.operadores = operadores;
-                console.log('Operadores processados:', AppState.operadores);
-                renderOperadores();
-            };
-        }
-
-        function renderOperadores() {
-            const select = $('operadorSelect');
-            if (!select) {
-                console.error('❌ Select de operadores NÃO encontrado no DOM!');
-                return;
-            }
-            console.log('✅ Select encontrado, renderizando operadores...');
-            select.innerHTML = '<option value="">-- Nenhum operador --</option>';
-            AppState.operadores.forEach((op, idx) => {
-                const option = document.createElement('option');
-                option.value = idx;
-                option.textContent = `${op.nome} (${op.funcao})`;
-                select.appendChild(option);
-                console.log(`  ✅ Adicionado: ${op.nome} (${op.funcao})`);
-            });
-            console.log(`✅ Total de operadores renderizados: ${AppState.operadores.length}`);
-        }
-
-        function construirMensagemComOperador() {
-            const selectIdx = $('operadorSelect').value;
-            let mensagem = AppState.conteudoCopiado;
-
-            if (selectIdx && AppState.operadores[selectIdx]) {
-                const op = AppState.operadores[selectIdx];
-                const header = `_*${op.nome} (${op.funcao}):*_\n`;
-                mensagem = header + mensagem;
-            }
-
-            return mensagem;
-        }
-
-        function enviarWhatsApp() {
-            const mensagem = construirMensagemComOperador();
-            const grupoLink = 'https://chat.whatsapp.com/KUdiGIzbRhdIERbci99BeT';
-
-            console.log('Mensagem para WhatsApp:', mensagem);
-
-            // Codificar a mensagem para URL
-            const mensagemCodificada = encodeURIComponent(mensagem);
-
-            // Abrir WhatsApp Web com o grupo e mensagem
-            window.open(`https://web.whatsapp.com/send?text=${mensagemCodificada}`, '_blank');
-
-            // Abrir o grupo como fallback
-            setTimeout(() => {
-                window.open(grupoLink, '_blank');
-            }, 500);
-        }
-
-        function abrirURLHubsoft() {
-            const rede = DOM.rede.value;
-            const url = rede === 'WIRE' ? 'https://clickip.hubsoft.com.br/rede/rede/pop' :
-                rede === 'FIBER' ? 'https://fibernetwork.hubsoft.com.br/rede/rede/pop' :
-                    'https://intlink.hubsoft.com.br/rede/rede/pop';
-
-            // Enviar WhatsApp
-            enviarWhatsApp();
-
-            // Abrir Hubsoft
-            setTimeout(() => {
-                window.open(url, '_blank');
-                fecharModal();
-            }, 500);
-        }
-
-        function fecharModal() {
-            $('copyModal').classList.remove('active');
-        }
-
-        async function gerarOS() {
-            try {
-                const btn = DOM.btnGerarOS; btn.innerHTML = 'GERANDO...'; btn.disabled = true;
-                const rede = DOM.rede.value, tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value;
-                const tecs = Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));
-                const emp = DOM.empresa.value;
-                if (!rede) throw new Error('Rede necessaria.');
-                if (!emp) throw new Error('Empresa necessaria.');
-                if (!tecs.length) throw new Error('Tecnico necessario.');
-                let ctos = [], portas = '';
-                if (tipo === 'REDE DE ACESSO - ATENUACAO') {
-                    if (!det) throw new Error('Especifique atenuacao.');
-                    if (det === 'PORTA CTO ATENUADA') {
-                        const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value);
-                        if (!ps.length) throw new Error('Portas necessarias.');
-                        portas = ps.join(', ');
-                        ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('CTO necessaria.'); if (ctos.length > 1) throw new Error('Uma CTO apenas.');
-                    } else if (det === 'RAMAL GPON ATENUADO') {
-                        ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('CTOs nao encontradas.');
-                    } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('CTO necessaria.'); }
-                } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('CTO necessaria.'); }
-
-                const problema = tipo + (det ? ` - ${det}` : '') + (portas ? ` | Portas: ${portas}` : '');
-                const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', ');
-
-                let corpo = `🚧 Acionamento REDE: ${rede}\n`;
-                corpo += `⚠️ Problema: ${problema}\n`;
-                corpo += `🏢 Empresa: ${emp}\n`;
-                corpo += `🔧 TEC: ${tecsStr}\n`;
-
-                if (det === 'RAMAL GPON ATENUADO') {
-                    corpo += `\nRamal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n`;
-                }
-
-                ctos.forEach(info => {
-                    const link = (info.lat && info.lng) ? `https://www.google.com/maps?q=${info.lat},${info.lng}` : 'Sem coordenadas';
-                    corpo += `📍 CTO: ${info.cto}\n`;
-                    corpo += `🌎 Localizacao da CTO: ${link}\n`;
-                });
-
-                await navigator.clipboard.writeText(corpo);
-                exibirModal(corpo);
-                btn.innerHTML = '▶ GERAR ORDEM DE SERVICO';
-                btn.disabled = false;
-            } catch (err) { alert(err.message); DOM.btnGerarOS.innerHTML = '▶ GERAR ORDEM DE SERVICO'; DOM.btnGerarOS.disabled = false; }
-        }
-
-        async function gerarOSMetro() {
-            try {
-                const btn = DOM.btnGerarOSMetro; btn.innerHTML = 'GERANDO...'; btn.disabled = true;
-                const emp = DOM.empresaMetro.value;
-                const problema = $('problemaMetro').value;
-                const tecs = Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));
-                const cards = DOM.resultadoCabos.querySelectorAll('.cabo-card');
-                if (!emp) throw new Error('Empresa necessaria.');
-                if (!problema) throw new Error('Selecione o tipo de problema.');
-                if (!tecs.length) throw new Error('Tecnico necessario.');
-                if (!cards.length) throw new Error('Busque cabos.');
-
-                const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', ');
-                const coordRaw = DOM.inputCoordenada.value.trim();
-                const coordParsed = parseCoordenada(coordRaw);
-                const locLink = coordParsed ? `https://www.google.com/maps?q=${coordParsed.lat},${coordParsed.lng}` : coordRaw;
-
-                let corpo = `🚧 Acionamento para atividade em campo.\n`;
-                corpo += `⚠️ Problema: ${problema}\n`;
-                corpo += `🏢 Empresa: ${emp}\n`;
-                corpo += `🔧 TEC: ${tecsStr}\n\n`;
-
-                cards.forEach(card => {
-                    const rows = {};
-                    card.querySelectorAll('.cabo-card-row').forEach(row => {
-                        const lbl = (row.querySelector('.cabo-label')?.textContent || '').trim().toLowerCase();
-                        const val = (row.querySelector('.cabo-value')?.textContent || '').trim();
-                        if (lbl && val) rows[lbl] = val;
-                    });
-
-                    const badgeEl = card.querySelector('.aba-badge');
-                    const badgeTxt = badgeEl ? badgeEl.textContent.trim() : '';
-
-                    const caboEl = card.querySelector('.cabo-card-row:first-child .cabo-value');
-                    const caboNome = caboEl ? (caboEl.textContent.replace(badgeTxt, '').trim()) : '-';
-                    const abaLabel = badgeTxt ? ` (${badgeTxt})` : '';
-
-                    const distEl = card.querySelector('.cabo-dist');
-                    const dist = distEl ? distEl.textContent.trim() : '';
-
-                    corpo += `⚡‍💥Cabo: ${caboNome}${abaLabel}\n`;
-                    corpo += `📌 Localizacao: ${locLink}\n`;
-                    if (rows['tipo']) corpo += `⚙️ Tipo: ${rows['tipo']}\n`;
-                    if (rows['nivel']) corpo += `🌐 Nivel: ${rows['nivel']}\n`;
-                    if (rows['comprimento']) corpo += `📋 Comprimento: ${rows['comprimento']}\n`;
-                    if (dist) corpo += `📐 ${dist}\n`;
-                    corpo += '\n';
-                });
-
-                await navigator.clipboard.writeText(corpo);
-                exibirModal(corpo);
-                btn.innerHTML = '▶ GERAR ORDEM DE SERVICO';
-                btn.disabled = false;
-            } catch (err) { alert(err.message); DOM.btnGerarOSMetro.innerHTML = '▶ GERAR ORDEM DE SERVICO'; DOM.btnGerarOSMetro.disabled = false; }
-        }
-
-        function limparTudo() {
-            DOM.rede.value = ''; DOM.tipo.value = ''; DOM.detalheAtenuacao.value = ''; DOM.inputFamilia.value = ''; DOM.filtro.value = ''; DOM.inputCoordenada.value = '';
-            desmarcarTudo('ctoCheck'); desmarcarTudo('tCheck'); desmarcarTudo('tCheckCabo'); desmarcarTudoPortas();
-            DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden');
-            DOM.wrapper.classList.remove('metro-mode'); DOM.sidebar.classList.remove('visible'); DOM.sidebar.style.display = '';
-            DOM.boxDetalheAtenuacao.classList.add('hidden'); DOM.boxPortas.classList.add('hidden');
-            DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden');
-            DOM.listaCTOs.innerHTML = '<div class="info-msg">Selecione rede.</div>';
-            DOM.resumoCTOs.innerHTML = '<div class="info-msg">Nenhuma selecao.</div>';
-            DOM.listaPreview.innerHTML = ''; DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione empresa.</div>';
-            DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione empresa.</div>';
-            DOM.empresa.innerHTML = '<option value="" disabled selected>Aguardando...</option>'; DOM.empresaMetro.value = ''; DOM.resultadoCabos.innerHTML = '';
-            AppState.baseDados = []; AppState.multiSelectAllowed = true; renderStatusBar();
-        }
-
-        let canvasCtx, isAudioSetup = false, visualizerData = new Array(80).fill(0), currentTrack = null;
-        const TOTAL_TRACKS = 10;
-
-        function setupAudioVisualizer() {
-            if (isAudioSetup) return; const canvas = $('audioVisualizer'); canvasCtx = canvas.getContext('2d');
-            const resize = () => { canvas.width = window.innerWidth; canvas.height = 120; }; window.addEventListener('resize', resize); resize();
-            isAudioSetup = true; drawVisualizer();
-        }
-
-        function drawVisualizer() {
-            requestAnimationFrame(drawVisualizer); if (!canvasCtx) return;
-            const canvas = $('audioVisualizer'); canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-            const buf = 80; const bw = canvas.width / buf; let x = 0;
-            const playing = !DOM.mPlayer.paused && DOM.mPlayer.currentTime > 0;
-            for (let i = 0; i < buf; i++) {
-                let tgt = 2;
-                if (playing) { const r = Math.random(); tgt = (0.1 + r * 0.4) * (canvas.height - 8); }
-                visualizerData[i] += (tgt - visualizerData[i]) * 0.1;
-                const h = visualizerData[i];
-                const pct = i / buf;
-                const r = Math.round(245 - pct * 34); const g = Math.round(166 - pct * 119); const b = Math.round(35 - pct * 35);
-                canvasCtx.fillStyle = `rgba(${r},${g},${b},0.7)`;
-                canvasCtx.fillRect(x, canvas.height - h, Math.max(bw - 1, 1), h); x += bw;
-            }
-        }
-
-        function nextRandomTrack() { let n; do { n = Math.floor(Math.random() * TOTAL_TRACKS) + 1; } while (n === currentTrack && TOTAL_TRACKS > 1); playMusic(n, DOM.musicControls.querySelector(`.m-btn[data-track="${n}"]`)); }
-        function playMusic(track, btn) { currentTrack = parseInt(track); setupAudioVisualizer(); DOM.mPlayer.src = `musica${track}.mp3`; DOM.mPlayer.play().catch(e => console.warn(e)); updateActiveMusicBtn(btn); }
-        function updateActiveMusicBtn(active) { DOM.musicControls.querySelectorAll('.m-btn').forEach(b => b.classList.remove('active')); if (active) active.classList.add('active'); }
+        function fetchCaboMetro() { if (AppState.cacheRedes['METRO']) return; AppState.cacheRedes['METRO'] = 'LOADING'; renderStatusBar(); const s = document.createElement('script'); s.src = `${GAS_URL}?callback=dataHandler_METRO`; s.onerror = () => { AppState.cacheRedes['METRO'] = 'ERRO'; renderStatusBar() }; document.body.appendChild(s); window.dataHandler_METRO = d => { const n = d.map(x => ({ ozmap: x.col1 || x.ozmap, localizacao: x.col2 || x.localizacao, tipo: x.col3 || x.tipo, nivel: x.col4 || x.nivel, comprimento: x.col5 || x.comprimento, ...x })); AppState.cacheRedes['METRO'] = n; renderStatusBar() } }
+        function renderStatusBar() { const s = AppState.cacheRedes['METRO']; if (s === 'LOADING') DOM.statusBar.innerHTML = `<div class="progress-wrap"><div class="progress-label">Carregando dados...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`; else if (s === 'ERRO') DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--red)">Falha ao carregar cabos.</div>`; else if (Array.isArray(s)) DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--teal)">✓ ${s.length} cabos carregados.</div>`; else DOM.statusBar.innerHTML = '' }
+        function haversine(a, b, c, d) { const R = 6371000, e = (c - a) * Math.PI / 180, f = (d - b) * Math.PI / 180, g = Math.sin(e / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(f / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(g), Math.sqrt(1 - g)) }
+        function parseCoordenada(input) { input = input.trim(); let m = input.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/); if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) }; m = input.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) }; m = input.match(/[?&]q=(-?\d+\.\d+)[,+](-?\d+\.\d+)/); if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) }; return null }
+        function extrairCoordsCabo(str) { str = String(str || '').trim(); if (!str || str === 'undefined') return []; if (str.includes(';')) { const c = []; str.split(',').forEach(p => { const x = p.trim().split(';'); if (x.length >= 2) { const la = parseFloat(x[0]), ln = parseFloat(x[1]); if (!isNaN(la) && !isNaN(ln)) c.push({ lat: la, lng: ln }) } }); if (c.length) return c } return [...str.matchAll(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/g)].map(m => ({ lat: parseFloat(m[2]), lng: parseFloat(m[1]) })) }
+        function buscarCabosProximos() { const coord = parseCoordenada(DOM.inputCoordenada.value); if (!coord) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Coordenada inválida.</div>`; return } const dm = AppState.cacheRedes['METRO']; if (!Array.isArray(dm)) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Banco ainda carregando...</div>`; return } const RAIO = 20, cv = new Map(); dm.forEach(row => { const nome = String(row.ozmap || row.cto || '').trim(), coords = String(row.localizacao || row.lat || '').trim(), tipo = String(row.tipo || row.lng || '').trim(), nivel = String(row.nivel || '').trim(), comp = String(row.comprimento || '').trim(); const pts = extrairCoordsCabo(coords); if (!pts.length) return; let best = Infinity; pts.forEach(p => { const d = haversine(coord.lat, coord.lng, p.lat, p.lng); if (d < best) best = d }); if (best <= RAIO && !cv.has(nome)) cv.set(nome, { nome, coords, tipo, nivel, comp, dist: best }) }); const enc = Array.from(cv.values()).sort((a, b) => a.dist - b.dist); if (!enc.length) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Nenhum cabo encontrado no raio de ${RAIO}m.</div>`; return } const ci = DOM.inputCoordenada.value.trim(); DOM.resultadoCabos.innerHTML = enc.map(c => `<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp || '-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('') }
+        function renderTecnosCabo() { const emp = DOM.empresaMetro.value; if (!emp) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione empresa.</div>'; return } const lista = tecnicosDB[emp] || []; if (!lista.length) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Nenhum técnico.</div>'; return } DOM.listaTecsCabo.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.f}" data-nome="${t.n}" style="display:none"><label for="tc${i}">${t.n}</label></div>`).join('') }
+        function normalizar(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[\s-]/g, '') }
+        function getPrefixFromCTO(n) { const u = n.toUpperCase(); return knownPrefixes.find(p => u.includes(p)) || '' }
+        function buscarCTOsPorFragmento(f) { const fn = normalizar(f); if (!fn) return []; return AppState.baseDados.filter(c => normalizar(c.cto).includes(fn)) }
+        function getSelectedCTOs() { if (DOM.tipo.value === 'REDE DE ACESSO - ATENUACAO' && DOM.detalheAtenuacao.value === 'RAMAL GPON ATENUADO') return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim()); return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb => AppState.baseDados.find(b => b.cto === cb.value)).filter(Boolean) }
+        function handleAcionamentoChange() { const t = DOM.tipo.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas(); DOM.boxDetalheAtenuacao.classList.toggle('hidden', t !== 'REDE DE ACESSO - ATENUACAO'); DOM.boxPreventiva.classList.toggle('hidden', t !== 'REDE DE ACESSO - PREVENTIVA'); if (t === 'REDE DE ACESSO - ATENUACAO') DOM.detalheAtenuacao.value = ''; if (t === 'REDE DE ACESSO - PREVENTIVA') DOM.detalhePreventiva.value = ''; DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.boxPortas.classList.add('hidden'); AppState.multiSelectAllowed = true; atualizarResumo(); renderTecnicos() }
+        function handleDetalheAtenuacaoChange() { const d = DOM.detalheAtenuacao.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas(); DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); AppState.multiSelectAllowed = true; if (d === 'PORTA CTO ATENUADA') { DOM.boxPortas.classList.remove('hidden'); AppState.multiSelectAllowed = false } else if (d === 'RAMAL GPON ATENUADO') { DOM.boxFamilia.classList.remove('hidden'); DOM.previewRamal.classList.remove('hidden'); DOM.boxBuscaCTO.classList.add('hidden'); atualizarPreviewRamal() } atualizarResumo(); renderTecnicos() }
+        function handleCTOToggle(cb) { const d = DOM.detalheAtenuacao.value; if (DOM.tipo.value !== 'REDE DE ACESSO - ATENUACAO') { atualizarResumo(); renderTecnicos(); return } if (d === 'PORTA CTO ATENUADA' && cb.checked) DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c => { if (c !== cb) c.checked = false }); else if (d === 'RAMAL GPON ATENUADO' && cb.checked) { cb.checked = false; return } atualizarResumo(); renderTecnicos() }
+        function renderListaCTOs(lista) { if (!lista || !lista.length) { DOM.listaCTOs.innerHTML = '<div class="info-msg">Nenhuma CTO encontrada.</div>'; return } DOM.listaCTOs.innerHTML = lista.sort((a, b) => a.cto.localeCompare(b.cto, undefined, { numeric: true })).map((item, i) => `<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join('') }
+        function renderTecnicos() { const rede = DOM.rede.value, tipo = DOM.tipo.value; let emps = ['IMAIS']; if (rede === 'FIBER') emps.push('CONNECT'); if (rede === 'INTLINK') emps.push('EXTRA SERVICOS'); if (rede === 'WIRE') emps.push('IC - SERVICOS'); const ctosSel = getSelectedCTOs(), prefs = new Set(ctosSel.map(c => getPrefixFromCTO(c.cto)).filter(Boolean)); if ([...prefs].some(p => imaisPrefixMap[p])) emps = emps.filter(e => e !== 'CONNECT' && e !== 'IC - SERVICOS'); const prev = DOM.empresa.value; DOM.empresa.innerHTML = '<option value="" disabled selected>Selecione...</option>'; emps.sort().forEach(e => DOM.empresa.insertAdjacentHTML('beforeend', `<option value="${e}">${e}</option>`)); DOM.empresa.value = emps.includes(prev) ? prev : ''; const emp = DOM.empresa.value; if (!emp) { DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione empresa.</div>'; return } let lista = [...(tecnicosDB[emp] || [])]; if (emp === 'CONNECT') lista = tipo.includes('HIGIENIZACAO') ? lista.filter(t => t.n === 'JESSE') : lista.filter(t => t.n !== 'JESSE'); if (emp === 'IMAIS') { if (!ctosSel.length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione CTOs.</div>'; return } const nomes = new Set(); prefs.forEach(p => (imaisPrefixMap[p] || []).forEach(n => nomes.add(n))); lista = lista.filter(t => nomes.has(t.n)) } if (!lista.length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Nenhum técnico disponível.</div>'; return } DOM.listaTecs.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.f}" data-nome="${t.n}" style="display:none"><label for="t${i}">${t.n}</label></div>`).join('') }
+        function atualizarPreviewRamal() { if (DOM.detalheAtenuacao.value !== 'RAMAL GPON ATENUADO') return; const frag = DOM.inputFamilia.value, enc = buscarCTOsPorFragmento(frag); if (!frag.trim()) DOM.listaPreview.innerHTML = '<div class="info-msg">Digite o prefixo.</div>'; else if (!enc.length) DOM.listaPreview.innerHTML = `<div class="preview-item">Nenhuma CTO encontrada</div>`; else DOM.listaPreview.innerHTML = enc.map(c => `<div class="preview-item">${c.cto}</div>`).join(''); atualizarResumo(); renderTecnicos() }
+        function atualizarResumo() { const sel = Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')); let html = sel.map(c => `<div class="tag"><span>${c.value}</span><button class="btn-remove" onclick="removerCTO('${c.id}')">✕</button></div>`).join(''); const tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value; if (tipo === 'REDE DE ACESSO - ATENUACAO' && det === 'RAMAL GPON ATENUADO') { const f = DOM.inputFamilia.value.trim(); if (f) { const enc = buscarCTOsPorFragmento(f); html += `<div class="tag warning"><span>${f} (${enc.length} CTOs)</span></div>` } } if (tipo === 'REDE DE ACESSO - ATENUACAO' && det === 'PORTA CTO ATENUADA') { const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (ps.length) html += `<div class="tag"><span>Portas: ${ps.join(', ')}</span></div>` } DOM.resumoCTOs.innerHTML = html || '<div class="info-msg">Nenhuma seleção.</div>' }
+        window.removerCTO = id => { const el = $(id); if (el) el.checked = false; atualizarResumo(); renderTecnicos() };
+        function filtrarCTOs() { const v = normalizar(DOM.filtro.value); DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it => { it.style.display = normalizar(it.textContent).includes(v) ? '' : 'none' }) }
+        function desmarcarTudo(n) { document.querySelectorAll(`input[name="${n}"]:checked`).forEach(c => c.checked = false) }
+        function desmarcarTudoPortas() { DOM.gridPortas.querySelectorAll('input:checked').forEach(c => c.checked = false) }
+        function exibirModal(c) { $('copyModalText').textContent = c; AppState.conteudoCopiado = c; $('operadorSelect').value = ''; $('copyModal').classList.add('active') }
+        function fecharModal() { $('copyModal').classList.remove('active') }
+        function carregarOperadores() { const s = document.createElement('script'); s.src = `${GAS_URL}?aba=OPERADOR&callback=dataHandler_OPERADORES`; s.onerror = () => console.warn('Erro operadores'); document.body.appendChild(s); window.dataHandler_OPERADORES = d => { AppState.operadores = d.map(x => ({ nome: x.col1 || '', funcao: x.col2 || '' })).filter(o => o.nome.trim()); renderOperadores() } }
+        function renderOperadores() { const sel = $('operadorSelect'); if (!sel) return; sel.innerHTML = '<option value="">— Nenhum operador —</option>'; AppState.operadores.forEach((op, i) => { const o = document.createElement('option'); o.value = i; o.textContent = `${op.nome} (${op.funcao})`; sel.appendChild(o) }) }
+        function construirMensagemComOperador() { const i = $('operadorSelect').value; let msg = AppState.conteudoCopiado; if (i !== '' && AppState.operadores[i]) { const op = AppState.operadores[i]; msg = `_*${op.nome} (${op.funcao}):*_\n` + msg } return msg }
+        async function gerarOS() { const btn = DOM.btnGerarOS; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const rede = DOM.rede.value, tipo = DOM.tipo.value, detAt = DOM.detalheAtenuacao.value, detPr = DOM.detalhePreventiva.value; const tecs = Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked')); const emp = DOM.empresa.value; if (!rede) throw new Error('Selecione a rede.'); if (!emp) throw new Error('Selecione a empresa.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); let ctos = [], portas = ''; if (tipo === 'REDE DE ACESSO - ATENUACAO') { if (!detAt) throw new Error('Especifique o tipo de atenuação.'); if (detAt === 'PORTA CTO ATENUADA') { const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (!ps.length) throw new Error('Selecione as portas afetadas.'); portas = ps.join(', '); ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione a CTO.'); if (ctos.length > 1) throw new Error('Selecione apenas uma CTO para porta específica.'); } else if (detAt === 'RAMAL GPON ATENUADO') { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Nenhuma CTO encontrada para o prefixo.') } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.') } } else if (tipo === 'REDE DE ACESSO - PREVENTIVA') { if (!detPr) throw new Error('Especifique o detalhe da preventiva.'); ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.') } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.') } const det = (tipo === 'REDE DE ACESSO - ATENUACAO') ? detAt : (tipo === 'REDE DE ACESSO - PREVENTIVA') ? detPr : ''; const problema = tipo + (det ? ` - ${det}` : '') + (portas ? ` | Portas: ${portas}` : ''); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); let corpo = `🚧 Acionamento REDE: ${rede}\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n🔧 TEC: ${tecsStr}\n\n`; if (detAt === 'RAMAL GPON ATENUADO' && tipo === 'REDE DE ACESSO - ATENUACAO') corpo += `Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`; ctos.forEach(info => { const link = (info.lat && info.lng) ? `https://www.google.com/maps?q=${info.lat},${info.lng}` : 'Sem coordenadas'; corpo += `📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n` }); try { await navigator.clipboard.writeText(corpo); showToast('✓ OS copiada para a área de transferência!') } catch { showToast('Não foi possível copiar automaticamente.', 'error') } exibirModal(corpo) } catch (err) { showToast(err.message, 'error', 4000) } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false } }
+        async function gerarOSMetro() { const btn = DOM.btnGerarOSMetro; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const emp = DOM.empresaMetro.value, problema = $('problemaMetro').value; const tecs = Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked')); const cards = DOM.resultadoCabos.querySelectorAll('.cabo-card'); if (!emp) throw new Error('Selecione a empresa.'); if (!problema) throw new Error('Selecione o tipo de problema.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); if (!cards.length) throw new Error('Busque os cabos antes de gerar a OS.'); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); const coordRaw = DOM.inputCoordenada.value.trim(), coordParsed = parseCoordenada(coordRaw); const locLink = coordParsed ? `https://www.google.com/maps?q=${coordParsed.lat},${coordParsed.lng}` : coordRaw; let corpo = `🚧 Acionamento para atividade em campo.\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n🔧 TEC: ${tecsStr}\n\n`; cards.forEach(card => { const rows = {}; card.querySelectorAll('.cabo-card-row').forEach(row => { const lbl = (row.querySelector('.cabo-label')?.textContent || '').trim().toLowerCase(), val = (row.querySelector('.cabo-value')?.textContent || '').trim(); if (lbl && val) rows[lbl] = val }); const d = card.querySelector('.cabo-dist'), dist = d ? d.textContent.trim() : ''; corpo += `⚡ Cabo: ${rows['cabo'] || '-'}\n📌 Localização: ${locLink}\n`; if (rows['tipo']) corpo += `⚙️ Tipo: ${rows['tipo']}\n`; if (rows['nível']) corpo += `🌐 Nível: ${rows['nível']}\n`; if (rows['comprimento']) corpo += `📋 Comprimento: ${rows['comprimento']}\n`; if (dist) corpo += `📐 ${dist}\n`; corpo += '\n' }); try { await navigator.clipboard.writeText(corpo); showToast('✓ OS copiada para a área de transferência!') } catch { showToast('Não foi possível copiar automaticamente.', 'error') } exibirModal(corpo) } catch (err) { showToast(err.message, 'error', 4000) } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false } }
+        function limparTudo() { DOM.rede.value = ''; DOM.tipo.value = ''; DOM.detalheAtenuacao.value = ''; DOM.detalhePreventiva.value = ''; DOM.inputFamilia.value = ''; DOM.filtro.value = ''; DOM.inputCoordenada.value = ''; desmarcarTudo('ctoCheck'); desmarcarTudo('tCheck'); desmarcarTudo('tCheckCabo'); desmarcarTudoPortas(); DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); DOM.boxPreventiva.classList.add('hidden'); DOM.wrapper.classList.remove('metro-mode'); DOM.sidebar.classList.remove('visible'); DOM.sidebar.style.display = ''; DOM.boxDetalheAtenuacao.classList.add('hidden'); DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.listaCTOs.innerHTML = '<div class="info-msg">Selecione uma rede.</div>'; DOM.resumoCTOs.innerHTML = '<div class="info-msg">Nenhuma seleção.</div>'; DOM.listaPreview.innerHTML = ''; DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione empresa e CTOs.</div>'; DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione a empresa.</div>'; DOM.empresa.innerHTML = '<option value="" disabled selected>Aguardando rede...</option>'; DOM.empresaMetro.value = ''; DOM.resultadoCabos.innerHTML = ''; AppState.baseDados = []; AppState.multiSelectAllowed = true; renderStatusBar(); showToast('✓ Formulário limpo.') }
+        let canvasCtx, isAudioSetup = false, visualizerData = new Array(90).fill(0), currentTrack = null;
+        function setupAudioVisualizer() { if (isAudioSetup) return; const canvas = $('audioVisualizer'); canvasCtx = canvas.getContext('2d'); const resize = () => { canvas.width = window.innerWidth; canvas.height = 80 }; window.addEventListener('resize', resize); resize(); isAudioSetup = true; drawVisualizer() }
+        function drawVisualizer() { requestAnimationFrame(drawVisualizer); if (!canvasCtx) return; const canvas = $('audioVisualizer'); canvasCtx.clearRect(0, 0, canvas.width, canvas.height); const buf = 90, bw = canvas.width / buf; let x = 0; const playing = !DOM.mPlayer.paused && DOM.mPlayer.currentTime > 0; const dark = document.documentElement.getAttribute('data-theme') === 'dark'; for (let i = 0; i < buf; i++) { const tgt = playing ? (0.08 + Math.random() * .45) * (canvas.height - 4) : 2; visualizerData[i] += (tgt - visualizerData[i]) * .12; const pct = i / buf; let r, g, b; if (dark) { r = Math.round(59 + pct * 14); g = Math.round(158 - pct * 30); b = Math.round(255 - pct * 55) } else { r = Math.round(26 + pct * 14); g = Math.round(111 + pct * 47); b = Math.round(219 - pct * 43) } canvasCtx.fillStyle = `rgba(${r},${g},${b},0.5)`; canvasCtx.fillRect(x, canvas.height - visualizerData[i], Math.max(bw - 1, 1), visualizerData[i]); x += bw } }
+        function playMusic(track, btn) { currentTrack = parseInt(track); setupAudioVisualizer(); DOM.mPlayer.src = `musica${track}.mp3`; DOM.mPlayer.play().catch(e => console.warn(e)); updateActiveMusicBtn(btn) }
+        function updateActiveMusicBtn(active) { DOM.musicControls.querySelectorAll('.m-btn').forEach(b => b.classList.remove('active')); if (active) active.classList.add('active') }
     </script>
 </body>
 
