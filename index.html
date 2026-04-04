@@ -722,8 +722,7 @@ function bindEvents(){
     if(!waWin)showToast('Popup bloqueado! Permita popups para este site.','error',5000);
     else showToast('✓ WhatsApp e Hubsoft abertos!');
   });
-  DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn=>{btn.addEventListener('click',e=>playMusic(e.currentTarget.dataset.track,e.currentTarget))});
-  $('btnStopMusic').addEventListener('click',()=>{DOM.mPlayer.pause();DOM.mPlayer.currentTime=0;currentTrack=null;updateActiveMusicBtn(null)});}
+  // música — tratado no Flame Engine abaixo}
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
 function aoMudarRede(){const r=DOM.rede.value,m=r==='METRO';DOM.wrapper.classList.toggle('metro-mode',m);DOM.sidebar.classList.toggle('visible',m);DOM.sidebar.style.display=m?'none':'';if(m){DOM.boxMetro.classList.remove('hidden');DOM.boxRede.classList.add('hidden');if(!AppState.cacheRedes['METRO'])fetchCaboMetro();else renderStatusBar();}else{DOM.boxMetro.classList.add('hidden');DOM.boxRede.classList.remove('hidden');carregarCTOs(r);}atualizarResumo()}
 function carregarCTOs(rede){
