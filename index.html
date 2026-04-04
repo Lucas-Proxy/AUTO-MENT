@@ -933,8 +933,7 @@
     </main>
 
     <script>
-        const CABOS_ABAS = ['CABOS-CDD', 'CABOS-CDD2', 'CABOS-MANAUS', 'CABOS-NC'];
-        const CABOS_LABELS = { 'CABOS-CDD': 'CDD', 'CABOS-CDD2': 'CDD2', 'CABOS-MANAUS': 'MANAUS', 'CABOS-NC': 'NC' };
+        // Backend unificado de cabos
         const GAS_URL = 'https://script.google.com/a/macros/clickip.com.br/s/AKfycbyDuRIIlq07rOsFy_ufrIWhI7qKGordXz1ZzG0JLjBo9UzfXZ0RUbFI5WD4-Hknriz-2g/exec';
         const AppState = { baseDados: [], cacheRedes: {}, multiSelectAllowed: true };
 
@@ -1000,7 +999,7 @@
             DOM.sidebar.style.display = isMetro ? 'none' : '';
             if (isMetro) {
                 DOM.boxMetro.classList.remove('hidden'); DOM.boxRede.classList.add('hidden');
-                CABOS_ABAS.forEach(aba => { if (!AppState.cacheRedes[aba]) fetchCabo(aba); }); renderStatusBar();
+                if (!AppState.cacheRedes['METRO']) fetchCaboMetro(); else renderStatusBar();
             } else { DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); carregarCTOs(rede); }
             atualizarResumo();
         }
@@ -1018,19 +1017,26 @@
             window[cbName] = dados => { AppState.cacheRedes[rede] = dados; AppState.baseDados = dados; renderListaCTOs(dados); renderTecnicos(); };
         }
 
-        function fetchCabo(aba) {
-            if (AppState.cacheRedes[aba]) return; renderStatusBar();
-            const cbName = `dataHandler_${aba.replace(/-/g, '_')}`; const s = document.createElement('script');
-            s.src = `${GAS_URL}?aba=${aba}&callback=${cbName}`;
-            s.onerror = () => { AppState.cacheRedes[aba] = 'ERRO'; renderStatusBar(); }; document.body.appendChild(s);
-            window[cbName] = dados => { AppState.cacheRedes[aba] = dados; renderStatusBar(); };
+        function fetchCaboMetro() {
+            if (AppState.cacheRedes['METRO']) return;
+            AppState.cacheRedes['METRO'] = 'LOADING'; renderStatusBar();
+            const cbName = `dataHandler_METRO`; const s = document.createElement('script');
+            s.src = `${GAS_URL}?callback=${cbName}`;
+            s.onerror = () => { AppState.cacheRedes['METRO'] = 'ERRO'; renderStatusBar(); }; document.body.appendChild(s);
+            window[cbName] = dados => { AppState.cacheRedes['METRO'] = dados; renderStatusBar(); };
         }
 
         function renderStatusBar() {
-            const prontas = CABOS_ABAS.filter(a => Array.isArray(AppState.cacheRedes[a])).length;
-            const erros = CABOS_ABAS.filter(a => AppState.cacheRedes[a] === 'ERRO').length;
-            const total = CABOS_ABAS.length; const pct = Math.round(((prontas + erros) / total) * 100);
-            DOM.statusBar.innerHTML = pct === 100 ? '' : `<div class="progress-wrap"><div class="progress-label">CARREGANDO ${pct}%</div><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
+            const status = AppState.cacheRedes['METRO'];
+            if (status === 'LOADING') {
+                DOM.statusBar.innerHTML = `<div class="progress-wrap"><div class="progress-label">CARREGANDO DADOS...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;
+            } else if (status === 'ERRO') {
+                DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--red)">Falha ao carregar cabos do servidor.</div>`;
+            } else if (Array.isArray(status)) {
+                DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--gold)">Bancos sincronizados com sucesso (${status.length} cabos).</div>`;
+            } else {
+                DOM.statusBar.innerHTML = '';
+            }
         }
 
         function haversine(lat1, lng1, lat2, lng2) {
@@ -1056,22 +1062,20 @@
         function buscarCabosProximos() {
             const coord = parseCoordenada(DOM.inputCoordenada.value);
             if (!coord) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Coordenada invalida.</div>`; return; }
-            const prontas = CABOS_ABAS.filter(a => Array.isArray(AppState.cacheRedes[a]));
-            if (!prontas.length) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Carregando bancos...</div>`; return; }
-            const RAIO = 10; const cabosVistos = new Map();
-            prontas.forEach(aba => {
-                AppState.cacheRedes[aba].forEach(row => {
-                    const nome = String(row.ozmap || row.cto || '').trim(); const coords = String(row.localizacao || row.lat || '').trim();
-                    const tipo = String(row.tipo || row.lng || '').trim(); const nivel = String(row.nivel || '').trim(); const comp = String(row.comprimento || '').trim();
-                    const pontos = extrairCoordsCabo(coords); if (!pontos.length) return;
-                    let melhor = Infinity; pontos.forEach(p => { const d = haversine(coord.lat, coord.lng, p.lat, p.lng); if (d < melhor) melhor = d; });
-                    if (melhor <= RAIO) { const ceboData = { nome, coords, tipo, nivel, comp, dist: melhor, aba }; if (!cabosVistos.has(nome) || aba === 'CABOS-MANAUS') cabosVistos.set(nome, ceboData); }
-                });
+            const dadosMetros = AppState.cacheRedes['METRO'];
+            if (!Array.isArray(dadosMetros)) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Carregando bancos...</div>`; return; }
+            const RAIO = 20; const cabosVistos = new Map();
+            dadosMetros.forEach(row => {
+                const nome = String(row.ozmap || row.cto || '').trim(); const coords = String(row.localizacao || row.lat || '').trim();
+                const tipo = String(row.tipo || row.lng || '').trim(); const nivel = String(row.nivel || '').trim(); const comp = String(row.comprimento || '').trim();
+                const pontos = extrairCoordsCabo(coords); if (!pontos.length) return;
+                let melhor = Infinity; pontos.forEach(p => { const d = haversine(coord.lat, coord.lng, p.lat, p.lng); if (d < melhor) melhor = d; });
+                if (melhor <= RAIO) { const ceboData = { nome, coords, tipo, nivel, comp, dist: melhor }; if (!cabosVistos.has(nome)) cabosVistos.set(nome, ceboData); }
             });
             const enc = Array.from(cabosVistos.values()).sort((a, b) => a.dist - b.dist);
-            if (!enc.length) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Nenhum cabo encontrado.</div>`; return; }
+            if (!enc.length) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Nenhum cabo encontrado no raio de ${RAIO}m.</div>`; return; }
             const coordInput = DOM.inputCoordenada.value.trim();
-            DOM.resultadoCabos.innerHTML = enc.map(c => `<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome || '-'} <span class="aba-badge">${CABOS_LABELS[c.aba]}</span></span></div><div class="cabo-card-row"><span class="cabo-label">Localizacao</span><span class="cabo-value">${coordInput}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nivel</span><span class="cabo-value">${c.nivel || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp || '-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
+            DOM.resultadoCabos.innerHTML = enc.map(c => `<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localizacao</span><span class="cabo-value">${coordInput}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nivel</span><span class="cabo-value">${c.nivel || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp || '-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
         }
 
         function renderTecnosCabo() {
@@ -1244,14 +1248,10 @@
 
                     const badgeEl = card.querySelector('.aba-badge');
                     const badgeTxt = badgeEl ? badgeEl.textContent.trim() : '';
-                    const abaKey = Object.keys(CABOS_LABELS).find(k => CABOS_LABELS[k] === badgeTxt) || '';
-                    rows['aba'] = abaKey;
 
-                    // FIX: declarar caboEl corretamente
                     const caboEl = card.querySelector('.cabo-card-row:first-child .cabo-value');
                     const caboNome = caboEl ? (caboEl.textContent.replace(badgeTxt, '').trim()) : '-';
-                    const projeto = CABOS_LABELS[rows['aba'] || ''] || badgeTxt;
-                    const abaLabel = projeto ? ` (${projeto})` : '';
+                    const abaLabel = badgeTxt ? ` (${badgeTxt})` : '';
 
                     // FIX: extrair dist do elemento correto
                     const distEl = card.querySelector('.cabo-dist');
