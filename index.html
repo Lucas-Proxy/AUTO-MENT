@@ -313,16 +313,54 @@ input::placeholder{color:var(--text3)}
 /* ── MUSIC ─────────────────────────────────────── */
 .music-controls{
   position:fixed;bottom:24px;right:24px;
-  display:grid;grid-template-columns:repeat(5,1fr);gap:3px;z-index:100;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:3px;z-index:100;
   background:var(--music-bg);padding:10px;
   border:1px solid var(--border);border-top:3px solid var(--blue);
   border-radius:12px;box-shadow:var(--shadow2);
   transition:background .35s,border-color .35s;
+  width:180px;
 }
-.m-btn{width:32px;height:32px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);border-radius:6px;cursor:pointer;font-weight:700;font-size:.7rem;transition:all .2s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace}
+.m-btn{width:100%;height:32px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);border-radius:6px;cursor:pointer;font-weight:700;font-size:.7rem;transition:all .2s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace}
 .m-btn:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
 .m-btn.active{background:var(--blue-l);border-color:var(--blue2);color:var(--blue);box-shadow:0 0 0 2px var(--blue-b)}
-#btnStopMusic{grid-column:span 5;width:100%;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2)}
+#btnStopMusic{grid-column:span 4;width:100%;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2)}
+
+/* ── FARMAR AURA ─────────────────────────────── */
+#btnFarmarAura{
+  grid-column:span 4;width:100%;height:44px;
+  border-radius:8px;font-family:'Bebas Neue',cursive;
+  font-size:1rem;letter-spacing:4px;cursor:pointer;
+  position:relative;overflow:visible;border:none;
+  transition:transform .2s;
+  z-index:1;
+}
+[data-theme="light"] #btnFarmarAura{
+  background:linear-gradient(180deg,#1a0500 0%,#0d0200 100%);
+  color:#ffcc44;
+  text-shadow:0 0 8px #ff6a00,0 0 18px #ff3000,0 0 30px #ff0000;
+  box-shadow:0 2px 12px rgba(255,60,0,.5);
+}
+[data-theme="dark"] #btnFarmarAura{
+  background:linear-gradient(180deg,#050515 0%,#020208 100%);
+  color:#c8e0ff;
+  text-shadow:0 0 8px #80b4ff,0 0 18px #4488ff,0 0 30px #0044ff;
+  box-shadow:0 2px 12px rgba(60,100,255,.5);
+}
+#btnFarmarAura span{position:relative;z-index:3}
+#btnFarmarAura:hover{transform:translateY(-2px)}
+#btnFarmarAura.active #flameCanvas{opacity:1}
+
+/* canvas de chama */
+#flameCanvas{
+  position:absolute;
+  bottom:0;left:0;
+  width:100%;height:160px;
+  transform:translateY(60%);
+  pointer-events:none;
+  z-index:2;
+  opacity:.85;
+  transition:opacity .3s;
+}
 .ambient-visualizer{position:fixed;bottom:0;left:0;width:100%;height:80px;z-index:0;pointer-events:none;opacity:.3}
 .signature{
   position:fixed;bottom:22px;left:28px;z-index:100;
@@ -441,7 +479,13 @@ input::placeholder{color:var(--text3)}
   <button class="m-btn" data-track="8">08</button>
   <button class="m-btn" data-track="9">09</button>
   <button class="m-btn" data-track="10">10</button>
+  <button class="m-btn" data-track="11">11</button>
+  <button class="m-btn" data-track="12">12</button>
   <button class="m-btn" id="btnStopMusic">■ Stop</button>
+  <button class="m-btn" id="btnFarmarAura" data-track="13">
+    <canvas id="flameCanvas"></canvas>
+    <span>🔥 FARMAR AURA</span>
+  </button>
 </div>
 <audio id="mPlayer" loop></audio>
 
@@ -668,8 +712,7 @@ function bindEvents(){
     else showToast('✓ WhatsApp e Hubsoft abertos!');
   });
   DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn=>{btn.addEventListener('click',e=>playMusic(e.currentTarget.dataset.track,e.currentTarget))});
-  $('btnStopMusic').addEventListener('click',()=>{DOM.mPlayer.pause();DOM.mPlayer.currentTime=0;currentTrack=null;updateActiveMusicBtn(null)});
-}
+  $('btnStopMusic').addEventListener('click',()=>{DOM.mPlayer.pause();DOM.mPlayer.currentTime=0;currentTrack=null;updateActiveMusicBtn(null)});}
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
 function aoMudarRede(){const r=DOM.rede.value,m=r==='METRO';DOM.wrapper.classList.toggle('metro-mode',m);DOM.sidebar.classList.toggle('visible',m);DOM.sidebar.style.display=m?'none':'';if(m){DOM.boxMetro.classList.remove('hidden');DOM.boxRede.classList.add('hidden');if(!AppState.cacheRedes['METRO'])fetchCaboMetro();else renderStatusBar();}else{DOM.boxMetro.classList.add('hidden');DOM.boxRede.classList.remove('hidden');carregarCTOs(r);}atualizarResumo()}
 function carregarCTOs(rede){
@@ -715,8 +758,103 @@ function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.v
 let canvasCtx,isAudioSetup=false,visualizerData=new Array(90).fill(0),currentTrack=null;
 function setupAudioVisualizer(){if(isAudioSetup)return;const canvas=$('audioVisualizer');canvasCtx=canvas.getContext('2d');const resize=()=>{canvas.width=window.innerWidth;canvas.height=80};window.addEventListener('resize',resize);resize();isAudioSetup=true;drawVisualizer()}
 function drawVisualizer(){requestAnimationFrame(drawVisualizer);if(!canvasCtx)return;const canvas=$('audioVisualizer');canvasCtx.clearRect(0,0,canvas.width,canvas.height);const buf=90,bw=canvas.width/buf;let x=0;const playing=!DOM.mPlayer.paused&&DOM.mPlayer.currentTime>0;const dark=document.documentElement.getAttribute('data-theme')==='dark';for(let i=0;i<buf;i++){const tgt=playing?(0.08+Math.random()*.45)*(canvas.height-4):2;visualizerData[i]+=(tgt-visualizerData[i])*.12;const pct=i/buf;let r,g,b;if(dark){r=Math.round(59+pct*14);g=Math.round(158-pct*30);b=Math.round(255-pct*55)}else{r=Math.round(26+pct*14);g=Math.round(111+pct*47);b=Math.round(219-pct*43)}canvasCtx.fillStyle=`rgba(${r},${g},${b},0.5)`;canvasCtx.fillRect(x,canvas.height-visualizerData[i],Math.max(bw-1,1),visualizerData[i]);x+=bw}}
-function playMusic(track,btn){currentTrack=parseInt(track);setupAudioVisualizer();DOM.mPlayer.src=`musica${track}.mp3`;DOM.mPlayer.play().catch(e=>console.warn(e));updateActiveMusicBtn(btn)}
-function updateActiveMusicBtn(active){DOM.musicControls.querySelectorAll('.m-btn').forEach(b=>b.classList.remove('active'));if(active)active.classList.add('active')}
+/* ── FLAME ENGINE ─────────────────────────────── */
+(function(){
+  const canvas = document.getElementById('flameCanvas');
+  const btn    = document.getElementById('btnFarmarAura');
+  const ctx    = canvas.getContext('2d');
+  let W, H, particles = [], raf;
+  let active = false;
+
+  function resize(){
+    const r = btn.getBoundingClientRect();
+    W = canvas.width  = r.width;
+    H = canvas.height = 160;
+  }
+
+  function isDark(){ return document.documentElement.getAttribute('data-theme') === 'dark'; }
+
+  function spawnParticle(){
+    const x = W * (0.1 + Math.random() * 0.8);
+    const speed = active ? (2.2 + Math.random()*2.8) : (1.4 + Math.random()*1.8);
+    const size  = active ? (6  + Math.random()*10)   : (4   + Math.random()*7);
+    particles.push({
+      x, y: H * 0.62,
+      vx: (Math.random()-0.5)*1.4,
+      vy: -(speed),
+      life: 1, decay: active ? 0.012+Math.random()*0.014 : 0.018+Math.random()*0.018,
+      size, wobble: Math.random()*Math.PI*2, wobbleSpeed: 0.08+Math.random()*0.08
+    });
+  }
+
+  function getColor(life, dark){
+    if(dark){
+      // azul → branco: fantasma motoqueiro
+      if(life > 0.7) return `rgba(30,80,255,${life})`;
+      if(life > 0.4) return `rgba(100,160,255,${life})`;
+      if(life > 0.2) return `rgba(200,230,255,${life*0.9})`;
+      return `rgba(240,248,255,${life*0.6})`;
+    } else {
+      // amarelo → laranja → vermelho: fogo real
+      if(life > 0.7) return `rgba(255,220,30,${life})`;
+      if(life > 0.45) return `rgba(255,120,0,${life})`;
+      if(life > 0.2) return `rgba(220,30,0,${life*0.9})`;
+      return `rgba(80,0,0,${life*0.5})`;
+    }
+  }
+
+  function tick(){
+    raf = requestAnimationFrame(tick);
+    ctx.clearRect(0,0,W,H);
+
+    const spawnCount = active ? 5 : 3;
+    for(let i=0;i<spawnCount;i++) spawnParticle();
+
+    const dark = isDark();
+    ctx.globalCompositeOperation = 'lighter';
+
+    for(let i = particles.length-1; i >= 0; i--){
+      const p = particles[i];
+      p.life -= p.decay;
+      if(p.life <= 0){ particles.splice(i,1); continue; }
+      p.wobble += p.wobbleSpeed;
+      p.x += p.vx + Math.sin(p.wobble) * 0.7;
+      p.y += p.vy;
+
+      const r = p.size * p.life;
+      const grad = ctx.createRadialGradient(p.x,p.y,0, p.x,p.y,r*2.2);
+      grad.addColorStop(0, getColor(p.life * 0.9, dark));
+      grad.addColorStop(0.4, getColor(p.life * 0.55, dark));
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r*2.2, 0, Math.PI*2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // sync com estado do botão
+  const origPlay = window.playMusic;
+  window.playMusic = function(track, btnEl){
+    origPlay(track, btnEl);
+    active = (track == 13);
+  };
+  const origStop = document.getElementById('btnStopMusic');
+  origStop.addEventListener('click', ()=>{ active = false; });
+
+  // também observar clique direto no botão aura
+  btn.addEventListener('click', ()=>{
+    active = btn.classList.contains('active');
+    // pequeno delay pra classe .active ser adicionada
+    setTimeout(()=>{ active = btn.classList.contains('active'); }, 50);
+  });
+
+  window.addEventListener('resize', resize);
+  resize();
+  tick();
+})();
 </script>
 </body>
 </html>
