@@ -6,2280 +6,705 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ANALYST — NOC</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         [data-theme="light"] {
-            --bg: #eef2f7;
-            --bg2: #fff;
-            --bg3: #f5f8fc;
-            --bg4: #e8f0fd;
-            --blue: #1a6fdb;
-            --blue2: #2d84f0;
-            --blue-l: #e8f0fd;
-            --blue-b: #c7dcfb;
-            --teal: #0e9e7e;
-            --teal-l: #e6f7f3;
-            --amber: #d97706;
-            --amber-l: #fef3c7;
-            --red: #dc2626;
-            --red-l: #fee2e2;
-            --border: #d1dce9;
-            --border2: #b8ccdf;
-            --text: #1a2636;
-            --text2: #4a647d;
-            --text3: #8fa8be;
+            --bg: #eef2f7; --bg2: #fff; --bg3: #f5f8fc; --bg4: #e8f0fd;
+            --blue: #1a6fdb; --blue2: #2d84f0; --blue-l: #e8f0fd; --blue-b: #c7dcfb;
+            --teal: #0e9e7e; --teal-l: #e6f7f3; --amber: #d97706; --amber-l: #fef3c7;
+            --red: #dc2626; --red-l: #fee2e2; --border: #d1dce9; --border2: #b8ccdf;
+            --text: #1a2636; --text2: #4a647d; --text3: #8fa8be;
             --shadow: 0 1px 3px rgba(26, 111, 219, .08), 0 4px 16px rgba(26, 111, 219, .06);
             --shadow2: 0 2px 8px rgba(26, 111, 219, .12), 0 8px 32px rgba(26, 111, 219, .08);
-            --music-bg: #fff;
         }
 
         [data-theme="dark"] {
-            --bg: #050c14;
-            --bg2: #0a1828;
-            --bg3: #0e2038;
-            --bg4: #122848;
-            --blue: #3b9eff;
-            --blue2: #60b4ff;
-            --blue-l: rgba(59, 158, 255, .12);
-            --blue-b: rgba(59, 158, 255, .25);
-            --teal: #2dd4a4;
-            --teal-l: rgba(45, 212, 164, .1);
-            --amber: #fbbf24;
-            --amber-l: rgba(251, 191, 36, .1);
-            --red: #f87171;
-            --red-l: rgba(248, 113, 113, .1);
-            --border: rgba(59, 158, 255, .14);
-            --border2: rgba(59, 158, 255, .28);
-            --text: #cce8f4;
-            --text2: #6aafcc;
-            --text3: #2a5570;
+            --bg: #050c14; --bg2: #0a1828; --bg3: #0e2038; --bg4: #122848;
+            --blue: #3b9eff; --blue2: #60b4ff; --blue-l: rgba(59, 158, 255, .12); --blue-b: rgba(59, 158, 255, .25);
+            --teal: #2dd4a4; --teal-l: rgba(45, 212, 164, .1); --amber: #fbbf24; --amber-l: rgba(251, 191, 36, .1);
+            --red: #f87171; --red-l: rgba(248, 113, 113, .1); --border: rgba(59, 158, 255, .14); --border2: rgba(59, 158, 255, .28);
+            --text: #cce8f4; --text2: #6aafcc; --text3: #2a5570;
             --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
             --shadow2: 0 2px 8px rgba(0, 0, 0, .5), 0 8px 32px rgba(0, 0, 0, .4);
-            --music-bg: #0a1828;
         }
 
-        *,
-        *::before,
-        *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box
-        }
-
-        html,
-        body {
-            width: 100%;
-            min-height: 100%
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.5;
-            overflow-x: hidden;
-            transition: background .35s, color .35s
-        }
-
-        [data-theme="light"] body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(26, 111, 219, .07) 0%, transparent 65%), radial-gradient(ellipse 40% 30% at 90% 10%, rgba(14, 158, 126, .05) 0%, transparent 60%);
-            z-index: 0;
-            pointer-events: none
-        }
-
-        [data-theme="dark"] body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image: linear-gradient(rgba(59, 158, 255, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 158, 255, .025) 1px, transparent 1px);
-            background-size: 40px 40px;
-            animation: gridMove 25s linear infinite;
-            z-index: 0;
-            pointer-events: none
-        }
-
-        [data-theme="dark"] body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 400px;
-            background: radial-gradient(ellipse 60% 40% at 50% -5%, rgba(59, 158, 255, .1) 0%, transparent 70%), radial-gradient(ellipse 30% 20% at 85% 0%, rgba(45, 212, 164, .06) 0%, transparent 60%);
-            z-index: 0;
-            pointer-events: none
-        }
-
-        @keyframes gridMove {
-            0% {
-                background-position: 0 0
-            }
-
-            100% {
-                background-position: 40px 40px
-            }
-        }
-
-        main {
-            position: relative;
-            z-index: 1;
-            min-height: 100vh;
-            padding: 48px 40px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start
-        }
-
-        .wrapper {
-            width: 100%;
-            max-width: 1380px;
-            display: flex;
-            gap: 32px;
-            align-items: flex-start
-        }
-
-        .wrapper.metro-mode {
-            max-width: 1020px;
-            justify-content: center
-        }
-
-        .wrapper.metro-mode .card {
-            max-width: 700px;
-            width: 100%
-        }
-
-        .wrapper.metro-mode .floating-sidebar {
-            position: fixed;
-            right: -500px;
-            top: 0;
-            width: 480px;
-            height: 100vh;
-            max-height: 100vh;
-            border-radius: 0;
-            overflow-y: auto;
-            transition: right .4s cubic-bezier(.23, 1, .32, 1);
-            z-index: 999;
-            padding: 60px 36px;
-            border-left: 1px solid var(--border2)
-        }
-
-        .wrapper.metro-mode .floating-sidebar.visible {
-            right: 0
-        }
-
-        .card {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 0;
-            position: relative;
-            flex: 1;
-            max-width: 640px;
-            box-shadow: var(--shadow2);
-            overflow: hidden;
-            transition: background .35s, border-color .35s
-        }
-
-        .card-top-bar {
-            height: 4px;
-            background: linear-gradient(90deg, var(--blue), var(--teal))
-        }
-
-        .card-inner {
-            padding: 40px 44px 44px
-        }
-
-        .floating-sidebar {
-            flex: 0 0 460px;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 0;
-            position: sticky;
-            top: 48px;
-            max-height: calc(100vh - 96px);
-            overflow-y: auto;
-            overflow-x: hidden;
-            box-shadow: var(--shadow);
-            transition: background .35s, border-color .35s
-        }
-
-        .sidebar-top-bar {
-            height: 4px;
-            background: linear-gradient(90deg, var(--teal), var(--blue))
-        }
-
-        .sidebar-inner {
-            padding: 32px
-        }
-
-        .floating-sidebar::-webkit-scrollbar {
-            width: 4px
-        }
-
-        .floating-sidebar::-webkit-scrollbar-thumb {
-            background: var(--border2);
-            border-radius: 2px
-        }
-
-        /* THEME TOGGLE */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 24px;
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 30px;
-            padding: 6px 12px 6px 8px;
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            user-select: none;
-            transition: background .3s, border-color .3s
-        }
-
-        .toggle-track {
-            width: 36px;
-            height: 20px;
-            border-radius: 10px;
-            background: var(--border);
-            position: relative;
-            transition: background .3s
-        }
-
-        [data-theme="dark"] .toggle-track {
-            background: var(--blue)
-        }
-
-        .toggle-thumb {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #fff;
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, .2)
-        }
-
-        [data-theme="dark"] .toggle-thumb {
-            transform: translateX(16px)
-        }
-
-        .toggle-label {
-            font-size: .72rem;
-            font-weight: 600;
-            color: var(--text2);
-            letter-spacing: .3px;
-            white-space: nowrap
-        }
-
-        /* LOGO */
-        .logo-area {
-            margin-bottom: 32px;
-            text-align: center;
-            padding-bottom: 28px;
-            border-bottom: 1px solid var(--border)
-        }
-
-        .logo-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
-            margin: 0 auto 16px;
-            box-shadow: 0 4px 20px rgba(26, 111, 219, .35)
-        }
-
-        .logo-badge svg {
-            width: 34px;
-            height: 34px
-        }
-
-        .logo-title {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 2rem;
-            letter-spacing: 5px;
-            color: var(--text);
-            line-height: 1.1;
-            text-transform: uppercase
-        }
-
-        .logo-title .hl {
-            color: var(--blue)
-        }
-
-        .logo-chips {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 10px;
-            flex-wrap: wrap
-        }
-
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 11px;
-            border-radius: 20px;
-            font-size: .68rem;
-            font-weight: 600;
-            letter-spacing: .8px;
-            text-transform: uppercase;
-            font-family: 'Share Tech Mono', monospace
-        }
-
-        .chip-blue {
-            background: var(--blue-l);
-            color: var(--blue)
-        }
-
-        .chip-teal {
-            background: var(--teal-l);
-            color: var(--teal)
-        }
-
-        .chip-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: currentColor;
-            animation: pulse 2s ease-in-out infinite
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1
-            }
-
-            50% {
-                opacity: .25
-            }
-        }
-
-        .section-label {
-            font-size: .65rem;
-            font-weight: 600;
-            color: var(--text3);
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            font-family: 'Share Tech Mono', monospace;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px
-        }
-
-        .section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border)
-        }
-
-        .divider {
-            height: 1px;
-            margin: 0 0 28px;
-            background: var(--border)
-        }
-
-        label {
-            display: block;
-            font-size: .72rem;
-            font-weight: 600;
-            color: var(--text2);
-            margin-bottom: 6px;
-            letter-spacing: .4px;
-            text-transform: uppercase
-        }
-
-        .form-group {
-            margin-bottom: 20px
-        }
-
-        input[type="text"],
-        textarea,
-        select {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            font-size: .92rem;
-            font-weight: 500;
-            transition: border-color .2s, background .2s, box-shadow .2s, color .35s;
-            outline: none;
-            -webkit-appearance: none
-        }
-
-        input[type="text"]:focus,
-        textarea:focus,
-        select:focus {
-            border-color: var(--blue2);
-            background: var(--bg2);
-            box-shadow: 0 0 0 3px rgba(59, 158, 255, .15)
-        }
-
-        select option {
-            background: var(--bg2);
-            color: var(--text)
-        }
-
-        input::placeholder {
-            color: var(--text3)
-        }
-
-        .cto-picker,
-        .stack-list,
-        .port-grid,
-        .preview-list {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            max-height: 260px;
-            overflow-y: auto;
-            margin-top: 6px
-        }
-
-        .preview-list {
-            flex-direction: column;
-            gap: 4px
-        }
-
-        .music-player-wrap {
-            display: flex;
-            flex-direction: row;
-            /* Garante ordem da esquerda para a direita */
-            gap: 8px;
-            align-items: flex-end;
-            margin-top: 10px;
-            width: 100%;
-        }
-
-        .music-controls {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-            padding: 10px;
-            background: var(--bg2);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            position: relative;
-        }
-
-        .vol-wrap {
-            position: fixed;
-            top: 72px;
-            /* Abaixo do Theme Toggle (que está em 20px + altura) */
-            right: 20px;
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            box-shadow: var(--shadow);
-        }
-
-        .vol-wrap:hover {
-            background: var(--bg3);
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .vol-slider-container {
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            padding: 12px 8px;
-            border-radius: 14px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1001;
-        }
-
-        .vol-wrap:hover .vol-slider-container {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .vol-slider-vert {
-            appearance: slider-vertical;
-            width: 6px;
-            height: 100px;
-            cursor: pointer;
-            outline: none;
-            background: var(--bg3);
-        }
-
-        .vol-icon {
-            font-size: 1.2rem;
-            opacity: 0.8;
-            transition: transform 0.2s;
-        }
-
-        .vol-wrap:hover .vol-icon {
-            transform: scale(1.1);
-            opacity: 1;
-        }
-
-        .port-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px
-        }
-
-        .pill-item label,
-        .stack-item label,
-        .port-item label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 7px 13px;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 7px;
-            cursor: pointer;
-            font-size: .8rem;
-            font-weight: 600;
-            color: var(--text2);
-            transition: all .2s;
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            letter-spacing: .3px;
-            text-transform: uppercase
-        }
-
-        .pill-item label:hover,
-        .stack-item label:hover,
-        .port-item label:hover {
-            border-color: var(--blue2);
-            color: var(--blue);
-            background: var(--blue-l)
-        }
-
-        .pill-item input:checked+label,
-        .stack-item input:checked+label,
-        .port-item input:checked+label {
-            background: var(--blue-l);
-            border-color: var(--blue2);
-            color: var(--blue);
-            font-weight: 700;
-            box-shadow: 0 0 0 2px var(--blue-b)
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px
-        }
-
-        .btn {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-family: 'Inter', sans-serif;
-            font-size: .88rem;
-            font-weight: 700;
-            letter-spacing: .4px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all .2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px
-        }
-
-        .btn-main {
-            background: linear-gradient(135deg, var(--blue2) 0%, var(--blue) 100%);
-            color: #fff;
-            box-shadow: 0 2px 10px rgba(26, 111, 219, .4)
-        }
-
-        .btn-main:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 18px rgba(26, 111, 219, .5)
-        }
-
-        .btn-main:active {
-            transform: translateY(0)
-        }
-
-        .btn-main:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-            transform: none
-        }
-
-        .btn-clear {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--text2);
-            font-size: .82rem
-        }
-
-        .btn-clear:hover {
-            border-color: var(--border2);
-            color: var(--text);
-            background: var(--bg4)
-        }
-
-        .tag-container {
-            display: flex;
-            flex-direction: column;
-            gap: 6px
-        }
-
-        .tag {
-            background: var(--blue-l);
-            border: 1px solid var(--blue-b);
-            color: var(--blue);
-            padding: 9px 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: .85rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            animation: slideIn .15s ease-out;
-            font-family: 'Inter', sans-serif
-        }
-
-        .tag.warning {
-            background: var(--amber-l);
-            border-color: rgba(217, 119, 6, .25);
-            color: var(--amber)
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-4px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            }
-        }
-
-        .btn-remove {
-            cursor: pointer;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-            transition: all .2s;
-            font-weight: 700;
-            background: transparent;
-            color: currentColor;
-            font-size: .85rem;
-            border: none;
-            opacity: .6
-        }
-
-        .btn-remove:hover {
-            background: var(--red-l);
-            color: var(--red);
-            opacity: 1
-        }
-
-        /* tremor de tela para transformação */
-        .screen-shake {
-            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
-            transform: translate3d(0, 0, 0);
-        }
-
-        @keyframes shake {
-
-            10%,
-            90% {
-                transform: translate3d(-2px, 0, 0);
-            }
-
-            20%,
-            80% {
-                transform: translate3d(4px, 0, 0);
-            }
-
-            30%,
-            50%,
-            70% {
-                transform: translate3d(-6px, 0, 0);
-            }
-
-            40%,
-            60% {
-                transform: translate3d(6px, 0, 0);
-            }
-        }
-
-        .hidden {
-            display: none !important
-        }
-
-        .info-msg {
-            color: var(--text3);
-            font-size: .78rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 6px;
-            line-height: 1.5;
-            font-family: 'Share Tech Mono', monospace
-        }
-
-        .loading-text {
-            color: var(--blue);
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: .82rem
-        }
-
-        .port-section {
-            margin-top: 24px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border)
-        }
-
-        .preview-item {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 8px 10px;
-            font-size: .85rem;
-            color: var(--text2);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 500;
-            transition: all .2s
-        }
-
-        .preview-item:hover {
-            border-color: var(--blue2);
-            color: var(--blue)
-        }
-
-        .sidebar-title {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1.5rem;
-            color: var(--text);
-            letter-spacing: 4px;
-            margin-bottom: 4px
-        }
-
-        .sidebar-divider {
-            height: 1px;
-            margin-bottom: 18px;
-            background: var(--border)
-        }
-
-        .sect {
-            font-size: .65rem;
-            font-weight: 600;
-            color: var(--text3);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: 'Share Tech Mono', monospace
-        }
-
-        .sect::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border)
-        }
-
-        .metro-card {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 18px
-        }
-
-        .metro-title {
-            font-size: .8rem;
-            font-weight: 700;
-            color: var(--blue);
-            margin-bottom: 14px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-family: 'Share Tech Mono', monospace
-        }
-
-        .cable-search-box {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px
-        }
-
-        .cable-search-box input {
-            flex: 1
-        }
-
-        .btn-buscar-cabo {
-            background: linear-gradient(135deg, var(--blue2), var(--blue));
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 16px;
-            font-family: 'Inter', sans-serif;
-            font-size: .82rem;
-            font-weight: 700;
-            letter-spacing: .4px;
-            text-transform: uppercase;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all .2s;
-            box-shadow: 0 2px 8px rgba(26, 111, 219, .3)
-        }
-
-        .btn-buscar-cabo:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 14px rgba(26, 111, 219, .4)
-        }
-
-        .cabo-card {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-            animation: slideIn .15s ease-out;
-            transition: all .2s
-        }
-
-        .cabo-card:hover {
-            border-color: var(--blue2)
-        }
-
-        .cabo-card:last-child {
-            margin-bottom: 0
-        }
-
-        .cabo-card-row {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            margin-bottom: 6px
-        }
-
-        .cabo-card-row:last-child {
-            margin-bottom: 0
-        }
-
-        .cabo-label {
-            font-size: .6rem;
-            font-weight: 600;
-            color: var(--text3);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-family: 'Share Tech Mono', monospace
-        }
-
-        .cabo-value {
-            font-size: .88rem;
-            font-weight: 600;
-            color: var(--text);
-            word-break: break-all
-        }
-
-        .cabo-dist {
-            font-size: .72rem;
-            color: var(--teal);
-            font-weight: 700;
-            margin-top: 4px;
-            font-family: 'Share Tech Mono', monospace
-        }
-
-        .progress-wrap {
-            margin-top: 6px
-        }
-
-        .progress-label {
-            font-size: .6rem;
-            font-weight: 600;
-            color: var(--text3);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-family: 'Share Tech Mono', monospace
-        }
-
-        .progress-track {
-            background: var(--border);
-            border-radius: 4px;
-            height: 3px;
-            overflow: hidden
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--blue), var(--teal));
-            transition: width .4s ease;
-            border-radius: 4px
-        }
-
-        /* MUSIC PLAYER */
-        .music-controls {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            z-index: 100;
-            background: var(--music-bg);
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-top: 3px solid var(--blue);
-            border-radius: 12px;
-            box-shadow: var(--shadow2);
-            transition: background .35s, border-color .35s;
-            width: 184px
-        }
-
-        .m-btn {
-            width: 100%;
-            height: 32px;
-            border: 1px solid var(--border);
-            background: var(--bg3);
-            color: var(--text3);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: .7rem;
-            transition: all .2s, color .2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Share Tech Mono', monospace
-        }
-
-        .music-controls.aura-active .m-btn {
-            color: #000 !important;
-            border-color: rgba(0, 0, 0, 0.2);
-        }
-
-        .music-controls.aura-active #btnFarmarAura.active {
-            color: #fff !important;
-            /* Mantém o destaque no botão ativo */
-        }
-
-        .m-btn:hover {
-            border-color: var(--blue2);
-            color: var(--blue);
-            background: var(--blue-l)
-        }
-
-        .m-btn.active {
-            background: var(--blue-l);
-            border-color: var(--blue2);
-            color: var(--blue);
-            box-shadow: 0 0 0 2px var(--blue-b)
-        }
-
-        #btnStopMusic {
-            grid-column: span 4;
-            width: 100%;
-            font-size: .72rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--text2)
-        }
-
-        /* FARMAR AURA */
-        #btnFarmarAura {
-            grid-column: span 4;
-            width: 100%;
-            height: 40px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: none;
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1rem;
-            letter-spacing: 4px;
-            position: relative;
-            overflow: visible;
-            z-index: 1;
-            transition: transform .2s, box-shadow .2s;
-        }
-
-        [data-theme="light"] #btnFarmarAura {
-            background: linear-gradient(180deg, #1c0600 0%, #0a0200 100%);
-            color: #ffcc77;
-            text-shadow: 0 0 6px #ff6600, 0 0 12px #cc2200;
-            box-shadow: 0 0 6px rgba(255, 60, 0, .25);
-        }
-
-        [data-theme="dark"] #btnFarmarAura {
-            background: linear-gradient(180deg, #06080f 0%, #020308 100%);
-            color: #d8eaff;
-            text-shadow: 0 0 6px #6699ff, 0 0 12px #2244cc;
-            box-shadow: 0 0 6px rgba(60, 100, 255, .2);
-        }
-
-        [data-theme="light"] #btnFarmarAura:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 0 16px rgba(255, 80, 0, .5)
-        }
-
-        [data-theme="dark"] #btnFarmarAura:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 0 16px rgba(80, 130, 255, .45)
-        }
-
-        /* quando tocando: texto preto com sombra preta profunda sobrepondo tudo */
-        #btnFarmarAura.active {
-            color: #000 !important;
-            text-shadow:
-                0 0 2px #000,
-                0 0 4px #000,
-                0 0 8px rgba(0, 0, 0, 0.5) !important;
-        }
-
-        #btnFarmarAura .btn-label {
-            position: relative;
-            z-index: 20;
-            /* Aumentado para ficar acima da aura */
-            pointer-events: none;
-            display: block;
-            mix-blend-mode: normal;
-        }
-
-        #btnFarmarAura.active .btn-label {
-            animation: auraPulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes auraPulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-                filter: brightness(1);
-            }
-
-            50% {
-                transform: scale(1.05);
-                filter: brightness(1.3);
-            }
-        }
-
-        /* canvas de faísca/borda — pequeno, só na borda */
-        #borderSparkCanvas {
-            position: absolute;
-            inset: -6px;
-            width: calc(100% + 12px);
-            height: calc(100% + 12px);
-            pointer-events: none;
-            z-index: 2;
-            border-radius: 12px;
-        }
-
-        /* canvas de chama grande — envolvente estilo Goku */
-        #flameCanvas {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 350%;
-            /* Aumentado de 200% para 350% */
-            height: 600px;
-            /* Aumentado de 300px para 600px */
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 15;
-            /* Abaixo das letras (20) */
-            opacity: 0;
-            transition: opacity .5s ease;
-            /* Máscara radial alongada para formato 'pontudo' (teardrop/flame style) */
-            -webkit-mask-image: radial-gradient(ellipse 40% 90% at 50% 80%, black 20%, transparent 75%);
-            mask-image: radial-gradient(ellipse 40% 90% at 50% 80%, black 20%, transparent 75%);
-        }
-
-        #btnFarmarAura.active #flameCanvas {
-            opacity: 1;
-            pointer-events: auto;
-            /* Permite clicar na chama ativa */
-            cursor: pointer;
-        }
-
-        /* FIRE OVERLAY */
-        #fireOverlay {
-            position: fixed;
-            inset: 0;
-            z-index: 9000;
-            pointer-events: none;
-            display: none
-        }
-
-        /* VISUALIZER */
-        .ambient-visualizer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 80px;
-            z-index: 0;
-            pointer-events: none;
-            opacity: .3
-        }
-
-        /* SIGNATURE */
-        .signature {
-            position: fixed;
-            bottom: 22px;
-            left: 28px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-            pointer-events: none
-        }
-
-        .signature-name {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1.05rem;
-            letter-spacing: 4px;
-            color: var(--blue);
-            opacity: .55;
-            line-height: 1
-        }
-
-        .signature-line {
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(90deg, var(--blue), transparent);
-            opacity: .35
-        }
-
-        .signature-role {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: .52rem;
-            letter-spacing: 3px;
-            color: var(--text3);
-            opacity: .6;
-            text-transform: uppercase
-        }
-
-        /* MODAL */
-        .copy-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 20, 35, .5);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all .28s ease
-        }
-
-        .copy-modal.active {
-            opacity: 1;
-            visibility: visible
-        }
-
-        .copy-modal-content {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-top: 3px solid var(--blue);
-            border-radius: 14px;
-            width: 90%;
-            max-width: 650px;
-            max-height: 88vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, .2);
-            transform: scale(.95) translateY(20px);
-            transition: all .35s cubic-bezier(.175, .885, .32, 1.275);
-            overflow: hidden
-        }
-
-        .copy-modal.active .copy-modal-content {
-            transform: scale(1) translateY(0)
-        }
-
-        .copy-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 22px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg3)
-        }
-
-        .copy-modal-header span {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1.25rem;
-            color: var(--text);
-            letter-spacing: 3px
-        }
-
-        .copy-modal-header button {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--text3);
-            width: 26px;
-            height: 26px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: .85rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all .2s
-        }
-
-        .copy-modal-header button:hover {
-            border-color: var(--red);
-            color: var(--red);
-            background: var(--red-l)
-        }
-
-        .copy-modal-text {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: .82rem;
-            color: var(--text);
-            white-space: pre-wrap;
-            line-height: 1.8;
-            background: var(--bg3);
-            padding: 18px;
-            overflow-y: auto;
-            flex: 1;
-            border: 1px solid var(--border);
-            margin: 16px 22px 0;
-            border-radius: 8px;
-            word-break: break-word
-        }
-
-        .copy-modal-operator {
-            padding: 14px 22px;
-            border-bottom: 1px solid var(--border)
-        }
-
-        .copy-modal-operator label {
-            font-size: .65rem;
-            color: var(--text2);
-            margin-bottom: 6px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-weight: 600;
-            display: block
-        }
-
-        .copy-modal-footer {
-            display: flex;
-            gap: 10px;
-            padding: 18px 22px;
-            background: var(--bg3)
-        }
-
-        .btn-seguir {
-            background: linear-gradient(135deg, var(--teal) 0%, #0c8069 100%) !important;
-            color: #fff !important;
-            border: none !important;
-            box-shadow: 0 2px 10px rgba(14, 158, 126, .35) !important;
-            flex: 2;
-            font-size: .88rem !important;
-            font-weight: 700 !important;
-            letter-spacing: .4px !important;
-            border-radius: 8px !important
-        }
-
-        .btn-seguir:hover {
-            transform: translateY(-1px) !important;
-            box-shadow: 0 4px 18px rgba(14, 158, 126, .45) !important
-        }
-
-        .btn-editar {
-            background: var(--bg2) !important;
-            border: 1px solid var(--border) !important;
-            color: var(--text2) !important;
-            flex: 1;
-            font-size: .85rem !important;
-            border-radius: 8px !important
-        }
-
-        .btn-editar:hover {
-            border-color: var(--border2) !important;
-            color: var(--text) !important;
-            background: var(--bg4) !important
-        }
-
-        /* TOAST */
-        .toast {
-            position: fixed;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%) translateY(12px);
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--teal);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            font-size: .8rem;
-            font-weight: 500;
-            padding: 10px 18px;
-            border-radius: 8px;
-            z-index: 2000;
-            opacity: 0;
-            transition: all .25s ease;
-            pointer-events: none;
-            white-space: nowrap;
-            box-shadow: var(--shadow)
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0)
-        }
-
-        .toast.error {
-            border-left-color: var(--red);
-            color: var(--red)
-        }
-
-        @media(max-width:1024px) {
-            main {
-                padding: 16px 12px
-            }
-
-            .wrapper {
-                flex-direction: column;
-                gap: 16px
-            }
-
-            .card,
-            .floating-sidebar {
-                flex: 1;
-                position: static;
-                max-height: none
-            }
-
-            .card-inner {
-                padding: 24px 20px
-            }
-
-            .sidebar-inner {
-                padding: 20px
-            }
-
-            .wrapper.metro-mode .floating-sidebar {
-                right: 0;
-                position: static;
-                width: 100%;
-                height: auto;
-                border-radius: 12px
-            }
-
-            .copy-modal-content {
-                width: 96%;
-                max-height: 93vh
-            }
-
-            .music-controls {
-                bottom: 8px;
-                right: 8px
-            }
-
-            .theme-toggle {
-                top: 12px;
-                right: 12px
-            }
-        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; overflow-x: hidden; transition: background .35s, color .35s }
+        main { position: relative; z-index: 1; min-height: 100vh; padding: 48px 40px; display: flex; justify-content: center; align-items: flex-start }
+        .wrapper { width: 100%; max-width: 1380px; display: flex; gap: 32px; align-items: flex-start; transition: max-width .4s cubic-bezier(0.16, 1, 0.3, 1) }
+        .wrapper.metro-mode { max-width: 800px }
+        
+        .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; flex: 1; min-width: 0; box-shadow: var(--shadow2); overflow: hidden; position: relative; transition: all .4s cubic-bezier(0.16, 1, 0.3, 1) }
+        .card-top-bar { height: 4px; background: linear-gradient(90deg, var(--blue), var(--teal)) }
+        .card-inner { padding: 40px 44px 44px }
+        
+        .floating-sidebar { flex: 0 0 460px; background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; position: sticky; top: 48px; max-height: calc(100vh - 96px); overflow-y: auto; box-shadow: var(--shadow); opacity: 0; transform: translateX(20px); transition: all .4s cubic-bezier(0.16, 1, 0.3, 1); display: none; }
+        .floating-sidebar.visible { opacity: 1; transform: translateX(0); display: block; }
+        .sidebar-top-bar { height: 4px; background: linear-gradient(90deg, var(--teal), var(--blue)) }
+        .sidebar-inner { padding: 32px }
+        
+        .logo-area { margin-bottom: 32px; text-align: center; padding-bottom: 28px; border-bottom: 1px solid var(--border); position: relative }
+        .logo-title { font-family: 'Bebas Neue', cursive; font-size: 2.2rem; letter-spacing: 5px; color: var(--text); text-transform: uppercase }
+        .logo-title .hl { color: var(--blue) }
+        .theme-toggle { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: var(--bg3); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 14px; font-weight: 600; transition: all .2s }
+        .theme-toggle:hover { background: var(--blue-l); color: var(--blue); border-color: var(--blue2) }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px }
+        .form-group { margin-bottom: 20px }
+        label { display: block; font-size: .72rem; font-weight: 600; color: var(--text2); margin-bottom: 6px; letter-spacing: .4px; text-transform: uppercase }
+        
+        select, input, textarea { width: 100%; padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: .9rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); outline: none; transition: all .2s }
+        select:focus, input:focus, textarea:focus { border-color: var(--blue2); background: var(--bg2); box-shadow: 0 0 0 3px var(--blue-l) }
+        
+        .btn-group { display: flex; gap: 10px; margin-bottom: 24px }
+        .btn-toggle { flex: 1; padding: 12px; text-align: center; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .85rem; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; transition: all .2s }
+        .btn-toggle.active { background: var(--blue-l); border-color: var(--blue2); color: var(--blue) }
+        
+        .stack-list { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto }
+        .stack-item label { display: flex; align-items: center; padding: 7px 13px; margin: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: .8rem; font-weight: 600; color: var(--text2); transition: all .2s; user-select: none }
+        .stack-item input:checked + label { background: var(--blue-l); border-color: var(--blue2); color: var(--blue) }
+        .stack-item input { display: none }
+        
+        .info-msg { font-size: .8rem; color: var(--text3); font-style: italic; width: 100%; text-align: center; padding: 10px 0 }
+        .hidden { display: none !important }
+        
+        .btn-main { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--blue2), var(--blue)); color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: .95rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all .2s; margin-top: 10px; box-shadow: 0 4px 12px rgba(26, 111, 219, .2) }
+        .btn-main:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(26, 111, 219, .3) }
+        .btn-main:active { transform: translateY(1px) }
+        
+        .resumo-preview { font-family: 'Share Tech Mono', monospace; font-size: .9rem; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word }
+        .resumo-preview .lbl { color: var(--text3); display: inline-block; width: 80px }
+        .resumo-preview .val { color: var(--blue); font-weight: bold }
+        .resumo-preview .val-red { color: var(--red); font-weight: bold }
+        
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text); color: var(--bg); padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: .9rem; opacity: 0; transition: all .3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000; box-shadow: var(--shadow2) }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1 }
+
+        .portas-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 8px }
+        .porta-item { position: relative }
+        .porta-item input { display: none }
+        .porta-item label { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-family: 'Share Tech Mono', monospace; font-size: .85rem; font-weight: 600; color: var(--text2); margin: 0; transition: all .2s }
+        .porta-item input:checked + label { background: var(--red-l); border-color: var(--red); color: var(--red) }
+        
+        .cto-preview-item { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px }
+        .cto-preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px }
+        .cto-preview-title { font-weight: 700; color: var(--text); font-size: .9rem }
+        .cto-preview-remove { color: var(--red); cursor: pointer; font-size: .8rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--red-l) }
+        
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: .7rem; font-weight: 700; margin-left: 6px; vertical-align: middle }
+        .badge-red { background: var(--red-l); color: var(--red) }
+        .badge-amber { background: var(--amber-l); color: var(--amber) }
     </style>
 </head>
 
 <body>
-
-    <!-- FIRE OVERLAY -->
-    <canvas id="fireOverlay"></canvas>
-
-    <!-- THEME TOGGLE -->
-    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-        <span style="font-size:13px;color:#f59e0b">☀</span>
-        <div class="toggle-track">
-            <div class="toggle-thumb"></div>
-        </div>
-        <span style="font-size:13px;color:#94a3b8">☽</span>
-        <span class="toggle-label" id="toggleLabel">Tema Claro</span>
-    </button>
-
-    <div class="vol-wrap">
-        <div class="vol-slider-container">
-            <input type="range" id="volSlider" class="vol-slider-vert" min="0" max="1" step="0.05" value="0.5">
-        </div>
-        <span class="vol-icon">🔊</span>
-    </div>
-
-    <div id="toast" class="toast"></div>
-
-    <!-- MODAL -->
-    <div id="copyModal" class="copy-modal">
-        <div class="copy-modal-content">
-            <div class="copy-modal-header">
-                <span>✦ Ordem de Serviço Gerada</span>
-                <button id="btnFecharModal">✕</button>
-            </div>
-            <pre id="copyModalText" class="copy-modal-text"></pre>
-            <div class="copy-modal-operator">
-                <label for="operadorSelect">Operador (Opcional)</label>
-                <select id="operadorSelect">
-                    <option value="">— Nenhum operador —</option>
-                </select>
-            </div>
-            <div class="copy-modal-footer">
-                <button class="btn btn-seguir" id="btnSeguir">▶ Enviar &amp; Abrir Hubsoft</button>
-                <button class="btn btn-editar" id="btnEditarOS">← Voltar</button>
-            </div>
-        </div>
-    </div>
-
-    <canvas id="audioVisualizer" class="ambient-visualizer"></canvas>
-
-    <!-- MUSIC -->
-    <div class="music-player-wrap">
-        <div id="mControls" class="music-controls">
-            <button class="m-btn" data-track="1">01</button>
-            <button class="m-btn" data-track="2">02</button>
-            <button class="m-btn" data-track="3">03</button>
-            <button class="m-btn" data-track="4">04</button>
-            <button class="m-btn" data-track="5">05</button>
-            <button class="m-btn" data-track="6">06</button>
-            <button class="m-btn" data-track="7">07</button>
-            <button class="m-btn" data-track="8">08</button>
-            <button class="m-btn" data-track="9">09</button>
-            <button class="m-btn" data-track="10">10</button>
-            <button class="m-btn" data-track="11">11</button>
-            <button class="m-btn" data-track="12">12</button>
-            <button class="m-btn" id="btnStopMusic" style="grid-column: span 4;">■ Stop</button>
-            <button class="m-btn" id="btnFarmarAura" data-track="13" style="grid-column: span 4;">
-                <canvas id="borderSparkCanvas"></canvas>
-                <canvas id="flameCanvas"></canvas>
-                <span class="btn-label">🔥 FARMAR AURA</span>
-            </button>
-        </div>
-    </div>
-    <audio id="mPlayer" loop></audio>
-
     <main>
         <div class="wrapper" id="wrapper">
-            <section class="card">
+            <div class="card">
                 <div class="card-top-bar"></div>
                 <div class="card-inner">
                     <div class="logo-area">
-                        <div class="logo-badge">
-                            <svg viewBox="0 0 34 34" fill="none">
-                                <circle cx="17" cy="17" r="14" stroke="rgba(255,255,255,.35)" stroke-width="1.5" />
-                                <circle cx="17" cy="17" r="8" stroke="rgba(255,255,255,.55)" stroke-width="1.5" />
-                                <circle cx="17" cy="17" r="3" fill="white" />
-                                <line x1="17" y1="3" x2="17" y2="11" stroke="white" stroke-width="1.5"
-                                    stroke-linecap="round" />
-                                <line x1="17" y1="23" x2="17" y2="31" stroke="white" stroke-width="1.5"
-                                    stroke-linecap="round" />
-                                <line x1="3" y1="17" x2="11" y2="17" stroke="white" stroke-width="1.5"
-                                    stroke-linecap="round" />
-                                <line x1="23" y1="17" x2="31" y2="17" stroke="white" stroke-width="1.5"
-                                    stroke-linecap="round" />
-                                <circle cx="24" cy="11" r="2" fill="rgba(255,255,255,.75)" />
-                            </svg>
+                        <h1 class="logo-title"><span class="hl">ANALYST</span> — NOC</h1>
+                        <button class="theme-toggle" id="btnTheme">Luz / Sombra</button>
+                    </div>
+
+                    <div class="btn-group">
+                        <div class="btn-toggle active" id="btnRede">Rede (CTO/Cabo)</div>
+                        <div class="btn-toggle" id="btnMetro">Metro (Switch/Rota)</div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Tipo de Acionamento</label>
+                            <select id="tipoAcionamento">
+                                <option value="">Selecione...</option>
+                                <option value="INCIDENTE">INCIDENTE</option>
+                                <option value="PROJETO">PROJETO</option>
+                                <option value="EMERGÊNCIA">EMERGÊNCIA</option>
+                                <option value="PREVENTIVA">PREVENTIVA</option>
+                            </select>
                         </div>
-                        <div class="logo-title"><span class="hl">Analista</span> de Redes</div>
-                        <div class="logo-chips">
-                            <span class="chip chip-blue"><span class="chip-dot"></span>NOC Online</span>
-                            <span class="chip chip-teal">Sistema de Acionamento</span>
+                        <div class="form-group" id="boxSubcategoria">
+                            <label>Subcategoria</label>
+                            <select id="subcategoria">
+                                <option value="">Aguardando Tipo...</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="section-label">Configuração do Acionamento</div>
-                    <div class="form-group">
-                        <label for="rede">Rede de Atuação</label>
-                        <select id="rede">
-                            <option value="" disabled selected>Selecione uma rede...</option>
-                            <option value="FIBER">Fiber Network</option>
-                            <option value="INTLINK">Intlink</option>
-                            <option value="WIRE">Wire</option>
-                            <option value="METRO">Rede Metro</option>
-                        </select>
-                    </div>
-                    <!-- BOX METRO -->
-                    <div id="boxMetro" class="hidden">
-                        <div class="metro-card">
-                            <div class="metro-title">Consulta de Cabos</div>
-                            <div class="form-group" style="margin-bottom:10px">
-                                <label>Coordenada ou Link Google Maps</label>
-                                <div class="cable-search-box">
-                                    <input type="text" id="inputCoordenada" placeholder="Ex: -3.09869, -60.01261">
-                                    <button class="btn-buscar-cabo" id="btnBuscarCabo">Buscar</button>
-                                </div>
+
+                    <div id="boxRede">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Empresa</label>
+                                <select id="empresa"><option value="">Carregando...</option></select>
                             </div>
-                            <div id="statusBar"></div>
-                            <div id="resultadoCabos" style="margin-top:10px"></div>
+                            <div class="form-group hidden" id="boxFamilia">
+                                <label>Família (Ex: F1, F2)</label>
+                                <input type="text" id="familia" placeholder="Ex: F1, F2">
+                            </div>
                         </div>
-                        <div class="form-group" style="margin-top:18px">
-                            <label for="problemaMetro">Tipo de Problema</label>
-                            <select id="problemaMetro">
-                                <option value="" disabled selected>Selecione o problema...</option>
-                                <option value="Troca de poste">Troca de Poste</option>
-                                <option value="Fiscalizacao">Fiscalização</option>
-                            </select>
+
+                        <div class="form-group hidden" id="boxDetalheAtenuacao">
+                            <label>Sinal Chegando na CTO (dBm)</label>
+                            <input type="text" id="sinalCto" placeholder="Ex: -28.5">
                         </div>
-                        <div class="form-group">
-                            <label for="empresaMetro">Empresa Executante</label>
-                            <select id="empresaMetro">
-                                <option value="" disabled selected>Selecione...</option>
-                            </select>
+
+                        <div class="form-group" id="boxBuscaCTO">
+                            <label>Buscar CTO</label>
+                            <input type="text" id="buscaCTO" placeholder="Digite para buscar CTOs..." autocomplete="off">
+                            <div class="stack-list" id="listaCTOs" style="margin-top: 10px;">
+                                <div class="info-msg">Selecione uma subcategoria.</div>
+                            </div>
                         </div>
-                        <div class="form-group">
+
+                        <div id="resumoCTOs" style="margin-bottom: 20px;"></div>
+
+                        <div class="form-group hidden" id="boxPortas">
+                            <label>Portas Afetadas na CTO Selecionada</label>
+                            <div class="portas-grid" id="gridPortas"></div>
+                        </div>
+
+                        <div class="form-group" id="boxTecnicos">
                             <label>Técnicos Disponíveis</label>
-                            <div id="listaTecsCabo" class="stack-list">
+                            <div class="stack-list" id="listaTecnicos">
+                                <div class="info-msg">Selecione a empresa e CTOs.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group hidden" id="boxTecnicosCabo">
+                            <label>Equipe Disponível (Cabistas)</label>
+                            <div class="stack-list" id="listaTecnicosCabo">
                                 <div class="info-msg">Selecione a empresa.</div>
                             </div>
                         </div>
-                        <div class="button-group">
-                            <button class="btn btn-main" id="btnGerarOSMetro">Gerar Ordem de Serviço</button>
-                            <button class="btn btn-clear" id="btnLimparTudo">Limpar</button>
-                        </div>
                     </div>
-                    <!-- BOX REDE -->
-                    <div id="boxRede">
+
+                    <div id="boxMetro" class="hidden">
                         <div class="form-group">
-                            <label for="tipo">Tipo de Acionamento</label>
-                            <select id="tipo">
-                                <option value="" disabled selected>O que está acontecendo?</option>
-                                <option value="REDE DE ACESSO - ATENUACAO">Atenuação na Rede</option>
-                                <option value="REDE DE ACESSO - CTO DOWN">CTO Down / Offline</option>
-                                <option value="REDE DE ACESSO - HIGIENIZACAO DE CTO">Higienização de CTO</option>
-                            </select>
+                            <label>Equipamento / Rota</label>
+                            <input type="text" id="equipamentoMetro" placeholder="Ex: SW-AGR-01 ou Rota JDE-ITA">
                         </div>
-                        <div id="boxDetalheAtenuacao" class="form-group hidden">
-                            <label for="detalheAtenuacao">Especificação da Atenuação</label>
-                            <select id="detalheAtenuacao">
-                                <option value="" disabled selected>Selecione...</option>
-                                <option value="CTO ATENUADA">CTO Atenuada (no geral)</option>
-                                <option value="PORTA CTO ATENUADA">Porta específica da CTO atenuada</option>
-                                <option value="RAMAL GPON ATENUADO">Ramal GPON atenuado (múltiplas CTOs)</option>
-                            </select>
+                        <div class="form-group">
+                            <label>Empresa</label>
+                            <select id="empresaMetro"><option value="">Carregando...</option></select>
                         </div>
-                        <div id="boxFamilia" class="form-group hidden">
-                            <label for="inputFamilia">Prefixo ou Ramal Afetado</label>
-                            <input type="text" id="inputFamilia" placeholder="Ex: PAR12, 12-1, AUT04...">
-                            <div class="info-msg" style="margin-top:6px">O sistema agrupará todas as CTOs com este
-                                texto.</div>
-                        </div>
-                        <div id="boxBuscaCTO" class="form-group">
-                            <label for="filtro">Buscar e Selecionar CTO</label>
-                            <input type="text" id="filtro" placeholder="Digite para filtrar...">
-                            <div id="listaCTOs" class="cto-picker">
-                                <div class="info-msg">Selecione uma rede primeiro.</div>
+                        <div class="form-group">
+                            <label>Técnicos de Fibra/Metro</label>
+                            <div class="stack-list" id="listaTecnicosMetro">
+                                <div class="info-msg">Selecione a empresa.</div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="empresa">Empresa Executante</label>
-                            <select id="empresa">
-                                <option value="" disabled selected>Selecione...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Técnicos Disponíveis</label>
-                            <div id="listaTecs" class="stack-list">
-                                <div class="info-msg">Selecione empresa e CTOs.</div>
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button class="btn btn-main" id="btnGerarOS">Gerar Ordem de Serviço</button>
-                            <button class="btn btn-clear" id="btnLimparTudo2">Limpar</button>
-                        </div>
                     </div>
+
+                    <div class="form-group">
+                        <label>Detalhes / Observações</label>
+                        <textarea id="observacoes" rows="3" placeholder="Informações adicionais relevantes..."></textarea>
+                    </div>
+
+                    <button class="btn-main" id="btnGerar">Gerar Resumo da O.S</button>
                 </div>
-            </section>
-            <aside class="floating-sidebar" id="sidebar">
+            </div>
+
+            <div class="floating-sidebar" id="sidebar">
                 <div class="sidebar-top-bar"></div>
                 <div class="sidebar-inner">
-                    <div class="sidebar-title">Seleção</div>
-                    <div class="sidebar-divider"></div>
-                    <div id="resumoCTOs" class="tag-container">
-                        <div class="info-msg">Nenhuma CTO selecionada.</div>
-                    </div>
-                    <div id="boxPortas" class="port-section hidden">
-                        <div class="sect">Portas Afetadas</div>
-                        <div class="port-grid" id="gridPortas"></div>
-                    </div>
-                    <div id="previewRamal" class="port-section hidden">
-                        <div class="sect">Ramal Identificado</div>
-                        <div id="listaPreview" class="preview-list"></div>
+                    <h2 style="font-family: 'Bebas Neue', cursive; font-size: 1.8rem; letter-spacing: 2px; color: var(--text); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center">
+                        RESUMO O.S
+                        <button id="btnCopiar" style="background: var(--blue-l); color: var(--blue); border: none; padding: 6px 12px; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: .8rem; font-weight: 600; cursor: pointer">COPIAR</button>
+                    </h2>
+                    <div id="previewText" class="resumo-preview">Preencha os dados e clique em Gerar.</div>
+                    
+                    <div id="previewRamal" class="hidden" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border)">
+                        <label>Técnico Selecionado</label>
+                        <div id="ramalTecnico" style="font-family: 'Share Tech Mono'; font-size: 1.1rem; color: var(--blue); font-weight: bold; background: var(--bg3); padding: 12px; border-radius: 8px; border: 1px solid var(--border)"></div>
                     </div>
                 </div>
-            </aside>
+            </div>
         </div>
     </main>
 
-    <div class="signature">
-        <span class="signature-name">Lucas Paes</span>
-        <div class="signature-line"></div>
-        <span class="signature-role">ANALYST · NOC</span>
-    </div>
+    <div class="toast" id="toast">Copiado para a área de transferência!</div>
 
     <script>
-        /* ════════════════════════════════════════════════
-           DADOS
-        ════════════════════════════════════════════════ */
-        const GAS_URL = 'https://script.google.com/a/macros/clickip.com.br/s/AKfycbyDuRIIlq07rOsFy_ufrIWhI7qKGordXz1ZzG0JLjBo9UzfXZ0RUbFI5WD4-Hknriz-2g/exec';
-        const AppState = {
-            baseDados: [],
-            cacheRedes: {},
-            multiSelectAllowed: true,
-            operadores: [],
-            tecnicos: [],
-            tecnicosStatus: 'idle',
-            prefixCatalog: [],
-            conteudoCopiado: ''
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6_9J9W1h5d9Wb8_2f3BXXdO4N-W34_2e4TzM6R2Lw1B9G88_1U4qQ3L9D8t2PqQ/exec';
+
+        const subcategorias = {
+            'INCIDENTE': ['ATENUAÇÃO', 'ROMPIMENTO', 'ANÁLISE DE PORTA', 'FALTA DE ENERGIA', 'VANDALISMO', 'INCÊNDIO'],
+            'PROJETO': ['REMANEJAMENTO'],
+            'EMERGÊNCIA': ['FIBRA NO CHÃO'],
+            'PREVENTIVA': ['CTO SEM TAMPA', 'CTO DESFIXADA', 'CTO COM TAMPA QUEBRADA', 'CTO SEM SPLITTER', 'CTO PEGOU FOGO', 'HIGIENIZAÇÃO']
         };
-        function splitListaValores(valor) {
-            return String(valor || '')
-                .split(/[\n;,]+/)
-                .map(v => v.trim())
-                .filter(Boolean);
-        }
-        function atualizarCatalogoPrefixos() {
-            AppState.prefixCatalog = [...new Set(AppState.tecnicos.flatMap(t => t.prefixos || []))]
-                .filter(Boolean)
-                .sort((a, b) => b.length - a.length || a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-        }
-        function getEmpresasTecnicos() {
-            return [...new Set(AppState.tecnicos.map(t => t.empresa).filter(Boolean))]
-                .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-        }
-        function getTecnicosPorEmpresa(empresa) {
-            return AppState.tecnicos.filter(t => t.empresa === empresa);
-        }
-        function tecnicoCombinaPrefixos(tecnico, prefixosSelecionados) {
-            if (!prefixosSelecionados.length) return true;
-            if (!tecnico.prefixos || !tecnico.prefixos.length) return true;
-            return tecnico.prefixos.some(p => prefixosSelecionados.includes(p));
-        }
-        const $ = id => document.getElementById(id);
+
         const DOM = {
-            rede: $('rede'), tipo: $('tipo'), detalheAtenuacao: $('detalheAtenuacao'), empresa: $('empresa'), empresaMetro: $('empresaMetro'),
-            inputFamilia: $('inputFamilia'), filtro: $('filtro'), listaCTOs: $('listaCTOs'), listaTecs: $('listaTecs'), listaTecsCabo: $('listaTecsCabo'),
-            resumoCTOs: $('resumoCTOs'), gridPortas: $('gridPortas'), listaPreview: $('listaPreview'),
-            boxMetro: $('boxMetro'), boxRede: $('boxRede'), boxDetalheAtenuacao: $('boxDetalheAtenuacao'), boxFamilia: $('boxFamilia'),
-            boxBuscaCTO: $('boxBuscaCTO'), boxPortas: $('boxPortas'), previewRamal: $('previewRamal'),
-            inputCoordenada: $('inputCoordenada'), btnBuscarCabo: $('btnBuscarCabo'), statusBar: $('statusBar'), resultadoCabos: $('resultadoCabos'),
-            btnGerarOS: $('btnGerarOS'), btnGerarOSMetro: $('btnGerarOSMetro'), btnLimparTudo: $('btnLimparTudo'), btnLimparTudo2: $('btnLimparTudo2'),
-            mPlayer: $('mPlayer'),
-            mVol: $('volSlider'),
-            wrapper: $('wrapper'), sidebar: $('sidebar'), musicControls: $('mControls')
+            wrapper: document.getElementById('wrapper'),
+            sidebar: document.getElementById('sidebar'),
+            tipo: document.getElementById('tipoAcionamento'),
+            sub: document.getElementById('subcategoria'),
+            empresa: document.getElementById('empresa'),
+            empresaMetro: document.getElementById('empresaMetro'),
+            boxRede: document.getElementById('boxRede'),
+            boxMetro: document.getElementById('boxMetro'),
+            boxDetalheAtenuacao: document.getElementById('boxDetalheAtenuacao'),
+            boxPortas: document.getElementById('boxPortas'),
+            boxFamilia: document.getElementById('boxFamilia'),
+            boxBuscaCTO: document.getElementById('boxBuscaCTO'),
+            boxTecnicos: document.getElementById('boxTecnicos'),
+            boxTecnicosCabo: document.getElementById('boxTecnicosCabo'),
+            listaCTOs: document.getElementById('listaCTOs'),
+            resumoCTOs: document.getElementById('resumoCTOs'),
+            listaTecs: document.getElementById('listaTecnicos'),
+            listaTecsCabo: document.getElementById('listaTecnicosCabo'),
+            listaTecsMetro: document.getElementById('listaTecnicosMetro'),
+            gridPortas: document.getElementById('gridPortas'),
+            previewText: document.getElementById('previewText'),
+            previewRamal: document.getElementById('previewRamal'),
+            ramalTecnico: document.getElementById('ramalTecnico'),
+            buscaCTO: document.getElementById('buscaCTO')
         };
 
-        /* ════════════════════════════════════════════════
-           TEMA
-        ════════════════════════════════════════════════ */
-        (function () {
-            const saved = localStorage.getItem('noc-theme') || 'light';
-            document.documentElement.setAttribute('data-theme', saved);
-            $('toggleLabel').textContent = saved === 'dark' ? 'Tema Escuro' : 'Tema Claro';
-        })();
-        function toggleTheme() {
-            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            $('toggleLabel').textContent = next === 'dark' ? 'Tema Escuro' : 'Tema Claro';
-            try { localStorage.setItem('noc-theme', next) } catch (e) { }
-        }
-        $('themeToggle').addEventListener('click', toggleTheme);
+        const AppState = {
+            tecnicosData: [],
+            empresasUnicas: [],
+            ctosData: [],
+            ctosSelecionadas: [], 
+            portasAfetadas: {}, 
+            tecnicosStatus: 'loading',
+            ctosStatus: 'loading'
+        };
 
-        /* ════════════════════════════════════════════════
-           TOAST
-        ════════════════════════════════════════════════ */
-        function showToast(msg, type = 'ok', dur = 2800) {
-            const t = $('toast'); t.textContent = msg;
-            t.className = 'toast' + (type === 'error' ? ' error' : '');
-            t.classList.add('show'); clearTimeout(t._t);
-            t._t = setTimeout(() => t.classList.remove('show'), dur);
-        }
-
-        /* ════════════════════════════════════════════════
-           MUSIC PLAYER
-        ════════════════════════════════════════════════ */
-        let currentTrack = null;
-        let canvasCtx = null, isAudioSetup = false, vizData = new Array(90).fill(0);
-
-        function setupAudioViz() {
-            if (isAudioSetup) return;
-            const cv = $('audioVisualizer'); canvasCtx = cv.getContext('2d');
-            const r = () => { cv.width = window.innerWidth; cv.height = 80 };
-            window.addEventListener('resize', r); r();
-            isAudioSetup = true; drawViz();
-        }
-        function drawViz() {
-            requestAnimationFrame(drawViz);
-            if (!canvasCtx) return;
-            const cv = $('audioVisualizer');
-            canvasCtx.clearRect(0, 0, cv.width, cv.height);
-            const buf = 90, bw = cv.width / buf; let x = 0;
-            const playing = !DOM.mPlayer.paused && DOM.mPlayer.currentTime > 0;
-            const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-            for (let i = 0; i < buf; i++) {
-                const tgt = playing ? (0.08 + Math.random() * .45) * (cv.height - 4) : 2;
-                vizData[i] += (tgt - vizData[i]) * .12;
-                const p = i / buf;
-                const r = dark ? Math.round(59 + p * 14) : Math.round(26 + p * 14);
-                const g = dark ? Math.round(158 - p * 30) : Math.round(111 + p * 47);
-                const b = dark ? Math.round(255 - p * 55) : Math.round(219 - p * 43);
-                canvasCtx.fillStyle = `rgba(${r},${g},${b},.5)`;
-                canvasCtx.fillRect(x, cv.height - vizData[i], Math.max(bw - 1, 1), vizData[i]);
-                x += bw;
-            }
-        }
-
-        function setActiveBtn(btn) {
-            DOM.musicControls.querySelectorAll('.m-btn').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-        }
-
-        function playTrack(track, btnEl) {
-            currentTrack = parseInt(track);
-            setupAudioViz();
-            DOM.mPlayer.src = `musica${track}.mp3`;
-            DOM.mPlayer.play().catch(e => console.warn('Audio error:', e));
-            setActiveBtn(btnEl);
-        }
-
-        // botões normais 01–12
-        DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn => {
-            if (btn.id === 'btnFarmarAura') return;
-            btn.addEventListener('click', function () { playTrack(this.dataset.track, this) });
-        });
-
-        // volume e persistência
-        try {
-            const savedVol = localStorage.getItem('player-vol');
-            if (savedVol !== null) {
-                DOM.mPlayer.volume = savedVol;
-                DOM.mVol.value = savedVol;
-            } else {
-                DOM.mPlayer.volume = 0.5;
-                DOM.mVol.value = 0.5;
-            }
-        } catch (e) { }
-
-        DOM.mVol.addEventListener('input', (e) => {
-            const v = e.target.value;
-            DOM.mPlayer.volume = v;
-            try { localStorage.setItem('player-vol', v) } catch (err) { }
-        });
-
-        function stopMusica() {
-            DOM.mPlayer.pause(); DOM.mPlayer.currentTime = 0;
-            currentTrack = null; setActiveBtn(null);
-            flameActive = false;
-            if (DOM.musicControls) DOM.musicControls.classList.remove('aura-active');
-
-            // Reset tema para light
-            document.documentElement.setAttribute('data-theme', 'light');
-            const label = $('toggleLabel');
-            if (label) label.textContent = 'Tema Claro';
-            try { localStorage.setItem('noc-theme', 'light') } catch (e) { }
-        }
-
-        // stop
-        $('btnStopMusic').addEventListener('click', stopMusica);
-        $('flameCanvas').addEventListener('click', (e) => {
-            if (flameActive) {
-                e.stopPropagation(); // Evita redisparar o player se o clique foi no botão
-                stopMusica();
-            }
-        });
-
-        /* ════════════════════════════════════════════════
-           CHAMA LOCAL (botão Farmar Aura)
-        ════════════════════════════════════════════════ */
-        let flameActive = false;
-        (function () {
-            const btn = $('btnFarmarAura');
-            const flameCv = $('flameCanvas');
-            const sparkCv = $('borderSparkCanvas');
-            const flameCtx = flameCv.getContext('2d');
-            const sparkCtx = sparkCv.getContext('2d');
-
-            let fW = 160, fH = 140, sParts = [], fParts = [];
-
-            /* resize */
-            function resize() {
-                const r = btn.getBoundingClientRect();
-                fW = flameCv.width = (r.width || 160) * 3.5;
-                fH = flameCv.height = 600;
-                sparkCv.width = (r.width || 160) + 12;
-                sparkCv.height = (r.height || 40) + 12;
-            }
-            window.addEventListener('resize', resize);
-            setTimeout(resize, 100);
-
-            function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
-
-            /* ── FAÍSCAS DE BORDA (sempre rodando, sutis) ── */
-            function spawnSpark() {
-                const dark = isDark();
-                const bW = sparkCv.width, bH = sparkCv.height;
-                // escolhe ponto na borda do botão
-                const side = Math.random();
-                let x, y;
-                if (side < 0.35) { x = Math.random() * bW; y = 2; }           // topo
-                else if (side < 0.65) { x = Math.random() * bW; y = bH - 2; }        // base
-                else if (side < 0.82) { x = 2; y = Math.random() * bH; } // esq
-                else { x = bW - 2; y = Math.random() * bH; } // dir
-                const speed = 0.4 + Math.random() * 0.9;
-                sParts.push({
-                    x, y,
-                    vx: (Math.random() - .5) * 1.4,
-                    vy: -(speed),
-                    life: 1, decay: .06 + Math.random() * .08,
-                    size: 1 + Math.random() * 1.5,
-                    dark
-                });
-            }
-            function drawSparks() {
-                sparkCtx.clearRect(0, 0, sparkCv.width, sparkCv.height);
-                // spawn 1-2 faíscas por frame
-                if (Math.random() < .55) spawnSpark();
-                if (Math.random() < .25) spawnSpark();
-                sparkCtx.globalCompositeOperation = 'lighter';
-                for (let i = sParts.length - 1; i >= 0; i--) {
-                    const p = sParts[i];
-                    p.life -= p.decay;
-                    if (p.life <= 0) { sParts.splice(i, 1); continue; }
-                    p.x += p.vx; p.y += p.vy;
-                    const alpha = p.life * .85;
-                    const col = p.dark
-                        ? `rgba(120,170,255,${alpha})`
-                        : `rgba(255,${Math.round(160 + p.life * 80)},${Math.round(p.life * 40)},${alpha})`;
-                    sparkCtx.beginPath();
-                    sparkCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-                    sparkCtx.fillStyle = col;
-                    sparkCtx.fill();
-                }
-                sparkCtx.globalCompositeOperation = 'source-over';
-            }
-
-            /* ── CHAMA SAIYAJIN (envolvente) ── */
-            function spawnFlame() {
-                // Aumento agressivo de velocidade e dispersão lateral
-                const spd = 6 + Math.random() * 8, sz = 18 + Math.random() * 30;
-                fParts.push({
-                    x: fW * (0.35 + Math.random() * .3),
-                    y: fH * (0.65 + Math.random() * .1),
-                    vx: (Math.random() - .5) * 8, // Aumentado de 2.5 para 8 (movimento lateral louco)
-                    vy: -spd,
-                    life: 1, decay: .006 + Math.random() * .01,
-                    size: sz, w: Math.random() * Math.PI * 2, ws: .15 + Math.random() * .25 // Oscilação mais rápida
-                });
-            }
-            function flameCol(life, dark) {
-                if (dark) {
-                    // Azul Super Saiyajin: Tons saturados para evitar o efeito "branco"
-                    if (life > .8) return `rgba(100,200,255,0.9)`; // Ciano vibrante
-                    if (life > .5) return `rgba(0,100,255,0.85)`;  // Azul royal
-                    if (life > .25) return `rgba(0,50,200,0.7)`;   // Azul profundo
-                    return `rgba(0,20,150,${life * 0.5})`;        // Rastro escuro
-                }
-                // Modo claro permanece quente, mas mais saturado
-                if (life > .8) return `rgba(255,200,50,0.9)`;
-                if (life > .5) return `rgba(255,100,0,0.85)`;
-                if (life > .25) return `rgba(200,20,0,0.7)`;
-                return `rgba(100,0,0,${life * 0.5})`;
-            }
-            function drawFlame() {
-                flameCtx.clearRect(0, 0, fW, fH);
-                if (!flameActive) { fParts = []; return; }
-                for (let i = 0; i < 10; i++) spawnFlame(); // Aumentado de 6 para 10 por frame
-                const dark = isDark();
-                flameCtx.globalCompositeOperation = 'lighter';
-                for (let i = fParts.length - 1; i >= 0; i--) {
-                    const p = fParts[i]; p.life -= p.decay;
-                    if (p.life <= 0) { fParts.splice(i, 1); continue; }
-                    // Movimento 'maluco': soma vx com uma oscilação senoidal forte
-                    p.w += p.ws;
-                    p.x += p.vx + Math.sin(p.w) * 5; // Aumentado de 0.85 para 5 (zigue-zague intenso)
-                    p.y += p.vy;
-                    const r = p.size * p.life;
-                    const g = flameCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.3);
-                    g.addColorStop(0, flameCol(p.life * .95, dark));
-                    g.addColorStop(.4, flameCol(p.life * .55, dark));
-                    g.addColorStop(1, 'rgba(0,0,0,0)');
-                    flameCtx.beginPath(); flameCtx.arc(p.x, p.y, r * 2.3, 0, Math.PI * 2);
-                    flameCtx.fillStyle = g; flameCtx.fill();
-                }
-                flameCtx.globalCompositeOperation = 'source-over';
-            }
-
-            /* loop unificado */
-            function tick() {
-                requestAnimationFrame(tick);
-                drawSparks();
-                drawFlame();
-            }
-            tick();
-        })();
-
-        /* ════════════════════════════════════════════════
-           FIRE OVERLAY (transformação de tema)
-        ════════════════════════════════════════════════ */
-        (function () {
-            const ov = $('fireOverlay');
-            const ctx = ov.getContext('2d');
-            let W, H, parts = [], running = false, start = 0, switched = false;
-            let shockwaves = [], speedLines = [];
-
-            function resize() { W = ov.width = window.innerWidth; H = ov.height = window.innerHeight; }
-            window.addEventListener('resize', resize); resize();
-
-            function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
-
-            function spawnShockwave() {
-                shockwaves.push({ r: 0, opacity: 1, color: isDark() ? '80, 150, 255' : '255, 180, 0' });
-            }
-
-            function spawnSpeedLines() {
-                speedLines = [];
-                for (let i = 0; i < 40; i++) {
-                    speedLines.push({
-                        angle: Math.random() * Math.PI * 2,
-                        len: 100 + Math.random() * 300,
-                        dist: Math.random() * 500,
-                        speed: 15 + Math.random() * 25
-                    });
-                }
-            }
-
-            function spawn(big, blue) {
-                const spd = big ? (10 + Math.random() * 15) : (5 + Math.random() * 8);
-                const sz = big ? (30 + Math.random() * 50) : (15 + Math.random() * 25);
-                parts.push({
-                    x: W * Math.random(), y: H + 50, vx: (Math.random() - .5) * 5, vy: -spd,
-                    life: 1, decay: big ? (.004 + Math.random() * .006) : (.007 + Math.random() * .01),
-                    size: sz, blue
-                });
-            }
-            function col(life, blue) {
-                if (blue) {
-                    if (life > .7) return `rgba(20,55,255,${life * .9})`;
-                    if (life > .4) return `rgba(75,135,255,${life * .85})`;
-                    if (life > .2) return `rgba(175,215,255,${life * .8})`;
-                    return `rgba(225,242,255,${life * .6})`;
-                }
-                if (life > .7) return `rgba(255,215,18,${life * .9})`;
-                if (life > .45) return `rgba(255,85,0,${life * .85})`;
-                if (life > .2) return `rgba(195,12,0,${life * .8})`;
-                return `rgba(50,0,0,${life * .5})`;
-            }
-
-            function draw(el) {
-                if (!running) return;
-                ctx.clearRect(0, 0, W, H);
-                if (!start) start = el;
-                const elapsed = el - start;
-                const blue = isDark();
-
-                // 1. Flash Inicial (Branco/Azul)
-                if (elapsed < 200) {
-                    const flashOpacity = 1 - (elapsed / 200);
-                    ctx.fillStyle = `rgba(${blue ? '150,220,255' : '255,255,255'}, ${flashOpacity})`;
-                    ctx.fillRect(0, 0, W, H);
-                }
-
-                // 2. Shockwaves (Ondas de Choque)
-                ctx.lineWidth = 5;
-                for (let i = shockwaves.length - 1; i >= 0; i--) {
-                    const sw = shockwaves[i];
-                    sw.r += 28; sw.opacity -= 0.035;
-                    if (sw.opacity <= 0) { shockwaves.splice(i, 1); continue; }
-                    ctx.strokeStyle = `rgba(${sw.color}, ${sw.opacity})`;
-                    ctx.beginPath(); ctx.arc(W / 2, H / 2, sw.r, 0, Math.PI * 2); ctx.stroke();
-                }
-
-                // 3. Linhas de Velocidade (Anime Style)
-                ctx.strokeStyle = blue ? 'rgba(100,200,255,0.6)' : 'rgba(255,200,0,0.6)';
-                ctx.lineWidth = 3;
-                speedLines.forEach(l => {
-                    l.dist += l.speed;
-                    const x1 = W / 2 + Math.cos(l.angle) * l.dist;
-                    const y1 = H / 2 + Math.sin(l.angle) * l.dist;
-                    const x2 = W / 2 + Math.cos(l.angle) * (l.dist + l.len);
-                    const y2 = H / 2 + Math.sin(l.angle) * (l.dist + l.len);
-                    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-                });
-
-                // 4. Partículas de Fogo Massivas
-                if (elapsed < 650) {
-                    for (let i = 0; i < 20; i++) spawn(Math.random() < .4, blue);
-                }
-
-                ctx.globalCompositeOperation = 'lighter';
-                for (let i = parts.length - 1; i >= 0; i--) {
-                    const p = parts[i]; p.life -= p.decay;
-                    if (p.life <= 0) { parts.splice(i, 1); continue; }
-                    p.x += p.vx; p.y += p.vy;
-                    const r = p.size * p.life;
-                    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.5);
-                    g.addColorStop(0, col(p.life * .95, p.blue));
-                    g.addColorStop(.3, col(p.life * .6, p.blue));
-                    g.addColorStop(1, 'rgba(0,0,0,0)');
-                    ctx.beginPath(); ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2);
-                    ctx.fillStyle = g; ctx.fill();
-                }
-                ctx.globalCompositeOperation = 'source-over';
-
-                // Troca de tema no pico (400ms)
-                if (elapsed > 400 && !switched) {
-                    switched = true; toggleTheme();
-                    parts.forEach(p => { p.blue = isDark(); });
-                    spawnShockwave(); // Segunda onda no impacto do tema
-                }
-
-                if (elapsed < 900) {
-                    requestAnimationFrame(draw);
-                } else {
-                    ctx.clearRect(0, 0, W, H);
-                    running = false;
-                    flameActive = true;
-                    if ($('btnFarmarAura')) setActiveBtn($('btnFarmarAura'));
-                    if (DOM.musicControls) DOM.musicControls.classList.add('aura-active');
-                    document.body.classList.remove('screen-shake');
-                    ov.style.display = 'none';
-                }
-            }
-
-            window.startTransition = function () {
-                if (running) return;
-                running = true; start = 0; switched = false; parts = []; shockwaves = [];
-                ov.style.display = 'block';
-                spawnShockwave();
-                spawnSpeedLines();
-                document.body.classList.add('screen-shake');
-                requestAnimationFrame(draw);
-            };
-
-            // Farmar Aura
-            $('btnFarmarAura').addEventListener('click', function () {
-                playTrack(13, this);
-                const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-                if (dark) {
-                    flameActive = true;
-                    if (DOM.musicControls) DOM.musicControls.classList.add('aura-active');
-                } else {
-                    startTransition();
-                }
-            });
-        })();
-
-        /* ════════════════════════════════════════════════
-           APP — FORMULÁRIO
-        ════════════════════════════════════════════════ */
-        document.addEventListener('DOMContentLoaded', () => { gerarGridPortas(); bindEvents(); renderStatusBar(); carregarOperadores(); carregarTecnicos() });
-
-        function bindEvents() {
-            DOM.rede.addEventListener('change', aoMudarRede);
-            DOM.tipo.addEventListener('change', handleAcionamentoChange);
-            DOM.detalheAtenuacao.addEventListener('change', handleDetalheAtenuacaoChange);
-            DOM.empresa.addEventListener('change', renderTecnicos);
-            DOM.empresaMetro.addEventListener('change', renderTecnosCabo);
-            DOM.inputFamilia.addEventListener('input', atualizarPreviewRamal);
-            DOM.filtro.addEventListener('input', filtrarCTOs);
-            DOM.btnBuscarCabo.addEventListener('click', buscarCabosProximos);
-            DOM.btnGerarOS.addEventListener('click', gerarOS);
-            DOM.btnGerarOSMetro.addEventListener('click', gerarOSMetro);
-            DOM.btnLimparTudo.addEventListener('click', limparTudo);
-            DOM.btnLimparTudo2.addEventListener('click', limparTudo);
-            DOM.listaCTOs.addEventListener('change', e => { if (e.target.name === 'ctoCheck') handleCTOToggle(e.target) });
-            DOM.gridPortas.addEventListener('change', atualizarResumo);
-            $('btnFecharModal').addEventListener('click', fecharModal);
-            $('btnEditarOS').addEventListener('click', fecharModal);
-            $('operadorSelect').addEventListener('change', async e => {
-                try { localStorage.setItem('noc-operador', e.target.value); } catch (err) { }
-                atualizarTextoModal();
-                try { await navigator.clipboard.writeText(construirMensagemComOperador()); } catch (err) { }
-            });
-            $('copyModal').addEventListener('click', e => { if (e.target === $('copyModal')) fecharModal() });
-            $('btnSeguir').addEventListener('click', async () => {
-                const rede = DOM.rede.value, msg = construirMensagemComOperador();
-                let hubUrl = null;
-                if (rede === 'WIRE') hubUrl = 'https://clickip.hubsoft.com.br/rede/rede/pop';
-                else if (rede === 'FIBER') hubUrl = 'https://fibernetwork.hubsoft.com.br/rede/rede/pop';
-                else if (rede === 'INTLINK') hubUrl = 'https://intlink.hubsoft.com.br/rede/rede/pop';
-                try { await navigator.clipboard.writeText(msg); } catch (err) { }
-                fecharModal();
-                const w = hubUrl ? window.open(hubUrl, '_blank') : null;
-                if (!w && hubUrl) showToast('Popup bloqueado! Permita popups.', 'error', 5000);
-                else if (hubUrl) showToast('✓ Hubsoft aberto!');
-                else showToast('Nenhum Hubsoft configurado para esta rede.', 'error', 5000);
+        async function init() {
+            carregarTema();
+            configurarEventos();
+            gerarGridPortas();
+            
+            Promise.all([fetchTecnicos(), fetchCTOs()]).then(() => {
+                renderEmpresas(DOM.empresa);
+                renderEmpresas(DOM.empresaMetro);
             });
         }
 
-        function carregarTecnicos() {
-            if (AppState.tecnicosStatus === 'loading') return;
-            AppState.tecnicosStatus = 'loading';
-            AppState.tecnicos = [];
-            const s = document.createElement('script');
-            s.src = `${GAS_URL}?aba=TECNICOS&callback=cbTec`;
-            s.onerror = () => {
+        async function fetchTecnicos() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getTecnicos`);
+                const data = await res.json();
+                AppState.tecnicosData = data;
+                AppState.empresasUnicas = [...new Set(data.map(t => t.empresa))].filter(Boolean).sort();
+                AppState.tecnicosStatus = 'success';
+                updateTecnicosList();
+            } catch (err) {
                 AppState.tecnicosStatus = 'error';
-                DOM.listaTecs.innerHTML = '<div class="info-msg">Erro ao carregar técnicos.</div>';
-                DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Erro ao carregar técnicos.</div>';
-                renderEmpresas(DOM.empresa);
-                renderEmpresas(DOM.empresaMetro);
-            };
-            document.body.appendChild(s);
-            window.cbTec = d => {
-                AppState.tecnicosStatus = 'ready';
-                AppState.tecnicos = (d || []).map(x => {
-                    const nome = (x.col1 || x.nome || '').trim();
-                    const numero = (x.col2 || x.numero || '').trim();
-                    const empresa = (x.col3 || x.empresa || '').trim();
-                    const prefixos = splitListaValores(x.col4 || x.prefixos || '').map(normalizar);
-                    return { nome, numero, empresa, prefixos };
-                }).filter(t => t.nome || t.numero || t.empresa);
-                atualizarCatalogoPrefixos();
-                renderEmpresas(DOM.empresa);
-                renderEmpresas(DOM.empresaMetro);
-                renderTecnicos();
-                renderTecnosCabo();
-            };
+                DOM.listaTecs.innerHTML = '<div class="info-msg" style="color:var(--red)">Erro ao carregar técnicos.</div>';
+            }
         }
-        function gerarGridPortas() { DOM.gridPortas.innerHTML = Array.from({ length: 16 }, (_, i) => i + 1).map(i => `<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('') }
-        function aoMudarRede() { const r = DOM.rede.value, m = r === 'METRO'; DOM.wrapper.classList.toggle('metro-mode', m); DOM.sidebar.classList.toggle('visible', m); DOM.sidebar.style.display = m ? 'none' : ''; if (m) { DOM.boxMetro.classList.remove('hidden'); DOM.boxRede.classList.add('hidden'); if (!AppState.cacheRedes['METRO']) fetchCaboMetro(); else renderStatusBar(); } else { DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); carregarCTOs(r); } atualizarResumo() }
-        function carregarCTOs(rede) {
-            DOM.listaCTOs.innerHTML = '<div class="loading-text">Carregando...</div>';
-            desmarcarTudo('ctoCheck'); atualizarResumo();
-            if (AppState.cacheRedes[rede]) { AppState.baseDados = AppState.cacheRedes[rede]; renderListaCTOs(AppState.baseDados); renderTecnicos(); return; }
-            const cb = `cbRede_${rede}`, s = document.createElement('script');
-            s.src = `${GAS_URL}?aba=${rede}&callback=${cb}`; s.onerror = () => DOM.listaCTOs.innerHTML = '<div class="info-msg">Erro ao carregar CTOs.</div>';
-            document.body.appendChild(s);
-            window[cb] = d => { const n = d.map(x => ({ cto: x.col1 || x.cto, lat: x.col2 || x.lat, lng: x.col3 || x.lng, ...x })); AppState.cacheRedes[rede] = n; AppState.baseDados = n; renderListaCTOs(n); renderTecnicos(); };
+
+        async function fetchCTOs() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getCTOs`);
+                const data = await res.json();
+                AppState.ctosData = data;
+                AppState.ctosStatus = 'success';
+                DOM.listaCTOs.innerHTML = '<div class="info-msg">Digite para buscar CTOs...</div>';
+            } catch (err) {
+                AppState.ctosStatus = 'error';
+                DOM.listaCTOs.innerHTML = '<div class="info-msg" style="color:var(--red)">Erro ao carregar CTOs.</div>';
+            }
         }
-        function fetchCaboMetro() { if (AppState.cacheRedes['METRO']) return; AppState.cacheRedes['METRO'] = 'LOADING'; renderStatusBar(); const s = document.createElement('script'); s.src = `${GAS_URL}?callback=cbMetro`; s.onerror = () => { AppState.cacheRedes['METRO'] = 'ERRO'; renderStatusBar(); }; document.body.appendChild(s); window.cbMetro = d => { const n = d.map(x => ({ ozmap: x.col1 || x.ozmap, localizacao: x.col2 || x.localizacao, tipo: x.col3 || x.tipo, nivel: x.col4 || x.nivel, comprimento: x.col5 || x.comprimento, ...x })); AppState.cacheRedes['METRO'] = n; renderStatusBar(); }; }
-        function renderStatusBar() { const s = AppState.cacheRedes['METRO']; if (s === 'LOADING') DOM.statusBar.innerHTML = `<div class="progress-wrap"><div class="progress-label">Carregando...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`; else if (s === 'ERRO') DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--red)">Falha ao carregar cabos.</div>`; else if (Array.isArray(s)) DOM.statusBar.innerHTML = `<div class="info-msg" style="color:var(--teal)">✓ ${s.length} cabos carregados.</div>`; else DOM.statusBar.innerHTML = ''; }
-        function haversine(a, b, c, d) { const R = 6371000, e = (c - a) * Math.PI / 180, f = (d - b) * Math.PI / 180, g = Math.sin(e / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(f / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(g), Math.sqrt(1 - g)); }
-        function distToSegment(u, p1, p2) {
-            const dx = p2.lng - p1.lng, dy = p2.lat - p1.lat;
-            if (dx === 0 && dy === 0) return haversine(u.lat, u.lng, p1.lat, p1.lng);
-            let t = ((u.lng - p1.lng) * dx + (u.lat - p1.lat) * dy) / (dx * dx + dy * dy);
-            t = Math.max(0, Math.min(1, t));
-            return haversine(u.lat, u.lng, p1.lat + t * dy, p1.lng + t * dx);
-        }
-        function parseCoordenada(s) { s = s.trim(); let m = s.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/); if (m) return { lat: +m[1], lng: +m[2] }; m = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) return { lat: +m[1], lng: +m[2] }; m = s.match(/[?&]q=(-?\d+\.\d+)[,+](-?\d+\.\d+)/); if (m) return { lat: +m[1], lng: +m[2] }; return null; }
-        function extrairCoordsCabo(str) { str = String(str || '').trim(); if (!str || str === 'undefined') return []; if (str.includes(';')) { const c = []; str.split(',').forEach(p => { const x = p.trim().split(';'); if (x.length >= 2) { const la = +x[0], ln = +x[1]; if (!isNaN(la) && !isNaN(ln)) c.push({ lat: la, lng: ln }); } }); if (c.length) return c; } return [...str.matchAll(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/g)].map(m => ({ lat: +m[2], lng: +m[1] })); }
-        function buscarCabosProximos() {
-            const coord = parseCoordenada(DOM.inputCoordenada.value);
-            if (!coord) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Coordenada inválida.</div>`; return; }
-            const dm = AppState.cacheRedes['METRO'];
-            if (!Array.isArray(dm)) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Banco ainda carregando...</div>`; return; }
-            const RAIO = 30, cv = new Map();
-            dm.forEach(row => {
-                const nome = String(row.ozmap || row.cto || '').trim();
-                const coords = String(row.localizacao || row.lat || '').trim();
-                const pts = extrairCoordsCabo(coords);
-                if (!pts.length) return;
-                let best = Infinity;
-                if (pts.length === 1) {
-                    best = haversine(coord.lat, coord.lng, pts[0].lat, pts[0].lng);
-                } else {
-                    for (let i = 0; i < pts.length - 1; i++) {
-                        const d = distToSegment(coord, pts[i], pts[i + 1]);
-                        if (d < best) best = d;
-                    }
-                }
-                if (best <= RAIO && !cv.has(nome)) {
-                    cv.set(nome, {
-                        nome, dist: best,
-                        tipo: String(row.tipo || row.lng || '').trim(),
-                        nivel: String(row.nivel || '').trim(),
-                        comp: String(row.comprimento || '').trim()
-                    });
-                }
+
+        function renderEmpresas(selectEl) {
+            selectEl.innerHTML = '<option value="">Selecione...</option>';
+            AppState.empresasUnicas.forEach(emp => {
+                selectEl.innerHTML += `<option value="${emp}">${emp}</option>`;
             });
-            const enc = Array.from(cv.values()).sort((a, b) => a.dist - b.dist);
-            if (!enc.length) { DOM.resultadoCabos.innerHTML = `<div class="info-msg">Nenhum cabo no raio de ${RAIO}m.</div>`; return; }
-            const ci = DOM.inputCoordenada.value.trim();
-            DOM.resultadoCabos.innerHTML = enc.map(c => `<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp || '-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
         }
-        function renderEmpresas(selectEl) { const el = selectEl || DOM.empresa; if (!el) return; const atual = el.value; if (AppState.tecnicosStatus === 'loading') { el.innerHTML = '<option value="" disabled selected>Carregando técnicos...</option>'; return; } if (AppState.tecnicosStatus === 'error') { el.innerHTML = '<option value="" disabled selected>Erro ao carregar técnicos</option>'; return; } const empresas = getEmpresasTecnicos(); if (!empresas.length) { el.innerHTML = '<option value="" disabled selected>Sem empresas na planilha</option>'; return; } el.innerHTML = '<option value="" disabled selected>Selecione...</option>'; empresas.forEach(emp => { el.insertAdjacentHTML('beforeend', `<option value="${emp}">${emp}</option>`); }); if (empresas.includes(atual)) el.value = atual; }
-        function renderTecnosCabo() { renderEmpresas(DOM.empresaMetro); const emp = DOM.empresaMetro.value; if (AppState.tecnicosStatus === 'loading') { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Carregando técnicos da planilha...</div>'; return; } if (AppState.tecnicosStatus === 'error') { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Erro ao carregar técnicos.</div>'; return; } if (!getEmpresasTecnicos().length) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Nenhuma empresa na planilha.</div>'; return; } if (!emp) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione a empresa.</div>'; return; } const ctosSel = getSelectedCTOs(); const prefixosSel = ctosSel.map(c => getPrefixFromCTO(c.cto)).filter(Boolean); let lista = getTecnicosPorEmpresa(emp); if (prefixosSel.length) lista = lista.filter(t => tecnicoCombinaPrefixos(t, prefixosSel)); if (!lista.length) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Nenhum técnico.</div>'; return; } DOM.listaTecsCabo.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join(''); }
-        function normalizar(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[\s-]/g, ''); }
-        function getPrefixFromCTO(n) { const u = normalizar(n); return AppState.prefixCatalog.find(p => u.includes(p)) || ''; }
-        function buscarCTOsPorFragmento(f) { const fn = normalizar(f); if (!fn) return []; return AppState.baseDados.filter(c => normalizar(c.cto).includes(fn)); }
-        function getSelectedCTOs() { if (DOM.tipo.value === 'REDE DE ACESSO - ATENUACAO' && DOM.detalheAtenuacao.value === 'RAMAL GPON ATENUADO') return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim()); return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb => AppState.baseDados.find(b => b.cto === cb.value)).filter(Boolean); }
-        function handleAcionamentoChange() { const t = DOM.tipo.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas(); DOM.boxDetalheAtenuacao.classList.toggle('hidden', t !== 'REDE DE ACESSO - ATENUACAO'); if (t === 'REDE DE ACESSO - ATENUACAO') DOM.detalheAtenuacao.value = ''; DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.boxPortas.classList.add('hidden'); AppState.multiSelectAllowed = true; atualizarResumo(); renderTecnicos(); }
-        function handleDetalheAtenuacaoChange() { const d = DOM.detalheAtenuacao.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas(); DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); AppState.multiSelectAllowed = true; if (d === 'PORTA CTO ATENUADA') { DOM.boxPortas.classList.remove('hidden'); AppState.multiSelectAllowed = false; } else if (d === 'RAMAL GPON ATENUADO') { DOM.boxFamilia.classList.remove('hidden'); DOM.previewRamal.classList.remove('hidden'); DOM.boxBuscaCTO.classList.add('hidden'); atualizarPreviewRamal(); } atualizarResumo(); renderTecnicos(); }
-        function handleCTOToggle(cb) { const d = DOM.detalheAtenuacao.value; if (DOM.tipo.value !== 'REDE DE ACESSO - ATENUACAO') { atualizarResumo(); renderTecnicos(); return; } if (d === 'PORTA CTO ATENUADA' && cb.checked) DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c => { if (c !== cb) c.checked = false; }); else if (d === 'RAMAL GPON ATENUADO' && cb.checked) { cb.checked = false; return; } atualizarResumo(); renderTecnicos(); }
-        function renderListaCTOs(lista) { if (!lista || !lista.length) { DOM.listaCTOs.innerHTML = '<div class="info-msg">Nenhuma CTO encontrada.</div>'; return; } DOM.listaCTOs.innerHTML = lista.sort((a, b) => a.cto.localeCompare(b.cto, undefined, { numeric: true })).map((item, i) => `<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join(''); }
-        function renderTecnicos() { renderEmpresas(DOM.empresa); if (AppState.tecnicosStatus === 'loading') { DOM.listaTecs.innerHTML = '<div class="info-msg">Carregando técnicos da planilha...</div>'; return; } if (AppState.tecnicosStatus === 'error') { DOM.listaTecs.innerHTML = '<div class="info-msg">Erro ao carregar técnicos.</div>'; return; } if (!getEmpresasTecnicos().length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Nenhuma empresa na planilha.</div>'; return; } const emp = DOM.empresa.value; if (!emp) { DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione empresa.</div>'; return; } const ctosSel = getSelectedCTOs(); const prefixosSel = ctosSel.map(c => getPrefixFromCTO(c.cto)).filter(Boolean); let lista = getTecnicosPorEmpresa(emp); if (prefixosSel.length) lista = lista.filter(t => tecnicoCombinaPrefixos(t, prefixosSel)); if (!lista.length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Nenhum técnico disponível.</div>'; return; } DOM.listaTecs.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join(''); }
-        function atualizarPreviewRamal() { if (DOM.detalheAtenuacao.value !== 'RAMAL GPON ATENUADO') return; const frag = DOM.inputFamilia.value, enc = buscarCTOsPorFragmento(frag); if (!frag.trim()) DOM.listaPreview.innerHTML = '<div class="info-msg">Digite o prefixo.</div>'; else if (!enc.length) DOM.listaPreview.innerHTML = `<div class="preview-item">Nenhuma CTO encontrada</div>`; else DOM.listaPreview.innerHTML = enc.map(c => `<div class="preview-item">${c.cto}</div>`).join(''); atualizarResumo(); renderTecnicos(); }
-        function atualizarResumo() { const sel = Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')); let html = sel.map(c => `<div class="tag"><span>${c.value}</span><button class="btn-remove" onclick="removerCTO('${c.id}')">✕</button></div>`).join(''); const tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value; if (tipo === 'REDE DE ACESSO - ATENUACAO' && det === 'RAMAL GPON ATENUADO') { const f = DOM.inputFamilia.value.trim(); if (f) { const enc = buscarCTOsPorFragmento(f); html += `<div class="tag warning"><span>${f} (${enc.length} CTOs)</span></div>`; } } if (tipo === 'REDE DE ACESSO - ATENUACAO' && det === 'PORTA CTO ATENUADA') { const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (ps.length) html += `<div class="tag"><span>Portas: ${ps.join(', ')}</span></div>`; } DOM.resumoCTOs.innerHTML = html || '<div class="info-msg">Nenhuma seleção.</div>'; }
-        window.removerCTO = id => { const el = $(id); if (el) el.checked = false; atualizarResumo(); renderTecnicos(); };
-        function filtrarCTOs() { const v = normalizar(DOM.filtro.value); DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it => { it.style.display = normalizar(it.textContent).includes(v) ? '' : 'none'; }); }
-        function desmarcarTudo(n) { document.querySelectorAll(`input[name="${n}"]:checked`).forEach(c => c.checked = false); }
-        function desmarcarTudoPortas() { DOM.gridPortas.querySelectorAll('input:checked').forEach(c => c.checked = false); }
-        function exibirModal(c) { AppState.conteudoCopiado = c; $('copyModal').classList.add('active'); atualizarTextoModal(); }
-        function fecharModal() { $('copyModal').classList.remove('active'); }
-        function carregarOperadores() { const s = document.createElement('script'); s.src = `${GAS_URL}?aba=OPERADOR&callback=cbOp`; s.onerror = () => console.warn('Erro operadores'); document.body.appendChild(s); window.cbOp = d => { AppState.operadores = d.map(x => ({ nome: (x.col1 || '').trim(), setor: (x.col2 || '').trim() })).filter(o => o.nome); renderOperadores(); }; }
-        function getOperadorKey(op) { return `${op.nome}|||${op.setor || ''}`; }
-        function renderOperadores() { const sel = $('operadorSelect'); if (!sel) return; const salvo = sel.value || localStorage.getItem('noc-operador') || ''; sel.innerHTML = '<option value="">— Nenhum operador —</option>'; AppState.operadores.forEach(op => { const o = document.createElement('option'); o.value = getOperadorKey(op); o.textContent = op.setor ? `${op.nome} - ${op.setor}` : op.nome; sel.appendChild(o); }); if (salvo !== '' && AppState.operadores.some(op => getOperadorKey(op) === salvo)) sel.value = salvo; atualizarTextoModal(); }
-        function construirMensagemComOperador(base = AppState.conteudoCopiado) { const chave = $('operadorSelect').value; let msg = base; const op = AppState.operadores.find(item => getOperadorKey(item) === chave); if (op) { msg = `_*${op.nome}${op.setor ? ` - {${op.setor}}` : ''}:*_\n\n` + msg; } return msg; }
-        function atualizarTextoModal() { const el = $('copyModalText'); if (!el) return; el.textContent = construirMensagemComOperador(); }
-        async function gerarOS() { const btn = DOM.btnGerarOS; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const rede = DOM.rede.value, tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value; const tecs = Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked')); const emp = DOM.empresa.value; if (!rede) throw new Error('Selecione a rede.'); if (!emp) throw new Error('Selecione a empresa.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); let ctos = [], portas = ''; if (tipo === 'REDE DE ACESSO - ATENUACAO') { if (!det) throw new Error('Especifique o tipo de atenuação.'); if (det === 'PORTA CTO ATENUADA') { const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (!ps.length) throw new Error('Selecione as portas afetadas.'); portas = ps.join(', '); ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione a CTO.'); if (ctos.length > 1) throw new Error('Selecione apenas uma CTO para porta específica.'); } else if (det === 'RAMAL GPON ATENUADO') { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Nenhuma CTO encontrada.'); } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } const problemStr = tipo + (det ? ` - ${det}` : '') + (portas ? ` | Portas: ${portas}` : ''); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); let corpo = `🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`; if (det === 'RAMAL GPON ATENUADO') corpo += `📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`; ctos.forEach(info => { const link = (info.lat && info.lng) ? `https://www.google.com/maps?q=${info.lat},${info.lng}` : 'Sem coordenadas'; corpo += `📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`; }); const msgFinal = construirMensagemComOperador(corpo); try { await navigator.clipboard.writeText(msgFinal); showToast('✓ OS copiada!'); } catch { showToast('Não foi possível copiar.', 'error'); } exibirModal(corpo); } catch (err) { showToast(err.message, 'error', 4000); } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false; } }
-        async function gerarOSMetro() { const btn = DOM.btnGerarOSMetro; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const emp = DOM.empresaMetro.value, problema = $('problemaMetro').value; const tecs = Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked')); const cards = DOM.resultadoCabos.querySelectorAll('.cabo-card'); if (!emp) throw new Error('Selecione a empresa.'); if (!problema) throw new Error('Selecione o tipo de problema.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); if (!cards.length) throw new Error('Busque os cabos antes de gerar.'); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); const coordRaw = DOM.inputCoordenada.value.trim(), cp = parseCoordenada(coordRaw); const locLink = cp ? `https://www.google.com/maps?q=${cp.lat},${cp.lng}` : coordRaw; let corpo = `🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`; cards.forEach((card, idx) => { const rows = {}; card.querySelectorAll('.cabo-card-row').forEach(row => { const l = (row.querySelector('.cabo-label')?.textContent || '').trim().toLowerCase(), v = (row.querySelector('.cabo-value')?.textContent || '').trim(); if (l && v) rows[l] = v; }); const dist = (card.querySelector('.cabo-dist')?.textContent || '').trim(); corpo += `⚡ Cabo: ${rows['cabo'] || '-'}\n📌 Localização: ${locLink}\n`; if (rows['tipo']) corpo += `⚙️ Tipo: ${rows['tipo']}\n`; if (rows['nível']) corpo += `🌐 Nível: ${rows['nível']}\n`; if (rows['comprimento']) corpo += `📋 Comprimento: ${rows['comprimento']}\n`; if (dist) corpo += `📐 ${dist}\n`; if (idx < cards.length - 1) corpo += `\n`; }); const msgFinal = construirMensagemComOperador(corpo); try { await navigator.clipboard.writeText(msgFinal); showToast('✓ OS copiada!'); } catch { showToast('Não foi possível copiar.', 'error', 4000); } exibirModal(corpo); } catch (err) { showToast(err.message, 'error', 4000); } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false; } }
-        function limparTudo() { DOM.rede.value = ''; DOM.tipo.value = ''; DOM.detalheAtenuacao.value = ''; DOM.inputFamilia.value = ''; DOM.filtro.value = ''; DOM.inputCoordenada.value = ''; desmarcarTudo('ctoCheck'); desmarcarTudo('tCheck'); desmarcarTudo('tCheckCabo'); desmarcarTudoPortas(); DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); DOM.wrapper.classList.remove('metro-mode'); DOM.sidebar.classList.remove('visible'); DOM.sidebar.style.display = ''; DOM.boxDetalheAtenuacao.classList.add('hidden'); DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.listaCTOs.innerHTML = '<div class="info-msg">Selecione uma rede.</div>'; DOM.resumoCTOs.innerHTML = '<div class="info-msg">Nenhuma seleção.</div>'; DOM.listaPreview.innerHTML = ''; DOM.listaTecs.innerHTML = AppState.tecnicosStatus === 'loading' ? '<div class="info-msg">Carregando técnicos da planilha...</div>' : (AppState.tecnicosStatus === 'error' ? '<div class="info-msg">Erro ao carregar técnicos.</div>' : '<div class="info-msg">Selecione empresa e CTOs.</div>'); DOM.listaTecsCabo.innerHTML = AppState.tecnicosStatus === 'loading' ? '<div class="info-msg">Carregando técnicos da planilha...</div>' : (AppState.tecnicosStatus === 'error' ? '<div class="info-msg">Erro ao carregar técnicos.</div>' : '<div class="info-msg">Selecione a empresa.</div>'); renderEmpresas(DOM.empresa); renderEmpresas(DOM.empresaMetro); DOM.empresa.value = ''; DOM.empresaMetro.value = ''; DOM.resultadoCabos.innerHTML = ''; AppState.baseDados = []; AppState.multiSelectAllowed = true; renderStatusBar(); showToast('✓ Formulário limpo.'); }
+
+        function configurarEventos() {
+            document.getElementById('btnTheme').addEventListener('click', () => {
+                const html = document.documentElement;
+                const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('noc_theme', newTheme);
+            });
+
+            document.getElementById('btnRede').addEventListener('click', () => switchTab('rede'));
+            document.getElementById('btnMetro').addEventListener('click', () => switchTab('metro'));
+
+            DOM.tipo.addEventListener('change', () => {
+                const t = DOM.tipo.value;
+                DOM.sub.innerHTML = '<option value="">Selecione...</option>';
+                if (subcategorias[t]) {
+                    subcategorias[t].forEach(s => DOM.sub.innerHTML += `<option value="${s}">${s}</option>`);
+                }
+                handleRules();
+            });
+
+            DOM.sub.addEventListener('change', handleRules);
+            DOM.empresa.addEventListener('change', updateTecnicosList);
+            DOM.empresaMetro.addEventListener('change', updateTecnicosMetroList);
+            
+            DOM.buscaCTO.addEventListener('input', (e) => {
+                renderBuscaCTOs(e.target.value);
+            });
+
+            document.getElementById('btnGerar').addEventListener('click', gerarResumo);
+            document.getElementById('btnCopiar').addEventListener('click', copiarResumo);
+        }
+
+        function carregarTema() {
+            const saved = localStorage.getItem('noc_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+        }
+
+        function switchTab(tab) {
+            document.getElementById('btnRede').classList.toggle('active', tab === 'rede');
+            document.getElementById('btnMetro').classList.toggle('active', tab === 'metro');
+            
+            if (tab === 'rede') {
+                DOM.boxMetro.classList.add('hidden');
+                DOM.boxRede.classList.remove('hidden');
+                DOM.wrapper.classList.remove('metro-mode');
+            } else {
+                DOM.boxRede.classList.add('hidden');
+                DOM.boxMetro.classList.remove('hidden');
+                DOM.wrapper.classList.add('metro-mode');
+            }
+        }
+
+        function handleRules() {
+            const t = DOM.tipo.value;
+            const s = DOM.sub.value;
+
+            DOM.boxDetalheAtenuacao.classList.add('hidden');
+            DOM.boxPortas.classList.add('hidden');
+            DOM.boxFamilia.classList.add('hidden');
+            DOM.boxTecnicos.classList.add('hidden');
+            DOM.boxTecnicosCabo.classList.add('hidden');
+            DOM.boxBuscaCTO.classList.remove('hidden');
+
+            const isCabo = t === 'PROJETO' || t === 'EMERGÊNCIA' || (t === 'INCIDENTE' && ['ROMPIMENTO', 'FALTA DE ENERGIA', 'VANDALISMO', 'INCÊNDIO'].includes(s));
+            
+            if (isCabo) {
+                DOM.boxFamilia.classList.remove('hidden');
+                DOM.boxTecnicosCabo.classList.remove('hidden');
+            } else {
+                DOM.boxTecnicos.classList.remove('hidden');
+            }
+
+            if (t === 'INCIDENTE' && s === 'ATENUAÇÃO') DOM.boxDetalheAtenuacao.classList.remove('hidden');
+            if (t === 'INCIDENTE' && s === 'ANÁLISE DE PORTA') DOM.boxPortas.classList.remove('hidden');
+
+            updateTecnicosList();
+            renderResumoCTOs();
+        }
+
+        function gerarGridPortas() {
+            DOM.gridPortas.innerHTML = '';
+            for (let i = 1; i <= 16; i++) {
+                DOM.gridPortas.innerHTML += `
+                    <div class="porta-item">
+                        <input type="checkbox" id="porta_${i}" value="${i}" onchange="updatePortas()">
+                        <label for="porta_${i}">${i}</label>
+                    </div>
+                `;
+            }
+        }
+
+        function updatePortas() {
+            if (AppState.ctosSelecionadas.length !== 1) return;
+            const ctoAtual = AppState.ctosSelecionadas[0];
+            const selecionadas = [];
+            for (let i = 1; i <= 16; i++) {
+                if (document.getElementById(`porta_${i}`).checked) selecionadas.push(i);
+            }
+            AppState.portasAfetadas[ctoAtual] = selecionadas;
+        }
+
+        function renderBuscaCTOs(termo) {
+            if (!termo || termo.length < 2) {
+                DOM.listaCTOs.innerHTML = '<div class="info-msg">Digite pelo menos 2 caracteres...</div>';
+                return;
+            }
+
+            if (AppState.ctosStatus !== 'success') return;
+
+            const tUpper = termo.toUpperCase();
+            const filtradas = AppState.ctosData.filter(c => c.nome.includes(tUpper)).slice(0, 15);
+
+            DOM.listaCTOs.innerHTML = '';
+            if (filtradas.length === 0) {
+                DOM.listaCTOs.innerHTML = '<div class="info-msg">Nenhuma CTO encontrada.</div>';
+                return;
+            }
+
+            filtradas.forEach(c => {
+                const isSelected = AppState.ctosSelecionadas.includes(c.nome);
+                const div = document.createElement('div');
+                div.className = 'stack-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="buscacto_${c.nome}" ${isSelected ? 'checked' : ''} onchange="toggleCTO('${c.nome}')">
+                    <label for="buscacto_${c.nome}">${c.nome}</label>
+                `;
+                DOM.listaCTOs.appendChild(div);
+            });
+        }
+
+        window.toggleCTO = function(nome) {
+            const idx = AppState.ctosSelecionadas.indexOf(nome);
+            if (idx > -1) {
+                AppState.ctosSelecionadas.splice(idx, 1);
+                delete AppState.portasAfetadas[nome];
+            } else {
+                AppState.ctosSelecionadas.push(nome);
+                AppState.portasAfetadas[nome] = [];
+            }
+
+            if (DOM.sub.value === 'ANÁLISE DE PORTA') {
+                if (AppState.ctosSelecionadas.length > 1) {
+                    alert("Atenção: Selecione apenas 1 CTO por vez para Análise de Porta.");
+                    AppState.ctosSelecionadas.pop();
+                    delete AppState.portasAfetadas[nome];
+                    document.getElementById(`buscacto_${nome}`).checked = false;
+                } else if (AppState.ctosSelecionadas.length === 1) {
+                    restaurarPortas(AppState.ctosSelecionadas[0]);
+                } else {
+                    desmarcarTudoPortas();
+                }
+            }
+            
+            renderResumoCTOs();
+            updateTecnicosList();
+        }
+
+        function restaurarPortas(cto) {
+            desmarcarTudoPortas();
+            if (AppState.portasAfetadas[cto]) {
+                AppState.portasAfetadas[cto].forEach(p => {
+                    const el = document.getElementById(`porta_${p}`);
+                    if (el) el.checked = true;
+                });
+            }
+        }
+
+        function desmarcarTudoPortas() {
+            for (let i = 1; i <= 16; i++) {
+                const el = document.getElementById(`porta_${i}`);
+                if (el) el.checked = false;
+            }
+        }
+
+        function renderResumoCTOs() {
+            DOM.resumoCTOs.innerHTML = '';
+            if (AppState.ctosSelecionadas.length === 0) {
+                DOM.resumoCTOs.innerHTML = '<div class="info-msg">Nenhuma CTO selecionada.</div>';
+                return;
+            }
+
+            AppState.ctosSelecionadas.forEach(cto => {
+                let extraInfo = '';
+                if (DOM.sub.value === 'ANÁLISE DE PORTA') {
+                    const pts = AppState.portasAfetadas[cto] || [];
+                    if (pts.length > 0) extraInfo = `<span class="badge badge-red">Portas: ${pts.join(', ')}</span>`;
+                }
+
+                DOM.resumoCTOs.innerHTML += `
+                    <div class="cto-preview-item">
+                        <div class="cto-preview-header">
+                            <span class="cto-preview-title">${cto} ${extraInfo}</span>
+                            <span class="cto-preview-remove" onclick="toggleCTO('${cto}'); renderBuscaCTOs(DOM.buscaCTO.value);">Remover</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateTecnicosList() {
+            if (AppState.tecnicosStatus !== 'success') return;
+            
+            const tipoSelected = DOM.tipo.value;
+            const subSelected = DOM.sub.value;
+            const empSelected = DOM.empresa.value;
+
+            // 1. REGRA: HIGIENIZAÇÃO -> Somente Jesse (Independente da empresa)
+            if (tipoSelected === 'PREVENTIVA' && subSelected === 'HIGIENIZAÇÃO') {
+                DOM.boxTecnicosCabo.classList.add('hidden');
+                DOM.boxTecnicos.classList.remove('hidden');
+                
+                const jesse = AppState.tecnicosData.find(t => t.nome.toUpperCase().includes('JESSE'));
+                DOM.listaTecs.innerHTML = '';
+                
+                if (jesse) {
+                    renderTecnico(jesse, DOM.listaTecs, 'tecRede');
+                } else {
+                    DOM.listaTecs.innerHTML = '<div class="info-msg">Técnico Jesse não encontrado na planilha.</div>';
+                }
+                return; 
+            }
+
+            // 2. Para os demais, precisa selecionar Empresa e CTO
+            if (!empSelected) {
+                DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione a empresa.</div>';
+                DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione a empresa.</div>';
+                return;
+            }
+
+            if (AppState.ctosSelecionadas.length === 0) {
+                DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione ao menos uma CTO para filtrar por prefixo.</div>';
+                DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione ao menos uma CTO para filtrar por prefixo.</div>';
+                return;
+            }
+
+            // 3. Verifica Função (Reparador ou Cabista)
+            const isCabista = tipoSelected === 'PROJETO' || tipoSelected === 'EMERGÊNCIA' || (tipoSelected === 'INCIDENTE' && ['ROMPIMENTO', 'FALTA DE ENERGIA', 'VANDALISMO', 'INCÊNDIO'].includes(subSelected));
+            
+            let filtrados = AppState.tecnicosData.filter(t => t.empresa === empSelected);
+            
+            if (isCabista) {
+                filtrados = filtrados.filter(t => t.funcao && t.funcao.toUpperCase().includes('CABISTA'));
+            } else {
+                filtrados = filtrados.filter(t => t.funcao && t.funcao.toUpperCase().includes('REPARADOR'));
+            }
+
+            // 4. REGRA DE PREFIXOS OBRIGATÓRIOS
+            // Pega os prefixos das CTOs selecionadas. Ex: ['JDE', 'ITA']
+            const selectedPrefixes = [...new Set(AppState.ctosSelecionadas.map(cto => cto.split('-')[0].trim().toUpperCase()))];
+            
+            filtrados = filtrados.filter(t => {
+                // Se for Connect ou Extra, o prefixo TEM que bater
+                if (['CONNECT', 'EXTRA SERVIÇOS'].includes(t.empresa.toUpperCase())) {
+                    if (!t.prefixos) return false;
+                    const tecPrefixes = t.prefixos.toUpperCase().split(',').map(p => p.trim());
+                    // Retorna verdadeiro se existir alguma interseção
+                    return selectedPrefixes.some(p => tecPrefixes.includes(p));
+                }
+                // Para a Própria, também aplicamos o filtro se o técnico tiver prefixo cadastrado
+                if (t.prefixos && t.prefixos.trim() !== '') {
+                    const tecPrefixes = t.prefixos.toUpperCase().split(',').map(p => p.trim());
+                    return selectedPrefixes.some(p => tecPrefixes.includes(p));
+                }
+                return true; 
+            });
+
+            // 5. Renderiza a lista correta
+            const targetList = isCabista ? DOM.listaTecsCabo : DOM.listaTecs;
+            targetList.innerHTML = '';
+            
+            if (filtrados.length === 0) {
+                targetList.innerHTML = '<div class="info-msg">Nenhum técnico atende estes prefixos nesta empresa.</div>';
+                return;
+            }
+
+            filtrados.forEach(t => renderTecnico(t, targetList, isCabista ? 'tecCabo' : 'tecRede'));
+        }
+
+        function updateTecnicosMetroList() {
+            if (AppState.tecnicosStatus !== 'success') return;
+            const empSelected = DOM.empresaMetro.value;
+            if (!empSelected) {
+                DOM.listaTecsMetro.innerHTML = '<div class="info-msg">Selecione a empresa.</div>';
+                return;
+            }
+
+            const filtrados = AppState.tecnicosData.filter(t => t.empresa === empSelected && t.funcao && t.funcao.toUpperCase().includes('CABISTA'));
+            DOM.listaTecsMetro.innerHTML = '';
+            
+            if (filtrados.length === 0) {
+                DOM.listaTecsMetro.innerHTML = '<div class="info-msg">Nenhum técnico encontrado.</div>';
+                return;
+            }
+
+            filtrados.forEach(t => renderTecnico(t, DOM.listaTecsMetro, 'tecMetro'));
+        }
+
+        function renderTecnico(tec, container, groupName) {
+            const div = document.createElement('div');
+            div.className = 'stack-item';
+            div.innerHTML = `
+                <input type="radio" name="${groupName}" id="${groupName}_${tec.nome}" value='${JSON.stringify(tec)}' onchange="mostrarRamal(this)">
+                <label for="${groupName}_${tec.nome}">${tec.nome}</label>
+            `;
+            container.appendChild(div);
+        }
+
+        window.mostrarRamal = function(radioEl) {
+            const tec = JSON.parse(radioEl.value);
+            DOM.previewRamal.classList.remove('hidden');
+            DOM.ramalTecnico.innerHTML = `${tec.nome} <span style="color:var(--text3);font-size:0.9rem">| Ramal:</span> ${tec.ramal || 'N/A'}`;
+        }
+
+        function gerarResumo() {
+            const isRede = document.getElementById('btnRede').classList.contains('active');
+            let res = '';
+
+            const t = DOM.tipo.value;
+            const s = DOM.sub.value;
+
+            if (!t || !s) return alert("Selecione Tipo e Subcategoria.");
+
+            if (isRede) {
+                if (AppState.ctosSelecionadas.length === 0) return alert("Selecione pelo menos uma CTO.");
+                const isCabo = t === 'PROJETO' || t === 'EMERGÊNCIA' || (t === 'INCIDENTE' && ['ROMPIMENTO', 'FALTA DE ENERGIA', 'VANDALISMO', 'INCÊNDIO'].includes(s));
+                const radioName = isCabo ? 'tecCabo' : 'tecRede';
+                const tecSelecionado = document.querySelector(`input[name="${radioName}"]:checked`);
+                
+                if (!tecSelecionado) return alert("Selecione um técnico/equipe.");
+                const tec = JSON.parse(tecSelecionado.value);
+
+                res += `<span class="lbl">TIPO:</span> <span class="val">${t}</span>\n`;
+                res += `<span class="lbl">SUB:</span> <span class="val">${s}</span>\n`;
+                
+                if (isCabo) {
+                    const fam = document.getElementById('familia').value || 'Não informado';
+                    res += `<span class="lbl">FAMÍLIA:</span> <span class="val">${fam}</span>\n`;
+                }
+
+                if (t === 'INCIDENTE' && s === 'ATENUAÇÃO') {
+                    const sinal = document.getElementById('sinalCto').value || 'N/A';
+                    res += `<span class="lbl">SINAL CTO:</span> <span class="val-red">${sinal} dBm</span>\n`;
+                }
+
+                res += `\n<span class="lbl" style="width:100%">ELEMENTOS AFETADOS:</span>\n`;
+                AppState.ctosSelecionadas.forEach(c => {
+                    res += `  - <span class="val">${c}</span>\n`;
+                    if (s === 'ANÁLISE DE PORTA' && AppState.portasAfetadas[c] && AppState.portasAfetadas[c].length > 0) {
+                        res += `    <span class="val-red">↳ Portas: ${AppState.portasAfetadas[c].join(', ')}</span>\n`;
+                    }
+                });
+
+                res += `\n<span class="lbl">EMPRESA:</span> <span class="val">${tec.empresa}</span>\n`;
+                res += `<span class="lbl">TÉCNICO:</span> <span class="val">${tec.nome} (Ramal ${tec.ramal || 'N/A'})</span>\n`;
+                
+            } else {
+                const equip = document.getElementById('equipamentoMetro').value;
+                if (!equip) return alert("Informe o equipamento/rota.");
+                const tecSelecionado = document.querySelector('input[name="tecMetro"]:checked');
+                if (!tecSelecionado) return alert("Selecione um técnico.");
+                const tec = JSON.parse(tecSelecionado.value);
+
+                res += `<span class="lbl">TIPO:</span> <span class="val">${t}</span>\n`;
+                res += `<span class="lbl">SUB:</span> <span class="val">${s}</span>\n`;
+                res += `<span class="lbl">EQUIP/ROTA:</span> <span class="val">${equip}</span>\n`;
+                res += `<span class="lbl">EMPRESA:</span> <span class="val">${tec.empresa}</span>\n`;
+                res += `<span class="lbl">TÉCNICO:</span> <span class="val">${tec.nome} (Ramal ${tec.ramal || 'N/A'})</span>\n`;
+            }
+
+            const obs = document.getElementById('observacoes').value;
+            if (obs) res += `\n<span class="lbl">OBS:</span> <span class="val">${obs}</span>`;
+
+            DOM.previewText.innerHTML = res;
+            DOM.sidebar.classList.add('visible');
+        }
+
+        function copiarResumo() {
+            const rawText = DOM.previewText.innerText;
+            if (rawText.includes("Preencha os dados")) return;
+            
+            navigator.clipboard.writeText(rawText).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2500);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
-
 </html>
