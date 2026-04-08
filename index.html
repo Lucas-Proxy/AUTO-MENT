@@ -1303,28 +1303,6 @@
             word-break: break-word
         }
 
-        .copy-modal-internal {
-            padding: 14px 22px;
-            border-bottom: 1px solid var(--border)
-        }
-
-        .copy-modal-internal label {
-            font-size: .65rem;
-            color: var(--text2);
-            margin-bottom: 6px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-weight: 600;
-            display: block
-        }
-
-        .copy-modal-internal textarea {
-            min-height: 74px;
-            resize: vertical;
-            font-family: 'Inter', sans-serif;
-            line-height: 1.4
-        }
-
         .copy-modal-operator {
             padding: 14px 22px;
             border-bottom: 1px solid var(--border)
@@ -1495,10 +1473,6 @@
                 <button id="btnFecharModal">✕</button>
             </div>
             <pre id="copyModalText" class="copy-modal-text"></pre>
-            <div class="copy-modal-internal">
-                <label for="osInternaInput">OS interna</label>
-                <textarea id="osInternaInput" placeholder="Digite a OS interna antes de enviar"></textarea>
-            </div>
             <div class="copy-modal-operator">
                 <label for="operadorSelect">Operador (Opcional)</label>
                 <select id="operadorSelect">
@@ -1743,7 +1717,6 @@
             boxBuscaCTO: $('boxBuscaCTO'), boxPortas: $('boxPortas'), previewRamal: $('previewRamal'),
             inputCoordenada: $('inputCoordenada'), btnBuscarCabo: $('btnBuscarCabo'), statusBar: $('statusBar'), resultadoCabos: $('resultadoCabos'),
             btnGerarOS: $('btnGerarOS'), btnGerarOSMetro: $('btnGerarOSMetro'), btnLimparTudo: $('btnLimparTudo'), btnLimparTudo2: $('btnLimparTudo2'),
-            osInternaInput: $('osInternaInput'),
             mPlayer: $('mPlayer'),
             mVol: $('volSlider'),
             wrapper: $('wrapper'), sidebar: $('sidebar'), musicControls: $('mControls')
@@ -2176,9 +2149,6 @@
                 atualizarTextoModal();
                 try { await navigator.clipboard.writeText(construirMensagemComOperador()); } catch (err) { }
             });
-            $('osInternaInput').addEventListener('input', () => {
-                atualizarTextoModal();
-            });
             $('copyModal').addEventListener('click', e => { if (e.target === $('copyModal')) fecharModal() });
             $('btnSeguir').addEventListener('click', async () => {
                 const rede = DOM.rede.value, msg = construirMensagemComOperador();
@@ -2300,15 +2270,15 @@
         function filtrarCTOs() { const v = normalizar(DOM.filtro.value); DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it => { it.style.display = normalizar(it.textContent).includes(v) ? '' : 'none'; }); }
         function desmarcarTudo(n) { document.querySelectorAll(`input[name="${n}"]:checked`).forEach(c => c.checked = false); }
         function desmarcarTudoPortas() { DOM.gridPortas.querySelectorAll('input:checked').forEach(c => c.checked = false); }
-        function exibirModal(c) { AppState.conteudoCopiado = c; $('osInternaInput').value = ''; $('copyModal').classList.add('active'); atualizarTextoModal(); $('osInternaInput').focus(); }
+        function exibirModal(c) { AppState.conteudoCopiado = c; $('copyModal').classList.add('active'); atualizarTextoModal(); }
         function fecharModal() { $('copyModal').classList.remove('active'); }
         function carregarOperadores() { const s = document.createElement('script'); s.src = `${GAS_URL}?aba=OPERADOR&callback=cbOp`; s.onerror = () => console.warn('Erro operadores'); document.body.appendChild(s); window.cbOp = d => { AppState.operadores = d.map(x => ({ nome: (x.col1 || '').trim(), setor: (x.col2 || '').trim() })).filter(o => o.nome); renderOperadores(); }; }
         function getOperadorKey(op) { return `${op.nome}|||${op.setor || ''}`; }
         function renderOperadores() { const sel = $('operadorSelect'); if (!sel) return; const salvo = sel.value || localStorage.getItem('noc-operador') || ''; sel.innerHTML = '<option value="">— Nenhum operador —</option>'; AppState.operadores.forEach(op => { const o = document.createElement('option'); o.value = getOperadorKey(op); o.textContent = op.setor ? `${op.nome} - ${op.setor}` : op.nome; sel.appendChild(o); }); if (salvo !== '' && AppState.operadores.some(op => getOperadorKey(op) === salvo)) sel.value = salvo; atualizarTextoModal(); }
-        function construirMensagemComOperador(base = AppState.conteudoCopiado) { const chave = $('operadorSelect').value; const osInterna = ($('osInternaInput')?.value || '').trim(); const baseComOS = base.replace('📃 OS interna: \n\n', `📃 OS interna: ${osInterna}\n\n`); let msg = baseComOS; const op = AppState.operadores.find(item => getOperadorKey(item) === chave); if (op) { msg = `_*${op.nome}${op.setor ? ` - {${op.setor}}` : ''}:*_\n\n` + msg; } return msg; }
+        function construirMensagemComOperador(base = AppState.conteudoCopiado) { const chave = $('operadorSelect').value; let msg = base; const op = AppState.operadores.find(item => getOperadorKey(item) === chave); if (op) { msg = `_*${op.nome}${op.setor ? ` - {${op.setor}}` : ''}:*_\n\n` + msg; } return msg; }
         function atualizarTextoModal() { const el = $('copyModalText'); if (!el) return; el.textContent = construirMensagemComOperador(); }
         async function gerarOS() { const btn = DOM.btnGerarOS; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const rede = DOM.rede.value, tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value; const tecs = Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked')); const emp = DOM.empresa.value; if (!rede) throw new Error('Selecione a rede.'); if (!emp) throw new Error('Selecione a empresa.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); let ctos = [], portas = ''; if (tipo === 'REDE DE ACESSO - ATENUACAO') { if (!det) throw new Error('Especifique o tipo de atenuação.'); if (det === 'PORTA CTO ATENUADA') { const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (!ps.length) throw new Error('Selecione as portas afetadas.'); portas = ps.join(', '); ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione a CTO.'); if (ctos.length > 1) throw new Error('Selecione apenas uma CTO para porta específica.'); } else if (det === 'RAMAL GPON ATENUADO') { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Nenhuma CTO encontrada.'); } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } const problemStr = tipo + (det ? ` - ${det}` : '') + (portas ? ` | Portas: ${portas}` : ''); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); let corpo = `🚧 Acionamento REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`; if (det === 'RAMAL GPON ATENUADO') corpo += `📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`; ctos.forEach(info => { const link = (info.lat && info.lng) ? `https://www.google.com/maps?q=${info.lat},${info.lng}` : 'Sem coordenadas'; corpo += `📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`; }); const msgFinal = construirMensagemComOperador(corpo); try { await navigator.clipboard.writeText(msgFinal); showToast('✓ OS copiada!'); } catch { showToast('Não foi possível copiar.', 'error'); } exibirModal(corpo); } catch (err) { showToast(err.message, 'error', 4000); } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false; } }
-        async function gerarOSMetro() { const btn = DOM.btnGerarOSMetro; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const emp = DOM.empresaMetro.value, problema = $('problemaMetro').value; const tecs = Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked')); const cards = DOM.resultadoCabos.querySelectorAll('.cabo-card'); if (!emp) throw new Error('Selecione a empresa.'); if (!problema) throw new Error('Selecione o tipo de problema.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); if (!cards.length) throw new Error('Busque os cabos antes de gerar.'); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); const coordRaw = DOM.inputCoordenada.value.trim(), cp = parseCoordenada(coordRaw); const locLink = cp ? `https://www.google.com/maps?q=${cp.lat},${cp.lng}` : coordRaw; let corpo = `🚧 Acionamento em campo.\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`; cards.forEach(card => { const rows = {}; card.querySelectorAll('.cabo-card-row').forEach(row => { const l = (row.querySelector('.cabo-label')?.textContent || '').trim().toLowerCase(), v = (row.querySelector('.cabo-value')?.textContent || '').trim(); if (l && v) rows[l] = v; }); const d = card.querySelector('.cabo-dist'), dist = d ? d.textContent.trim() : ''; corpo += `⚡ Cabo: ${rows['cabo'] || '-'}\n\n📌 Localização: ${locLink}\n\n`; if (rows['tipo']) corpo += `⚙️ Tipo: ${rows['tipo']}\n\n`; if (rows['nível']) corpo += `🌐 Nível: ${rows['nível']}\n\n`; if (rows['comprimento']) corpo += `📋 Comprimento: ${rows['comprimento']}\n\n`; if (dist) corpo += `📐 ${dist}\n\n`; }); const msgFinal = construirMensagemComOperador(corpo); try { await navigator.clipboard.writeText(msgFinal); showToast('✓ OS copiada!'); } catch { showToast('Não foi possível copiar.', 'error'); } exibirModal(corpo); } catch (err) { showToast(err.message, 'error', 4000); } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false; } }
+        async function gerarOSMetro() { const btn = DOM.btnGerarOSMetro; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const emp = DOM.empresaMetro.value, problema = $('problemaMetro').value; const tecs = Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked')); const cards = DOM.resultadoCabos.querySelectorAll('.cabo-card'); if (!emp) throw new Error('Selecione a empresa.'); if (!problema) throw new Error('Selecione o tipo de problema.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); if (!cards.length) throw new Error('Busque os cabos antes de gerar.'); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); const coordRaw = DOM.inputCoordenada.value.trim(), cp = parseCoordenada(coordRaw); const locLink = cp ? `https://www.google.com/maps?q=${cp.lat},${cp.lng}` : coordRaw; let corpo = `🚧 Acionamento em campo.\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`; cards.forEach((card, idx) => { const rows = {}; card.querySelectorAll('.cabo-card-row').forEach(row => { const l = (row.querySelector('.cabo-label')?.textContent || '').trim().toLowerCase(), v = (row.querySelector('.cabo-value')?.textContent || '').trim(); if (l && v) rows[l] = v; }); const dist = (card.querySelector('.cabo-dist')?.textContent || '').trim(); corpo += `⚡ Cabo: ${rows['cabo'] || '-'}\n📌 Localização: ${locLink}\n`; if (rows['tipo']) corpo += `⚙️ Tipo: ${rows['tipo']}\n`; if (rows['nível']) corpo += `🌐 Nível: ${rows['nível']}\n`; if (rows['comprimento']) corpo += `📋 Comprimento: ${rows['comprimento']}\n`; if (dist) corpo += `📐 ${dist}\n`; if (idx < cards.length - 1) corpo += `\n`; }); const msgFinal = construirMensagemComOperador(corpo); try { await navigator.clipboard.writeText(msgFinal); showToast('✓ OS copiada!'); } catch { showToast('Não foi possível copiar.', 'error'); } exibirModal(corpo); } catch (err) { showToast(err.message, 'error', 4000); } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false; } }
         function limparTudo() { DOM.rede.value = ''; DOM.tipo.value = ''; DOM.detalheAtenuacao.value = ''; DOM.inputFamilia.value = ''; DOM.filtro.value = ''; DOM.inputCoordenada.value = ''; desmarcarTudo('ctoCheck'); desmarcarTudo('tCheck'); desmarcarTudo('tCheckCabo'); desmarcarTudoPortas(); DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); DOM.wrapper.classList.remove('metro-mode'); DOM.sidebar.classList.remove('visible'); DOM.sidebar.style.display = ''; DOM.boxDetalheAtenuacao.classList.add('hidden'); DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.listaCTOs.innerHTML = '<div class="info-msg">Selecione uma rede.</div>'; DOM.resumoCTOs.innerHTML = '<div class="info-msg">Nenhuma seleção.</div>'; DOM.listaPreview.innerHTML = ''; DOM.listaTecs.innerHTML = AppState.tecnicosStatus === 'loading' ? '<div class="info-msg">Carregando técnicos da planilha...</div>' : (AppState.tecnicosStatus === 'error' ? '<div class="info-msg">Erro ao carregar técnicos.</div>' : '<div class="info-msg">Selecione empresa e CTOs.</div>'); DOM.listaTecsCabo.innerHTML = AppState.tecnicosStatus === 'loading' ? '<div class="info-msg">Carregando técnicos da planilha...</div>' : (AppState.tecnicosStatus === 'error' ? '<div class="info-msg">Erro ao carregar técnicos.</div>' : '<div class="info-msg">Selecione a empresa.</div>'); renderEmpresas(DOM.empresa); renderEmpresas(DOM.empresaMetro); DOM.empresa.value = ''; DOM.empresaMetro.value = ''; DOM.resultadoCabos.innerHTML = ''; AppState.baseDados = []; AppState.multiSelectAllowed = true; renderStatusBar(); showToast('✓ Formulário limpo.'); }
     </script>
 </body>
