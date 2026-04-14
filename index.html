@@ -1044,9 +1044,10 @@
             border-radius: 8px;
             cursor: pointer;
             border: none;
-            font-family: 'Bebas Neue', cursive;
-            font-size: 1rem;
-            letter-spacing: 4px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
             position: relative;
             overflow: visible;
             z-index: 1;
@@ -1548,8 +1549,8 @@
                             <option value="" disabled selected>Selecione uma rede...</option>
                             <option value="FIBER">Fiber Network</option>
                             <option value="INTLINK">Intlink</option>
-                            <option value="WIRE">Wire</option>
                             <option value="METRO">Rede Metro</option>
+                            <option value="WIRE">Wire</option>
                         </select>
                     </div>
                     <!-- BOX METRO -->
@@ -1570,8 +1571,8 @@
                             <label for="problemaMetro">Tipo de Problema</label>
                             <select id="problemaMetro">
                                 <option value="" disabled selected>Selecione o problema...</option>
-                                <option value="Troca de poste">Troca de Poste</option>
                                 <option value="Fiscalizacao">Fiscalização</option>
+                                <option value="Troca de poste">Troca de Poste</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1600,13 +1601,27 @@
                                 <option value="REDE DE ACESSO - ATENUACAO">Atenuação na Rede</option>
                                 <option value="REDE DE ACESSO - CTO DOWN">CTO Down / Offline</option>
                                 <option value="REDE DE ACESSO - HIGIENIZACAO DE CTO">Higienização de CTO</option>
+                                <option value="PREVENTIVA">Preventiva</option>
+                            </select>
+                        </div>
+                        <div id="boxDetalhePreventiva" class="form-group hidden">
+                            <label for="detalhePreventiva">Especificação da Preventiva</label>
+                            <select id="detalhePreventiva">
+                                <option value="" disabled selected>Selecione...</option>
+                                <option value="ANCORAGEM DE CABOS">Ancoragem de cabos</option>
+                                <option value="CAIXA DESACOPLADA">Caixa desacoplada</option>
+                                <option value="CAIXA FORA DO PADRAO">Caixa fora do padrão</option>
+                                <option value="CTO PEGOU FOGO">CTO pegou fogo</option>
+                                <option value="FURTO DE CTO">Furto de CTO</option>
+                                <option value="FURTO DE SPLITTER">Furto de splitter</option>
+                                <option value="REVITALIZACAO DE PINTURA">Revitalização de pintura</option>
                             </select>
                         </div>
                         <div id="boxDetalheAtenuacao" class="form-group hidden">
                             <label for="detalheAtenuacao">Especificação da Atenuação</label>
                             <select id="detalheAtenuacao">
                                 <option value="" disabled selected>Selecione...</option>
-                                <option value="CTO ATENUADA">CTO Atenuada (no geral)</option>
+                                <option value="CTO ATENUADA">CTO atenuada (no geral)</option>
                                 <option value="PORTA CTO ATENUADA">Porta específica da CTO atenuada</option>
                                 <option value="RAMAL GPON ATENUADO">Ramal GPON atenuado (múltiplas CTOs)</option>
                             </select>
@@ -1696,24 +1711,32 @@
                 .filter(Boolean)
                 .sort((a, b) => b.length - a.length || a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
         }
-        function getEmpresasTecnicos() {
-            return [...new Set(AppState.tecnicos.map(t => t.empresa).filter(Boolean))]
-                .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-        }
-        function getTecnicosPorEmpresa(empresa) {
-            return AppState.tecnicos.filter(t => t.empresa === empresa);
-        }
-        function tecnicoCombinaPrefixos(tecnico, prefixosSelecionados) {
-            if (!prefixosSelecionados.length) return true;
-            if (!tecnico.prefixos || !tecnico.prefixos.length) return true;
-            return tecnico.prefixos.some(p => prefixosSelecionados.includes(p));
+        function getTecnicosElegiveis() {
+            let tecs = AppState.tecnicos;
+            const ctosSel = getSelectedCTOs();
+            if (ctosSel.length > 0) {
+                const prefixosSel = [...new Set(ctosSel.map(c => getPrefixFromCTO(c.cto)).filter(Boolean))];
+                if (prefixosSel.length > 0) {
+                    tecs = tecs.filter(t => t.prefixos && t.prefixos.some(p => prefixosSel.includes(p)));
+                } else {
+                    tecs = []; // CTO selecionada mas sem prefixo válido = nenhum técnico mapeado
+                }
+            } else if (DOM.tipo.value === 'REDE DE ACESSO - ATENUACAO' && DOM.detalheAtenuacao.value === 'RAMAL GPON ATENUADO') {
+                tecs = []; // Ramal digitado mas sem match de CTO
+            } else {
+                // Se nenhuma CTO estiver selecionada, restringe pelas regras de rede
+                const r = DOM.rede.value;
+                if (r === 'FIBER') tecs = tecs.filter(t => t.empresa.toUpperCase().includes('CONNECT'));
+                else if (r === 'INTLINK') tecs = tecs.filter(t => t.empresa.toUpperCase().includes('EXTRA'));
+            }
+            return tecs;
         }
         const $ = id => document.getElementById(id);
         const DOM = {
-            rede: $('rede'), tipo: $('tipo'), detalheAtenuacao: $('detalheAtenuacao'), empresa: $('empresa'), empresaMetro: $('empresaMetro'),
+            rede: $('rede'), tipo: $('tipo'), detalheAtenuacao: $('detalheAtenuacao'), detalhePreventiva: $('detalhePreventiva'), empresa: $('empresa'), empresaMetro: $('empresaMetro'),
             inputFamilia: $('inputFamilia'), filtro: $('filtro'), listaCTOs: $('listaCTOs'), listaTecs: $('listaTecs'), listaTecsCabo: $('listaTecsCabo'),
             resumoCTOs: $('resumoCTOs'), gridPortas: $('gridPortas'), listaPreview: $('listaPreview'),
-            boxMetro: $('boxMetro'), boxRede: $('boxRede'), boxDetalheAtenuacao: $('boxDetalheAtenuacao'), boxFamilia: $('boxFamilia'),
+            boxMetro: $('boxMetro'), boxRede: $('boxRede'), boxDetalheAtenuacao: $('boxDetalheAtenuacao'), boxDetalhePreventiva: $('boxDetalhePreventiva'), boxFamilia: $('boxFamilia'),
             boxBuscaCTO: $('boxBuscaCTO'), boxPortas: $('boxPortas'), previewRamal: $('previewRamal'),
             inputCoordenada: $('inputCoordenada'), btnBuscarCabo: $('btnBuscarCabo'), statusBar: $('statusBar'), resultadoCabos: $('resultadoCabos'),
             btnGerarOS: $('btnGerarOS'), btnGerarOSMetro: $('btnGerarOSMetro'), btnLimparTudo: $('btnLimparTudo'), btnLimparTudo2: $('btnLimparTudo2'),
@@ -2187,7 +2210,8 @@
                     const empresa = (x.col3 || x.empresa || '').trim();
                     const prefixos = splitListaValores(x.col4 || x.prefixos || '').map(normalizar);
                     return { nome, numero, empresa, prefixos };
-                }).filter(t => t.nome || t.numero || t.empresa);
+                }).filter(t => t.nome || t.numero || t.empresa)
+                    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
                 atualizarCatalogoPrefixos();
                 renderEmpresas(DOM.empresa);
                 renderEmpresas(DOM.empresaMetro);
@@ -2229,6 +2253,10 @@
                 const coords = String(row.localizacao || row.lat || '').trim();
                 const pts = extrairCoordsCabo(coords);
                 if (!pts.length) return;
+
+                const nivel = String(row.nivel || '').trim().toUpperCase();
+                if (nivel === 'PROJETO') return;
+
                 let best = Infinity;
                 if (pts.length === 1) {
                     best = haversine(coord.lat, coord.lng, pts[0].lat, pts[0].lng);
@@ -2241,7 +2269,7 @@
                 if (best <= RAIO && !cv.has(nome)) {
                     cv.set(nome, {
                         nome, dist: best,
-                        tipo: String(row.tipo || row.lng || '').trim(),
+                        tipo: String(row.tipo || '').trim(),
                         nivel: String(row.nivel || '').trim(),
                         comp: String(row.comprimento || '').trim()
                     });
@@ -2252,17 +2280,73 @@
             const ci = DOM.inputCoordenada.value.trim();
             DOM.resultadoCabos.innerHTML = enc.map(c => `<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel || '-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp || '-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
         }
-        function renderEmpresas(selectEl) { const el = selectEl || DOM.empresa; if (!el) return; const atual = el.value; if (AppState.tecnicosStatus === 'loading') { el.innerHTML = '<option value="" disabled selected>Carregando técnicos...</option>'; return; } if (AppState.tecnicosStatus === 'error') { el.innerHTML = '<option value="" disabled selected>Erro ao carregar técnicos</option>'; return; } const empresas = getEmpresasTecnicos(); if (!empresas.length) { el.innerHTML = '<option value="" disabled selected>Sem empresas na planilha</option>'; return; } el.innerHTML = '<option value="" disabled selected>Selecione...</option>'; empresas.forEach(emp => { el.insertAdjacentHTML('beforeend', `<option value="${emp}">${emp}</option>`); }); if (empresas.includes(atual)) el.value = atual; }
-        function renderTecnosCabo() { renderEmpresas(DOM.empresaMetro); const emp = DOM.empresaMetro.value; if (AppState.tecnicosStatus === 'loading') { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Carregando técnicos da planilha...</div>'; return; } if (AppState.tecnicosStatus === 'error') { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Erro ao carregar técnicos.</div>'; return; } if (!getEmpresasTecnicos().length) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Nenhuma empresa na planilha.</div>'; return; } if (!emp) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione a empresa.</div>'; return; } const ctosSel = getSelectedCTOs(); const prefixosSel = ctosSel.map(c => getPrefixFromCTO(c.cto)).filter(Boolean); let lista = getTecnicosPorEmpresa(emp); if (prefixosSel.length) lista = lista.filter(t => tecnicoCombinaPrefixos(t, prefixosSel)); if (!lista.length) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Nenhum técnico.</div>'; return; } DOM.listaTecsCabo.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join(''); }
+        function renderEmpresas(selectEl) {
+            const el = selectEl || DOM.empresa;
+            if (!el) return;
+            const atual = el.value;
+            if (AppState.tecnicosStatus === 'loading') {
+                el.innerHTML = '<option value="" disabled selected>Carregando técnicos...</option>';
+                return;
+            }
+            if (AppState.tecnicosStatus === 'error') {
+                el.innerHTML = '<option value="" disabled selected>Erro ao carregar técnicos</option>';
+                return;
+            }
+
+            let tecs = (el.id === 'empresaMetro') ? AppState.tecnicos : getTecnicosElegiveis();
+            const empresas = [...new Set(tecs.map(t => t.empresa).filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+
+            if (!empresas.length) {
+                el.innerHTML = '<option value="" disabled selected>Nenhuma empresa / técnico para o prefixo</option>';
+                return;
+            }
+
+            el.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+            empresas.forEach(emp => {
+                el.insertAdjacentHTML('beforeend', `<option value="${emp}">${emp}</option>`);
+            });
+
+            if (empresas.includes(atual)) {
+                el.value = atual;
+            } else if (empresas.length === 1 && el.id === 'empresa') {
+                el.value = empresas[0];
+            }
+        }
+        function renderTecnosCabo() {
+            renderEmpresas(DOM.empresaMetro);
+            if (AppState.tecnicosStatus === 'loading') { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Carregando técnicos...</div>'; return; }
+            if (AppState.tecnicosStatus === 'error') { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Erro ao carregar.</div>'; return; }
+
+            const emp = DOM.empresaMetro.value;
+            if (!emp) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Selecione a empresa.</div>'; return; }
+
+            let lista = AppState.tecnicos.filter(t => t.empresa === emp);
+            if (!lista.length) { DOM.listaTecsCabo.innerHTML = '<div class="info-msg">Nenhum técnico.</div>'; return; }
+
+            DOM.listaTecsCabo.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join('');
+        }
         function normalizar(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[\s-]/g, ''); }
         function getPrefixFromCTO(n) { const u = normalizar(n); return AppState.prefixCatalog.find(p => u.includes(p)) || ''; }
         function buscarCTOsPorFragmento(f) { const fn = normalizar(f); if (!fn) return []; return AppState.baseDados.filter(c => normalizar(c.cto).includes(fn)); }
         function getSelectedCTOs() { if (DOM.tipo.value === 'REDE DE ACESSO - ATENUACAO' && DOM.detalheAtenuacao.value === 'RAMAL GPON ATENUADO') return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim()); return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb => AppState.baseDados.find(b => b.cto === cb.value)).filter(Boolean); }
-        function handleAcionamentoChange() { const t = DOM.tipo.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas(); DOM.boxDetalheAtenuacao.classList.toggle('hidden', t !== 'REDE DE ACESSO - ATENUACAO'); if (t === 'REDE DE ACESSO - ATENUACAO') DOM.detalheAtenuacao.value = ''; DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.boxPortas.classList.add('hidden'); AppState.multiSelectAllowed = true; atualizarResumo(); renderTecnicos(); }
+        function handleAcionamentoChange() { const t = DOM.tipo.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas(); DOM.boxDetalheAtenuacao.classList.toggle('hidden', t !== 'REDE DE ACESSO - ATENUACAO'); if (t === 'REDE DE ACESSO - ATENUACAO') DOM.detalheAtenuacao.value = ''; DOM.boxDetalhePreventiva.classList.toggle('hidden', t !== 'PREVENTIVA'); if (t === 'PREVENTIVA') DOM.detalhePreventiva.value = ''; DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.boxPortas.classList.add('hidden'); AppState.multiSelectAllowed = true; atualizarResumo(); renderTecnicos(); }
         function handleDetalheAtenuacaoChange() { const d = DOM.detalheAtenuacao.value; desmarcarTudo('ctoCheck'); desmarcarTudoPortas(); DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); AppState.multiSelectAllowed = true; if (d === 'PORTA CTO ATENUADA') { DOM.boxPortas.classList.remove('hidden'); AppState.multiSelectAllowed = false; } else if (d === 'RAMAL GPON ATENUADO') { DOM.boxFamilia.classList.remove('hidden'); DOM.previewRamal.classList.remove('hidden'); DOM.boxBuscaCTO.classList.add('hidden'); atualizarPreviewRamal(); } atualizarResumo(); renderTecnicos(); }
         function handleCTOToggle(cb) { const d = DOM.detalheAtenuacao.value; if (DOM.tipo.value !== 'REDE DE ACESSO - ATENUACAO') { atualizarResumo(); renderTecnicos(); return; } if (d === 'PORTA CTO ATENUADA' && cb.checked) DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c => { if (c !== cb) c.checked = false; }); else if (d === 'RAMAL GPON ATENUADO' && cb.checked) { cb.checked = false; return; } atualizarResumo(); renderTecnicos(); }
         function renderListaCTOs(lista) { if (!lista || !lista.length) { DOM.listaCTOs.innerHTML = '<div class="info-msg">Nenhuma CTO encontrada.</div>'; return; } DOM.listaCTOs.innerHTML = lista.sort((a, b) => a.cto.localeCompare(b.cto, undefined, { numeric: true })).map((item, i) => `<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join(''); }
-        function renderTecnicos() { renderEmpresas(DOM.empresa); if (AppState.tecnicosStatus === 'loading') { DOM.listaTecs.innerHTML = '<div class="info-msg">Carregando técnicos da planilha...</div>'; return; } if (AppState.tecnicosStatus === 'error') { DOM.listaTecs.innerHTML = '<div class="info-msg">Erro ao carregar técnicos.</div>'; return; } if (!getEmpresasTecnicos().length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Nenhuma empresa na planilha.</div>'; return; } const emp = DOM.empresa.value; if (!emp) { DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione empresa.</div>'; return; } const ctosSel = getSelectedCTOs(); const prefixosSel = ctosSel.map(c => getPrefixFromCTO(c.cto)).filter(Boolean); let lista = getTecnicosPorEmpresa(emp); if (prefixosSel.length) lista = lista.filter(t => tecnicoCombinaPrefixos(t, prefixosSel)); if (!lista.length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Nenhum técnico disponível.</div>'; return; } DOM.listaTecs.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join(''); }
+        function renderTecnicos() {
+            renderEmpresas(DOM.empresa);
+            if (AppState.tecnicosStatus === 'loading') { DOM.listaTecs.innerHTML = '<div class="info-msg">Carregando técnicos da planilha...</div>'; return; }
+            if (AppState.tecnicosStatus === 'error') { DOM.listaTecs.innerHTML = '<div class="info-msg">Erro ao carregar técnicos.</div>'; return; }
+
+            const emp = DOM.empresa.value;
+            if (!emp) { DOM.listaTecs.innerHTML = '<div class="info-msg">Selecione CTOs e uma empresa.</div>'; return; }
+
+            const lista = getTecnicosElegiveis().filter(t => t.empresa === emp);
+            if (!lista.length) { DOM.listaTecs.innerHTML = '<div class="info-msg">Nenhum técnico disponível para esta CTO / Empresa.</div>'; return; }
+
+            DOM.listaTecs.innerHTML = lista.map((t, i) => `<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('');
+        }
         function atualizarPreviewRamal() { if (DOM.detalheAtenuacao.value !== 'RAMAL GPON ATENUADO') return; const frag = DOM.inputFamilia.value, enc = buscarCTOsPorFragmento(frag); if (!frag.trim()) DOM.listaPreview.innerHTML = '<div class="info-msg">Digite o prefixo.</div>'; else if (!enc.length) DOM.listaPreview.innerHTML = `<div class="preview-item">Nenhuma CTO encontrada</div>`; else DOM.listaPreview.innerHTML = enc.map(c => `<div class="preview-item">${c.cto}</div>`).join(''); atualizarResumo(); renderTecnicos(); }
         function atualizarResumo() { const sel = Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')); let html = sel.map(c => `<div class="tag"><span>${c.value}</span><button class="btn-remove" onclick="removerCTO('${c.id}')">✕</button></div>`).join(''); const tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value; if (tipo === 'REDE DE ACESSO - ATENUACAO' && det === 'RAMAL GPON ATENUADO') { const f = DOM.inputFamilia.value.trim(); if (f) { const enc = buscarCTOsPorFragmento(f); html += `<div class="tag warning"><span>${f} (${enc.length} CTOs)</span></div>`; } } if (tipo === 'REDE DE ACESSO - ATENUACAO' && det === 'PORTA CTO ATENUADA') { const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (ps.length) html += `<div class="tag"><span>Portas: ${ps.join(', ')}</span></div>`; } DOM.resumoCTOs.innerHTML = html || '<div class="info-msg">Nenhuma seleção.</div>'; }
         window.removerCTO = id => { const el = $(id); if (el) el.checked = false; atualizarResumo(); renderTecnicos(); };
@@ -2271,14 +2355,14 @@
         function desmarcarTudoPortas() { DOM.gridPortas.querySelectorAll('input:checked').forEach(c => c.checked = false); }
         function exibirModal(c) { AppState.conteudoCopiado = c; $('copyModal').classList.add('active'); atualizarTextoModal(); }
         function fecharModal() { $('copyModal').classList.remove('active'); }
-        function carregarOperadores() { const s = document.createElement('script'); s.src = `${GAS_URL}?aba=OPERADOR&callback=cbOp`; s.onerror = () => console.warn('Erro operadores'); document.body.appendChild(s); window.cbOp = d => { AppState.operadores = d.map(x => ({ nome: (x.col1 || '').trim(), setor: (x.col2 || '').trim() })).filter(o => o.nome); renderOperadores(); }; }
+        function carregarOperadores() { const s = document.createElement('script'); s.src = `${GAS_URL}?aba=OPERADOR&callback=cbOp`; s.onerror = () => console.warn('Erro operadores'); document.body.appendChild(s); window.cbOp = d => { AppState.operadores = d.map(x => ({ nome: (x.col1 || '').trim(), setor: (x.col2 || '').trim() })).filter(o => o.nome).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })); renderOperadores(); }; }
         function getOperadorKey(op) { return `${op.nome}|||${op.setor || ''}`; }
         function renderOperadores() { const sel = $('operadorSelect'); if (!sel) return; const salvo = sel.value || localStorage.getItem('noc-operador') || ''; sel.innerHTML = '<option value="">— Nenhum operador —</option>'; AppState.operadores.forEach(op => { const o = document.createElement('option'); o.value = getOperadorKey(op); o.textContent = op.setor ? `${op.nome} - ${op.setor}` : op.nome; sel.appendChild(o); }); if (salvo !== '' && AppState.operadores.some(op => getOperadorKey(op) === salvo)) sel.value = salvo; atualizarTextoModal(); }
         function construirMensagemComOperador(base = AppState.conteudoCopiado) { const chave = $('operadorSelect').value; let msg = base; const op = AppState.operadores.find(item => getOperadorKey(item) === chave); if (op) { msg = `_*${op.nome}${op.setor ? ` - {${op.setor}}` : ''}:*_\n\n` + msg; } return msg; }
         function atualizarTextoModal() { const el = $('copyModalText'); if (!el) return; el.textContent = construirMensagemComOperador(); }
-        async function gerarOS() { const btn = DOM.btnGerarOS; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const rede = DOM.rede.value, tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value; const tecs = Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked')); const emp = DOM.empresa.value; if (!rede) throw new Error('Selecione a rede.'); if (!emp) throw new Error('Selecione a empresa.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); let ctos = [], portas = ''; if (tipo === 'REDE DE ACESSO - ATENUACAO') { if (!det) throw new Error('Especifique o tipo de atenuação.'); if (det === 'PORTA CTO ATENUADA') { const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (!ps.length) throw new Error('Selecione as portas afetadas.'); portas = ps.join(', '); ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione a CTO.'); if (ctos.length > 1) throw new Error('Selecione apenas uma CTO para porta específica.'); } else if (det === 'RAMAL GPON ATENUADO') { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Nenhuma CTO encontrada.'); } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } const problemStr = tipo + (det ? ` - ${det}` : '') + (portas ? ` | Portas: ${portas}` : ''); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); let corpo = `🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`; if (det === 'RAMAL GPON ATENUADO') corpo += `📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`; ctos.forEach(info => { const link = (info.lat && info.lng) ? `https://www.google.com/maps?q=${info.lat},${info.lng}` : 'Sem coordenadas'; corpo += `📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`; }); const msgFinal = construirMensagemComOperador(corpo); try { await navigator.clipboard.writeText(msgFinal); showToast('✓ OS copiada!'); } catch { showToast('Não foi possível copiar.', 'error'); } exibirModal(corpo); } catch (err) { showToast(err.message, 'error', 4000); } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false; } }
+        async function gerarOS() { const btn = DOM.btnGerarOS; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const rede = DOM.rede.value, tipo = DOM.tipo.value, det = DOM.detalheAtenuacao.value, detPrev = DOM.detalhePreventiva.value; const tecs = Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked')); const emp = DOM.empresa.value; if (!rede) throw new Error('Selecione a rede.'); if (!emp) throw new Error('Selecione a empresa.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); let ctos = [], portas = ''; let curDet = ''; if (tipo === 'REDE DE ACESSO - ATENUACAO') { curDet = det; if (!det) throw new Error('Especifique o tipo de atenuação.'); if (det === 'PORTA CTO ATENUADA') { const ps = Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p => p.value); if (!ps.length) throw new Error('Selecione as portas afetadas.'); portas = ps.join(', '); ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione a CTO.'); if (ctos.length > 1) throw new Error('Selecione apenas uma CTO para porta específica.'); } else if (det === 'RAMAL GPON ATENUADO') { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Nenhuma CTO encontrada.'); } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } } else if (tipo === 'PREVENTIVA') { curDet = detPrev; if (!detPrev) throw new Error('Especifique a preventiva.'); ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } else { ctos = getSelectedCTOs(); if (!ctos.length) throw new Error('Selecione ao menos uma CTO.'); } const problemStr = tipo + (curDet ? ` - ${curDet}` : '') + (portas ? ` | Portas: ${portas}` : ''); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); let corpo = `🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`; if (det === 'RAMAL GPON ATENUADO') corpo += `📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`; ctos.forEach(info => { const link = (info.lat && info.lng) ? `https://www.google.com/maps?q=${info.lat},${info.lng}` : 'Sem coordenadas'; corpo += `📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`; }); const msgFinal = construirMensagemComOperador(corpo); try { await navigator.clipboard.writeText(msgFinal); showToast('✓ OS copiada!'); } catch { showToast('Não foi possível copiar.', 'error'); } exibirModal(corpo); } catch (err) { showToast(err.message, 'error', 4000); } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false; } }
         async function gerarOSMetro() { const btn = DOM.btnGerarOSMetro; try { btn.innerHTML = 'Gerando...'; btn.disabled = true; const emp = DOM.empresaMetro.value, problema = $('problemaMetro').value; const tecs = Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked')); const cards = DOM.resultadoCabos.querySelectorAll('.cabo-card'); if (!emp) throw new Error('Selecione a empresa.'); if (!problema) throw new Error('Selecione o tipo de problema.'); if (!tecs.length) throw new Error('Selecione ao menos um técnico.'); if (!cards.length) throw new Error('Busque os cabos antes de gerar.'); const tecsStr = tecs.map(t => `@${t.value} (${t.dataset.nome})`).join(', '); const coordRaw = DOM.inputCoordenada.value.trim(), cp = parseCoordenada(coordRaw); const locLink = cp ? `https://www.google.com/maps?q=${cp.lat},${cp.lng}` : coordRaw; let corpo = `🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`; cards.forEach((card, idx) => { const rows = {}; card.querySelectorAll('.cabo-card-row').forEach(row => { const l = (row.querySelector('.cabo-label')?.textContent || '').trim().toLowerCase(), v = (row.querySelector('.cabo-value')?.textContent || '').trim(); if (l && v) rows[l] = v; }); const dist = (card.querySelector('.cabo-dist')?.textContent || '').trim(); corpo += `⚡ Cabo: ${rows['cabo'] || '-'}\n📌 Localização: ${locLink}\n`; if (rows['tipo']) corpo += `⚙️ Tipo: ${rows['tipo']}\n`; if (rows['nível']) corpo += `🌐 Nível: ${rows['nível']}\n`; if (rows['comprimento']) corpo += `📋 Comprimento: ${rows['comprimento']}\n`; if (dist) corpo += `📐 ${dist}\n`; if (idx < cards.length - 1) corpo += `\n`; }); const msgFinal = construirMensagemComOperador(corpo); try { await navigator.clipboard.writeText(msgFinal); showToast('✓ OS copiada!'); } catch { showToast('Não foi possível copiar.', 'error', 4000); } exibirModal(corpo); } catch (err) { showToast(err.message, 'error', 4000); } finally { btn.innerHTML = 'Gerar Ordem de Serviço'; btn.disabled = false; } }
-        function limparTudo() { DOM.rede.value = ''; DOM.tipo.value = ''; DOM.detalheAtenuacao.value = ''; DOM.inputFamilia.value = ''; DOM.filtro.value = ''; DOM.inputCoordenada.value = ''; desmarcarTudo('ctoCheck'); desmarcarTudo('tCheck'); desmarcarTudo('tCheckCabo'); desmarcarTudoPortas(); DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); DOM.wrapper.classList.remove('metro-mode'); DOM.sidebar.classList.remove('visible'); DOM.sidebar.style.display = ''; DOM.boxDetalheAtenuacao.classList.add('hidden'); DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.listaCTOs.innerHTML = '<div class="info-msg">Selecione uma rede.</div>'; DOM.resumoCTOs.innerHTML = '<div class="info-msg">Nenhuma seleção.</div>'; DOM.listaPreview.innerHTML = ''; DOM.listaTecs.innerHTML = AppState.tecnicosStatus === 'loading' ? '<div class="info-msg">Carregando técnicos da planilha...</div>' : (AppState.tecnicosStatus === 'error' ? '<div class="info-msg">Erro ao carregar técnicos.</div>' : '<div class="info-msg">Selecione empresa e CTOs.</div>'); DOM.listaTecsCabo.innerHTML = AppState.tecnicosStatus === 'loading' ? '<div class="info-msg">Carregando técnicos da planilha...</div>' : (AppState.tecnicosStatus === 'error' ? '<div class="info-msg">Erro ao carregar técnicos.</div>' : '<div class="info-msg">Selecione a empresa.</div>'); renderEmpresas(DOM.empresa); renderEmpresas(DOM.empresaMetro); DOM.empresa.value = ''; DOM.empresaMetro.value = ''; DOM.resultadoCabos.innerHTML = ''; AppState.baseDados = []; AppState.multiSelectAllowed = true; renderStatusBar(); showToast('✓ Formulário limpo.'); }
+        function limparTudo() { DOM.rede.value = ''; DOM.tipo.value = ''; DOM.detalheAtenuacao.value = ''; DOM.detalhePreventiva.value = ''; DOM.inputFamilia.value = ''; DOM.filtro.value = ''; DOM.inputCoordenada.value = ''; desmarcarTudo('ctoCheck'); desmarcarTudo('tCheck'); desmarcarTudo('tCheckCabo'); desmarcarTudoPortas(); DOM.boxMetro.classList.add('hidden'); DOM.boxRede.classList.remove('hidden'); DOM.wrapper.classList.remove('metro-mode'); DOM.sidebar.classList.remove('visible'); DOM.sidebar.style.display = ''; DOM.boxDetalheAtenuacao.classList.add('hidden'); DOM.boxDetalhePreventiva.classList.add('hidden'); DOM.boxPortas.classList.add('hidden'); DOM.boxFamilia.classList.add('hidden'); DOM.previewRamal.classList.add('hidden'); DOM.boxBuscaCTO.classList.remove('hidden'); DOM.listaCTOs.innerHTML = '<div class="info-msg">Selecione uma rede.</div>'; DOM.resumoCTOs.innerHTML = '<div class="info-msg">Nenhuma seleção.</div>'; DOM.listaPreview.innerHTML = ''; DOM.listaTecs.innerHTML = AppState.tecnicosStatus === 'loading' ? '<div class="info-msg">Carregando técnicos da planilha...</div>' : (AppState.tecnicosStatus === 'error' ? '<div class="info-msg">Erro ao carregar técnicos.</div>' : '<div class="info-msg">Selecione empresa e CTOs.</div>'); DOM.listaTecsCabo.innerHTML = AppState.tecnicosStatus === 'loading' ? '<div class="info-msg">Carregando técnicos da planilha...</div>' : (AppState.tecnicosStatus === 'error' ? '<div class="info-msg">Erro ao carregar técnicos.</div>' : '<div class="info-msg">Selecione a empresa.</div>'); renderEmpresas(DOM.empresa); renderEmpresas(DOM.empresaMetro); DOM.empresa.value = ''; DOM.empresaMetro.value = ''; DOM.resultadoCabos.innerHTML = ''; AppState.baseDados = []; AppState.multiSelectAllowed = true; renderStatusBar(); showToast('✓ Formulário limpo.'); }
     </script>
 </body>
 
