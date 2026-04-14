@@ -60,6 +60,31 @@
             --music-bg: #0a1828;
         }
 
+        [data-theme="ben10"] {
+            --bg: #0a0f0a;
+            --bg2: #0d1a0d;
+            --bg3: #112211;
+            --bg4: #163016;
+            --blue: #00e639;
+            --blue2: #33ff66;
+            --blue-l: rgba(0, 230, 57, .12);
+            --blue-b: rgba(0, 230, 57, .25);
+            --teal: #00cc44;
+            --teal-l: rgba(0, 204, 68, .1);
+            --amber: #66ff33;
+            --amber-l: rgba(102, 255, 51, .1);
+            --red: #ff4444;
+            --red-l: rgba(255, 68, 68, .1);
+            --border: rgba(0, 230, 57, .16);
+            --border2: rgba(0, 230, 57, .3);
+            --text: #c8ffc8;
+            --text2: #5cb85c;
+            --text3: #2a5c2a;
+            --shadow: 0 1px 3px rgba(0, 0, 0, .5), 0 4px 16px rgba(0, 230, 57, .08);
+            --shadow2: 0 2px 8px rgba(0, 0, 0, .6), 0 8px 32px rgba(0, 230, 57, .12);
+            --music-bg: #0d1a0d;
+        }
+
         *,
         *::before,
         *::after {
@@ -113,6 +138,43 @@
             background: radial-gradient(ellipse 60% 40% at 50% -5%, rgba(59, 158, 255, .1) 0%, transparent 70%), radial-gradient(ellipse 30% 20% at 85% 0%, rgba(45, 212, 164, .06) 0%, transparent 60%);
             z-index: 0;
             pointer-events: none
+        }
+
+        [data-theme="ben10"] body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(0, 230, 57, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 230, 57, .03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        [data-theme="ben10"] body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 500px;
+            background: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(0, 230, 57, .15) 0%, transparent 65%), radial-gradient(ellipse 30% 25% at 80% 5%, rgba(0, 180, 40, .08) 0%, transparent 55%);
+            z-index: 0;
+            pointer-events: none
+        }
+
+        /* Floating aliens canvas */
+        #ben10Aliens {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            display: none
+        }
+        [data-theme="ben10"] #ben10Aliens {
+            display: block
         }
 
         @keyframes gridMove {
@@ -247,7 +309,7 @@
         }
 
         .toggle-track {
-            width: 36px;
+            width: 42px;
             height: 20px;
             border-radius: 10px;
             background: var(--border);
@@ -257,6 +319,10 @@
 
         [data-theme="dark"] .toggle-track {
             background: var(--blue)
+        }
+
+        [data-theme="ben10"] .toggle-track {
+            background: #00e639
         }
 
         .toggle-thumb {
@@ -272,7 +338,13 @@
         }
 
         [data-theme="dark"] .toggle-thumb {
-            transform: translateX(16px)
+            transform: translateX(12px)
+        }
+
+        [data-theme="ben10"] .toggle-thumb {
+            transform: translateX(24px);
+            background: #00e639;
+            box-shadow: 0 0 8px rgba(0, 230, 57, .6)
         }
 
         .toggle-label {
@@ -281,6 +353,48 @@
             color: var(--text2);
             letter-spacing: .3px;
             white-space: nowrap
+        }
+
+        /* BEN10 LOGO OVERRIDE */
+        [data-theme="ben10"] .logo-badge {
+            background: linear-gradient(135deg, #000 0%, #1a3a1a 50%, #000 100%);
+            box-shadow: 0 0 25px rgba(0, 230, 57, .5), 0 0 60px rgba(0, 230, 57, .15);
+            border: 2px solid #00e639
+        }
+        [data-theme="ben10"] .logo-badge svg.default-logo { display: none }
+        [data-theme="ben10"] .logo-badge svg.omnitrix-logo { display: block }
+        svg.omnitrix-logo { display: none }
+
+        [data-theme="ben10"] .logo-title .hl {
+            color: #00e639;
+            text-shadow: 0 0 12px rgba(0, 230, 57, .4)
+        }
+
+        [data-theme="ben10"] .card-top-bar {
+            background: linear-gradient(90deg, #00e639, #00cc44, #009933)
+        }
+        [data-theme="ben10"] .sidebar-top-bar {
+            background: linear-gradient(90deg, #009933, #00e639)
+        }
+
+        [data-theme="ben10"] .chip-blue {
+            background: rgba(0, 230, 57, .12);
+            color: #00e639
+        }
+        [data-theme="ben10"] .chip-teal {
+            background: rgba(0, 204, 68, .1);
+            color: #00cc44
+        }
+
+        [data-theme="ben10"] #btnFarmarAura {
+            background: linear-gradient(180deg, #001a00 0%, #000d00 100%);
+            color: #66ff66;
+            text-shadow: 0 0 6px #00e639, 0 0 12px #009933;
+            box-shadow: 0 0 6px rgba(0, 230, 57, .25);
+        }
+        [data-theme="ben10"] #btnFarmarAura:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 16px rgba(0, 230, 57, .5)
         }
 
         /* LOGO */
@@ -1447,13 +1561,15 @@
     <!-- FIRE OVERLAY -->
     <canvas id="fireOverlay"></canvas>
 
+    <!-- BEN10 FLOATING ALIENS -->
+    <canvas id="ben10Aliens"></canvas>
+
     <!-- THEME TOGGLE -->
     <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-        <span style="font-size:13px;color:#f59e0b">☀</span>
+        <span id="themeIcon" style="font-size:13px">☀</span>
         <div class="toggle-track">
             <div class="toggle-thumb"></div>
         </div>
-        <span style="font-size:13px;color:#94a3b8">☽</span>
         <span class="toggle-label" id="toggleLabel">Tema Claro</span>
     </button>
 
@@ -1504,7 +1620,8 @@
             <button class="m-btn" data-track="10">10</button>
             <button class="m-btn" data-track="11">11</button>
             <button class="m-btn" data-track="12">12</button>
-            <button class="m-btn" id="btnStopMusic" style="grid-column: span 4;">■ Stop</button>
+            <button class="m-btn" data-track="ben10" id="btnBen10Music">B10</button>
+            <button class="m-btn" id="btnStopMusic" style="grid-column: span 3;">■ Stop</button>
             <button class="m-btn" id="btnFarmarAura" data-track="13" style="grid-column: span 4;">
                 <canvas id="borderSparkCanvas"></canvas>
                 <canvas id="flameCanvas"></canvas>
@@ -1521,19 +1638,32 @@
                 <div class="card-inner">
                     <div class="logo-area">
                         <div class="logo-badge">
-                            <svg viewBox="0 0 34 34" fill="none">
+                            <!-- Logo padrão -->
+                            <svg class="default-logo" viewBox="0 0 34 34" fill="none">
                                 <circle cx="17" cy="17" r="14" stroke="rgba(255,255,255,.35)" stroke-width="1.5" />
                                 <circle cx="17" cy="17" r="8" stroke="rgba(255,255,255,.55)" stroke-width="1.5" />
                                 <circle cx="17" cy="17" r="3" fill="white" />
-                                <line x1="17" y1="3" x2="17" y2="11" stroke="white" stroke-width="1.5"
-                                    stroke-linecap="round" />
-                                <line x1="17" y1="23" x2="17" y2="31" stroke="white" stroke-width="1.5"
-                                    stroke-linecap="round" />
-                                <line x1="3" y1="17" x2="11" y2="17" stroke="white" stroke-width="1.5"
-                                    stroke-linecap="round" />
-                                <line x1="23" y1="17" x2="31" y2="17" stroke="white" stroke-width="1.5"
-                                    stroke-linecap="round" />
+                                <line x1="17" y1="3" x2="17" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                                <line x1="17" y1="23" x2="17" y2="31" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                                <line x1="3" y1="17" x2="11" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                                <line x1="23" y1="17" x2="31" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round" />
                                 <circle cx="24" cy="11" r="2" fill="rgba(255,255,255,.75)" />
+                            </svg>
+                            <!-- Omnitrix logo (Ben 10) -->
+                            <svg class="omnitrix-logo" viewBox="0 0 100 100" fill="none">
+                                <circle cx="50" cy="50" r="44" fill="#111" stroke="#00e639" stroke-width="3"/>
+                                <circle cx="50" cy="50" r="32" fill="none" stroke="#00e639" stroke-width="2" opacity=".5"/>
+                                <circle cx="50" cy="50" r="18" fill="#00e639" opacity=".15"/>
+                                <!-- Omnitrix hourglass -->
+                                <path d="M38 32 L50 50 L38 68 Z" fill="#00e639" opacity=".9"/>
+                                <path d="M62 32 L50 50 L62 68 Z" fill="#00e639" opacity=".9"/>
+                                <line x1="38" y1="32" x2="62" y2="32" stroke="#00e639" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="38" y1="68" x2="62" y2="68" stroke="#00e639" stroke-width="3" stroke-linecap="round"/>
+                                <!-- Glow ring -->
+                                <circle cx="50" cy="50" r="44" fill="none" stroke="#00e639" stroke-width="1" opacity=".3">
+                                    <animate attributeName="r" values="44;47;44" dur="2s" repeatCount="indefinite"/>
+                                    <animate attributeName="opacity" values=".3;.6;.3" dur="2s" repeatCount="indefinite"/>
+                                </circle>
                             </svg>
                         </div>
                         <div class="logo-title"><span class="hl">Analista</span> de Redes</div>
@@ -1748,18 +1878,192 @@
         /* ════════════════════════════════════════════════
            TEMA
         ════════════════════════════════════════════════ */
+        const THEME_ORDER = ['light', 'dark', 'ben10'];
+        const THEME_LABELS = { light: 'Tema Claro', dark: 'Tema Escuro', ben10: 'Ben 10' };
+        const THEME_ICONS = { light: '☀', dark: '☽', ben10: '⌚' };
+        function applyThemeUI(t) {
+            $('toggleLabel').textContent = THEME_LABELS[t] || t;
+            const icon = $('themeIcon');
+            if (icon) {
+                icon.textContent = THEME_ICONS[t] || '☀';
+                icon.style.color = t === 'light' ? '#f59e0b' : t === 'dark' ? '#94a3b8' : '#00e639';
+            }
+        }
         (function () {
             const saved = localStorage.getItem('noc-theme') || 'light';
             document.documentElement.setAttribute('data-theme', saved);
-            $('toggleLabel').textContent = saved === 'dark' ? 'Tema Escuro' : 'Tema Claro';
+            applyThemeUI(saved);
         })();
         function toggleTheme() {
-            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            const cur = document.documentElement.getAttribute('data-theme');
+            const idx = THEME_ORDER.indexOf(cur);
+            const next = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
             document.documentElement.setAttribute('data-theme', next);
-            $('toggleLabel').textContent = next === 'dark' ? 'Tema Escuro' : 'Tema Claro';
+            applyThemeUI(next);
             try { localStorage.setItem('noc-theme', next) } catch (e) { }
         }
+        function setTheme(t) {
+            document.documentElement.setAttribute('data-theme', t);
+            applyThemeUI(t);
+            try { localStorage.setItem('noc-theme', t) } catch (e) { }
+        }
         $('themeToggle').addEventListener('click', toggleTheme);
+
+        /* ════════════════════════════════════════════════
+           BEN 10 — FLOATING ALIEN SILHOUETTES
+        ════════════════════════════════════════════════ */
+        (function () {
+            const cv = $('ben10Aliens');
+            if (!cv) return;
+            const ctx = cv.getContext('2d');
+            let W, H, aliens = [];
+
+            function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+            window.addEventListener('resize', resize); resize();
+
+            // Alien silhouette shapes as path functions
+            const SHAPES = [
+                // Fourarms silhouette (big)
+                function (ctx, s) {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, s * 0.6, s, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // arms
+                    ctx.fillRect(-s * 0.9, -s * 0.3, s * 0.4, s * 0.15);
+                    ctx.fillRect(s * 0.5, -s * 0.3, s * 0.4, s * 0.15);
+                    ctx.fillRect(-s * 0.8, 0, s * 0.35, s * 0.15);
+                    ctx.fillRect(s * 0.45, 0, s * 0.35, s * 0.15);
+                    // head
+                    ctx.beginPath();
+                    ctx.arc(0, -s * 0.85, s * 0.35, 0, Math.PI * 2);
+                    ctx.fill();
+                },
+                // Diamondhead silhouette (crystal)
+                function (ctx, s) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, -s);
+                    ctx.lineTo(s * 0.5, -s * 0.3);
+                    ctx.lineTo(s * 0.4, s * 0.6);
+                    ctx.lineTo(-s * 0.4, s * 0.6);
+                    ctx.lineTo(-s * 0.5, -s * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                    // crystal point on head
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.15, -s);
+                    ctx.lineTo(0, -s * 1.35);
+                    ctx.lineTo(s * 0.15, -s);
+                    ctx.closePath();
+                    ctx.fill();
+                },
+                // XLR8 silhouette (fast/slim)
+                function (ctx, s) {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, s * 0.3, s * 0.8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // visor head
+                    ctx.beginPath();
+                    ctx.ellipse(0, -s * 0.7, s * 0.35, s * 0.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // tail
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.1, s * 0.7);
+                    ctx.quadraticCurveTo(-s * 0.6, s * 1.2, -s * 0.3, s * 1.4);
+                    ctx.lineTo(s * 0.05, s * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+                },
+                // Heatblast silhouette (flame head)
+                function (ctx, s) {
+                    ctx.beginPath();
+                    ctx.ellipse(0, s * 0.1, s * 0.45, s * 0.7, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // flame head
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.3, -s * 0.5);
+                    ctx.quadraticCurveTo(-s * 0.15, -s * 1.2, 0, -s * 1.35);
+                    ctx.quadraticCurveTo(s * 0.15, -s * 1.2, s * 0.3, -s * 0.5);
+                    ctx.closePath();
+                    ctx.fill();
+                },
+                // Omnitrix symbol floating
+                function (ctx, s) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.7, 0, Math.PI * 2);
+                    ctx.fill();
+                    // hourglass cutout (draw in slightly lighter shade)
+                    ctx.save();
+                    ctx.globalAlpha = 0.3;
+                    ctx.fillStyle = '#00e639';
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.25, -s * 0.35);
+                    ctx.lineTo(0, 0);
+                    ctx.lineTo(-s * 0.25, s * 0.35);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(s * 0.25, -s * 0.35);
+                    ctx.lineTo(0, 0);
+                    ctx.lineTo(s * 0.25, s * 0.35);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+            ];
+
+            function spawnAlien() {
+                const s = 14 + Math.random() * 28;
+                aliens.push({
+                    x: Math.random() * W,
+                    y: H + s * 2,
+                    size: s,
+                    vy: -(0.3 + Math.random() * 0.6),
+                    vx: (Math.random() - 0.5) * 0.4,
+                    rot: Math.random() * Math.PI * 2,
+                    rotSpeed: (Math.random() - 0.5) * 0.008,
+                    opacity: 0.06 + Math.random() * 0.12,
+                    shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+                    wobble: Math.random() * Math.PI * 2,
+                    wobbleSpeed: 0.005 + Math.random() * 0.01
+                });
+            }
+
+            function draw() {
+                requestAnimationFrame(draw);
+                const isBen10 = document.documentElement.getAttribute('data-theme') === 'ben10';
+                if (!isBen10) { ctx.clearRect(0, 0, W, H); return; }
+
+                ctx.clearRect(0, 0, W, H);
+
+                // Spawn new aliens
+                if (aliens.length < 25 && Math.random() < 0.03) spawnAlien();
+
+                for (let i = aliens.length - 1; i >= 0; i--) {
+                    const a = aliens[i];
+                    a.y += a.vy;
+                    a.wobble += a.wobbleSpeed;
+                    a.x += a.vx + Math.sin(a.wobble) * 0.3;
+                    a.rot += a.rotSpeed;
+
+                    if (a.y < -a.size * 3) { aliens.splice(i, 1); continue; }
+
+                    ctx.save();
+                    ctx.translate(a.x, a.y);
+                    ctx.rotate(a.rot);
+                    ctx.globalAlpha = a.opacity;
+                    ctx.fillStyle = '#000';
+                    a.shape(ctx, a.size);
+                    ctx.restore();
+                }
+            }
+
+            // Pre-fill some aliens
+            for (let i = 0; i < 12; i++) {
+                spawnAlien();
+                aliens[aliens.length - 1].y = Math.random() * H;
+            }
+            draw();
+        })();
 
         /* ════════════════════════════════════════════════
            TOAST
@@ -1791,14 +2095,25 @@
             canvasCtx.clearRect(0, 0, cv.width, cv.height);
             const buf = 90, bw = cv.width / buf; let x = 0;
             const playing = !DOM.mPlayer.paused && DOM.mPlayer.currentTime > 0;
-            const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const theme = document.documentElement.getAttribute('data-theme');
             for (let i = 0; i < buf; i++) {
                 const tgt = playing ? (0.08 + Math.random() * .45) * (cv.height - 4) : 2;
                 vizData[i] += (tgt - vizData[i]) * .12;
                 const p = i / buf;
-                const r = dark ? Math.round(59 + p * 14) : Math.round(26 + p * 14);
-                const g = dark ? Math.round(158 - p * 30) : Math.round(111 + p * 47);
-                const b = dark ? Math.round(255 - p * 55) : Math.round(219 - p * 43);
+                let r, g, b;
+                if (theme === 'ben10') {
+                    r = Math.round(0 + p * 20);
+                    g = Math.round(200 + p * 55);
+                    b = Math.round(40 + p * 20);
+                } else if (theme === 'dark') {
+                    r = Math.round(59 + p * 14);
+                    g = Math.round(158 - p * 30);
+                    b = Math.round(255 - p * 55);
+                } else {
+                    r = Math.round(26 + p * 14);
+                    g = Math.round(111 + p * 47);
+                    b = Math.round(219 - p * 43);
+                }
                 canvasCtx.fillStyle = `rgba(${r},${g},${b},.5)`;
                 canvasCtx.fillRect(x, cv.height - vizData[i], Math.max(bw - 1, 1), vizData[i]);
                 x += bw;
@@ -1811,16 +2126,27 @@
         }
 
         function playTrack(track, btnEl) {
-            currentTrack = parseInt(track);
+            currentTrack = track;
             setupAudioViz();
-            DOM.mPlayer.src = `musica${track}.mp3`;
+            if (track === 'ben10') {
+                DOM.mPlayer.src = 'musicaben10.mp3';
+            } else {
+                DOM.mPlayer.src = `musica${track}.mp3`;
+            }
             DOM.mPlayer.play().catch(e => console.warn('Audio error:', e));
             setActiveBtn(btnEl);
         }
 
-        // botões normais 01–12
+        // botões normais 01–12 + B10
         DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn => {
             if (btn.id === 'btnFarmarAura') return;
+            if (btn.id === 'btnBen10Music') {
+                btn.addEventListener('click', function () {
+                    setTheme('ben10');
+                    playTrack('ben10', this);
+                });
+                return;
+            }
             btn.addEventListener('click', function () { playTrack(this.dataset.track, this) });
         });
 
@@ -1849,10 +2175,7 @@
             if (DOM.musicControls) DOM.musicControls.classList.remove('aura-active');
 
             // Reset tema para light
-            document.documentElement.setAttribute('data-theme', 'light');
-            const label = $('toggleLabel');
-            if (label) label.textContent = 'Tema Claro';
-            try { localStorage.setItem('noc-theme', 'light') } catch (e) { }
+            setTheme('light');
         }
 
         // stop
