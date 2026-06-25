@@ -657,57 +657,9 @@ function filtrarTecGpon(){const v=normGpon($('filtroTecGpon').value);DOM.gponLis
 /* ════════════════════════════════════════════
    TIPO-AC — carga e renderização dinâmica
 ════════════════════════════════════════════ */
-function carregarTipoAC(){
-  if(AppState.tipoACStatus!=='idle')return;
-  AppState.tipoACStatus='loading';
-  const s=document.createElement('script');
-  s.src=`${GAS_URL}?aba=TIPO-AC&callback=cbTipoAC`;
-  s.onerror=()=>{
-    AppState.tipoACStatus='error';
-    console.warn('Erro ao carregar TIPO-AC — usando fallback embutido.');
-    AppState.tipoAC=getTipoACFallback();
-    AppState.tipoACStatus='ready';
-    renderTodosSelects();
-  };
-  document.body.appendChild(s);
-  window.cbTipoAC=d=>{
-    AppState.tipoAC=(d||[]).map(x=>({
-      contexto:(x.col1||x.contexto||'').trim().toUpperCase(),
-      valor:(x.col2||x.valor||'').trim(),
-      label:(x.col3||x.label||'').trim(),
-      pai:(x.col4||x.pai_valor||'').trim(),
-      ordem:parseInt(x.col5||x.ordem||'99')||99
-    })).filter(t=>t.contexto&&t.valor);
-    AppState.tipoACStatus='ready';
-    renderTodosSelects();
-  };
-}
 
-function getTipoACFallback(){
-  return [
-    {contexto:'NORMAL',valor:'REDE DE ACESSO - ATENUACAO',label:'Atenuação na Rede',pai:'',ordem:1},
-    {contexto:'NORMAL',valor:'REDE DE ACESSO - CTO DOWN',label:'CTO Down / Offline',pai:'',ordem:2},
-    {contexto:'NORMAL',valor:'REDE DE ACESSO - HIGIENIZACAO DE CTO',label:'Higienização de CTO',pai:'',ordem:3},
-    {contexto:'NORMAL',valor:'PREVENTIVA',label:'Preventiva',pai:'',ordem:4},
-    {contexto:'NORMAL',valor:'CTO ATENUADA',label:'CTO atenuada (no geral)',pai:'REDE DE ACESSO - ATENUACAO',ordem:1},
-    {contexto:'NORMAL',valor:'PORTA CTO ATENUADA',label:'Porta específica da CTO atenuada',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
-    {contexto:'NORMAL',valor:'RAMAL GPON ATENUADO',label:'Ramal GPON atenuado (múltiplas CTOs)',pai:'REDE DE ACESSO - ATENUACAO',ordem:3},
-    {contexto:'NORMAL',valor:'ANCORAGEM DE CABOS',label:'Ancoragem de cabos',pai:'PREVENTIVA',ordem:1},
-    {contexto:'NORMAL',valor:'CAIXA DESACOPLADA',label:'Caixa desacoplada',pai:'PREVENTIVA',ordem:2},
-    {contexto:'NORMAL',valor:'CAIXA FORA DO PADRAO',label:'Caixa fora do padrão',pai:'PREVENTIVA',ordem:3},
-    {contexto:'NORMAL',valor:'CTO PEGOU FOGO',label:'CTO pegou fogo',pai:'PREVENTIVA',ordem:4},
-    {contexto:'NORMAL',valor:'FURTO DE CTO',label:'Furto de CTO',pai:'PREVENTIVA',ordem:5},
-    {contexto:'NORMAL',valor:'FURTO DE SPLITTER',label:'Furto de splitter',pai:'PREVENTIVA',ordem:6},
-    {contexto:'NORMAL',valor:'REVITALIZACAO DE PINTURA',label:'Revitalização de pintura',pai:'PREVENTIVA',ordem:7},
-    {contexto:'METRO',valor:'Fiscalizacao',label:'Fiscalização',pai:'',ordem:1},
-    {contexto:'METRO',valor:'Troca de poste',label:'Troca de Poste',pai:'',ordem:2},
-    {contexto:'GPON',valor:'REDE DE ACESSO - GPON DOWN',label:'GPON Down',pai:'',ordem:1},
-    {contexto:'GPON',valor:'REDE DE ACESSO - ATENUACAO',label:'Atenuação na Rede',pai:'',ordem:2},
-    {contexto:'GPON',valor:'CTO ATENUADA',label:'CTO atenuada (no geral)',pai:'REDE DE ACESSO - ATENUACAO',ordem:1},
-    {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'Porta específica da CTO atenuada',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
-    {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'Ramal GPON atenuado',pai:'REDE DE ACESSO - ATENUACAO',ordem:3},
-  ];
-}
+
+
 
 function getTipoAC(contexto,pai=''){
   return AppState.tipoAC
@@ -752,6 +704,39 @@ function renderSubDetalhes(){
     getTipoAC('NORMAL','REDE DE ACESSO - ATENUACAO'),'Selecione...');
   preencherSelect('detalhePreventiva',
     getTipoAC('NORMAL','PREVENTIVA'),'Selecione...');
+}
+
+
+/* ════════════════════════════════════════════
+   TIPO-AC — carga dinâmica da planilha
+════════════════════════════════════════════ */
+function carregarTipoAC(){
+  if(AppState.tipoACStatus!=='idle')return;
+  AppState.tipoACStatus='loading';
+  // Callback definido ANTES do appendChild — evita race condition com cache do browser
+  window.cbTipoAC=function(d){
+    AppState.tipoAC=(d||[]).map(function(x){
+      return{
+        contexto:String(x.col1||'').trim().toUpperCase(),
+        valor:   String(x.col2||'').trim(),
+        label:   String(x.col3||'').trim(),
+        pai:     String(x.col4||'').trim(),
+        ordem:   parseInt(x.col5||'99')||99
+      };
+    }).filter(function(t){return t.contexto&&t.valor;});
+    AppState.tipoACStatus='ready';
+    renderTodosSelects();
+  };
+  const s=document.createElement('script');
+  s.src=GAS_URL+'?aba=TIPO-AC&callback=cbTipoAC&nc='+Date.now();
+  s.onerror=function(){
+    AppState.tipoACStatus='error';
+    ['tipo','problemaMetro','gponTipo'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el)el.innerHTML='<option value="" disabled selected>Erro — verifique a aba TIPO-AC</option>';
+    });
+  };
+  document.body.appendChild(s);
 }
 
 function carregarTecnicos(){if(AppState.tecnicosStatus==='loading')return;AppState.tecnicosStatus='loading';AppState.tecnicos=[];const s=document.createElement('script');s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;s.onerror=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos.</div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderGponEmpresas()};document.body.appendChild(s);window.cbTec=d=>{AppState.tecnicosStatus='ready';AppState.tecnicos=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));atualizarCatalogoPrefixos();renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderTecnicos();renderTecnosCabo();renderGponEmpresas()}}
