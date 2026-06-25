@@ -392,19 +392,11 @@ Identifica&#231;&#227;o de Ramal GPON
 </div>
 <div class="form-group">
 <label for="gponTipo">Tipo de Acionamento</label>
-<select id="gponTipo">
-<option value="REDE DE ACESSO - GPON DOWN">GPON Down</option>
-<option value="REDE DE ACESSO - ATENUACAO">Atenu&#231;&#227;o na Rede</option>
-</select>
+<select id="gponTipo"><option value="" disabled selected>Carregando...</option></select>
 </div>
 <div id="gponBoxDetalheAtenuacao" class="form-group hidden">
 <label for="gponDetalheAtenuacao">Especifica&#231;&#227;o da Atenu&#225;&#231;&#227;o</label>
-<select id="gponDetalheAtenuacao">
-<option value="" disabled selected>Selecione...</option>
-<option value="CTO ATENUADA">CTO atenuada (no geral)</option>
-<option value="PORTA CTO ATENUADA">Porta espec&#237;fica da CTO atenuada</option>
-<option value="RAMAL GPON ATENUADO">Ramal GPON atenuado</option>
-</select>
+<select id="gponDetalheAtenuacao"><option value="" disabled selected>Selecione...</option></select>
 </div>
 <div class="form-group">
 <label for="gponEmpresa">Empresa Executante</label>
@@ -451,11 +443,7 @@ Identifica&#231;&#227;o de Ramal GPON
 </div>
 <div class="form-group" style="margin-top:18px">
 <label for="problemaMetro">Tipo de Problema</label>
-<select id="problemaMetro">
-<option value="" disabled selected>Selecione o problema...</option>
-<option value="Fiscalizacao">Fiscaliza&#231;&#227;o</option>
-<option value="Troca de poste">Troca de Poste</option>
-</select>
+<select id="problemaMetro"><option value="" disabled selected>Carregando...</option></select>
 </div>
 <div class="form-group">
 <label for="empresaMetro">Empresa Executante</label>
@@ -478,35 +466,15 @@ Identifica&#231;&#227;o de Ramal GPON
 <div id="boxRede">
 <div class="form-group">
 <label for="tipo">Tipo de Acionamento</label>
-<select id="tipo">
-<option value="" disabled selected>O que est&#225; acontecendo?</option>
-<option value="REDE DE ACESSO - ATENUACAO">Atenu&#231;&#227;o na Rede</option>
-<option value="REDE DE ACESSO - CTO DOWN">CTO Down / Offline</option>
-<option value="REDE DE ACESSO - HIGIENIZACAO DE CTO">Higieniza&#231;&#227;o de CTO</option>
-<option value="PREVENTIVA">Preventiva</option>
-</select>
+<select id="tipo"><option value="" disabled selected>Carregando...</option></select>
 </div>
 <div id="boxDetalhePreventiva" class="form-group hidden">
 <label for="detalhePreventiva">Especifica&#231;&#227;o da Preventiva</label>
-<select id="detalhePreventiva">
-<option value="" disabled selected>Selecione...</option>
-<option value="ANCORAGEM DE CABOS">Ancoragem de cabos</option>
-<option value="CAIXA DESACOPLADA">Caixa desacoplada</option>
-<option value="CAIXA FORA DO PADRAO">Caixa fora do padr&#227;o</option>
-<option value="CTO PEGOU FOGO">CTO pegou fogo</option>
-<option value="FURTO DE CTO">Furto de CTO</option>
-<option value="FURTO DE SPLITTER">Furto de splitter</option>
-<option value="REVITALIZACAO DE PINTURA">Revitaliza&#231;&#227;o de pintura</option>
-</select>
+<select id="detalhePreventiva"><option value="" disabled selected>Selecione...</option></select>
 </div>
 <div id="boxDetalheAtenuacao" class="form-group hidden">
 <label for="detalheAtenuacao">Especifica&#231;&#227;o da Atenu&#225;&#231;&#227;o</label>
-<select id="detalheAtenuacao">
-<option value="" disabled selected>Selecione...</option>
-<option value="CTO ATENUADA">CTO atenuada (no geral)</option>
-<option value="PORTA CTO ATENUADA">Porta espec&#237;fica da CTO atenuada</option>
-<option value="RAMAL GPON ATENUADO">Ramal GPON atenuado (m&#250;ltiplas CTOs)</option>
-</select>
+<select id="detalheAtenuacao"><option value="" disabled selected>Selecione...</option></select>
 </div>
 <div id="boxFamilia" class="form-group hidden">
 <label for="inputFamilia">Prefixo ou Ramal Afetado</label>
@@ -567,7 +535,7 @@ Identifica&#231;&#227;o de Ramal GPON
 
 <script>
 const GAS_URL='https://script.google.com/a/macros/clickip.com.br/s/AKfycbyDuRIIlq07rOsFy_ufrIWhI7qKGordXz1ZzG0JLjBo9UzfXZ0RUbFI5WD4-Hknriz-2g/exec';
-const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoGpon:false,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[]};
+const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoGpon:false,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle'};
 function splitListaValores(v){return String(v||'').split(/[\n;,]+/).map(x=>x.trim()).filter(Boolean)}
 function atualizarCatalogoPrefixos(){AppState.prefixCatalog=[...new Set(AppState.tecnicos.flatMap(t=>t.prefixos||[]))].filter(Boolean).sort((a,b)=>b.length-a.length||a.localeCompare(b,'pt-BR',{sensitivity:'base'}))}
 const $=id=>document.getElementById(id);
@@ -641,7 +609,7 @@ function renderGponEmpresas(){const el=DOM.gponEmpresa,atual=el.value;if(AppStat
 function atualizarTecnicosGponSemRenderEmpresas(){const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
 function atualizarTecnicosGpon(){renderGponEmpresas();const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
 
-document.addEventListener('DOMContentLoaded',()=>{gerarGridPortas();bindEvents();renderStatusBar();carregarOperadores();carregarTecnicos()});
+document.addEventListener('DOMContentLoaded',()=>{gerarGridPortas();bindEvents();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC()});
 
 function bindEvents(){
   DOM.rede.addEventListener('change',aoMudarRede);
@@ -685,6 +653,107 @@ function filtrarTecsCabo(){const v=normGpon($('filtroTecCabo').value);DOM.listaT
 function filtrarTecs(){const v=normGpon($('filtroTec').value);DOM.listaTecs.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
 function filtrarTecGpon(){const v=normGpon($('filtroTecGpon').value);DOM.gponListaTecs.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
 
+
+/* ════════════════════════════════════════════
+   TIPO-AC — carga e renderização dinâmica
+════════════════════════════════════════════ */
+function carregarTipoAC(){
+  if(AppState.tipoACStatus!=='idle')return;
+  AppState.tipoACStatus='loading';
+  const s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=TIPO-AC&callback=cbTipoAC`;
+  s.onerror=()=>{
+    AppState.tipoACStatus='error';
+    console.warn('Erro ao carregar TIPO-AC — usando fallback embutido.');
+    AppState.tipoAC=getTipoACFallback();
+    AppState.tipoACStatus='ready';
+    renderTodosSelects();
+  };
+  document.body.appendChild(s);
+  window.cbTipoAC=d=>{
+    AppState.tipoAC=(d||[]).map(x=>({
+      contexto:(x.col1||x.contexto||'').trim().toUpperCase(),
+      valor:(x.col2||x.valor||'').trim(),
+      label:(x.col3||x.label||'').trim(),
+      pai:(x.col4||x.pai_valor||'').trim(),
+      ordem:parseInt(x.col5||x.ordem||'99')||99
+    })).filter(t=>t.contexto&&t.valor);
+    AppState.tipoACStatus='ready';
+    renderTodosSelects();
+  };
+}
+
+function getTipoACFallback(){
+  return [
+    {contexto:'NORMAL',valor:'REDE DE ACESSO - ATENUACAO',label:'Atenuação na Rede',pai:'',ordem:1},
+    {contexto:'NORMAL',valor:'REDE DE ACESSO - CTO DOWN',label:'CTO Down / Offline',pai:'',ordem:2},
+    {contexto:'NORMAL',valor:'REDE DE ACESSO - HIGIENIZACAO DE CTO',label:'Higienização de CTO',pai:'',ordem:3},
+    {contexto:'NORMAL',valor:'PREVENTIVA',label:'Preventiva',pai:'',ordem:4},
+    {contexto:'NORMAL',valor:'CTO ATENUADA',label:'CTO atenuada (no geral)',pai:'REDE DE ACESSO - ATENUACAO',ordem:1},
+    {contexto:'NORMAL',valor:'PORTA CTO ATENUADA',label:'Porta específica da CTO atenuada',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
+    {contexto:'NORMAL',valor:'RAMAL GPON ATENUADO',label:'Ramal GPON atenuado (múltiplas CTOs)',pai:'REDE DE ACESSO - ATENUACAO',ordem:3},
+    {contexto:'NORMAL',valor:'ANCORAGEM DE CABOS',label:'Ancoragem de cabos',pai:'PREVENTIVA',ordem:1},
+    {contexto:'NORMAL',valor:'CAIXA DESACOPLADA',label:'Caixa desacoplada',pai:'PREVENTIVA',ordem:2},
+    {contexto:'NORMAL',valor:'CAIXA FORA DO PADRAO',label:'Caixa fora do padrão',pai:'PREVENTIVA',ordem:3},
+    {contexto:'NORMAL',valor:'CTO PEGOU FOGO',label:'CTO pegou fogo',pai:'PREVENTIVA',ordem:4},
+    {contexto:'NORMAL',valor:'FURTO DE CTO',label:'Furto de CTO',pai:'PREVENTIVA',ordem:5},
+    {contexto:'NORMAL',valor:'FURTO DE SPLITTER',label:'Furto de splitter',pai:'PREVENTIVA',ordem:6},
+    {contexto:'NORMAL',valor:'REVITALIZACAO DE PINTURA',label:'Revitalização de pintura',pai:'PREVENTIVA',ordem:7},
+    {contexto:'METRO',valor:'Fiscalizacao',label:'Fiscalização',pai:'',ordem:1},
+    {contexto:'METRO',valor:'Troca de poste',label:'Troca de Poste',pai:'',ordem:2},
+    {contexto:'GPON',valor:'REDE DE ACESSO - GPON DOWN',label:'GPON Down',pai:'',ordem:1},
+    {contexto:'GPON',valor:'REDE DE ACESSO - ATENUACAO',label:'Atenuação na Rede',pai:'',ordem:2},
+    {contexto:'GPON',valor:'CTO ATENUADA',label:'CTO atenuada (no geral)',pai:'REDE DE ACESSO - ATENUACAO',ordem:1},
+    {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'Porta específica da CTO atenuada',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
+    {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'Ramal GPON atenuado',pai:'REDE DE ACESSO - ATENUACAO',ordem:3},
+  ];
+}
+
+function getTipoAC(contexto,pai=''){
+  return AppState.tipoAC
+    .filter(t=>t.contexto===contexto&&t.pai===pai)
+    .sort((a,b)=>a.ordem-b.ordem);
+}
+
+function preencherSelect(elId,itens,placeholder){
+  const el=$(elId);
+  if(!el)return;
+  const atual=el.value;
+  el.innerHTML=`<option value="" disabled selected>${placeholder}</option>`;
+  itens.forEach(t=>{
+    el.insertAdjacentHTML('beforeend',`<option value="${t.valor}">${t.label}</option>`);
+  });
+  // Restaurar seleção prévia se ainda válida
+  if(atual&&itens.some(t=>t.valor===atual))el.value=atual;
+}
+
+function renderTodosSelects(){
+  // Modo Normal — raízes
+  preencherSelect('tipo',getTipoAC('NORMAL'),'O que está acontecendo?');
+  // Modo Normal — sub-menus (renderizados vazios; preenchidos quando pai muda)
+  renderSubDetalhes();
+  // Modo Metro
+  preencherSelect('problemaMetro',getTipoAC('METRO'),'Selecione o problema...');
+  // Modo GPON — raízes
+  const gponItens=getTipoAC('GPON');
+  preencherSelect('gponTipo',gponItens,'Selecione...');
+  // Definir default do gponTipo (primeiro item)
+  if(gponItens.length){
+    const el=$('gponTipo');
+    if(!el.value||el.value==='')el.value=gponItens[0].valor;
+  }
+  // Modo GPON — sub-menu atenuação
+  preencherSelect('gponDetalheAtenuacao',getTipoAC('GPON','REDE DE ACESSO - ATENUACAO'),'Selecione...');
+}
+
+function renderSubDetalhes(){
+  const tipoAtual=DOM.tipo.value;
+  preencherSelect('detalheAtenuacao',
+    getTipoAC('NORMAL','REDE DE ACESSO - ATENUACAO'),'Selecione...');
+  preencherSelect('detalhePreventiva',
+    getTipoAC('NORMAL','PREVENTIVA'),'Selecione...');
+}
+
 function carregarTecnicos(){if(AppState.tecnicosStatus==='loading')return;AppState.tecnicosStatus='loading';AppState.tecnicos=[];const s=document.createElement('script');s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;s.onerror=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos.</div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderGponEmpresas()};document.body.appendChild(s);window.cbTec=d=>{AppState.tecnicosStatus='ready';AppState.tecnicos=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));atualizarCatalogoPrefixos();renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderTecnicos();renderTecnosCabo();renderGponEmpresas()}}
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
 function aoMudarRede(){const r=DOM.rede.value,m=r==='METRO';DOM.wrapper.classList.toggle('metro-mode',m);DOM.sidebar.classList.toggle('visible',m);DOM.sidebar.style.display=m?'none':'';if(m){DOM.boxMetro.classList.remove('hidden');DOM.boxRede.classList.add('hidden');if(!AppState.cacheRedes['METRO'])fetchCaboMetro();else renderStatusBar()}else{DOM.boxMetro.classList.add('hidden');DOM.boxRede.classList.remove('hidden');carregarCTOs(r)}atualizarResumo()}
@@ -703,7 +772,23 @@ function renderTecnosCabo(){renderEmpresas(DOM.empresaMetro);const ftc=$('filtro
 function getPrefixFromCTO(n){const u=normGpon(n);return AppState.prefixCatalog.find(p=>u.includes(p))||''}
 function buscarCTOsPorFragmento(f){const fn=normGpon(f);if(!fn)return[];return AppState.baseDados.filter(c=>normGpon(c.cto).includes(fn))}
 function getSelectedCTOs(){if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim());return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb=>AppState.baseDados.find(b=>b.cto===cb.value)).filter(Boolean)}
-function handleAcionamentoChange(){const t=DOM.tipo.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();DOM.boxDetalheAtenuacao.classList.toggle('hidden',t!=='REDE DE ACESSO - ATENUACAO');if(t==='REDE DE ACESSO - ATENUACAO')DOM.detalheAtenuacao.value='';DOM.boxDetalhePreventiva.classList.toggle('hidden',t!=='PREVENTIVA');if(t==='PREVENTIVA')DOM.detalhePreventiva.value='';DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.boxPortas.classList.add('hidden');AppState.multiSelectAllowed=true;atualizarResumo();renderTecnicos()}
+function handleAcionamentoChange(){
+  const t=DOM.tipo.value;
+  desmarcarTudo('ctoCheck');desmarcarTudoPortas();
+  // Verificar se este tipo tem filhos na planilha (sub-menu de detalhe)
+  const filhosAtenuacao=getTipoAC('NORMAL','REDE DE ACESSO - ATENUACAO');
+  const filhosPreventiva=getTipoAC('NORMAL','PREVENTIVA');
+  const isAtenuacao=t==='REDE DE ACESSO - ATENUACAO'||filhosAtenuacao.some(f=>f.pai===t&&t.includes('ATENUACAO'));
+  const isPreventiva=t==='PREVENTIVA';
+  DOM.boxDetalheAtenuacao.classList.toggle('hidden',!isAtenuacao);
+  if(isAtenuacao)DOM.detalheAtenuacao.value='';
+  DOM.boxDetalhePreventiva.classList.toggle('hidden',!isPreventiva);
+  if(isPreventiva)DOM.detalhePreventiva.value='';
+  DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');
+  DOM.boxBuscaCTO.classList.remove('hidden');DOM.boxPortas.classList.add('hidden');
+  AppState.multiSelectAllowed=true;
+  atualizarResumo();renderTecnicos();
+}
 function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');AppState.multiSelectAllowed=true;if(d==='PORTA CTO ATENUADA'){DOM.boxPortas.classList.remove('hidden');AppState.multiSelectAllowed=false}else if(d==='RAMAL GPON ATENUADO'){DOM.boxFamilia.classList.remove('hidden');DOM.previewRamal.classList.remove('hidden');DOM.boxBuscaCTO.classList.add('hidden');atualizarPreviewRamal()}atualizarResumo();renderTecnicos()}
 function handleCTOToggle(cb){const d=DOM.detalheAtenuacao.value;if(DOM.tipo.value!=='REDE DE ACESSO - ATENUACAO'){atualizarResumo();renderTecnicos();return}if(d==='PORTA CTO ATENUADA'&&cb.checked)DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});else if(d==='RAMAL GPON ATENUADO'&&cb.checked){cb.checked=false;return}atualizarResumo();renderTecnicos()}
 function renderListaCTOs(lista){if(!lista||!lista.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}DOM.listaCTOs.innerHTML=lista.sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true})).map((item,i)=>`<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join('')}
@@ -766,7 +851,7 @@ async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Ge
 
 `;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!')}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
-function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';DOM.gponTipo.value='REDE DE ACESSO - GPON DOWN';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';showToast('✓ Modo GPON limpo.')}
+function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';showToast('✓ Modo GPON limpo.')}
 function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.detalhePreventiva.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.multiSelectAllowed=true;renderStatusBar();showToast('✓ Formulário limpo.')}
 </script>
 </body>
