@@ -251,6 +251,16 @@ input::placeholder{color:var(--text3)}
 .btn-add-gpon:hover{background:var(--teal-l);border-style:solid}
 .gpon-section-divider{height:1px;background:var(--border);margin:0 0 20px}
 /* ═══ CTO → FAMÍLIA ═══ */
+.cto-input-wrap{position:relative;flex:1}
+.cto-autocomplete{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;z-index:500;max-height:220px;overflow-y:auto;box-shadow:var(--shadow2);display:none}
+.cto-autocomplete.open{display:block}
+.cto-ac-item{padding:9px 13px;font-size:.78rem;font-weight:500;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;transition:background .15s;gap:8px}
+.cto-ac-item:last-child{border-bottom:none}
+.cto-ac-item:hover{background:var(--teal-l);color:var(--teal)}
+.cto-ac-item-name{font-weight:700;font-size:.8rem;word-break:break-all}
+.cto-ac-item-rede{font-size:.58rem;font-weight:700;color:var(--text3);letter-spacing:1.5px;font-family:'Share Tech Mono',monospace;background:var(--bg3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;flex-shrink:0}
+.cto-ac-item:hover .cto-ac-item-rede{background:rgba(14,158,126,.12);border-color:rgba(14,158,126,.35);color:var(--teal)}
+.cto-ac-count{padding:7px 13px;font-size:.62rem;font-family:'Share Tech Mono',monospace;color:var(--text3);text-align:center;border-top:1px solid var(--border);background:var(--bg3)}
 .cto-lookup-result{background:var(--bg2);border:1px solid var(--teal);border-radius:10px;padding:14px;margin-top:14px;display:none;animation:slideIn .18s ease-out}
 .cto-lookup-result.visible{display:block}
 .cto-lookup-result.erro{border-color:var(--red)}
@@ -258,6 +268,9 @@ input::placeholder{color:var(--text3)}
 .cto-result-field{display:flex;flex-direction:column;gap:3px}
 .cto-result-label{font-size:.58rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
 .cto-result-value{font-size:.88rem;font-weight:700;color:var(--text);word-break:break-all}
+.cto-result-gpon{grid-column:span 2;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px;margin-top:2px}
+.cto-result-gpon-label{font-size:.58rem;font-weight:700;color:var(--text3);font-family:'Share Tech Mono',monospace;text-transform:uppercase;letter-spacing:2px;flex-shrink:0}
+.cto-result-gpon-value{font-size:.88rem;font-weight:700;color:var(--text2);font-family:'Share Tech Mono',monospace}
 .cto-result-familia{grid-column:span 2;background:var(--teal-l);border:1px solid rgba(14,158,126,.3);border-radius:8px;padding:10px 14px;margin-top:6px;display:flex;align-items:center;gap:10px}
 .cto-result-familia-label{font-size:.6rem;font-weight:700;color:var(--teal);font-family:'Share Tech Mono',monospace;text-transform:uppercase;letter-spacing:2px;flex-shrink:0}
 .cto-result-familia-value{font-size:1rem;font-weight:700;color:var(--text)}
@@ -429,7 +442,10 @@ IDENTIFICA&#199;&#195;O
 <div class="gpon-card-title">&#128205; Consulta CTO &rarr; Fam&#237;lia</div>
 <div class="info-msg" style="margin-bottom:12px">&#9432; Digite o nome ou parte da CTO para identificar OLT, modelo e fam&#237;lia. As redes devem ter sido acessadas ao menos uma vez.</div>
 <div class="cable-search-box">
+<div class="cto-input-wrap">
 <input type="text" id="ctoLookupInput" placeholder="Ex: CTO-PAR12-001, AUT04-002..." autocomplete="off">
+<div id="ctoAC" class="cto-autocomplete"></div>
+</div>
 <button class="btn-buscar-cabo" id="btnBuscarFamilia">Buscar</button>
 </div>
 <div id="ctoLookupResult"></div>
@@ -702,30 +718,21 @@ function garantirRedesCarregadas(){
 /* ════════════════════════════════════════
    CTO → FAMÍLIA
 ════════════════════════════════════════ */
-function buscarFamiliaPorCTO(){
-  const input=($('ctoLookupInput').value||'').trim();
-  const result=$('ctoLookupResult');
-  if(!input){result.innerHTML='';result.className='cto-lookup-result';return}
+
+/* retorna array de todos os registros CTO das redes carregadas */
+function _todasCtos(){
   const todas=[];
   ['FIBER','INTLINK','WIRE','METRO'].forEach(r=>{
     const arr=AppState.cacheRedes[r];
     if(Array.isArray(arr))todas.push(...arr.map(x=>({...x,_rede:r})));
   });
-  if(!todas.length){
-    result.className='cto-lookup-result erro visible';
-    result.innerHTML='<div class="cto-lookup-not-found">&#9432; As redes ainda estão carregando. Acesse uma rede no formulário principal primeiro e tente novamente.</div>';
-    return;
-  }
-  const qn=normGpon(input);
-  const enc=todas.find(c=>normGpon(c.cto||'')===qn)||todas.find(c=>normGpon(c.cto||'').includes(qn)&&qn.length>=3);
-  if(!enc){
-    result.className='cto-lookup-result erro visible';
-    result.innerHTML=`<div class="cto-lookup-not-found">CTO "<strong>${input}</strong>" não encontrada nas redes carregadas.<br><span style="font-size:.7rem;opacity:.7">Acesse cada rede no formulário principal para carregá-la.</span></div>`;
-    return;
-  }
+  return todas;
+}
+
+/* calcula dados OLT + GPON referência a partir de uma CTO */
+function _resolverCTO(enc){
   const prefixo=getPrefixFromCTO(enc.cto);
-  const redeLabel=enc._rede||'-';
-  let oltNome='-',oltModelo='-',gponRange='-',familia='-';
+  let oltNome='-',oltModelo='-',gponRange='-',gponRef='-',familia='-';
   if(prefixo&&AppState.oltDB.length){
     const pn=normGpon(prefixo);
     const oltMatch=AppState.oltDB.find(o=>{
@@ -739,12 +746,77 @@ function buscarFamiliaPorCTO(){
       if(projIdx>=0){
         gponRange=gponRangePortas(oltModelo,projIdx,projs.length);
         familia=projs[projIdx]+'-X-X';
+        /* derivar GPON de referência (primeiro slot/porta do range) */
+        const m=oltModelo.toUpperCase();
+        if(m.includes('DM4615')){
+          const portaIni=projIdx*8+1;
+          gponRef=`1/1/${portaIni}`;
+        } else if(m.includes('DM4618')){
+          const total=projs.length;
+          if(total===8&&projIdx>=4){
+            const portaIni=(projIdx-4)*8+1;
+            gponRef=`1/2/${portaIni}`;
+          } else {
+            const portaIni=projIdx*8+1;
+            gponRef=`1/1/${portaIni}`;
+          }
+        }
       } else if(projs.length>0){
         familia=projs[0]+'-X-X';
       }
     }
   }
   if(familia==='-'&&prefixo)familia=prefixo+'-X-X';
+  return{oltNome,oltModelo,gponRange,gponRef,familia};
+}
+
+/* autocomplete em tempo real */
+function renderCtoAC(query){
+  const ac=$('ctoAC');
+  if(!ac)return;
+  if(!query||query.length<2){ac.classList.remove('open');return}
+  const todas=_todasCtos();
+  if(!todas.length){ac.classList.remove('open');return}
+  const q=normGpon(query);
+  const matches=todas.filter(c=>normGpon(c.cto||'').includes(q)).slice(0,30);
+  if(!matches.length){ac.classList.remove('open');return}
+  const MAX_SHOW=12;
+  const visible=matches.slice(0,MAX_SHOW);
+  ac.innerHTML=visible.map(c=>`<div class="cto-ac-item" data-cto="${c.cto}"><span class="cto-ac-item-name">${c.cto}</span><span class="cto-ac-item-rede">${c._rede}</span></div>`).join('');
+  if(matches.length>MAX_SHOW){
+    ac.insertAdjacentHTML('beforeend',`<div class="cto-ac-count">+${matches.length-MAX_SHOW} resultados — refine a busca</div>`);
+  }
+  ac.classList.add('open');
+  ac.querySelectorAll('.cto-ac-item').forEach(el=>{
+    el.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      $('ctoLookupInput').value=el.dataset.cto;
+      ac.classList.remove('open');
+      buscarFamiliaPorCTO();
+    });
+  });
+}
+
+function buscarFamiliaPorCTO(){
+  const input=($('ctoLookupInput').value||'').trim();
+  const result=$('ctoLookupResult');
+  const ac=$('ctoAC');if(ac)ac.classList.remove('open');
+  if(!input){result.innerHTML='';result.className='cto-lookup-result';return}
+  const todas=_todasCtos();
+  if(!todas.length){
+    result.className='cto-lookup-result erro visible';
+    result.innerHTML='<div class="cto-lookup-not-found">&#9432; As redes ainda estão carregando. Acesse uma rede no formulário principal primeiro e tente novamente.</div>';
+    return;
+  }
+  const qn=normGpon(input);
+  const enc=todas.find(c=>normGpon(c.cto||'')===qn)||todas.find(c=>normGpon(c.cto||'').includes(qn)&&qn.length>=3);
+  if(!enc){
+    result.className='cto-lookup-result erro visible';
+    result.innerHTML=`<div class="cto-lookup-not-found">CTO "<strong>${input}</strong>" não encontrada nas redes carregadas.<br><span style="font-size:.7rem;opacity:.7">Acesse cada rede no formulário principal para carregá-la.</span></div>`;
+    return;
+  }
+  const{oltNome,oltModelo,gponRange,gponRef,familia}=_resolverCTO(enc);
+  const redeLabel=enc._rede||'-';
   result.className='cto-lookup-result visible';
   result.innerHTML=`<div class="cto-result-grid">
     <div class="cto-result-field"><span class="cto-result-label">CTO</span><span class="cto-result-value">${enc.cto}</span></div>
@@ -752,6 +824,7 @@ function buscarFamiliaPorCTO(){
     <div class="cto-result-field"><span class="cto-result-label">OLT</span><span class="cto-result-value">${oltNome}</span></div>
     <div class="cto-result-field"><span class="cto-result-label">Modelo</span><span class="cto-result-value">${oltModelo}</span></div>
     ${gponRange!=='-'?`<div class="cto-result-field" style="grid-column:span 2"><span class="cto-result-label">Slot · Portas</span><span class="cto-result-value">${gponRange}</span></div>`:''}
+    ${gponRef!=='-'?`<div class="cto-result-gpon" style="grid-column:span 2"><span class="cto-result-gpon-label">GPON ref.</span><span class="cto-result-gpon-value">${gponRef}</span></div>`:''}
     <div class="cto-result-familia"><span class="cto-result-familia-label">Fam&#237;lia</span><span class="cto-result-familia-value">${familia}</span></div>
   </div>`;
 }
@@ -834,7 +907,13 @@ function bindEvents(){
     btn.addEventListener('click',function(e){e.stopPropagation();setIdentMode(this.dataset.mode)});
   });
   $('btnBuscarFamilia').addEventListener('click',buscarFamiliaPorCTO);
-  const _ctoLk=$('ctoLookupInput');if(_ctoLk)_ctoLk.addEventListener('keydown',e=>{if(e.key==='Enter')buscarFamiliaPorCTO()});
+  const _ctoLk=$('ctoLookupInput');
+  if(_ctoLk){
+    _ctoLk.addEventListener('input',()=>renderCtoAC(_ctoLk.value));
+    _ctoLk.addEventListener('keydown',e=>{if(e.key==='Enter'){$('ctoAC').classList.remove('open');buscarFamiliaPorCTO()}if(e.key==='Escape')$('ctoAC').classList.remove('open')});
+    _ctoLk.addEventListener('blur',()=>setTimeout(()=>{const ac=$('ctoAC');if(ac)ac.classList.remove('open')},160));
+    _ctoLk.addEventListener('focus',()=>{if(_ctoLk.value.length>=2)renderCtoAC(_ctoLk.value)});
+  }
   // GPON painel
   const inputOlt=$('gponInputOlt');
   inputOlt.addEventListener('input',()=>{$('gponInputModelo').value='';AppState.gponProjetoAtual=null;renderGponAC(inputOlt.value)});
