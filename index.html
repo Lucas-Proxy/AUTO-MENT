@@ -759,6 +759,23 @@ function _prefixoDaCTO(nomeCTO){
   return '';
 }
 
+/* extrai a posição da GPON dentro do projeto a partir do nome da CTO.
+   O número logo após o prefixo do projeto é a posição (1-8), conforme
+   convenção: cada projeto ocupa 8 GPONs em sequência.
+   Ex: "CTO-TO2-8-5"      → projeto TO2, posição 8
+       "WIRE-CTO-TO2-2-5" → projeto TO2, posição 2 */
+function _posicaoDaCTO(nomeCTO,projeto){
+  if(!projeto)return null;
+  const partes=normGpon(nomeCTO).split('-').filter(Boolean);
+  const pj=normGpon(projeto);
+  const idx=partes.findIndex(p=>p===pj);
+  if(idx>=0&&idx+1<partes.length){
+    const n=parseInt(partes[idx+1],10);
+    if(!isNaN(n)&&n>=1&&n<=8)return n;
+  }
+  return null;
+}
+
 /* calcula dados OLT + GPON referência a partir de uma CTO */
 function _resolverCTO(enc){
   /* prefixo direto do nome da CTO é mais confiável que o catálogo de técnicos */
@@ -807,14 +824,19 @@ function _resolverCTO(enc){
     if(projIdx>=0){
       gponRange=gponRangePortas(oltModelo,projIdx,projs.length);
       const m=oltModelo.toUpperCase();
-      let portaIni=projIdx*8+1,slotRef=1;
-      if(m.includes('DM4618')){
-        const total=projs.length;
-        if(total===8&&projIdx>=4){slotRef=2;portaIni=(projIdx-4)*8+1;}
+      /* posição da GPON dentro do projeto = número após o prefixo na CTO (1-8) */
+      const posicao=_posicaoDaCTO(enc.cto,projs[projIdx])||1;
+      /* família: PROJETO-posição-X (último segmento permanece X) */
+      familia=`${projs[projIdx]}-${posicao}-X`;
+      /* GPON de referência precisa: porta = (índice do projeto no slot)*8 + posição */
+      if(m.includes('DM4615')){
+        gponRef=`1/1/${projIdx*8+posicao}`;
+      } else if(m.includes('DM4618')){
+        let slotRef=1,projIdxLocal=projIdx;
+        if(projs.length===8&&projIdx>=4){slotRef=2;projIdxLocal=projIdx-4;}
+        gponRef=`1/${slotRef}/${projIdxLocal*8+posicao}`;
       }
-      gponRef=`1/${slotRef}/${portaIni}`;
-      /* família com posição correta: porta inicial do range é sempre posição 1 no projeto */
-      familia=gponFormatarFamilia(projs[projIdx],gponRef);
+      /* DM4610 e outros: GPON ref permanece '-' (sem mapeamento de porta) */
     } else if(projs.length>0){
       /* OLT encontrada mas projeto não mapeado: retorna sem família falsa */
       familia='-';
