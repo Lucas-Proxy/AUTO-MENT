@@ -715,6 +715,20 @@ function garantirRedesCarregadas(){
   if(AppState.oltDBStatus==='idle')carregarOLTs();
 }
 
+/* aguarda oltDB estar pronto; tenta a cada 300ms por até 15s */
+function _aguardarOLTs(){
+  return new Promise((resolve,reject)=>{
+    if(AppState.oltDBStatus==='ready'){resolve();return}
+    if(AppState.oltDBStatus==='idle')carregarOLTs();
+    const INTERVALO=300,MAX=50;let tentativas=0;
+    const t=setInterval(()=>{
+      tentativas++;
+      if(AppState.oltDBStatus==='ready'){clearInterval(t);resolve()}
+      else if(AppState.oltDBStatus==='error'||tentativas>=MAX){clearInterval(t);reject(AppState.oltDBStatus)}
+    },INTERVALO);
+  });
+}
+
 /* ════════════════════════════════════════
    CTO → FAMÍLIA
 ════════════════════════════════════════ */
@@ -747,14 +761,15 @@ function _prefixoDaCTO(nomeCTO){
 
 /* calcula dados OLT + GPON referência a partir de uma CTO */
 function _resolverCTO(enc){
-  /* tenta primeiro via prefixCatalog (técnicos), depois direto do nome */
-  const prefixoCatalog=getPrefixFromCTO(enc.cto);
+  /* prefixo direto do nome da CTO é mais confiável que o catálogo de técnicos */
   const prefixoDireto=_prefixoDaCTO(enc.cto);
-  /* usa o mais específico (mais longo) ou o do catálogo se existir */
-  const prefixo=prefixoCatalog||prefixoDireto;
+  const prefixoCatalog=getPrefixFromCTO(enc.cto);
+  /* prefixo direto tem prioridade; catálogo só como fallback se direto falhar */
+  const prefixo=prefixoDireto||prefixoCatalog;
 
   let oltNome='-',oltModelo='-',gponRange='-',gponRef='-',familia='-';
-  if(!AppState.oltDB.length)return{oltNome,oltModelo,gponRange,gponRef,familia};
+  if(!prefixo)return{oltNome,oltModelo,gponRange,gponRef,familia,prefixo:''};
+  if(!AppState.oltDB.length)return{oltNome,oltModelo,gponRange,gponRef,familia,prefixo};
 
   /* busca OLT: primeiro match exato de projeto, depois parcial — mas
      só faz match parcial se o prefixo tiver ao menos 3 chars para
@@ -843,11 +858,21 @@ function renderCtoAC(query){
   });
 }
 
-function buscarFamiliaPorCTO(){
+async function buscarFamiliaPorCTO(){
   const input=($('ctoLookupInput').value||'').trim();
   const result=$('ctoLookupResult');
   const ac=$('ctoAC');if(ac)ac.classList.remove('open');
   if(!input){result.innerHTML='';result.className='cto-lookup-result';return}
+  /* aguardar OLTs se necessário */
+  if(AppState.oltDBStatus!=='ready'){
+    result.className='cto-lookup-result visible';
+    result.innerHTML='<div class="cto-lookup-not-found" style="color:var(--blue)">&#8987; Carregando banco de OLTs, aguarde...</div>';
+    try{await _aguardarOLTs()}catch(e){
+      result.className='cto-lookup-result erro visible';
+      result.innerHTML='<div class="cto-lookup-not-found">&#9888; Falha ao carregar OLTs ('+e+'). Verifique a conexão e tente novamente.</div>';
+      return;
+    }
+  }
   const todas=_todasCtos();
   if(!todas.length){
     result.className='cto-lookup-result erro visible';
