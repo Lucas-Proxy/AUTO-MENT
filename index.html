@@ -806,21 +806,15 @@ function _resolverCTO(enc){
     }
     if(projIdx>=0){
       gponRange=gponRangePortas(oltModelo,projIdx,projs.length);
-      familia=projs[projIdx]+'-X-X';
       const m=oltModelo.toUpperCase();
-      if(m.includes('DM4615')){
-        const portaIni=projIdx*8+1;
-        gponRef=`1/1/${portaIni}`;
-      } else if(m.includes('DM4618')){
+      let portaIni=projIdx*8+1,slotRef=1;
+      if(m.includes('DM4618')){
         const total=projs.length;
-        if(total===8&&projIdx>=4){
-          const portaIni=(projIdx-4)*8+1;
-          gponRef=`1/2/${portaIni}`;
-        } else {
-          const portaIni=projIdx*8+1;
-          gponRef=`1/1/${portaIni}`;
-        }
+        if(total===8&&projIdx>=4){slotRef=2;portaIni=(projIdx-4)*8+1;}
       }
+      gponRef=`1/${slotRef}/${portaIni}`;
+      /* família com posição correta: porta inicial do range é sempre posição 1 no projeto */
+      familia=gponFormatarFamilia(projs[projIdx],gponRef);
     } else if(projs.length>0){
       /* OLT encontrada mas projeto não mapeado: retorna sem família falsa */
       familia='-';
