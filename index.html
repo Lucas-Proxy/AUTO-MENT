@@ -684,17 +684,20 @@ function setIdentMode(mode){
   document.querySelectorAll('.ident-sub-btn').forEach(b=>{
     b.classList.toggle('active',b.dataset.mode===mode);
   });
-  const boxGC=$('boxGponConsulta'),boxCL=$('boxCtoLookup'),boxG=$('boxGpon');
+  const boxGC=$('boxGponConsulta'),boxCL=$('boxCtoLookup'),boxG=$('boxGpon'),boxN=$('boxNormal');
   if(mode===null){
     if(boxG)boxG.classList.remove('visible');
     if(boxGC)boxGC.style.display='none';
     if(boxCL)boxCL.style.display='none';
+    if(boxN)boxN.style.display='';
     if(DOM.sidebar)DOM.sidebar.style.display='';
     return;
   }
   if(boxG)boxG.classList.add('visible');
   if(boxGC)boxGC.style.display=(mode==='gpon')?'':'none';
   if(boxCL)boxCL.style.display=(mode==='cto')?'':'none';
+  /* modo cto: apenas consulta — ocultar formulário de acionamento */
+  if(boxN)boxN.style.display=(mode==='cto')?'none':'';
   DOM.sidebar.style.display='none';
   if(mode==='gpon'&&AppState.oltDBStatus==='idle')carregarOLTs();
   if(mode==='cto')garantirRedesCarregadas();
