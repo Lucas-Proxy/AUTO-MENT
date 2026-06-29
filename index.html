@@ -729,45 +729,91 @@ function _todasCtos(){
   return todas;
 }
 
+/* extrai o prefixo do projeto diretamente do nome da CTO,
+   sem depender do prefixCatalog (que vem dos técnicos e pode estar incompleto).
+   Ex: "CTO-TO2-2-5" → "TO2"
+       "AUT04-002"   → "AUT04"
+       "CTO-PAR12-001" → "PAR12"
+   Estratégia: pegar o primeiro segmento (separado por hífen) que não seja
+   palavras reservadas (CTO, BOX, CEO, etc.) e que tenha ao menos 2 chars. */
+function _prefixoDaCTO(nomeCTO){
+  const RESERVADAS=/^(CTO|BOX|CEO|CEL|CEP|DIO|DIV|NAP|NAB|OLT|CEO|POP|RACK|SPLITTER|WIRE|FIBER|INTLINK|METRO|AM|BR|RR|PA|TO|AC|RO|AP|MA)$/i;
+  const partes=normGpon(nomeCTO).split('-').filter(Boolean);
+  for(const p of partes){
+    if(!RESERVADAS.test(p)&&p.length>=2&&/[A-Z]/.test(p))return p;
+  }
+  return '';
+}
+
 /* calcula dados OLT + GPON referência a partir de uma CTO */
 function _resolverCTO(enc){
-  const prefixo=getPrefixFromCTO(enc.cto);
+  /* tenta primeiro via prefixCatalog (técnicos), depois direto do nome */
+  const prefixoCatalog=getPrefixFromCTO(enc.cto);
+  const prefixoDireto=_prefixoDaCTO(enc.cto);
+  /* usa o mais específico (mais longo) ou o do catálogo se existir */
+  const prefixo=prefixoCatalog||prefixoDireto;
+
   let oltNome='-',oltModelo='-',gponRange='-',gponRef='-',familia='-';
-  if(prefixo&&AppState.oltDB.length){
-    const pn=normGpon(prefixo);
-    const oltMatch=AppState.oltDB.find(o=>{
+  if(!AppState.oltDB.length)return{oltNome,oltModelo,gponRange,gponRef,familia};
+
+  /* busca OLT: primeiro match exato de projeto, depois parcial — mas
+     só faz match parcial se o prefixo tiver ao menos 3 chars para
+     evitar falsos positivos com strings vazias ou muito curtas */
+  const pn=normGpon(prefixo);
+  let oltMatch=null;
+  if(pn.length>=2){
+    /* 1) match exato: algum projeto da OLT === prefixo */
+    oltMatch=AppState.oltDB.find(o=>{
       const projs=gponExtrairProjetos(o.nome);
       return projs.some(p=>normGpon(p)===pn);
-    })||AppState.oltDB.find(o=>normGpon(o.nome).includes(pn)||pn.includes(normGpon(o.nome).slice(-6)));
-    if(oltMatch){
-      oltNome=oltMatch.nome;oltModelo=oltMatch.modelo;
-      const projs=gponExtrairProjetos(oltNome);
-      const projIdx=projs.findIndex(p=>normGpon(p)===pn);
-      if(projIdx>=0){
-        gponRange=gponRangePortas(oltModelo,projIdx,projs.length);
-        familia=projs[projIdx]+'-X-X';
-        /* derivar GPON de referência (primeiro slot/porta do range) */
-        const m=oltModelo.toUpperCase();
-        if(m.includes('DM4615')){
-          const portaIni=projIdx*8+1;
-          gponRef=`1/1/${portaIni}`;
-        } else if(m.includes('DM4618')){
-          const total=projs.length;
-          if(total===8&&projIdx>=4){
-            const portaIni=(projIdx-4)*8+1;
-            gponRef=`1/2/${portaIni}`;
-          } else {
-            const portaIni=projIdx*8+1;
-            gponRef=`1/1/${portaIni}`;
-          }
-        }
-      } else if(projs.length>0){
-        familia=projs[0]+'-X-X';
-      }
+    });
+    /* 2) match por inclusão mútua, apenas se prefixo tem ≥3 chars */
+    if(!oltMatch&&pn.length>=3){
+      oltMatch=AppState.oltDB.find(o=>{
+        const projs=gponExtrairProjetos(o.nome);
+        return projs.some(p=>{
+          const np=normGpon(p);
+          return np.includes(pn)||pn.includes(np);
+        });
+      });
     }
   }
-  if(familia==='-'&&prefixo)familia=prefixo+'-X-X';
-  return{oltNome,oltModelo,gponRange,gponRef,familia};
+
+  if(oltMatch){
+    oltNome=oltMatch.nome;oltModelo=oltMatch.modelo;
+    const projs=gponExtrairProjetos(oltNome);
+    /* encontrar índice do projeto que bate com o prefixo */
+    let projIdx=projs.findIndex(p=>normGpon(p)===pn);
+    if(projIdx<0&&pn.length>=3){
+      projIdx=projs.findIndex(p=>{
+        const np=normGpon(p);return np.includes(pn)||pn.includes(np);
+      });
+    }
+    if(projIdx>=0){
+      gponRange=gponRangePortas(oltModelo,projIdx,projs.length);
+      familia=projs[projIdx]+'-X-X';
+      const m=oltModelo.toUpperCase();
+      if(m.includes('DM4615')){
+        const portaIni=projIdx*8+1;
+        gponRef=`1/1/${portaIni}`;
+      } else if(m.includes('DM4618')){
+        const total=projs.length;
+        if(total===8&&projIdx>=4){
+          const portaIni=(projIdx-4)*8+1;
+          gponRef=`1/2/${portaIni}`;
+        } else {
+          const portaIni=projIdx*8+1;
+          gponRef=`1/1/${portaIni}`;
+        }
+      }
+    } else if(projs.length>0){
+      /* OLT encontrada mas projeto não mapeado: retorna sem família falsa */
+      familia='-';
+    }
+  }
+  /* fallback final: se ainda sem família e temos prefixo direto do nome */
+  if(familia==='-'&&prefixoDireto)familia=prefixoDireto+'-X-X';
+  return{oltNome,oltModelo,gponRange,gponRef,familia,prefixo:prefixoDireto||prefixo};
 }
 
 /* autocomplete em tempo real */
@@ -815,17 +861,19 @@ function buscarFamiliaPorCTO(){
     result.innerHTML=`<div class="cto-lookup-not-found">CTO "<strong>${input}</strong>" não encontrada nas redes carregadas.<br><span style="font-size:.7rem;opacity:.7">Acesse cada rede no formulário principal para carregá-la.</span></div>`;
     return;
   }
-  const{oltNome,oltModelo,gponRange,gponRef,familia}=_resolverCTO(enc);
+  const{oltNome,oltModelo,gponRange,gponRef,familia,prefixo}=_resolverCTO(enc);
   const redeLabel=enc._rede||'-';
   result.className='cto-lookup-result visible';
+  const oltNaoEncontrada=oltNome==='-'&&prefixo;
   result.innerHTML=`<div class="cto-result-grid">
     <div class="cto-result-field"><span class="cto-result-label">CTO</span><span class="cto-result-value">${enc.cto}</span></div>
     <div class="cto-result-field"><span class="cto-result-label">Rede</span><span class="cto-result-value">${redeLabel}</span></div>
     <div class="cto-result-field"><span class="cto-result-label">OLT</span><span class="cto-result-value">${oltNome}</span></div>
     <div class="cto-result-field"><span class="cto-result-label">Modelo</span><span class="cto-result-value">${oltModelo}</span></div>
+    ${oltNaoEncontrada?`<div class="cto-result-field" style="grid-column:span 2"><span class="cto-result-label">Prefixo detectado</span><span class="cto-result-value" style="color:var(--amber)">${prefixo} <span style="font-size:.72rem;font-weight:500;opacity:.7">— OLT não encontrada no banco. Verifique se as OLTs estão carregadas.</span></span></div>`:''}
     ${gponRange!=='-'?`<div class="cto-result-field" style="grid-column:span 2"><span class="cto-result-label">Slot · Portas</span><span class="cto-result-value">${gponRange}</span></div>`:''}
     ${gponRef!=='-'?`<div class="cto-result-gpon" style="grid-column:span 2"><span class="cto-result-gpon-label">GPON ref.</span><span class="cto-result-gpon-value">${gponRef}</span></div>`:''}
-    <div class="cto-result-familia"><span class="cto-result-familia-label">Fam&#237;lia</span><span class="cto-result-familia-value">${familia}</span></div>
+    <div class="cto-result-familia"><span class="cto-result-familia-label">Fam&#237;lia</span><span class="cto-result-familia-value">${familia!=='-'?familia:'Não identificada'}</span></div>
   </div>`;
 }
 
