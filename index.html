@@ -452,6 +452,7 @@ IDENTIFICA&#199;&#195;O
 </div>
 </div>
 
+<div id="boxGponAcionamento">
 <div class="gpon-section-divider"></div>
 
 <div class="form-group">
@@ -488,6 +489,7 @@ IDENTIFICA&#199;&#195;O
 <button class="btn btn-main" id="btnGerarOSGpon">Gerar Ordem de Servi&#231;o</button>
 <button class="btn btn-clear" id="btnLimparGpon">Limpar</button>
 </div>
+</div><!-- /boxGponAcionamento -->
 </div>
 
 <div id="boxNormal">
@@ -684,11 +686,12 @@ function setIdentMode(mode){
   document.querySelectorAll('.ident-sub-btn').forEach(b=>{
     b.classList.toggle('active',b.dataset.mode===mode);
   });
-  const boxGC=$('boxGponConsulta'),boxCL=$('boxCtoLookup'),boxG=$('boxGpon'),boxN=$('boxNormal');
+  const boxGC=$('boxGponConsulta'),boxCL=$('boxCtoLookup'),boxG=$('boxGpon'),boxN=$('boxNormal'),boxGA=$('boxGponAcionamento');
   if(mode===null){
     if(boxG)boxG.classList.remove('visible');
     if(boxGC)boxGC.style.display='none';
     if(boxCL)boxCL.style.display='none';
+    if(boxGA)boxGA.style.display='';
     if(boxN)boxN.style.display='';
     if(DOM.sidebar)DOM.sidebar.style.display='';
     return;
@@ -696,8 +699,10 @@ function setIdentMode(mode){
   if(boxG)boxG.classList.add('visible');
   if(boxGC)boxGC.style.display=(mode==='gpon')?'':'none';
   if(boxCL)boxCL.style.display=(mode==='cto')?'':'none';
-  /* modo cto: apenas consulta — ocultar formulário de acionamento */
-  if(boxN)boxN.style.display=(mode==='cto')?'none':'';
+  /* modo cto: apenas consulta — ocultar formulários de acionamento */
+  const isCto=(mode==='cto');
+  if(boxGA)boxGA.style.display=isCto?'none':'';
+  if(boxN)boxN.style.display=isCto?'none':'';
   DOM.sidebar.style.display='none';
   if(mode==='gpon'&&AppState.oltDBStatus==='idle')carregarOLTs();
   if(mode==='cto')garantirRedesCarregadas();
