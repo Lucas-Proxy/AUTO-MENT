@@ -699,10 +699,12 @@ function setIdentMode(mode){
   if(boxG)boxG.classList.add('visible');
   if(boxGC)boxGC.style.display=(mode==='gpon')?'':'none';
   if(boxCL)boxCL.style.display=(mode==='cto')?'':'none';
-  /* modo cto: apenas consulta — ocultar formulários de acionamento */
+  /* enquanto qualquer submodo de identificação estiver ativo (gpon ou cto),
+     o formulário normal de acionamento (boxNormal) fica sempre oculto —
+     ele só reaparece quando a Identificação é totalmente desativada (mode===null) */
   const isCto=(mode==='cto');
   if(boxGA)boxGA.style.display=isCto?'none':'';
-  if(boxN)boxN.style.display=isCto?'none':'';
+  if(boxN)boxN.style.display='none';
   DOM.sidebar.style.display='none';
   if(mode==='gpon'&&AppState.oltDBStatus==='idle')carregarOLTs();
   if(mode==='cto')garantirRedesCarregadas();
