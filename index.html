@@ -32,10 +32,11 @@ main{position:relative;z-index:1;min-height:100vh;padding:48px 40px;display:flex
 .wrapper.metro-mode .floating-sidebar{position:fixed;right:-500px;top:0;width:480px;height:100vh;max-height:100vh;border-radius:0;overflow-y:auto;transition:right .4s cubic-bezier(.23,1,.32,1);z-index:999;padding:60px 36px;border-left:1px solid var(--border2)}
 .wrapper.metro-mode .floating-sidebar.visible{right:0}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:0;position:relative;flex:1;max-width:640px;box-shadow:var(--shadow2);overflow:hidden;transition:background .35s,border-color .35s}
-.card-top-bar{height:4px;background:linear-gradient(90deg,var(--blue),var(--teal))}
+.card-top-bar{height:4px;background:linear-gradient(90deg,var(--blue),var(--teal));background-size:200% 100%;animation:topBarShift 6s linear infinite}
+@keyframes topBarShift{0%{background-position:0% 0}100%{background-position:200% 0}}
 .card-inner{padding:40px 44px 44px}
 .floating-sidebar{flex:0 0 460px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:0;position:sticky;top:48px;max-height:calc(100vh - 96px);overflow-y:auto;overflow-x:hidden;box-shadow:var(--shadow);transition:background .35s,border-color .35s}
-.sidebar-top-bar{height:4px;background:linear-gradient(90deg,var(--teal),var(--blue))}
+.sidebar-top-bar{height:4px;background:linear-gradient(90deg,var(--teal),var(--blue));background-size:200% 100%;animation:topBarShift 6s linear infinite reverse}
 .sidebar-inner{padding:32px}
 .floating-sidebar::-webkit-scrollbar{width:4px}
 .floating-sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
@@ -87,7 +88,8 @@ svg.got-logo{display:none}
 label{display:block;font-size:.72rem;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:.4px;text-transform:uppercase}
 .form-group{margin-bottom:20px}
 input[type="text"],textarea,select{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:.92rem;font-weight:500;transition:border-color .2s,background .2s,box-shadow .2s,color .35s;outline:none;-webkit-appearance:none}
-input[type="text"]:focus,textarea:focus,select:focus{border-color:var(--blue2);background:var(--bg2);box-shadow:0 0 0 3px rgba(59,158,255,.15)}
+input[type="text"]:focus,textarea:focus,select:focus{border-color:var(--blue2);background:var(--bg2);box-shadow:0 0 0 3px rgba(59,158,255,.15);animation:focusPulse .5s ease-out}
+@keyframes focusPulse{0%{box-shadow:0 0 0 0 rgba(59,158,255,.45)}100%{box-shadow:0 0 0 9px rgba(59,158,255,0)}}
 select option{background:var(--bg2);color:var(--text)}
 input::placeholder{color:var(--text3)}
 .cto-picker,.stack-list,.port-grid,.preview-list{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;max-height:260px;overflow-y:auto;margin-top:6px}
@@ -116,7 +118,10 @@ input::placeholder{color:var(--text3)}
 .tag-container{display:flex;flex-direction:column;gap:6px}
 .tag{background:var(--blue-l);border:1px solid var(--blue-b);color:var(--blue);padding:9px 12px;border-radius:8px;font-weight:600;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;animation:slideIn .15s ease-out;font-family:'Inter',sans-serif}
 .tag.warning{background:var(--amber-l);border-color:rgba(217,119,6,.25);color:var(--amber)}
-@keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{0%{opacity:0;transform:translateY(-10px) scale(.94)}55%{opacity:1;transform:translateY(2px) scale(1.015)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes panelFadeSlide{0%{opacity:0;transform:translateY(-14px) scale(.985)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes selectPop{0%{transform:scale(1)}45%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes rippleAnim{to{transform:scale(2.6);opacity:0}}
 .btn-remove{cursor:pointer;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:all .2s;font-weight:700;background:transparent;color:currentColor;font-size:.85rem;border:none;opacity:.6}
 .btn-remove:hover{background:var(--red-l);color:var(--red);opacity:1}
 .screen-shake{animation:shake .4s cubic-bezier(.36,.07,.19,.97) both;transform:translate3d(0,0,0)}
@@ -189,7 +194,7 @@ input::placeholder{color:var(--text3)}
 .btn-seguir:hover{transform:translateY(-1px)!important;box-shadow:0 4px 18px rgba(14,158,126,.45)!important}
 .btn-editar{background:var(--bg2)!important;border:1px solid var(--border)!important;color:var(--text2)!important;flex:1;font-size:.85rem!important;border-radius:8px!important}
 .btn-editar:hover{border-color:var(--border2)!important;color:var(--text)!important;background:var(--bg4)!important}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--teal);color:var(--text);font-family:'Inter',sans-serif;font-size:.8rem;font-weight:500;padding:10px 18px;border-radius:8px;z-index:2000;opacity:0;transition:all .25s ease;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--teal);color:var(--text);font-family:'Inter',sans-serif;font-size:.8rem;font-weight:500;padding:10px 18px;border-radius:8px;z-index:2000;opacity:0;transition:opacity .3s ease,transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.error{border-left-color:var(--red);color:var(--red)}
 /* ═══ BUSCA TÉCNICOS ═══ */
@@ -299,12 +304,89 @@ main{padding:16px 12px}
 .gpon-search-row{grid-template-columns:1fr 100px}
 .ident-submenu{flex-direction:column}
 }
+
+/* ═══════════════════════════════════════════════════════
+   EFEITOS VISUAIS EXTRA — transições, micro-interações e temas
+═══════════════════════════════════════════════════════ */
+
+/* — entrada da página — */
+@keyframes cardEnter{0%{opacity:0;transform:translateY(18px) scale(.98)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.card{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) both}
+.floating-sidebar{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) .08s both}
+
+/* — transição de painéis (reaproveita o mecanismo display:none→block já usado pelo app) — */
+#boxMetro,#boxRede,#boxGponConsulta,#boxCtoLookup,#boxDetalheAtenuacao,#boxDetalhePreventiva,
+#boxFamilia,#boxPortas,#previewRamal,#gponBoxDetalheAtenuacao,#boxGponAcionamento,#boxNormal{
+  animation:panelFadeSlide .42s cubic-bezier(.22,1,.36,1)
+}
+#boxGpon.visible{animation:panelFadeSlide .42s cubic-bezier(.22,1,.36,1)}
+
+/* — cascata de itens em listas (CTOs, técnicos, portas, preventivas) — */
+.pill-item,.stack-item,.port-item,.prev-item{animation:slideIn .3s cubic-bezier(.22,1,.36,1) both}
+.pill-item:nth-child(1),.stack-item:nth-child(1),.port-item:nth-child(1),.prev-item:nth-child(1){animation-delay:0ms}
+.pill-item:nth-child(2),.stack-item:nth-child(2),.port-item:nth-child(2),.prev-item:nth-child(2){animation-delay:15ms}
+.pill-item:nth-child(3),.stack-item:nth-child(3),.port-item:nth-child(3),.prev-item:nth-child(3){animation-delay:30ms}
+.pill-item:nth-child(4),.stack-item:nth-child(4),.port-item:nth-child(4),.prev-item:nth-child(4){animation-delay:45ms}
+.pill-item:nth-child(5),.stack-item:nth-child(5),.port-item:nth-child(5),.prev-item:nth-child(5){animation-delay:60ms}
+.pill-item:nth-child(6),.stack-item:nth-child(6),.port-item:nth-child(6),.prev-item:nth-child(6){animation-delay:75ms}
+.pill-item:nth-child(7),.stack-item:nth-child(7),.port-item:nth-child(7),.prev-item:nth-child(7){animation-delay:90ms}
+.pill-item:nth-child(8),.stack-item:nth-child(8),.port-item:nth-child(8),.prev-item:nth-child(8){animation-delay:105ms}
+.pill-item:nth-child(n+9),.stack-item:nth-child(n+9),.port-item:nth-child(n+9),.prev-item:nth-child(n+9){animation-delay:115ms}
+
+/* — pop ao selecionar — */
+.pill-item input:checked+label,.stack-item input:checked+label,.port-item input:checked+label,.prev-item input:checked+label{animation:selectPop .32s cubic-bezier(.34,1.56,.64,1)}
+
+/* — autocompletes com entrada suave — */
+.gpon-autocomplete.open,.cto-autocomplete.open{animation:slideIn .16s ease-out}
+.gpon-lista-wrap.visible{animation:panelFadeSlide .3s cubic-bezier(.22,1,.36,1)}
+
+/* — ripple dinâmico nos botões — */
+.btn,.btn-buscar-cabo,.btn-seguir,.btn-editar,.btn-identificacao,.ident-sub-btn,.m-btn:not(#btnFarmarAura){position:relative;overflow:hidden}
+.ripple-el{position:absolute;border-radius:50%;transform:scale(0);pointer-events:none;background:rgba(70,110,160,.24);animation:rippleAnim .55s ease-out forwards}
+.btn-main .ripple-el,.btn-seguir .ripple-el,.btn-buscar-cabo .ripple-el{background:rgba(255,255,255,.5)}
+[data-theme="dark"] .ripple-el{background:rgba(160,200,255,.2)}
+[data-theme="ben10"] .ripple-el{background:rgba(0,230,57,.32)}
+[data-theme="ben10"] .btn-main .ripple-el,[data-theme="ben10"] .btn-seguir .ripple-el,[data-theme="ben10"] .btn-buscar-cabo .ripple-el{background:rgba(255,255,255,.5)}
+[data-theme="got"] .ripple-el{background:rgba(201,168,76,.28)}
+[data-theme="got"] .btn-main .ripple-el,[data-theme="got"] .btn-seguir .ripple-el,[data-theme="got"] .btn-buscar-cabo .ripple-el{background:rgba(255,255,255,.5)}
+
+/* — botões principais "respirando" para reforçar a ação primária — */
+.btn-main{animation:none}
+.btn-main:hover{animation:btnBreathe 1.4s ease-in-out infinite}
+@keyframes btnBreathe{0%,100%{box-shadow:0 2px 10px rgba(26,111,219,.4)}50%{box-shadow:0 4px 22px rgba(26,111,219,.65)}}
+
+/* — brilho ambiente dos temas — */
+[data-theme="dark"] .card{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) both,darkCardGlow 4.5s ease-in-out infinite}
+@keyframes darkCardGlow{0%,100%{box-shadow:var(--shadow2)}50%{box-shadow:var(--shadow2),0 0 26px rgba(59,158,255,.14)}}
+[data-theme="ben10"] .card{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) both,ben10CardGlow 3.2s ease-in-out infinite}
+@keyframes ben10CardGlow{0%,100%{box-shadow:var(--shadow2)}50%{box-shadow:var(--shadow2),0 0 34px rgba(0,230,57,.24)}}
+[data-theme="got"] .card{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) both,gotCardGlow 3.6s ease-in-out infinite}
+@keyframes gotCardGlow{0%,100%{box-shadow:var(--shadow2)}50%{box-shadow:var(--shadow2),0 0 30px rgba(201,168,76,.2)}}
+
+[data-theme="ben10"] .logo-title .hl{animation:ben10Pulse 1.8s ease-in-out infinite}
+@keyframes ben10Pulse{0%,100%{text-shadow:0 0 12px rgba(0,230,57,.4)}50%{text-shadow:0 0 22px rgba(0,230,57,.8)}}
+[data-theme="got"] .logo-title .hl{animation:gotFlicker 2.6s ease-in-out infinite}
+@keyframes gotFlicker{0%,100%{text-shadow:0 0 10px rgba(201,168,76,.35)}45%{text-shadow:0 0 17px rgba(201,168,76,.6)}50%{text-shadow:0 0 6px rgba(201,168,76,.22)}55%{text-shadow:0 0 19px rgba(201,168,76,.65)}}
+
+[data-theme="ben10"] .logo-badge{animation:ben10BadgeSpin 6s linear infinite}
+@keyframes ben10BadgeSpin{0%{filter:hue-rotate(0deg) brightness(1)}50%{filter:hue-rotate(8deg) brightness(1.12)}100%{filter:hue-rotate(0deg) brightness(1)}}
+[data-theme="got"] .logo-badge{animation:gotEmber 2.4s ease-in-out infinite}
+@keyframes gotEmber{0%,100%{box-shadow:0 0 20px rgba(201,168,76,.4),0 0 50px rgba(139,26,26,.15)}50%{box-shadow:0 0 28px rgba(201,168,76,.65),0 0 60px rgba(139,26,26,.3)}}
+
+/* — cursor de brilho ambiente — */
+#cursorGlow{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* — respeitar quem prefere menos movimento — */
+@media(prefers-reduced-motion:reduce){
+*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
 </style>
 </head>
 <body>
 <canvas id="fireOverlay"></canvas>
 <canvas id="ben10Aliens"></canvas>
 <canvas id="gotSnow"></canvas>
+<canvas id="cursorGlow"></canvas>
 
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
 <span id="themeIcon" style="font-size:13px">&#9728;</span>
@@ -646,6 +728,91 @@ $('themeToggle').addEventListener('click',toggleTheme);
 (function(){const cv=$('ben10Aliens');if(!cv)return;const ctx=cv.getContext('2d');let W,H,aliens=[];function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}window.addEventListener('resize',resize);resize();const SHAPES=[(ctx,s)=>{ctx.beginPath();ctx.ellipse(0,0,s*.6,s,0,0,Math.PI*2);ctx.fill();ctx.fillRect(-s*.9,-s*.3,s*.4,s*.15);ctx.fillRect(s*.5,-s*.3,s*.4,s*.15);ctx.fillRect(-s*.8,0,s*.35,s*.15);ctx.fillRect(s*.45,0,s*.35,s*.15);ctx.beginPath();ctx.arc(0,-s*.85,s*.35,0,Math.PI*2);ctx.fill()},(ctx,s)=>{ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*.5,-s*.3);ctx.lineTo(s*.4,s*.6);ctx.lineTo(-s*.4,s*.6);ctx.lineTo(-s*.5,-s*.3);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(-s*.15,-s);ctx.lineTo(0,-s*1.35);ctx.lineTo(s*.15,-s);ctx.closePath();ctx.fill()},(ctx,s)=>{ctx.beginPath();ctx.ellipse(0,0,s*.3,s*.8,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(0,-s*.7,s*.35,s*.2,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(-s*.1,s*.7);ctx.quadraticCurveTo(-s*.6,s*1.2,-s*.3,s*1.4);ctx.lineTo(s*.05,s*.8);ctx.closePath();ctx.fill()}];function spawnAlien(){const s=14+Math.random()*28;aliens.push({x:Math.random()*W,y:H+s*2,size:s,vy:-(0.3+Math.random()*.6),vx:(Math.random()-.5)*.4,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.008,opacity:.06+Math.random()*.12,shape:SHAPES[Math.floor(Math.random()*SHAPES.length)],wobble:Math.random()*Math.PI*2,wobbleSpeed:.005+Math.random()*.01})}function draw(){requestAnimationFrame(draw);if(document.documentElement.getAttribute('data-theme')!=='ben10'){ctx.clearRect(0,0,W,H);return}ctx.clearRect(0,0,W,H);if(aliens.length<25&&Math.random()<.03)spawnAlien();for(let i=aliens.length-1;i>=0;i--){const a=aliens[i];a.y+=a.vy;a.wobble+=a.wobbleSpeed;a.x+=a.vx+Math.sin(a.wobble)*.3;a.rot+=a.rotSpeed;if(a.y<-a.size*3){aliens.splice(i,1);continue}ctx.save();ctx.translate(a.x,a.y);ctx.rotate(a.rot);ctx.globalAlpha=a.opacity;ctx.fillStyle='#000';a.shape(ctx,a.size);ctx.restore()}}for(let i=0;i<12;i++){spawnAlien();aliens[aliens.length-1].y=Math.random()*H}draw()})();
 
 (function(){const cv=$('gotSnow');if(!cv)return;const ctx=cv.getContext('2d');let W,H,flakes=[];function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}window.addEventListener('resize',resize);resize();function spawnFlake(){const e=Math.random()<.15;flakes.push({x:Math.random()*W,y:-5,r:e?(1+Math.random()*2):(1.5+Math.random()*3.5),vy:e?-(0.4+Math.random()*.8):(0.5+Math.random()*1.2),vx:(Math.random()-.5)*.6,wobble:Math.random()*Math.PI*2,wobbleSpeed:.01+Math.random()*.02,opacity:.3+Math.random()*.5,isEmber:e})}function draw(){requestAnimationFrame(draw);if(document.documentElement.getAttribute('data-theme')!=='got'){ctx.clearRect(0,0,W,H);return}ctx.clearRect(0,0,W,H);if(flakes.length<80&&Math.random()<.4)spawnFlake();for(let i=flakes.length-1;i>=0;i--){const f=flakes[i];f.wobble+=f.wobbleSpeed;f.x+=f.vx+Math.sin(f.wobble)*.5;f.y+=f.vy;if(f.isEmber?f.y<-10:f.y>H+10){flakes.splice(i,1);continue}ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,Math.PI*2);if(f.isEmber){const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*4);g.addColorStop(0,`rgba(255,180,30,${f.opacity})`);g.addColorStop(.5,`rgba(200,60,10,${f.opacity*.5})`);g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.arc(f.x,f.y,f.r*4,0,Math.PI*2)}else{ctx.fillStyle=`rgba(220,230,255,${f.opacity})`}ctx.fill()}}for(let i=0;i<40;i++){spawnFlake();flakes[flakes.length-1].y=Math.random()*H}draw()})();
+
+/* ═══════════════════════════════════════════
+   EFEITOS EXTRA — ripple, brilho de cursor e confete
+════════════════════════════════════════ */
+
+/* ripple dinâmico ao clicar em qualquer botão principal (não altera nenhuma lógica de clique existente) */
+document.addEventListener('click',function(e){
+  const btn=e.target.closest('.btn,.btn-buscar-cabo,.btn-seguir,.btn-editar,.btn-identificacao,.ident-sub-btn,.m-btn');
+  if(!btn||btn.id==='btnFarmarAura')return;
+  const rect=btn.getBoundingClientRect();
+  const ripple=document.createElement('span');
+  ripple.className='ripple-el';
+  const size=Math.max(rect.width,rect.height)*1.3;
+  ripple.style.width=ripple.style.height=size+'px';
+  ripple.style.left=(e.clientX-rect.left-size/2)+'px';
+  ripple.style.top=(e.clientY-rect.top-size/2)+'px';
+  btn.appendChild(ripple);
+  ripple.addEventListener('animationend',()=>ripple.remove());
+},true);
+
+/* brilho suave que acompanha o cursor, com cor conforme o tema ativo */
+(function(){
+  const cv=$('cursorGlow');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  let W,H,mx=-9999,my=-9999,cx=-9999,cy=-9999,ativo=false;
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}
+  window.addEventListener('resize',resize);resize();
+  window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;ativo=true});
+  window.addEventListener('mouseleave',()=>{ativo=false});
+  function corTema(){
+    const t=document.documentElement.getAttribute('data-theme');
+    if(t==='ben10')return'0,230,57';
+    if(t==='got')return'201,168,76';
+    if(t==='dark')return'59,158,255';
+    return'26,111,219'
+  }
+  function draw(){
+    requestAnimationFrame(draw);
+    cx+=(mx-cx)*.09;cy+=(my-cy)*.09;
+    ctx.clearRect(0,0,W,H);
+    if(!ativo)return;
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,260);
+    g.addColorStop(0,`rgba(${corTema()},.09)`);
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath();ctx.arc(cx,cy,260,0,Math.PI*2);ctx.fill()
+  }
+  draw()
+})();
+
+/* confete de sucesso ao gerar/copiar uma OS, com cores do tema ativo */
+function dispararConfete(){
+  const cv=document.createElement('canvas');
+  cv.style.position='fixed';cv.style.inset='0';cv.style.width='100%';cv.style.height='100%';cv.style.zIndex='2500';cv.style.pointerEvents='none';
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  document.body.appendChild(cv);
+  const ctx=cv.getContext('2d');
+  const t=document.documentElement.getAttribute('data-theme');
+  const cores=t==='ben10'?['#00e639','#33ff66','#009933','#ffffff']:t==='got'?['#c9a84c','#dbc06a','#8b1a1a','#e8c547']:t==='dark'?['#3b9eff','#60b4ff','#2dd4a4','#ffffff']:['#1a6fdb','#2d84f0','#0e9e7e','#ffffff'];
+  const parts=[],originX=cv.width/2,originY=cv.height*.32;
+  for(let i=0;i<70;i++){
+    const ang=Math.random()*Math.PI*2,spd=3+Math.random()*7;
+    parts.push({x:originX,y:originY,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-2,g:.18+Math.random()*.08,life:1,decay:.008+Math.random()*.012,size:3+Math.random()*4,color:cores[Math.floor(Math.random()*cores.length)],rot:Math.random()*Math.PI*2,rs:(Math.random()-.5)*.3})
+  }
+  let frame=0;
+  function tick(){
+    frame++;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let viva=false;
+    parts.forEach(p=>{
+      if(p.life<=0)return;
+      viva=true;
+      p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;p.rot+=p.rs;
+      ctx.save();
+      ctx.globalAlpha=Math.max(p.life,0);
+      ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.6);
+      ctx.restore()
+    });
+    if(viva&&frame<220)requestAnimationFrame(tick);
+    else cv.remove()
+  }
+  tick()
+}
 
 function showToast(msg,type='ok',dur=2800){const t=$('toast');t.textContent=msg;t.className='toast'+(type==='error'?' error':'');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur)}
 
@@ -1111,11 +1278,11 @@ function renderOperadores(){const sel=$('operadorSelect');if(!sel)return;const s
 function construirMensagemComOperador(base=AppState.conteudoCopiado){const chave=$('operadorSelect').value;let msg=base;const op=AppState.operadores.find(item=>getOperadorKey(item)===chave);if(op)msg=`_*${op.nome}${op.setor?` - {${op.setor}}`:''}:*_\n\n`+msg;return msg}
 function atualizarTextoModal(){const el=$('copyModalText');if(!el)return;el.textContent=construirMensagemComOperador()}
 
-async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;ctos.forEach(info=>{const link=(info.lat&&info.lng)?`https://www.google.com/maps?q=${info.lat},${info.lng}`:'Sem coordenadas';corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!')}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;ctos.forEach(info=>{const link=(info.lat&&info.lng)?`https://www.google.com/maps?q=${info.lat},${info.lng}`:'Sem coordenadas';corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
-async function gerarOSMetro(){const btn=DOM.btnGerarOSMetro;try{btn.innerHTML='Gerando...';btn.disabled=true;const emp=DOM.empresaMetro.value,problema=$('problemaMetro').value;const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));const cards=DOM.resultadoCabos.querySelectorAll('.cabo-card');if(!emp)throw new Error('Selecione a empresa.');if(!problema)throw new Error('Selecione o tipo de problema.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(!cards.length)throw new Error('Busque os cabos antes de gerar.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const coordRaw=DOM.inputCoordenada.value.trim(),cp=parseCoordenada(coordRaw);const locLink=cp?`https://www.google.com/maps?q=${cp.lat},${cp.lng}`:coordRaw;let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;cards.forEach((card,idx)=>{const rows={};card.querySelectorAll('.cabo-card-row').forEach(row=>{const l=(row.querySelector('.cabo-label')?.textContent||'').trim().toLowerCase(),v=(row.querySelector('.cabo-value')?.textContent||'').trim();if(l&&v)rows[l]=v});const dist=(card.querySelector('.cabo-dist')?.textContent||'').trim();corpo+=`⚡ Cabo: ${rows['cabo']||'-'}\n📌 Localização: ${locLink}\n`;if(rows['tipo'])corpo+=`⚙️ Tipo: ${rows['tipo']}\n`;if(rows['nível'])corpo+=`🌐 Nível: ${rows['nível']}\n`;if(rows['comprimento'])corpo+=`📋 Comprimento: ${rows['comprimento']}\n`;if(dist)corpo+=`📐 ${dist}\n`;if(idx<cards.length-1)corpo+=`\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!')}catch{showToast('Não foi possível copiar.','error',4000)}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOSMetro(){const btn=DOM.btnGerarOSMetro;try{btn.innerHTML='Gerando...';btn.disabled=true;const emp=DOM.empresaMetro.value,problema=$('problemaMetro').value;const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));const cards=DOM.resultadoCabos.querySelectorAll('.cabo-card');if(!emp)throw new Error('Selecione a empresa.');if(!problema)throw new Error('Selecione o tipo de problema.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(!cards.length)throw new Error('Busque os cabos antes de gerar.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const coordRaw=DOM.inputCoordenada.value.trim(),cp=parseCoordenada(coordRaw);const locLink=cp?`https://www.google.com/maps?q=${cp.lat},${cp.lng}`:coordRaw;let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;cards.forEach((card,idx)=>{const rows={};card.querySelectorAll('.cabo-card-row').forEach(row=>{const l=(row.querySelector('.cabo-label')?.textContent||'').trim().toLowerCase(),v=(row.querySelector('.cabo-value')?.textContent||'').trim();if(l&&v)rows[l]=v});const dist=(card.querySelector('.cabo-dist')?.textContent||'').trim();corpo+=`⚡ Cabo: ${rows['cabo']||'-'}\n📌 Localização: ${locLink}\n`;if(rows['tipo'])corpo+=`⚙️ Tipo: ${rows['tipo']}\n`;if(rows['nível'])corpo+=`🌐 Nível: ${rows['nível']}\n`;if(rows['comprimento'])corpo+=`📋 Comprimento: ${rows['comprimento']}\n`;if(dist)corpo+=`📐 ${dist}\n`;if(idx<cards.length-1)corpo+=`\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
-async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!')}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}showToast('✓ Limpo.')}
