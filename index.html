@@ -702,6 +702,31 @@ IDENTIFICA&#199;&#195;O
 
 <script>
 const GAS_URL='https://script.google.com/a/macros/clickip.com.br/s/AKfycbyDuRIIlq07rOsFy_ufrIWhI7qKGordXz1ZzG0JLjBo9UzfXZ0RUbFI5WD4-Hknriz-2g/exec';
+const TIPO_AC_FIXO=[
+{contexto:'NORMAL',valor:'REDE DE ACESSO - ATENUACAO',label:'ATENUAÇÃO',pai:'',ordem:1},
+{contexto:'NORMAL',valor:'REDE DE ACESSO - CTO DOWN',label:'CTO DOWN',pai:'',ordem:2},
+{contexto:'NORMAL',valor:'REDE DE ACESSO - HIGIENIZACAO DE CTO',label:'HIGIENIZAÇÃO',pai:'',ordem:3},
+{contexto:'NORMAL',valor:'PREVENTIVA',label:'PREVENTIVA',pai:'',ordem:4},
+{contexto:'NORMAL',valor:'BACKBONE',label:'BACKBONE',pai:'',ordem:5},
+{contexto:'NORMAL',valor:'CTO ATENUADA',label:'CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:1},
+{contexto:'NORMAL',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
+{contexto:'NORMAL',valor:'RAMAL GPON ATENUADO',label:'Ramal GPON atenuado (múltiplas CTOs)',pai:'REDE DE ACESSO - ATENUACAO',ordem:3},
+{contexto:'NORMAL',valor:'ANCORAGEM DE CABOS',label:'ANCORAGEM DE CABOS',pai:'PREVENTIVA',ordem:1},
+{contexto:'NORMAL',valor:'CAIXA DESACOPLADA',label:'CAIXA DESACOPLADA',pai:'PREVENTIVA',ordem:2},
+{contexto:'NORMAL',valor:'CAIXA FORA DO PADRAO',label:'CAIXA FORA DO PADRAO',pai:'PREVENTIVA',ordem:3},
+{contexto:'NORMAL',valor:'CTO PEGOU FOGO',label:'CTO PEGOU FOGO',pai:'PREVENTIVA',ordem:4},
+{contexto:'NORMAL',valor:'FURTO DE CTO',label:'FURTO DE CTO',pai:'PREVENTIVA',ordem:5},
+{contexto:'NORMAL',valor:'FURTO DE SPLITTER',label:'FURTO DE SPLITTER',pai:'PREVENTIVA',ordem:6},
+{contexto:'NORMAL',valor:'REVITALIZACAO DE PINTURA',label:'REVITALIZACAO DE PINTURA',pai:'PREVENTIVA',ordem:7},
+{contexto:'NORMAL',valor:'CTO SEM TAMPA',label:'CTO SEM TAMPA',pai:'PREVENTIVA',ordem:8},
+{contexto:'METRO',valor:'FISCALIZAÇÃO',label:'FISCALIZAÇÃO',pai:'',ordem:1},
+{contexto:'METRO',valor:'TROCA DE POSTE',label:'TROCA DE POSTES',pai:'',ordem:2},
+{contexto:'GPON',valor:'REDE DE ACESSO - GPON DOWN',label:'GPON OFFLINE',pai:'',ordem:1},
+{contexto:'GPON',valor:'REDE DE ACESSO - ATENUACAO',label:'ATENUAÇÃO EM GPON',pai:'',ordem:2},
+{contexto:'GPON',valor:'CTO ATENUADA',label:'CTO ATENUADA (geral)',pai:'REDE DE ACESSO - ATENUACAO',ordem:1},
+{contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
+{contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
+];
 const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle'};
 function splitListaValores(v){return String(v||'').split(/[\n;,]+/).map(x=>x.trim()).filter(Boolean)}
 function atualizarCatalogoPrefixos(){AppState.prefixCatalog=[...new Set(AppState.tecnicos.flatMap(t=>t.prefixos||[]))].filter(Boolean).sort((a,b)=>b.length-a.length||a.localeCompare(b,'pt-BR',{sensitivity:'base'}))}
@@ -1209,9 +1234,7 @@ function filtrarTecGpon(){const v=normGpon($('filtroTecGpon').value);DOM.gponLis
 function getTipoAC(contexto,pai=''){return AppState.tipoAC.filter(t=>t.contexto===contexto&&t.pai===pai).sort((a,b)=>a.ordem-b.ordem)}
 function preencherSelect(elId,itens,placeholder){const el=$(elId);if(!el)return;const atual=el.value;el.innerHTML=`<option value="" disabled selected>${placeholder}</option>`;itens.forEach(t=>{el.insertAdjacentHTML('beforeend',`<option value="${t.valor}">${t.label}</option>`)});if(atual&&itens.some(t=>t.valor===atual))el.value=atual}
 function renderTodosSelects(){
-  const tipoItens=getTipoAC('NORMAL');
-  if(!tipoItens.some(t=>t.valor==='BACKBONE')){tipoItens.push({contexto:'NORMAL',valor:'BACKBONE',label:'BACKBONE',pai:'',ordem:99});tipoItens.sort((a,b)=>a.ordem-b.ordem)}
-  preencherSelect('tipo',tipoItens,'O que está acontecendo?');
+  preencherSelect('tipo',getTipoAC('NORMAL'),'O que está acontecendo?');
   renderSubDetalhes();
   preencherSelect('problemaMetro',getTipoAC('METRO'),'Selecione o problema...');
   const gponItens=getTipoAC('GPON');
@@ -1225,15 +1248,9 @@ function renderSubDetalhes(){preencherSelect('detalheAtenuacao',getTipoAC('NORMA
 function carregarTipoAC(){
   if(AppState.tipoACStatus!=='idle')return;
   AppState.tipoACStatus='loading';
-  window.cbTipoAC=function(d){
-    AppState.tipoAC=(d||[]).map(function(x){return{contexto:String(x.col1||'').trim().toUpperCase(),valor:String(x.col2||'').trim(),label:String(x.col3||'').trim(),pai:String(x.col4||'').trim(),ordem:parseInt(x.col5||'99')||99}}).filter(function(t){return t.contexto&&t.valor});
-    AppState.tipoACStatus='ready';
-    renderTodosSelects();
-  };
-  const s=document.createElement('script');
-  s.src=GAS_URL+'?aba=TIPO-AC&callback=cbTipoAC&nc='+Date.now();
-  s.onerror=function(){AppState.tipoACStatus='error';['tipo','problemaMetro','gponTipo'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<option value="" disabled selected>Erro — verifique a aba TIPO-AC</option>'})};
-  document.body.appendChild(s);
+  AppState.tipoAC=TIPO_AC_FIXO.slice();
+  AppState.tipoACStatus='ready';
+  renderTodosSelects();
 }
 
 function carregarTecnicos(){if(AppState.tecnicosStatus==='loading')return;AppState.tecnicosStatus='loading';AppState.tecnicos=[];const s=document.createElement('script');s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;s.onerror=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos.</div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderGponEmpresas()};document.body.appendChild(s);window.cbTec=d=>{AppState.tecnicosStatus='ready';AppState.tecnicos=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));atualizarCatalogoPrefixos();renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderTecnicos();renderTecnosCabo();renderGponEmpresas()}}
