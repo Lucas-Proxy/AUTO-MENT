@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANALISTA DE REDES — NOC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+[data-theme="light"]{--bg:#eef2f7;--bg2:#fff;--bg3:#f5f8fc;--bg4:#e8f0fd;--blue:#1a6fdb;--blue2:#2d84f0;--blue-l:#e8f0fd;--blue-b:#c7dcfb;--teal:#0e9e7e;--teal-l:#e6f7f3;--amber:#d97706;--amber-l:#fef3c7;--red:#dc2626;--red-l:#fee2e2;--border:#d1dce9;--border2:#b8ccdf;--text:#1a2636;--text2:#4a647d;--text3:#8fa8be;--shadow:0 1px 3px rgba(26,111,219,.08),0 4px 16px rgba(26,111,219,.06);--shadow2:0 2px 8px rgba(26,111,219,.12),0 8px 32px rgba(26,111,219,.08);--music-bg:#fff}
+[data-theme="dark"]{--bg:#050c14;--bg2:#0a1828;--bg3:#0e2038;--bg4:#122848;--blue:#3b9eff;--blue2:#60b4ff;--blue-l:rgba(59,158,255,.12);--blue-b:rgba(59,158,255,.25);--teal:#2dd4a4;--teal-l:rgba(45,212,164,.1);--amber:#fbbf24;--amber-l:rgba(251,191,36,.1);--red:#f87171;--red-l:rgba(248,113,113,.1);--border:rgba(59,158,255,.14);--border2:rgba(59,158,255,.28);--text:#cce8f4;--text2:#6aafcc;--text3:#2a5570;--shadow:0 1px 3px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);--shadow2:0 2px 8px rgba(0,0,0,.5),0 8px 32px rgba(0,0,0,.4);--music-bg:#0a1828}
+[data-theme="ben10"]{--bg:#0a0f0a;--bg2:#0d1a0d;--bg3:#112211;--bg4:#163016;--blue:#00e639;--blue2:#33ff66;--blue-l:rgba(0,230,57,.12);--blue-b:rgba(0,230,57,.25);--teal:#00cc44;--teal-l:rgba(0,204,68,.1);--amber:#66ff33;--amber-l:rgba(102,255,51,.1);--red:#ff4444;--red-l:rgba(255,68,68,.1);--border:rgba(0,230,57,.16);--border2:rgba(0,230,57,.3);--text:#c8ffc8;--text2:#5cb85c;--text3:#2a5c2a;--shadow:0 1px 3px rgba(0,0,0,.5),0 4px 16px rgba(0,230,57,.08);--shadow2:0 2px 8px rgba(0,0,0,.6),0 8px 32px rgba(0,230,57,.12);--music-bg:#0d1a0d}
+[data-theme="got"]{--bg:#0e0b07;--bg2:#15110a;--bg3:#1c1710;--bg4:#261e14;--blue:#c9a84c;--blue2:#dbc06a;--blue-l:rgba(201,168,76,.12);--blue-b:rgba(201,168,76,.25);--teal:#8b1a1a;--teal-l:rgba(139,26,26,.12);--amber:#e8c547;--amber-l:rgba(232,197,71,.1);--red:#cc2222;--red-l:rgba(204,34,34,.12);--border:rgba(201,168,76,.16);--border2:rgba(201,168,76,.3);--text:#e8dcc8;--text2:#a08a60;--text3:#5a4a30;--shadow:0 1px 3px rgba(0,0,0,.6),0 4px 16px rgba(201,168,76,.06);--shadow2:0 2px 8px rgba(0,0,0,.7),0 8px 32px rgba(201,168,76,.08);--music-bg:#15110a}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100%}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;overflow-x:hidden;transition:background .35s,color .35s}
+[data-theme="light"] body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(26,111,219,.07) 0%,transparent 65%),radial-gradient(ellipse 40% 30% at 90% 10%,rgba(14,158,126,.05) 0%,transparent 60%);z-index:0;pointer-events:none}
+[data-theme="dark"] body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,158,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(59,158,255,.025) 1px,transparent 1px);background-size:40px 40px;animation:gridMove 25s linear infinite;z-index:0;pointer-events:none}
+[data-theme="dark"] body::after{content:'';position:fixed;top:0;left:0;width:100%;height:400px;background:radial-gradient(ellipse 60% 40% at 50% -5%,rgba(59,158,255,.1) 0%,transparent 70%),radial-gradient(ellipse 30% 20% at 85% 0%,rgba(45,212,164,.06) 0%,transparent 60%);z-index:0;pointer-events:none}
+[data-theme="ben10"] body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,230,57,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,230,57,.03) 1px,transparent 1px);background-size:50px 50px;animation:gridMove 20s linear infinite;z-index:0;pointer-events:none}
+[data-theme="ben10"] body::after{content:'';position:fixed;top:0;left:0;width:100%;height:500px;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(0,230,57,.15) 0%,transparent 65%);z-index:0;pointer-events:none}
+[data-theme="got"] body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 100% 60% at 50% 110%,rgba(139,26,26,.08) 0%,transparent 60%);z-index:0;pointer-events:none}
+[data-theme="got"] body::after{content:'';position:fixed;top:0;left:0;width:100%;height:500px;background:radial-gradient(ellipse 60% 40% at 50% -8%,rgba(201,168,76,.08) 0%,transparent 60%);z-index:0;pointer-events:none}
+#ben10Aliens,#gotSnow{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:none}
+[data-theme="ben10"] #ben10Aliens{display:block}
+[data-theme="got"] #gotSnow{display:block}
+@keyframes gridMove{0%{background-position:0 0}100%{background-position:40px 40px}}
+main{position:relative;z-index:1;min-height:100vh;padding:48px 40px;display:flex;justify-content:center;align-items:flex-start}
+.wrapper{width:100%;max-width:1380px;display:flex;gap:32px;align-items:flex-start}
+.wrapper.metro-mode{max-width:1020px;justify-content:center}
+.wrapper.metro-mode .card{max-width:700px;width:100%}
+.wrapper.metro-mode .floating-sidebar{position:fixed;right:-500px;top:0;width:480px;height:100vh;max-height:100vh;border-radius:0;overflow-y:auto;transition:right .4s cubic-bezier(.23,1,.32,1);z-index:999;padding:60px 36px;border-left:1px solid var(--border2)}
+.wrapper.metro-mode .floating-sidebar.visible{right:0}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:0;position:relative;flex:1;max-width:640px;box-shadow:var(--shadow2);overflow:hidden;transition:background .35s,border-color .35s}
+.card-top-bar{height:4px;background:linear-gradient(90deg,var(--blue),var(--teal));background-size:200% 100%;animation:topBarShift 6s linear infinite}
+@keyframes topBarShift{0%{background-position:0% 0}100%{background-position:200% 0}}
+.card-inner{padding:40px 44px 44px}
+.floating-sidebar{flex:0 0 460px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:0;position:sticky;top:48px;max-height:calc(100vh - 96px);overflow-y:auto;overflow-x:hidden;box-shadow:var(--shadow);transition:background .35s,border-color .35s}
+.sidebar-top-bar{height:4px;background:linear-gradient(90deg,var(--teal),var(--blue));background-size:200% 100%;animation:topBarShift 6s linear infinite reverse}
+.sidebar-inner{padding:32px}
+.floating-sidebar::-webkit-scrollbar{width:4px}
+.floating-sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.theme-toggle{position:fixed;top:20px;right:24px;z-index:200;display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--border);border-radius:30px;padding:6px 12px 6px 8px;box-shadow:var(--shadow);cursor:pointer;user-select:none;transition:background .3s,border-color .3s}
+.toggle-track{width:54px;height:20px;border-radius:10px;background:var(--border);position:relative;transition:background .3s}
+[data-theme="dark"] .toggle-track{background:var(--blue)}
+[data-theme="ben10"] .toggle-track{background:#00e639}
+[data-theme="got"] .toggle-track{background:#c9a84c}
+.toggle-thumb{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+[data-theme="dark"] .toggle-thumb{transform:translateX(13px)}
+[data-theme="ben10"] .toggle-thumb{transform:translateX(26px);background:#00e639;box-shadow:0 0 8px rgba(0,230,57,.6)}
+[data-theme="got"] .toggle-thumb{transform:translateX(36px);background:#c9a84c;box-shadow:0 0 8px rgba(201,168,76,.6)}
+.toggle-label{font-size:.72rem;font-weight:600;color:var(--text2);letter-spacing:.3px;white-space:nowrap}
+[data-theme="ben10"] .logo-badge{background:linear-gradient(135deg,#000 0%,#1a3a1a 50%,#000 100%);box-shadow:0 0 25px rgba(0,230,57,.5),0 0 60px rgba(0,230,57,.15);border:2px solid #00e639}
+[data-theme="ben10"] .logo-badge svg.default-logo{display:none}
+[data-theme="ben10"] .logo-badge svg.omnitrix-logo{display:block}
+svg.omnitrix-logo{display:none}
+[data-theme="ben10"] .logo-title .hl{color:#00e639;text-shadow:0 0 12px rgba(0,230,57,.4)}
+[data-theme="ben10"] .card-top-bar{background:linear-gradient(90deg,#00e639,#00cc44,#009933)}
+[data-theme="ben10"] .sidebar-top-bar{background:linear-gradient(90deg,#009933,#00e639)}
+[data-theme="ben10"] .chip-blue{background:rgba(0,230,57,.12);color:#00e639}
+[data-theme="ben10"] .chip-teal{background:rgba(0,204,68,.1);color:#00cc44}
+[data-theme="ben10"] #btnFarmarAura{background:linear-gradient(180deg,#001a00 0%,#000d00 100%);color:#66ff66;text-shadow:0 0 6px #00e639,0 0 12px #009933;box-shadow:0 0 6px rgba(0,230,57,.25)}
+[data-theme="ben10"] #btnFarmarAura:hover{transform:translateY(-1px);box-shadow:0 0 16px rgba(0,230,57,.5)}
+[data-theme="got"] .logo-badge{background:linear-gradient(135deg,#1a1208 0%,#2a200e 50%,#0e0b07 100%);box-shadow:0 0 20px rgba(201,168,76,.4),0 0 50px rgba(139,26,26,.15);border:2px solid #c9a84c}
+[data-theme="got"] .logo-badge svg.default-logo{display:none}
+[data-theme="got"] .logo-badge svg.got-logo{display:block}
+svg.got-logo{display:none}
+[data-theme="got"] .logo-title .hl{color:#c9a84c;text-shadow:0 0 10px rgba(201,168,76,.35)}
+[data-theme="got"] .card-top-bar{background:linear-gradient(90deg,#8b1a1a,#c9a84c,#8b1a1a)}
+[data-theme="got"] .sidebar-top-bar{background:linear-gradient(90deg,#c9a84c,#8b1a1a,#c9a84c)}
+[data-theme="got"] .chip-blue{background:rgba(201,168,76,.12);color:#c9a84c}
+[data-theme="got"] .chip-teal{background:rgba(139,26,26,.12);color:#cc4444}
+[data-theme="got"] #btnFarmarAura{background:linear-gradient(180deg,#1a1208 0%,#0e0905 100%);color:#dbc06a;text-shadow:0 0 6px #c9a84c,0 0 12px #8b6914;box-shadow:0 0 6px rgba(201,168,76,.25)}
+[data-theme="got"] #btnFarmarAura:hover{transform:translateY(-1px);box-shadow:0 0 16px rgba(201,168,76,.5)}
+.logo-area{margin-bottom:32px;text-align:center;padding-bottom:28px;border-bottom:1px solid var(--border)}
+.logo-badge{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--blue) 0%,var(--teal) 100%);margin:0 auto 16px;box-shadow:0 4px 20px rgba(26,111,219,.35)}
+.logo-badge svg{width:34px;height:34px}
+.logo-title{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:5px;color:var(--text);line-height:1.1;text-transform:uppercase}
+.logo-title .hl{color:var(--blue)}
+.logo-chips{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:.68rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+.chip-blue{background:var(--blue-l);color:var(--blue)}
+.chip-teal{background:var(--teal-l);color:var(--teal)}
+.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.section-label{font-size:.65rem;font-weight:600;color:var(--text3);letter-spacing:3px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+label{display:block;font-size:.72rem;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:.4px;text-transform:uppercase}
+.form-group{margin-bottom:20px}
+input[type="text"],textarea,select{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:.92rem;font-weight:500;transition:border-color .2s,background .2s,box-shadow .2s,color .35s;outline:none;-webkit-appearance:none}
+input[type="text"]:focus,textarea:focus,select:focus{border-color:var(--blue2);background:var(--bg2);box-shadow:0 0 0 3px rgba(59,158,255,.15);animation:focusPulse .5s ease-out}
+@keyframes focusPulse{0%{box-shadow:0 0 0 0 rgba(59,158,255,.45)}100%{box-shadow:0 0 0 9px rgba(59,158,255,0)}}
+select option{background:var(--bg2);color:var(--text)}
+input::placeholder{color:var(--text3)}
+.cto-picker,.stack-list,.port-grid,.preview-list{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;max-height:260px;overflow-y:auto;margin-top:6px}
+.preview-list{flex-direction:column;gap:4px}
+.music-player-wrap{display:flex;flex-direction:row;gap:8px;align-items:flex-end;margin-top:10px;width:100%}
+.music-controls{position:fixed;bottom:24px;right:24px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;z-index:100;background:var(--music-bg);padding:10px;border:1px solid var(--border);border-top:3px solid var(--blue);border-radius:12px;box-shadow:var(--shadow2);transition:background .35s,border-color .35s;width:184px}
+.vol-wrap{position:fixed;top:72px;right:20px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .3s ease;z-index:1000;box-shadow:var(--shadow)}
+.vol-wrap:hover{background:var(--bg3);transform:translateY(-2px)}
+.vol-slider-container{position:absolute;top:50px;right:0;background:var(--bg2);border:1px solid var(--border);padding:12px 8px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;opacity:0;visibility:hidden;transform:translateY(-10px);transition:all .3s cubic-bezier(.175,.885,.32,1.275);z-index:1001}
+.vol-wrap:hover .vol-slider-container{opacity:1;visibility:visible;transform:translateY(0)}
+.vol-slider-vert{appearance:slider-vertical;width:6px;height:100px;cursor:pointer;outline:none;background:var(--bg3)}
+.vol-icon{font-size:1.2rem;opacity:.8;transition:transform .2s}
+.vol-wrap:hover .vol-icon{transform:scale(1.1);opacity:1}
+.port-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pill-item label,.stack-item label,.port-item label{display:flex;align-items:center;justify-content:center;padding:7px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text2);transition:all .2s;margin:0;font-family:'Inter',sans-serif;letter-spacing:.3px;text-transform:uppercase}
+.pill-item label:hover,.stack-item label:hover,.port-item label:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
+.pill-item input:checked+label,.stack-item input:checked+label,.port-item input:checked+label{background:var(--blue-l);border-color:var(--blue2);color:var(--blue);font-weight:700;box-shadow:0 0 0 2px var(--blue-b)}
+.button-group{display:flex;gap:10px;margin-top:30px}
+.btn{flex:1;padding:12px 20px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-main{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);color:#fff;box-shadow:0 2px 10px rgba(26,111,219,.4)}
+.btn-main:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(26,111,219,.5)}
+.btn-main:active{transform:translateY(0)}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-clear{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:.82rem}
+.btn-clear:hover{border-color:var(--border2);color:var(--text);background:var(--bg4)}
+.tag-container{display:flex;flex-direction:column;gap:6px}
+.tag{background:var(--blue-l);border:1px solid var(--blue-b);color:var(--blue);padding:9px 12px;border-radius:8px;font-weight:600;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;animation:slideIn .15s ease-out;font-family:'Inter',sans-serif}
+.tag.warning{background:var(--amber-l);border-color:rgba(217,119,6,.25);color:var(--amber)}
+@keyframes slideIn{0%{opacity:0;transform:translateY(-10px) scale(.94)}55%{opacity:1;transform:translateY(2px) scale(1.015)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes panelFadeSlide{0%{opacity:0;transform:translateY(-14px) scale(.985)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes selectPop{0%{transform:scale(1)}45%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes rippleAnim{to{transform:scale(2.6);opacity:0}}
+.btn-remove{cursor:pointer;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:all .2s;font-weight:700;background:transparent;color:currentColor;font-size:.85rem;border:none;opacity:.6}
+.btn-remove:hover{background:var(--red-l);color:var(--red);opacity:1}
+.screen-shake{animation:shake .4s cubic-bezier(.36,.07,.19,.97) both;transform:translate3d(0,0,0)}
+@keyframes shake{10%,90%{transform:translate3d(-2px,0,0)}20%,80%{transform:translate3d(4px,0,0)}30%,50%,70%{transform:translate3d(-6px,0,0)}40%,60%{transform:translate3d(6px,0,0)}}
+.hidden{display:none!important}
+.info-msg{color:var(--text3);font-size:.78rem;display:flex;align-items:flex-start;gap:6px;line-height:1.5;font-family:'Share Tech Mono',monospace}
+.loading-text{color:var(--blue);font-weight:600;display:flex;align-items:center;gap:8px;font-size:.82rem}
+.port-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.preview-item{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.85rem;color:var(--text2);display:flex;align-items:center;gap:6px;font-weight:500;transition:all .2s}
+.preview-item:hover{border-color:var(--blue2);color:var(--blue)}
+.sidebar-title{font-family:'Bebas Neue',cursive;font-size:1.5rem;color:var(--text);letter-spacing:4px;margin-bottom:4px}
+.sidebar-divider{height:1px;margin-bottom:18px;background:var(--border)}
+.sect{font-size:.65rem;font-weight:600;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace}
+.sect::after{content:'';flex:1;height:1px;background:var(--border)}
+.metro-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px}
+.metro-title{font-size:.8rem;font-weight:700;color:var(--blue);margin-bottom:14px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+.cable-search-box{display:flex;gap:8px;margin-bottom:10px}
+.cable-search-box input{flex:1}
+.btn-buscar-cabo{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:8px;padding:10px 16px;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:0 2px 8px rgba(26,111,219,.3)}
+.btn-buscar-cabo:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,111,219,.4)}
+.cabo-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;animation:slideIn .15s ease-out;transition:all .2s}
+.cabo-card:hover{border-color:var(--blue2)}
+.cabo-card:last-child{margin-bottom:0}
+.cabo-card-row{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.cabo-card-row:last-child{margin-bottom:0}
+.cabo-label{font-size:.6rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
+.cabo-value{font-size:.88rem;font-weight:600;color:var(--text);word-break:break-all}
+.cabo-dist{font-size:.72rem;color:var(--teal);font-weight:700;margin-top:4px;font-family:'Share Tech Mono',monospace}
+.progress-wrap{margin-top:6px}
+.progress-label{font-size:.6rem;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
+.progress-track{background:var(--border);border-radius:4px;height:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));transition:width .4s ease;border-radius:4px}
+.m-btn{width:100%;height:32px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);border-radius:6px;cursor:pointer;font-weight:700;font-size:.7rem;transition:all .2s,color .2s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace}
+.music-controls.aura-active .m-btn{color:#000!important;border-color:rgba(0,0,0,.2)}
+.music-controls.aura-active #btnFarmarAura.active{color:#fff!important}
+.m-btn:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
+.m-btn.active{background:var(--blue-l);border-color:var(--blue2);color:var(--blue);box-shadow:0 0 0 2px var(--blue-b)}
+#btnStopMusic{grid-column:span 4;width:100%;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2)}
+#btnFarmarAura{grid-column:span 4;width:100%;height:40px;border-radius:8px;cursor:pointer;border:none;font-family:'Share Tech Mono',monospace;font-size:1.05rem;font-weight:700;letter-spacing:2.5px;position:relative;overflow:visible;z-index:1;transition:transform .2s,box-shadow .2s}
+[data-theme="light"] #btnFarmarAura{background:linear-gradient(180deg,#1c0600 0%,#0a0200 100%);color:#ffcc77;text-shadow:0 0 6px #ff6600,0 0 12px #cc2200;box-shadow:0 0 6px rgba(255,60,0,.25)}
+[data-theme="dark"] #btnFarmarAura{background:linear-gradient(180deg,#06080f 0%,#020308 100%);color:#d8eaff;text-shadow:0 0 6px #6699ff,0 0 12px #2244cc;box-shadow:0 0 6px rgba(60,100,255,.2)}
+[data-theme="light"] #btnFarmarAura:hover{transform:translateY(-1px);box-shadow:0 0 16px rgba(255,80,0,.5)}
+[data-theme="dark"] #btnFarmarAura:hover{transform:translateY(-1px);box-shadow:0 0 16px rgba(80,130,255,.45)}
+#btnFarmarAura.active{color:#000!important;text-shadow:0 0 2px #000,0 0 4px #000,0 0 8px rgba(0,0,0,.5)!important}
+#btnFarmarAura .btn-label{position:relative;z-index:20;pointer-events:none;display:block;mix-blend-mode:normal}
+#btnFarmarAura.active .btn-label{animation:auraPulse 1.5s ease-in-out infinite}
+@keyframes auraPulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.05);filter:brightness(1.3)}}
+#borderSparkCanvas{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);pointer-events:none;z-index:2;border-radius:12px}
+#flameCanvas{position:absolute;top:50%;left:50%;width:350%;height:600px;transform:translate(-50%,-50%);pointer-events:none;z-index:15;opacity:0;transition:opacity .5s ease;-webkit-mask-image:radial-gradient(ellipse 40% 90% at 50% 80%,black 20%,transparent 75%);mask-image:radial-gradient(ellipse 40% 90% at 50% 80%,black 20%,transparent 75%)}
+#btnFarmarAura.active #flameCanvas{opacity:1;pointer-events:auto;cursor:pointer}
+#fireOverlay{position:fixed;inset:0;z-index:9000;pointer-events:none;display:none}
+.ambient-visualizer{position:fixed;bottom:0;left:0;width:100%;height:80px;z-index:0;pointer-events:none;opacity:.3}
+.signature{position:fixed;bottom:22px;left:28px;z-index:100;display:flex;flex-direction:column;gap:1px;pointer-events:none}
+.signature-name{font-family:'Bebas Neue',cursive;font-size:1.05rem;letter-spacing:4px;color:var(--blue);opacity:.55;line-height:1}
+.signature-line{width:100%;height:1px;background:linear-gradient(90deg,var(--blue),transparent);opacity:.35}
+.signature-role{font-family:'Share Tech Mono',monospace;font-size:.52rem;letter-spacing:3px;color:var(--text3);opacity:.6;text-transform:uppercase}
+.copy-modal{position:fixed;inset:0;background:rgba(10,20,35,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all .28s ease}
+.copy-modal.active{opacity:1;visibility:visible}
+.copy-modal-content{background:var(--bg2);border:1px solid var(--border);border-top:3px solid var(--blue);border-radius:14px;width:90%;max-width:650px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.2);transform:scale(.95) translateY(20px);transition:all .35s cubic-bezier(.175,.885,.32,1.275);overflow:hidden}
+.copy-modal.active .copy-modal-content{transform:scale(1) translateY(0)}
+.copy-modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.copy-modal-header span{font-family:'Bebas Neue',cursive;font-size:1.25rem;color:var(--text);letter-spacing:3px}
+.copy-modal-header button{background:none;border:1px solid var(--border);color:var(--text3);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.copy-modal-header button:hover{border-color:var(--red);color:var(--red);background:var(--red-l)}
+.copy-modal-text{font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--text);white-space:pre-wrap;line-height:1.8;background:var(--bg3);padding:18px;overflow-y:auto;flex:1;border:1px solid var(--border);margin:16px 22px 0;border-radius:8px;word-break:break-word}
+.copy-modal-operator{padding:14px 22px;border-bottom:1px solid var(--border)}
+.copy-modal-operator label{font-size:.65rem;color:var(--text2);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;font-weight:600;display:block}
+.copy-modal-footer{display:flex;gap:10px;padding:18px 22px;background:var(--bg3)}
+.btn-seguir{background:linear-gradient(135deg,var(--teal) 0%,#0c8069 100%)!important;color:#fff!important;border:none!important;box-shadow:0 2px 10px rgba(14,158,126,.35)!important;flex:2;font-size:.88rem!important;font-weight:700!important;letter-spacing:.4px!important;border-radius:8px!important}
+.btn-seguir:hover{transform:translateY(-1px)!important;box-shadow:0 4px 18px rgba(14,158,126,.45)!important}
+.btn-editar{background:var(--bg2)!important;border:1px solid var(--border)!important;color:var(--text2)!important;flex:1;font-size:.85rem!important;border-radius:8px!important}
+.btn-editar:hover{border-color:var(--border2)!important;color:var(--text)!important;background:var(--bg4)!important}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--teal);color:var(--text);font-family:'Inter',sans-serif;font-size:.8rem;font-weight:500;padding:10px 18px;border-radius:8px;z-index:2000;opacity:0;transition:opacity .3s ease,transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{border-left-color:var(--red);color:var(--red)}
+/* ═══ BUSCA TÉCNICOS ═══ */
+.tec-search-wrap{position:relative;margin-bottom:6px}
+.tec-search-wrap input[type="text"]{padding-left:34px;font-size:.82rem}
+.tec-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--text3);pointer-events:none;line-height:1}
+/* ═══════════════════════════════════════════
+   IDENTIFICAÇÃO — BOTÃO COMPACTO + SUBMENU
+═══════════════════════════════════════════ */
+.ident-toggle-wrap{margin-bottom:20px;position:relative}
+.btn-identificacao{padding:7px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.67rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .22s;white-space:nowrap}
+.btn-identificacao:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-l)}
+.btn-identificacao.ativo{background:var(--teal-l);border-color:var(--teal);color:var(--teal);box-shadow:0 0 0 2px rgba(14,158,126,.18)}
+.btn-identificacao svg{width:12px;height:12px;flex-shrink:0;opacity:.7}
+.ident-chevron{font-size:.65rem;transition:transform .25s;display:inline-block;opacity:.6}
+.btn-identificacao.ativo .ident-chevron{transform:rotate(180deg)}
+.ident-submenu{display:none;margin-top:8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:6px;gap:6px;flex-direction:row;animation:slideIn .15s ease-out}
+.ident-submenu.open{display:flex}
+.ident-sub-btn{flex:1;padding:9px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:center;line-height:1.3}
+.ident-sub-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-l)}
+.ident-sub-btn.active{background:var(--teal-l);border-color:var(--teal);color:var(--teal);box-shadow:0 0 0 2px rgba(14,158,126,.18)}
+/* ═══ MODO GPON ═══ */
+.btn-gpon-mode{width:100%;padding:11px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .25s}
+.btn-gpon-mode:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-l)}
+.btn-gpon-mode.ativo{background:var(--teal-l);border-color:var(--teal);color:var(--teal);box-shadow:0 0 0 2px rgba(14,158,126,.18)}
+#boxGpon{display:none}
+#boxGpon.visible{display:block}
+.gpon-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px}
+.gpon-card-title{font-size:.68rem;font-weight:700;color:var(--teal);margin-bottom:14px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;gap:8px}
+.gpon-card-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.gpon-search-row{display:grid;grid-template-columns:1fr 120px;gap:10px;align-items:flex-end}
+.gpon-input-wrap{position:relative}
+.gpon-autocomplete{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;z-index:500;max-height:210px;overflow-y:auto;box-shadow:var(--shadow2);display:none}
+.gpon-autocomplete.open{display:block}
+.gpon-ac-item{padding:9px 13px;font-size:.78rem;font-weight:500;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;transition:background .15s}
+.gpon-ac-item:last-child{border-bottom:none}
+.gpon-ac-item:hover{background:var(--blue-l);color:var(--blue)}
+.gpon-ac-modelo{font-size:.58rem;font-weight:700;color:var(--text3);letter-spacing:1.5px;font-family:'Share Tech Mono',monospace;background:var(--bg3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;flex-shrink:0}
+.gpon-ac-item:hover .gpon-ac-modelo{background:var(--blue-b);border-color:var(--blue2);color:var(--blue)}
+.gpon-result-box{background:var(--bg2);border:1px solid var(--blue-b);border-radius:10px;padding:14px;margin-top:14px;display:none;animation:slideIn .18s ease-out}
+.gpon-result-box.visible{display:block}
+.gpon-result-badge{display:inline-flex;align-items:center;gap:8px;background:var(--teal-l);border:1px solid rgba(14,158,126,.3);border-radius:8px;padding:8px 14px;margin-bottom:10px;width:100%}
+.gpon-result-badge.erro{background:var(--red-l);border-color:rgba(220,38,38,.3)}
+.gpon-badge-gpon{font-family:'Share Tech Mono',monospace;font-size:.7rem;font-weight:700;color:var(--teal);background:var(--bg3);padding:2px 7px;border-radius:4px;border:1px solid var(--border)}
+.gpon-badge-gpon.erro{color:var(--red)}
+.gpon-badge-projeto{font-size:1rem;font-weight:700;color:var(--text);flex:1}
+.gpon-badge-projeto.erro{color:var(--red);font-size:.85rem}
+.gpon-badge-range{font-size:.62rem;color:var(--text3);font-family:'Share Tech Mono',monospace}
+.gpon-olt-meta{font-size:.65rem;color:var(--text3);font-family:'Share Tech Mono',monospace;display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.gpon-olt-meta strong{color:var(--blue)}
+.gpon-lista-wrap{margin-top:14px;display:none}
+.gpon-lista-wrap.visible{display:block}
+.gpon-lista-label{font-size:.6rem;font-weight:600;color:var(--text3);letter-spacing:3px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.gpon-lista-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.gpon-lista-tags{display:flex;flex-direction:column;gap:6px}
+.gpon-tag{background:var(--teal-l);border:1px solid rgba(14,158,126,.3);color:var(--teal);padding:8px 12px;border-radius:8px;font-weight:600;font-size:.82rem;display:flex;justify-content:space-between;align-items:center;animation:slideIn .15s ease-out;font-family:'Share Tech Mono',monospace}
+.btn-add-gpon{width:100%;margin-top:10px;padding:8px 14px;background:var(--bg2);border:1px dashed var(--teal);border-radius:8px;color:var(--teal);font-family:'Share Tech Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:none}
+.btn-add-gpon.visible{display:block}
+.btn-add-gpon:hover{background:var(--teal-l);border-style:solid}
+.gpon-section-divider{height:1px;background:var(--border);margin:0 0 20px}
+/* ═══ CTO → FAMÍLIA ═══ */
+.cto-input-wrap{position:relative;flex:1}
+.cto-autocomplete{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;z-index:500;max-height:220px;overflow-y:auto;box-shadow:var(--shadow2);display:none}
+.cto-autocomplete.open{display:block}
+.cto-ac-item{padding:9px 13px;font-size:.78rem;font-weight:500;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;transition:background .15s;gap:8px}
+.cto-ac-item:last-child{border-bottom:none}
+.cto-ac-item:hover{background:var(--teal-l);color:var(--teal)}
+.cto-ac-item-name{font-weight:700;font-size:.8rem;word-break:break-all}
+.cto-ac-item-rede{font-size:.58rem;font-weight:700;color:var(--text3);letter-spacing:1.5px;font-family:'Share Tech Mono',monospace;background:var(--bg3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;flex-shrink:0}
+.cto-ac-item:hover .cto-ac-item-rede{background:rgba(14,158,126,.12);border-color:rgba(14,158,126,.35);color:var(--teal)}
+.cto-ac-count{padding:7px 13px;font-size:.62rem;font-family:'Share Tech Mono',monospace;color:var(--text3);text-align:center;border-top:1px solid var(--border);background:var(--bg3)}
+.cto-lookup-result{background:var(--bg2);border:1px solid var(--teal);border-radius:10px;padding:14px;margin-top:14px;display:none;animation:slideIn .18s ease-out}
+.cto-lookup-result.visible{display:block}
+.cto-lookup-result.erro{border-color:var(--red)}
+.cto-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cto-result-field{display:flex;flex-direction:column;gap:3px}
+.cto-result-label{font-size:.58rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
+.cto-result-value{font-size:.88rem;font-weight:700;color:var(--text);word-break:break-all}
+.cto-result-gpon{grid-column:span 2;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px;margin-top:2px}
+.cto-result-gpon-label{font-size:.58rem;font-weight:700;color:var(--text3);font-family:'Share Tech Mono',monospace;text-transform:uppercase;letter-spacing:2px;flex-shrink:0}
+.cto-result-gpon-value{font-size:.88rem;font-weight:700;color:var(--text2);font-family:'Share Tech Mono',monospace}
+.cto-result-familia{grid-column:span 2;background:var(--teal-l);border:1px solid rgba(14,158,126,.3);border-radius:8px;padding:10px 14px;margin-top:6px;display:flex;align-items:center;gap:10px}
+.cto-result-familia-label{font-size:.6rem;font-weight:700;color:var(--teal);font-family:'Share Tech Mono',monospace;text-transform:uppercase;letter-spacing:2px;flex-shrink:0}
+.cto-result-familia-value{font-size:1rem;font-weight:700;color:var(--text)}
+.cto-lookup-not-found{color:var(--text3);font-size:.8rem;font-family:'Share Tech Mono',monospace;text-align:center;padding:12px}
+/* ═══ PREVENTIVA — LISTA COM BUSCA ═══ */
+.prev-lista{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;margin-top:6px}
+.prev-lista .info-msg{padding:4px 6px}
+.prev-item{display:flex}
+.prev-item input{display:none}
+.prev-item label{width:100%;padding:8px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text2);transition:all .2s;margin:0;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.3px}
+.prev-item label:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
+.prev-item input:checked+label{background:var(--blue-l);border-color:var(--blue2);color:var(--blue);font-weight:700;box-shadow:0 0 0 2px var(--blue-b)}
+.prev-search-wrap{position:relative;margin-bottom:6px}
+.prev-search-wrap input[type="text"]{padding-left:32px;font-size:.82rem}
+.prev-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.78rem;color:var(--text3);pointer-events:none}
+@media(max-width:1024px){
+main{padding:16px 12px}
+.wrapper{flex-direction:column;gap:16px}
+.card,.floating-sidebar{flex:1;position:static;max-height:none}
+.card-inner{padding:24px 20px}
+.sidebar-inner{padding:20px}
+.wrapper.metro-mode .floating-sidebar{right:0;position:static;width:100%;height:auto;border-radius:12px}
+.copy-modal-content{width:96%;max-height:93vh}
+.music-controls{bottom:8px;right:8px}
+.theme-toggle{top:12px;right:12px}
+.gpon-search-row{grid-template-columns:1fr 100px}
+.ident-submenu{flex-direction:column}
+}
+
+/* ═══════════════════════════════════════════════════════
+   EFEITOS VISUAIS EXTRA — transições, micro-interações e temas
+═══════════════════════════════════════════════════════ */
+
+/* — entrada da página — */
+@keyframes cardEnter{0%{opacity:0;transform:translateY(18px) scale(.98)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.card{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) both}
+.floating-sidebar{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) .08s both}
+
+/* — transição de painéis (reaproveita o mecanismo display:none→block já usado pelo app) — */
+#boxMetro,#boxRede,#boxGponConsulta,#boxCtoLookup,#boxDetalheAtenuacao,#boxDetalhePreventiva,
+#boxFamilia,#boxPortas,#previewRamal,#gponBoxDetalheAtenuacao,#boxGponAcionamento,#boxNormal{
+  animation:panelFadeSlide .42s cubic-bezier(.22,1,.36,1)
+}
+#boxGpon.visible{animation:panelFadeSlide .42s cubic-bezier(.22,1,.36,1)}
+
+/* — cascata de itens em listas (CTOs, técnicos, portas, preventivas) — */
+.pill-item,.stack-item,.port-item,.prev-item{animation:slideIn .3s cubic-bezier(.22,1,.36,1) both}
+.pill-item:nth-child(1),.stack-item:nth-child(1),.port-item:nth-child(1),.prev-item:nth-child(1){animation-delay:0ms}
+.pill-item:nth-child(2),.stack-item:nth-child(2),.port-item:nth-child(2),.prev-item:nth-child(2){animation-delay:15ms}
+.pill-item:nth-child(3),.stack-item:nth-child(3),.port-item:nth-child(3),.prev-item:nth-child(3){animation-delay:30ms}
+.pill-item:nth-child(4),.stack-item:nth-child(4),.port-item:nth-child(4),.prev-item:nth-child(4){animation-delay:45ms}
+.pill-item:nth-child(5),.stack-item:nth-child(5),.port-item:nth-child(5),.prev-item:nth-child(5){animation-delay:60ms}
+.pill-item:nth-child(6),.stack-item:nth-child(6),.port-item:nth-child(6),.prev-item:nth-child(6){animation-delay:75ms}
+.pill-item:nth-child(7),.stack-item:nth-child(7),.port-item:nth-child(7),.prev-item:nth-child(7){animation-delay:90ms}
+.pill-item:nth-child(8),.stack-item:nth-child(8),.port-item:nth-child(8),.prev-item:nth-child(8){animation-delay:105ms}
+.pill-item:nth-child(n+9),.stack-item:nth-child(n+9),.port-item:nth-child(n+9),.prev-item:nth-child(n+9){animation-delay:115ms}
+
+/* — pop ao selecionar — */
+.pill-item input:checked+label,.stack-item input:checked+label,.port-item input:checked+label,.prev-item input:checked+label{animation:selectPop .32s cubic-bezier(.34,1.56,.64,1)}
+
+/* — autocompletes com entrada suave — */
+.gpon-autocomplete.open,.cto-autocomplete.open{animation:slideIn .16s ease-out}
+.gpon-lista-wrap.visible{animation:panelFadeSlide .3s cubic-bezier(.22,1,.36,1)}
+
+/* — ripple dinâmico nos botões — */
+.btn,.btn-buscar-cabo,.btn-seguir,.btn-editar,.btn-identificacao,.ident-sub-btn,.m-btn:not(#btnFarmarAura){position:relative;overflow:hidden}
+.ripple-el{position:absolute;border-radius:50%;transform:scale(0);pointer-events:none;background:rgba(70,110,160,.24);animation:rippleAnim .55s ease-out forwards}
+.btn-main .ripple-el,.btn-seguir .ripple-el,.btn-buscar-cabo .ripple-el{background:rgba(255,255,255,.5)}
+[data-theme="dark"] .ripple-el{background:rgba(160,200,255,.2)}
+[data-theme="ben10"] .ripple-el{background:rgba(0,230,57,.32)}
+[data-theme="ben10"] .btn-main .ripple-el,[data-theme="ben10"] .btn-seguir .ripple-el,[data-theme="ben10"] .btn-buscar-cabo .ripple-el{background:rgba(255,255,255,.5)}
+[data-theme="got"] .ripple-el{background:rgba(201,168,76,.28)}
+[data-theme="got"] .btn-main .ripple-el,[data-theme="got"] .btn-seguir .ripple-el,[data-theme="got"] .btn-buscar-cabo .ripple-el{background:rgba(255,255,255,.5)}
+
+/* — botões principais "respirando" para reforçar a ação primária — */
+.btn-main{animation:none}
+.btn-main:hover{animation:btnBreathe 1.4s ease-in-out infinite}
+@keyframes btnBreathe{0%,100%{box-shadow:0 2px 10px rgba(26,111,219,.4)}50%{box-shadow:0 4px 22px rgba(26,111,219,.65)}}
+
+/* — brilho ambiente dos temas — */
+[data-theme="dark"] .card{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) both,darkCardGlow 4.5s ease-in-out infinite}
+@keyframes darkCardGlow{0%,100%{box-shadow:var(--shadow2)}50%{box-shadow:var(--shadow2),0 0 26px rgba(59,158,255,.14)}}
+[data-theme="ben10"] .card{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) both,ben10CardGlow 3.2s ease-in-out infinite}
+@keyframes ben10CardGlow{0%,100%{box-shadow:var(--shadow2)}50%{box-shadow:var(--shadow2),0 0 34px rgba(0,230,57,.24)}}
+[data-theme="got"] .card{animation:cardEnter .55s cubic-bezier(.22,1,.36,1) both,gotCardGlow 3.6s ease-in-out infinite}
+@keyframes gotCardGlow{0%,100%{box-shadow:var(--shadow2)}50%{box-shadow:var(--shadow2),0 0 30px rgba(201,168,76,.2)}}
+
+[data-theme="ben10"] .logo-title .hl{animation:ben10Pulse 1.8s ease-in-out infinite}
+@keyframes ben10Pulse{0%,100%{text-shadow:0 0 12px rgba(0,230,57,.4)}50%{text-shadow:0 0 22px rgba(0,230,57,.8)}}
+[data-theme="got"] .logo-title .hl{animation:gotFlicker 2.6s ease-in-out infinite}
+@keyframes gotFlicker{0%,100%{text-shadow:0 0 10px rgba(201,168,76,.35)}45%{text-shadow:0 0 17px rgba(201,168,76,.6)}50%{text-shadow:0 0 6px rgba(201,168,76,.22)}55%{text-shadow:0 0 19px rgba(201,168,76,.65)}}
+
+[data-theme="ben10"] .logo-badge{animation:ben10BadgeSpin 6s linear infinite}
+@keyframes ben10BadgeSpin{0%{filter:hue-rotate(0deg) brightness(1)}50%{filter:hue-rotate(8deg) brightness(1.12)}100%{filter:hue-rotate(0deg) brightness(1)}}
+[data-theme="got"] .logo-badge{animation:gotEmber 2.4s ease-in-out infinite}
+@keyframes gotEmber{0%,100%{box-shadow:0 0 20px rgba(201,168,76,.4),0 0 50px rgba(139,26,26,.15)}50%{box-shadow:0 0 28px rgba(201,168,76,.65),0 0 60px rgba(139,26,26,.3)}}
+
+/* — cursor de brilho ambiente — */
+#cursorGlow{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* — respeitar quem prefere menos movimento — */
+@media(prefers-reduced-motion:reduce){
+*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+</style>
+</head>
+<body>
+<canvas id="fireOverlay"></canvas>
+<canvas id="ben10Aliens"></canvas>
+<canvas id="gotSnow"></canvas>
+<canvas id="cursorGlow"></canvas>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+<span id="themeIcon" style="font-size:13px">&#9728;</span>
+<div class="toggle-track"><div class="toggle-thumb"></div></div>
+<span class="toggle-label" id="toggleLabel">Tema Claro</span>
+</button>
+
+<div class="vol-wrap">
+<div class="vol-slider-container">
+<input type="range" id="volSlider" class="vol-slider-vert" min="0" max="1" step="0.05" value="0.5">
+</div>
+<span class="vol-icon">&#128266;</span>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="copyModal" class="copy-modal">
+<div class="copy-modal-content">
+<div class="copy-modal-header">
+<span>&#10022; Ordem de Servi&#231;o Gerada</span>
+<button id="btnFecharModal">&#10005;</button>
+</div>
+<pre id="copyModalText" class="copy-modal-text"></pre>
+<div class="copy-modal-operator">
+<label for="operadorSelect">Operador (Opcional)</label>
+<select id="operadorSelect"><option value="">&#8212; Nenhum operador &#8212;</option></select>
+</div>
+<div class="copy-modal-footer">
+<button class="btn btn-seguir" id="btnSeguir">&#9654; Enviar &amp; Abrir Hubsoft</button>
+<button class="btn btn-editar" id="btnEditarOS">&#8592; Voltar</button>
+</div>
+</div>
+</div>
+
+<canvas id="audioVisualizer" class="ambient-visualizer"></canvas>
+
+<div class="music-player-wrap">
+<div id="mControls" class="music-controls">
+<button class="m-btn" data-track="1">01</button>
+<button class="m-btn" data-track="2">02</button>
+<button class="m-btn" data-track="3">03</button>
+<button class="m-btn" data-track="4">04</button>
+<button class="m-btn" data-track="5">05</button>
+<button class="m-btn" data-track="6">06</button>
+<button class="m-btn" data-track="7">07</button>
+<button class="m-btn" data-track="8">08</button>
+<button class="m-btn" data-track="9">09</button>
+<button class="m-btn" data-track="10">10</button>
+<button class="m-btn" data-track="11">11</button>
+<button class="m-btn" data-track="12">12</button>
+<button class="m-btn" data-track="ben10" id="btnBen10Music">B10</button>
+<button class="m-btn" data-track="got" id="btnGotMusic">GOT</button>
+<button class="m-btn" id="btnStopMusic" style="grid-column:span 2">&#9632; Stop</button>
+<button class="m-btn" id="btnFarmarAura" data-track="13" style="grid-column:span 4">
+<canvas id="borderSparkCanvas"></canvas>
+<canvas id="flameCanvas"></canvas>
+<span class="btn-label">&#128293; FARMAR AURA</span>
+</button>
+</div>
+</div>
+<audio id="mPlayer" loop></audio>
+
+<main>
+<div class="wrapper" id="wrapper">
+<section class="card">
+<div class="card-top-bar"></div>
+<div class="card-inner">
+
+<div class="logo-area">
+<div class="logo-badge">
+<svg class="default-logo" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="14" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/><circle cx="17" cy="17" r="8" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><circle cx="17" cy="17" r="3" fill="white"/><line x1="17" y1="3" x2="17" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="23" x2="17" y2="31" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="17" x2="11" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="23" y1="17" x2="31" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/><circle cx="24" cy="11" r="2" fill="rgba(255,255,255,.75)"/></svg>
+<svg class="omnitrix-logo" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="44" fill="#111" stroke="#00e639" stroke-width="3"/><circle cx="50" cy="50" r="32" fill="none" stroke="#00e639" stroke-width="2" opacity=".5"/><circle cx="50" cy="50" r="18" fill="#00e639" opacity=".15"/><path d="M38 32 L50 50 L38 68 Z" fill="#00e639" opacity=".9"/><path d="M62 32 L50 50 L62 68 Z" fill="#00e639" opacity=".9"/><line x1="38" y1="32" x2="62" y2="32" stroke="#00e639" stroke-width="3" stroke-linecap="round"/><line x1="38" y1="68" x2="62" y2="68" stroke="#00e639" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="50" r="44" fill="none" stroke="#00e639" stroke-width="1" opacity=".3"><animate attributeName="r" values="44;47;44" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".3;.6;.3" dur="2s" repeatCount="indefinite"/></circle></svg>
+<svg class="got-logo" viewBox="0 0 100 100" fill="none"><rect x="47" y="8" width="6" height="58" rx="2" fill="#c9a84c"/><rect x="28" y="54" width="44" height="7" rx="3" fill="#c9a84c"/><rect x="47.5" y="65" width="5" height="22" rx="2" fill="#8b6914"/><circle cx="50" cy="89" r="5" fill="#c9a84c"/><polygon points="50,4 47,10 53,10" fill="#e8c547"/><circle cx="28" cy="57.5" r="3" fill="#8b6914"/><circle cx="72" cy="57.5" r="3" fill="#8b6914"/><ellipse cx="50" cy="35" rx="10" ry="30" fill="none" stroke="#c9a84c" stroke-width="1" opacity=".2"><animate attributeName="opacity" values=".1;.4;.1" dur="3s" repeatCount="indefinite"/></ellipse></svg>
+</div>
+<div class="logo-title"><span class="hl">Analista</span> de Redes</div>
+<div class="logo-chips">
+<span class="chip chip-blue"><span class="chip-dot"></span>NOC Online</span>
+<span class="chip chip-teal">Sistema de Acionamento</span>
+</div>
+</div>
+
+<!-- ═══ IDENTIFICAÇÃO — BOTÃO COMPACTO ═══ -->
+<div class="ident-toggle-wrap">
+<button class="btn-identificacao" id="btnIdentificacao">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+IDENTIFICA&#199;&#195;O
+<span class="ident-chevron">&#9660;</span>
+</button>
+<div class="ident-submenu" id="identSubmenu">
+<button class="ident-sub-btn active" data-mode="gpon">&#9889; GPON &middot; FAM&#205;LIA</button>
+<button class="ident-sub-btn" data-mode="cto">&#128205; CTO &rarr; FAM&#205;LIA</button>
+</div>
+</div>
+
+<div class="section-label">Configura&#231;&#227;o do Acionamento</div>
+
+<div id="boxGpon">
+<!-- Sub-painel: GPON · FAMÍLIA -->
+<div id="boxGponConsulta">
+<div class="gpon-card">
+<div class="gpon-card-title">Consulta GPON</div>
+<div class="gpon-search-row">
+<div class="form-group" style="margin-bottom:0">
+<label for="gponInputOlt">OLT</label>
+<div class="gpon-input-wrap">
+<input type="text" id="gponInputOlt" placeholder="Digite parte do nome..." autocomplete="off">
+<input type="hidden" id="gponInputModelo">
+<div class="gpon-autocomplete" id="gponAC"></div>
+</div>
+</div>
+<div class="form-group" style="margin-bottom:0">
+<label for="gponInputPorta">GPON</label>
+<input type="text" id="gponInputPorta" placeholder="1/1/1" maxlength="10" autocomplete="off">
+</div>
+</div>
+<div class="gpon-result-box" id="gponResultBox">
+<div id="gponResultBadge" class="gpon-result-badge">
+<span id="gponBadgeGpon" class="gpon-badge-gpon"></span>
+<span id="gponBadgeProjeto" class="gpon-badge-projeto"></span>
+<span id="gponBadgeRange" class="gpon-badge-range"></span>
+</div>
+<div id="gponOltMeta" class="gpon-olt-meta"></div>
+</div>
+<button class="btn-add-gpon" id="btnAdicionarGpon">+ Adicionar &#224; lista</button>
+<div class="gpon-lista-wrap" id="gponListaWrap">
+<div class="gpon-lista-label">GPONs Selecionadas</div>
+<div class="gpon-lista-tags" id="gponListaTags"></div>
+</div>
+</div>
+</div><!-- /boxGponConsulta -->
+
+<!-- Sub-painel: CTO → FAMÍLIA -->
+<div id="boxCtoLookup" style="display:none">
+<div class="gpon-card">
+<div class="gpon-card-title">&#128205; Consulta CTO &rarr; Fam&#237;lia</div>
+<div class="info-msg" style="margin-bottom:12px">&#9432; Digite o nome ou parte da CTO para identificar OLT, modelo e fam&#237;lia. As redes devem ter sido acessadas ao menos uma vez.</div>
+<div class="cable-search-box">
+<div class="cto-input-wrap">
+<input type="text" id="ctoLookupInput" placeholder="Ex: CTO-PAR12-001, AUT04-002..." autocomplete="off">
+<div id="ctoAC" class="cto-autocomplete"></div>
+</div>
+<button class="btn-buscar-cabo" id="btnBuscarFamilia">Buscar</button>
+</div>
+<div id="ctoLookupResult"></div>
+</div>
+</div>
+
+<div id="boxGponAcionamento">
+<div class="gpon-section-divider"></div>
+
+<div class="form-group">
+<label for="gponRede">Rede de Atua&#231;&#227;o</label>
+<select id="gponRede">
+<option value="" disabled selected>Selecione uma rede...</option>
+<option value="FIBER">Fiber Network</option>
+<option value="INTLINK">Intlink</option>
+<option value="METRO">Rede Metro</option>
+<option value="WIRE">Wire</option>
+</select>
+</div>
+<div class="form-group">
+<label for="gponTipo">Tipo de Acionamento</label>
+<select id="gponTipo"><option value="" disabled selected>Carregando...</option></select>
+</div>
+<div id="gponBoxDetalheAtenuacao" class="form-group hidden">
+<label for="gponDetalheAtenuacao">Especifica&#231;&#227;o da Atenu&#225;&#231;&#227;o</label>
+<select id="gponDetalheAtenuacao"><option value="" disabled selected>Selecione...</option></select>
+</div>
+<div class="form-group">
+<label for="gponEmpresa">Empresa Executante</label>
+<select id="gponEmpresa"><option value="" disabled selected>Selecione...</option></select>
+</div>
+<div class="form-group">
+<label>T&#233;cnicos Dispon&#237;veis</label>
+<div class="tec-search-wrap">
+<span class="tec-search-icon">&#128269;</span>
+<input type="text" id="filtroTecGpon" placeholder="Buscar t&#233;cnico..." autocomplete="off">
+</div>
+<div id="gponListaTecs" class="stack-list"><div class="info-msg">Identifique a GPON e selecione a rede.</div></div>
+</div>
+<div class="button-group">
+<button class="btn btn-main" id="btnGerarOSGpon">Gerar Ordem de Servi&#231;o</button>
+<button class="btn btn-clear" id="btnLimparGpon">Limpar</button>
+</div>
+</div><!-- /boxGponAcionamento -->
+</div>
+
+<div id="boxNormal">
+<div class="form-group">
+<label for="rede">Rede de Atua&#231;&#227;o</label>
+<select id="rede">
+<option value="" disabled selected>Selecione uma rede...</option>
+<option value="FIBER">Fiber Network</option>
+<option value="INTLINK">Intlink</option>
+<option value="METRO">Rede Metro</option>
+<option value="WIRE">Wire</option>
+</select>
+</div>
+
+<div id="boxMetro" class="hidden">
+<div class="metro-card">
+<div class="metro-title">Consulta de Cabos</div>
+<div class="form-group" style="margin-bottom:10px">
+<label>Coordenada ou Link Google Maps</label>
+<div class="cable-search-box">
+<input type="text" id="inputCoordenada" placeholder="Ex: -3.09869, -60.01261">
+<button class="btn-buscar-cabo" id="btnBuscarCabo">Buscar</button>
+</div>
+</div>
+<div id="statusBar"></div>
+<div id="resultadoCabos" style="margin-top:10px"></div>
+</div>
+<div class="form-group" style="margin-top:18px">
+<label for="problemaMetro">Tipo de Problema</label>
+<select id="problemaMetro"><option value="" disabled selected>Carregando...</option></select>
+</div>
+<div class="form-group">
+<label for="empresaMetro">Empresa Executante</label>
+<select id="empresaMetro"><option value="" disabled selected>Selecione...</option></select>
+</div>
+<div class="form-group">
+<label>T&#233;cnicos Dispon&#237;veis</label>
+<div class="tec-search-wrap">
+<span class="tec-search-icon">&#128269;</span>
+<input type="text" id="filtroTecCabo" placeholder="Buscar t&#233;cnico..." autocomplete="off">
+</div>
+<div id="listaTecsCabo" class="stack-list"><div class="info-msg">Selecione a empresa.</div></div>
+</div>
+<div class="button-group">
+<button class="btn btn-main" id="btnGerarOSMetro">Gerar Ordem de Servi&#231;o</button>
+<button class="btn btn-clear" id="btnLimparTudo">Limpar</button>
+</div>
+</div>
+
+<div id="boxRede">
+<div class="form-group">
+<label for="tipo">Tipo de Acionamento</label>
+<select id="tipo"><option value="" disabled selected>Carregando...</option></select>
+</div>
+<div id="boxDetalhePreventiva" class="form-group hidden">
+<label>Especifica&#231;&#227;o da Preventiva</label>
+<div class="prev-search-wrap">
+<span class="prev-search-icon">&#128269;</span>
+<input type="text" id="filtroPreventiva" placeholder="Buscar op&#231;&#227;o..." autocomplete="off">
+</div>
+<div id="listaPreventiva" class="prev-lista"><div class="info-msg">Selecione "Preventiva" para carregar.</div></div>
+</div>
+<div id="boxDetalheAtenuacao" class="form-group hidden">
+<label for="detalheAtenuacao">Especifica&#231;&#227;o da Atenu&#225;&#231;&#227;o</label>
+<select id="detalheAtenuacao"><option value="" disabled selected>Selecione...</option></select>
+</div>
+<div id="boxFamilia" class="form-group hidden">
+<label for="inputFamilia">Prefixo ou Ramal Afetado</label>
+<input type="text" id="inputFamilia" placeholder="Ex: PAR12, 12-1, AUT04...">
+<div class="info-msg" style="margin-top:6px">O sistema agrupar&#225; todas as CTOs com este texto.</div>
+</div>
+<div id="boxBackbone" class="form-group hidden">
+<label for="inputBackbone">Trecho Afetado</label>
+<input type="text" id="inputBackbone" placeholder="Ex: MANAUS <> ITACOATIARA" autocomplete="off">
+<div class="info-msg" style="margin-top:6px">Informe de onde para onde est&#225; o rompimento (ex: PONTO A &lt;&gt; PONTO B).</div>
+</div>
+<div id="boxBuscaCTO" class="form-group">
+<label for="filtro">Buscar e Selecionar CTO</label>
+<input type="text" id="filtro" placeholder="Digite para filtrar...">
+<div id="listaCTOs" class="cto-picker"><div class="info-msg">Selecione uma rede primeiro.</div></div>
+</div>
+<div class="form-group">
+<label for="empresa">Empresa Executante</label>
+<select id="empresa"><option value="" disabled selected>Selecione...</option></select>
+</div>
+<div class="form-group">
+<label>T&#233;cnicos Dispon&#237;veis</label>
+<div class="tec-search-wrap">
+<span class="tec-search-icon">&#128269;</span>
+<input type="text" id="filtroTec" placeholder="Buscar t&#233;cnico..." autocomplete="off">
+</div>
+<div id="listaTecs" class="stack-list"><div class="info-msg">Selecione empresa e CTOs.</div></div>
+</div>
+<div class="button-group">
+<button class="btn btn-main" id="btnGerarOS">Gerar Ordem de Servi&#231;o</button>
+<button class="btn btn-clear" id="btnLimparTudo2">Limpar</button>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+
+<aside class="floating-sidebar" id="sidebar">
+<div class="sidebar-top-bar"></div>
+<div class="sidebar-inner">
+<div class="sidebar-title">Sele&#231;&#227;o</div>
+<div class="sidebar-divider"></div>
+<div id="resumoCTOs" class="tag-container"><div class="info-msg">Nenhuma CTO selecionada.</div></div>
+<div id="boxPortas" class="port-section hidden">
+<div class="sect">Portas Afetadas</div>
+<div class="port-grid" id="gridPortas"></div>
+</div>
+<div id="previewRamal" class="port-section hidden">
+<div class="sect">Ramal Identificado</div>
+<div id="listaPreview" class="preview-list"></div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+
+<div class="signature">
+<span class="signature-name">Lucas Paes</span>
+<div class="signature-line"></div>
+<span class="signature-role">ANALYST &#183; NOC</span>
+</div>
+
+<script>
+const GAS_URL='https://script.google.com/a/macros/clickip.com.br/s/AKfycbyDuRIIlq07rOsFy_ufrIWhI7qKGordXz1ZzG0JLjBo9UzfXZ0RUbFI5WD4-Hknriz-2g/exec';
+const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle'};
+function splitListaValores(v){return String(v||'').split(/[\n;,]+/).map(x=>x.trim()).filter(Boolean)}
+function atualizarCatalogoPrefixos(){AppState.prefixCatalog=[...new Set(AppState.tecnicos.flatMap(t=>t.prefixos||[]))].filter(Boolean).sort((a,b)=>b.length-a.length||a.localeCompare(b,'pt-BR',{sensitivity:'base'}))}
+const $=id=>document.getElementById(id);
+const DOM={
+  rede:$('rede'),tipo:$('tipo'),detalheAtenuacao:$('detalheAtenuacao'),
+  empresa:$('empresa'),empresaMetro:$('empresaMetro'),inputFamilia:$('inputFamilia'),filtro:$('filtro'),
+  listaCTOs:$('listaCTOs'),listaTecs:$('listaTecs'),listaTecsCabo:$('listaTecsCabo'),
+  resumoCTOs:$('resumoCTOs'),gridPortas:$('gridPortas'),listaPreview:$('listaPreview'),
+  boxMetro:$('boxMetro'),boxRede:$('boxRede'),boxDetalheAtenuacao:$('boxDetalheAtenuacao'),
+  boxDetalhePreventiva:$('boxDetalhePreventiva'),boxFamilia:$('boxFamilia'),
+  boxBackbone:$('boxBackbone'),inputBackbone:$('inputBackbone'),
+  boxBuscaCTO:$('boxBuscaCTO'),boxPortas:$('boxPortas'),previewRamal:$('previewRamal'),
+  inputCoordenada:$('inputCoordenada'),btnBuscarCabo:$('btnBuscarCabo'),statusBar:$('statusBar'),resultadoCabos:$('resultadoCabos'),
+  btnGerarOS:$('btnGerarOS'),btnGerarOSMetro:$('btnGerarOSMetro'),btnLimparTudo:$('btnLimparTudo'),btnLimparTudo2:$('btnLimparTudo2'),
+  mPlayer:$('mPlayer'),mVol:$('volSlider'),wrapper:$('wrapper'),sidebar:$('sidebar'),musicControls:$('mControls'),
+  gponRede:$('gponRede'),gponTipo:$('gponTipo'),gponEmpresa:$('gponEmpresa'),
+  gponListaTecs:$('gponListaTecs'),gponBoxDetalheAtenuacao:$('gponBoxDetalheAtenuacao'),gponDetalheAtenuacao:$('gponDetalheAtenuacao')
+};
+
+const THEME_ORDER=['light','dark','ben10','got'];
+const THEME_LABELS={light:'Tema Claro',dark:'Tema Escuro',ben10:'Ben 10',got:'Game of Thrones'};
+const THEME_ICONS={light:'\u2600',dark:'\u263D',ben10:'\u231A',got:'\u2694'};
+function applyThemeUI(t){$('toggleLabel').textContent=THEME_LABELS[t]||t;const i=$('themeIcon');if(i){i.textContent=THEME_ICONS[t]||'\u2600';i.style.color=t==='light'?'#f59e0b':t==='dark'?'#94a3b8':t==='ben10'?'#00e639':'#c9a84c'}}
+(function(){const s=localStorage.getItem('noc-theme')||'light';document.documentElement.setAttribute('data-theme',s);applyThemeUI(s)})();
+function toggleTheme(){const c=document.documentElement.getAttribute('data-theme'),i=THEME_ORDER.indexOf(c),n=THEME_ORDER[(i+1)%THEME_ORDER.length];document.documentElement.setAttribute('data-theme',n);applyThemeUI(n);try{localStorage.setItem('noc-theme',n)}catch(e){}}
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);applyThemeUI(t);try{localStorage.setItem('noc-theme',t)}catch(e){}}
+$('themeToggle').addEventListener('click',toggleTheme);
+
+(function(){const cv=$('ben10Aliens');if(!cv)return;const ctx=cv.getContext('2d');let W,H,aliens=[];function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}window.addEventListener('resize',resize);resize();const SHAPES=[(ctx,s)=>{ctx.beginPath();ctx.ellipse(0,0,s*.6,s,0,0,Math.PI*2);ctx.fill();ctx.fillRect(-s*.9,-s*.3,s*.4,s*.15);ctx.fillRect(s*.5,-s*.3,s*.4,s*.15);ctx.fillRect(-s*.8,0,s*.35,s*.15);ctx.fillRect(s*.45,0,s*.35,s*.15);ctx.beginPath();ctx.arc(0,-s*.85,s*.35,0,Math.PI*2);ctx.fill()},(ctx,s)=>{ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*.5,-s*.3);ctx.lineTo(s*.4,s*.6);ctx.lineTo(-s*.4,s*.6);ctx.lineTo(-s*.5,-s*.3);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(-s*.15,-s);ctx.lineTo(0,-s*1.35);ctx.lineTo(s*.15,-s);ctx.closePath();ctx.fill()},(ctx,s)=>{ctx.beginPath();ctx.ellipse(0,0,s*.3,s*.8,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(0,-s*.7,s*.35,s*.2,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(-s*.1,s*.7);ctx.quadraticCurveTo(-s*.6,s*1.2,-s*.3,s*1.4);ctx.lineTo(s*.05,s*.8);ctx.closePath();ctx.fill()}];function spawnAlien(){const s=14+Math.random()*28;aliens.push({x:Math.random()*W,y:H+s*2,size:s,vy:-(0.3+Math.random()*.6),vx:(Math.random()-.5)*.4,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.008,opacity:.06+Math.random()*.12,shape:SHAPES[Math.floor(Math.random()*SHAPES.length)],wobble:Math.random()*Math.PI*2,wobbleSpeed:.005+Math.random()*.01})}function draw(){requestAnimationFrame(draw);if(document.documentElement.getAttribute('data-theme')!=='ben10'){ctx.clearRect(0,0,W,H);return}ctx.clearRect(0,0,W,H);if(aliens.length<25&&Math.random()<.03)spawnAlien();for(let i=aliens.length-1;i>=0;i--){const a=aliens[i];a.y+=a.vy;a.wobble+=a.wobbleSpeed;a.x+=a.vx+Math.sin(a.wobble)*.3;a.rot+=a.rotSpeed;if(a.y<-a.size*3){aliens.splice(i,1);continue}ctx.save();ctx.translate(a.x,a.y);ctx.rotate(a.rot);ctx.globalAlpha=a.opacity;ctx.fillStyle='#000';a.shape(ctx,a.size);ctx.restore()}}for(let i=0;i<12;i++){spawnAlien();aliens[aliens.length-1].y=Math.random()*H}draw()})();
+
+(function(){const cv=$('gotSnow');if(!cv)return;const ctx=cv.getContext('2d');let W,H,flakes=[];function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}window.addEventListener('resize',resize);resize();function spawnFlake(){const e=Math.random()<.15;flakes.push({x:Math.random()*W,y:-5,r:e?(1+Math.random()*2):(1.5+Math.random()*3.5),vy:e?-(0.4+Math.random()*.8):(0.5+Math.random()*1.2),vx:(Math.random()-.5)*.6,wobble:Math.random()*Math.PI*2,wobbleSpeed:.01+Math.random()*.02,opacity:.3+Math.random()*.5,isEmber:e})}function draw(){requestAnimationFrame(draw);if(document.documentElement.getAttribute('data-theme')!=='got'){ctx.clearRect(0,0,W,H);return}ctx.clearRect(0,0,W,H);if(flakes.length<80&&Math.random()<.4)spawnFlake();for(let i=flakes.length-1;i>=0;i--){const f=flakes[i];f.wobble+=f.wobbleSpeed;f.x+=f.vx+Math.sin(f.wobble)*.5;f.y+=f.vy;if(f.isEmber?f.y<-10:f.y>H+10){flakes.splice(i,1);continue}ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,Math.PI*2);if(f.isEmber){const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*4);g.addColorStop(0,`rgba(255,180,30,${f.opacity})`);g.addColorStop(.5,`rgba(200,60,10,${f.opacity*.5})`);g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.arc(f.x,f.y,f.r*4,0,Math.PI*2)}else{ctx.fillStyle=`rgba(220,230,255,${f.opacity})`}ctx.fill()}}for(let i=0;i<40;i++){spawnFlake();flakes[flakes.length-1].y=Math.random()*H}draw()})();
+
+/* ═══════════════════════════════════════════
+   EFEITOS EXTRA — ripple, brilho de cursor e confete
+════════════════════════════════════════ */
+
+/* ripple dinâmico ao clicar em qualquer botão principal (não altera nenhuma lógica de clique existente) */
+document.addEventListener('click',function(e){
+  const btn=e.target.closest('.btn,.btn-buscar-cabo,.btn-seguir,.btn-editar,.btn-identificacao,.ident-sub-btn,.m-btn');
+  if(!btn||btn.id==='btnFarmarAura')return;
+  const rect=btn.getBoundingClientRect();
+  const ripple=document.createElement('span');
+  ripple.className='ripple-el';
+  const size=Math.max(rect.width,rect.height)*1.3;
+  ripple.style.width=ripple.style.height=size+'px';
+  ripple.style.left=(e.clientX-rect.left-size/2)+'px';
+  ripple.style.top=(e.clientY-rect.top-size/2)+'px';
+  btn.appendChild(ripple);
+  ripple.addEventListener('animationend',()=>ripple.remove());
+},true);
+
+/* brilho suave que acompanha o cursor, com cor conforme o tema ativo */
+(function(){
+  const cv=$('cursorGlow');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  let W,H,mx=-9999,my=-9999,cx=-9999,cy=-9999,ativo=false;
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}
+  window.addEventListener('resize',resize);resize();
+  window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;ativo=true});
+  window.addEventListener('mouseleave',()=>{ativo=false});
+  function corTema(){
+    const t=document.documentElement.getAttribute('data-theme');
+    if(t==='ben10')return'0,230,57';
+    if(t==='got')return'201,168,76';
+    if(t==='dark')return'59,158,255';
+    return'26,111,219'
+  }
+  function draw(){
+    requestAnimationFrame(draw);
+    cx+=(mx-cx)*.09;cy+=(my-cy)*.09;
+    ctx.clearRect(0,0,W,H);
+    if(!ativo)return;
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,260);
+    g.addColorStop(0,`rgba(${corTema()},.09)`);
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath();ctx.arc(cx,cy,260,0,Math.PI*2);ctx.fill()
+  }
+  draw()
+})();
+
+/* confete de sucesso ao gerar/copiar uma OS, com cores do tema ativo */
+function dispararConfete(){
+  const cv=document.createElement('canvas');
+  cv.style.position='fixed';cv.style.inset='0';cv.style.width='100%';cv.style.height='100%';cv.style.zIndex='2500';cv.style.pointerEvents='none';
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  document.body.appendChild(cv);
+  const ctx=cv.getContext('2d');
+  const t=document.documentElement.getAttribute('data-theme');
+  const cores=t==='ben10'?['#00e639','#33ff66','#009933','#ffffff']:t==='got'?['#c9a84c','#dbc06a','#8b1a1a','#e8c547']:t==='dark'?['#3b9eff','#60b4ff','#2dd4a4','#ffffff']:['#1a6fdb','#2d84f0','#0e9e7e','#ffffff'];
+  const parts=[],originX=cv.width/2,originY=cv.height*.32;
+  for(let i=0;i<70;i++){
+    const ang=Math.random()*Math.PI*2,spd=3+Math.random()*7;
+    parts.push({x:originX,y:originY,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-2,g:.18+Math.random()*.08,life:1,decay:.008+Math.random()*.012,size:3+Math.random()*4,color:cores[Math.floor(Math.random()*cores.length)],rot:Math.random()*Math.PI*2,rs:(Math.random()-.5)*.3})
+  }
+  let frame=0;
+  function tick(){
+    frame++;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let viva=false;
+    parts.forEach(p=>{
+      if(p.life<=0)return;
+      viva=true;
+      p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;p.rot+=p.rs;
+      ctx.save();
+      ctx.globalAlpha=Math.max(p.life,0);
+      ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.6);
+      ctx.restore()
+    });
+    if(viva&&frame<220)requestAnimationFrame(tick);
+    else cv.remove()
+  }
+  tick()
+}
+
+function showToast(msg,type='ok',dur=2800){const t=$('toast');t.textContent=msg;t.className='toast'+(type==='error'?' error':'');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur)}
+
+let currentTrack=null,canvasCtx=null,isAudioSetup=false,vizData=new Array(90).fill(0);
+function setupAudioViz(){if(isAudioSetup)return;const cv=$('audioVisualizer');canvasCtx=cv.getContext('2d');const r=()=>{cv.width=window.innerWidth;cv.height=80};window.addEventListener('resize',r);r();isAudioSetup=true;drawViz()}
+function drawViz(){requestAnimationFrame(drawViz);if(!canvasCtx)return;const cv=$('audioVisualizer');canvasCtx.clearRect(0,0,cv.width,cv.height);const buf=90,bw=cv.width/buf;let x=0;const playing=!DOM.mPlayer.paused&&DOM.mPlayer.currentTime>0;const theme=document.documentElement.getAttribute('data-theme');for(let i=0;i<buf;i++){const tgt=playing?(0.08+Math.random()*.45)*(cv.height-4):2;vizData[i]+=(tgt-vizData[i])*.12;const p=i/buf;let r,g,b;if(theme==='ben10'){r=Math.round(p*20);g=Math.round(200+p*55);b=Math.round(40+p*20)}else if(theme==='got'){r=Math.round(180+p*40);g=Math.round(130+p*30);b=Math.round(20+p*15)}else if(theme==='dark'){r=Math.round(59+p*14);g=Math.round(158-p*30);b=Math.round(255-p*55)}else{r=Math.round(26+p*14);g=Math.round(111+p*47);b=Math.round(219-p*43)}canvasCtx.fillStyle=`rgba(${r},${g},${b},.5)`;canvasCtx.fillRect(x,cv.height-vizData[i],Math.max(bw-1,1),vizData[i]);x+=bw}}
+function setActiveBtn(btn){DOM.musicControls.querySelectorAll('.m-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active')}
+function playTrack(track,btnEl){currentTrack=track;setupAudioViz();if(track==='ben10'){DOM.mPlayer.src='musicaben10.mp3'}else if(track==='got'){DOM.mPlayer.src='musicagame.mp3'}else{DOM.mPlayer.src=`musica${track}.mp3`}DOM.mPlayer.play().catch(e=>console.warn('Audio:',e));setActiveBtn(btnEl)}
+DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn=>{if(btn.id==='btnFarmarAura')return;if(btn.id==='btnBen10Music'){btn.addEventListener('click',function(){setTheme('ben10');playTrack('ben10',this)});return}if(btn.id==='btnGotMusic'){btn.addEventListener('click',function(){setTheme('got');playTrack('got',this)});return}btn.addEventListener('click',function(){playTrack(this.dataset.track,this)})});
+try{const sv=localStorage.getItem('player-vol');if(sv!==null){DOM.mPlayer.volume=sv;DOM.mVol.value=sv}else{DOM.mPlayer.volume=.5;DOM.mVol.value=.5}}catch(e){}
+DOM.mVol.addEventListener('input',e=>{const v=e.target.value;DOM.mPlayer.volume=v;try{localStorage.setItem('player-vol',v)}catch(err){}});
+let flameActive=false;
+function stopMusica(){DOM.mPlayer.pause();DOM.mPlayer.currentTime=0;currentTrack=null;setActiveBtn(null);flameActive=false;if(DOM.musicControls)DOM.musicControls.classList.remove('aura-active');setTheme('light')}
+$('btnStopMusic').addEventListener('click',stopMusica);
+$('flameCanvas').addEventListener('click',e=>{if(flameActive){e.stopPropagation();stopMusica()}});
+
+(function(){const btn=$('btnFarmarAura'),flameCv=$('flameCanvas'),sparkCv=$('borderSparkCanvas'),flameCtx=flameCv.getContext('2d'),sparkCtx=sparkCv.getContext('2d');let fW=160,fH=140,sParts=[],fParts=[];function resize(){const r=btn.getBoundingClientRect();fW=flameCv.width=(r.width||160)*3.5;fH=flameCv.height=600;sparkCv.width=(r.width||160)+12;sparkCv.height=(r.height||40)+12}window.addEventListener('resize',resize);setTimeout(resize,100);function isDark(){return document.documentElement.getAttribute('data-theme')==='dark'}function spawnSpark(){const bW=sparkCv.width,bH=sparkCv.height,side=Math.random();let x,y;if(side<.35){x=Math.random()*bW;y=2}else if(side<.65){x=Math.random()*bW;y=bH-2}else if(side<.82){x=2;y=Math.random()*bH}else{x=bW-2;y=Math.random()*bH}const spd=.4+Math.random()*.9;sParts.push({x,y,vx:(Math.random()-.5)*1.4,vy:-spd,life:1,decay:.06+Math.random()*.08,size:1+Math.random()*1.5,dark:isDark()})}function drawSparks(){sparkCtx.clearRect(0,0,sparkCv.width,sparkCv.height);if(Math.random()<.55)spawnSpark();if(Math.random()<.25)spawnSpark();sparkCtx.globalCompositeOperation='lighter';for(let i=sParts.length-1;i>=0;i--){const p=sParts[i];p.life-=p.decay;if(p.life<=0){sParts.splice(i,1);continue}p.x+=p.vx;p.y+=p.vy;const al=p.life*.85,col=p.dark?`rgba(120,170,255,${al})`:`rgba(255,${Math.round(160+p.life*80)},${Math.round(p.life*40)},${al})`;sparkCtx.beginPath();sparkCtx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);sparkCtx.fillStyle=col;sparkCtx.fill()}sparkCtx.globalCompositeOperation='source-over'}function spawnFlame(){const spd=6+Math.random()*8,sz=18+Math.random()*30;fParts.push({x:fW*(.35+Math.random()*.3),y:fH*(.65+Math.random()*.1),vx:(Math.random()-.5)*8,vy:-spd,life:1,decay:.006+Math.random()*.01,size:sz,w:Math.random()*Math.PI*2,ws:.15+Math.random()*.25})}function flameCol(life,dark){if(dark){if(life>.8)return`rgba(100,200,255,0.9)`;if(life>.5)return`rgba(0,100,255,0.85)`;if(life>.25)return`rgba(0,50,200,0.7)`;return`rgba(0,20,150,${life*.5})`}if(life>.8)return`rgba(255,200,50,0.9)`;if(life>.5)return`rgba(255,100,0,0.85)`;if(life>.25)return`rgba(200,20,0,0.7)`;return`rgba(100,0,0,${life*.5})`}function drawFlame(){flameCtx.clearRect(0,0,fW,fH);if(!flameActive){fParts=[];return}for(let i=0;i<10;i++)spawnFlame();const dark=isDark();flameCtx.globalCompositeOperation='lighter';for(let i=fParts.length-1;i>=0;i--){const p=fParts[i];p.life-=p.decay;if(p.life<=0){fParts.splice(i,1);continue}p.w+=p.ws;p.x+=p.vx+Math.sin(p.w)*5;p.y+=p.vy;const r=p.size*p.life,g=flameCtx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2.3);g.addColorStop(0,flameCol(p.life*.95,dark));g.addColorStop(.4,flameCol(p.life*.55,dark));g.addColorStop(1,'rgba(0,0,0,0)');flameCtx.beginPath();flameCtx.arc(p.x,p.y,r*2.3,0,Math.PI*2);flameCtx.fillStyle=g;flameCtx.fill()}flameCtx.globalCompositeOperation='source-over'}function tick(){requestAnimationFrame(tick);drawSparks();drawFlame()}tick()})();
+
+(function(){const ov=$('fireOverlay'),ctx=ov.getContext('2d');let W,H,parts=[],running=false,start=0,switched=false,shockwaves=[],speedLines=[];function resize(){W=ov.width=window.innerWidth;H=ov.height=window.innerHeight}window.addEventListener('resize',resize);resize();function isDark(){return document.documentElement.getAttribute('data-theme')==='dark'}function spawnSW(){shockwaves.push({r:0,opacity:1,color:isDark()?'80,150,255':'255,180,0'})}function spawnSL(){speedLines=[];for(let i=0;i<40;i++)speedLines.push({angle:Math.random()*Math.PI*2,len:100+Math.random()*300,dist:Math.random()*500,speed:15+Math.random()*25})}function spawn(big,blue){const spd=big?(10+Math.random()*15):(5+Math.random()*8),sz=big?(30+Math.random()*50):(15+Math.random()*25);parts.push({x:W*Math.random(),y:H+50,vx:(Math.random()-.5)*5,vy:-spd,life:1,decay:big?(.004+Math.random()*.006):(.007+Math.random()*.01),size:sz,blue})}function col(life,blue){if(blue){if(life>.7)return`rgba(20,55,255,${life*.9})`;if(life>.4)return`rgba(75,135,255,${life*.85})`;if(life>.2)return`rgba(175,215,255,${life*.8})`;return`rgba(225,242,255,${life*.6})`}if(life>.7)return`rgba(255,215,18,${life*.9})`;if(life>.45)return`rgba(255,85,0,${life*.85})`;if(life>.2)return`rgba(195,12,0,${life*.8})`;return`rgba(50,0,0,${life*.5})`}function draw(el){if(!running)return;ctx.clearRect(0,0,W,H);if(!start)start=el;const elapsed=el-start,blue=isDark();if(elapsed<200){ctx.fillStyle=`rgba(${blue?'150,220,255':'255,255,255'},${1-elapsed/200})`;ctx.fillRect(0,0,W,H)}ctx.lineWidth=5;for(let i=shockwaves.length-1;i>=0;i--){const sw=shockwaves[i];sw.r+=28;sw.opacity-=.035;if(sw.opacity<=0){shockwaves.splice(i,1);continue}ctx.strokeStyle=`rgba(${sw.color},${sw.opacity})`;ctx.beginPath();ctx.arc(W/2,H/2,sw.r,0,Math.PI*2);ctx.stroke()}ctx.strokeStyle=blue?'rgba(100,200,255,0.6)':'rgba(255,200,0,0.6)';ctx.lineWidth=3;speedLines.forEach(l=>{l.dist+=l.speed;const x1=W/2+Math.cos(l.angle)*l.dist,y1=H/2+Math.sin(l.angle)*l.dist,x2=W/2+Math.cos(l.angle)*(l.dist+l.len),y2=H/2+Math.sin(l.angle)*(l.dist+l.len);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()});if(elapsed<650)for(let i=0;i<20;i++)spawn(Math.random()<.4,blue);ctx.globalCompositeOperation='lighter';for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.life-=p.decay;if(p.life<=0){parts.splice(i,1);continue}p.x+=p.vx;p.y+=p.vy;const r=p.size*p.life,g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2.5);g.addColorStop(0,col(p.life*.95,p.blue));g.addColorStop(.3,col(p.life*.6,p.blue));g.addColorStop(1,'rgba(0,0,0,0)');ctx.beginPath();ctx.arc(p.x,p.y,r*2.5,0,Math.PI*2);ctx.fillStyle=g;ctx.fill()}ctx.globalCompositeOperation='source-over';if(elapsed>400&&!switched){switched=true;toggleTheme();parts.forEach(p=>{p.blue=isDark()});spawnSW()}if(elapsed<900){requestAnimationFrame(draw)}else{ctx.clearRect(0,0,W,H);running=false;flameActive=true;if($('btnFarmarAura'))setActiveBtn($('btnFarmarAura'));if(DOM.musicControls)DOM.musicControls.classList.add('aura-active');document.body.classList.remove('screen-shake');ov.style.display='none'}}window.startTransition=function(){if(running)return;running=true;start=0;switched=false;parts=[];shockwaves=[];ov.style.display='block';spawnSW();spawnSL();document.body.classList.add('screen-shake');requestAnimationFrame(draw)};$('btnFarmarAura').addEventListener('click',function(){playTrack(13,this);const dark=document.documentElement.getAttribute('data-theme')==='dark';if(dark){flameActive=true;if(DOM.musicControls)DOM.musicControls.classList.add('aura-active')}else startTransition()})})();
+
+/* ════════════════════════════════════════
+   IDENTIFICAÇÃO — TOGGLE COMPACTO
+════════════════════════════════════════ */
+function toggleIdentPanel(){
+  const btn=$('btnIdentificacao'),menu=$('identSubmenu');
+  const isOpen=menu.classList.contains('open');
+  if(isOpen){
+    menu.classList.remove('open');btn.classList.remove('ativo');
+    setIdentMode(null);
+  } else {
+    menu.classList.add('open');btn.classList.add('ativo');
+    setIdentMode(AppState.modoIdent||'gpon');
+  }
+}
+
+function setIdentMode(mode){
+  AppState.modoIdent=mode;
+  document.querySelectorAll('.ident-sub-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mode===mode);
+  });
+  const boxGC=$('boxGponConsulta'),boxCL=$('boxCtoLookup'),boxG=$('boxGpon'),boxN=$('boxNormal'),boxGA=$('boxGponAcionamento');
+  if(mode===null){
+    if(boxG)boxG.classList.remove('visible');
+    if(boxGC)boxGC.style.display='none';
+    if(boxCL)boxCL.style.display='none';
+    if(boxGA)boxGA.style.display='';
+    if(boxN)boxN.style.display='';
+    if(DOM.sidebar)DOM.sidebar.style.display='';
+    return;
+  }
+  if(boxG)boxG.classList.add('visible');
+  if(boxGC)boxGC.style.display=(mode==='gpon')?'':'none';
+  if(boxCL)boxCL.style.display=(mode==='cto')?'':'none';
+  /* enquanto qualquer submodo de identificação estiver ativo (gpon ou cto),
+     o formulário normal de acionamento (boxNormal) fica sempre oculto —
+     ele só reaparece quando a Identificação é totalmente desativada (mode===null) */
+  const isCto=(mode==='cto');
+  if(boxGA)boxGA.style.display=isCto?'none':'';
+  if(boxN)boxN.style.display='none';
+  DOM.sidebar.style.display='none';
+  if(mode==='gpon'&&AppState.oltDBStatus==='idle')carregarOLTs();
+  if(mode==='cto')garantirRedesCarregadas();
+}
+
+function garantirRedesCarregadas(){
+  ['FIBER','INTLINK','WIRE'].forEach(r=>{
+    if(!AppState.cacheRedes[r]){
+      const cb=`cbIdentRede_${r}`;
+      const s=document.createElement('script');
+      s.src=`${GAS_URL}?aba=${r}&callback=${cb}`;
+      document.body.appendChild(s);
+      window[cb]=d=>{
+        AppState.cacheRedes[r]=d.map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x,_rede:r}));
+      };
+    }
+  });
+  if(AppState.oltDBStatus==='idle')carregarOLTs();
+}
+
+/* aguarda oltDB estar pronto; tenta a cada 300ms por até 15s */
+function _aguardarOLTs(){
+  return new Promise((resolve,reject)=>{
+    if(AppState.oltDBStatus==='ready'){resolve();return}
+    if(AppState.oltDBStatus==='idle')carregarOLTs();
+    const INTERVALO=300,MAX=50;let tentativas=0;
+    const t=setInterval(()=>{
+      tentativas++;
+      if(AppState.oltDBStatus==='ready'){clearInterval(t);resolve()}
+      else if(AppState.oltDBStatus==='error'||tentativas>=MAX){clearInterval(t);reject(AppState.oltDBStatus)}
+    },INTERVALO);
+  });
+}
+
+/* ════════════════════════════════════════
+   CTO → FAMÍLIA
+════════════════════════════════════════ */
+
+/* retorna array de todos os registros CTO das redes carregadas */
+function _todasCtos(){
+  const todas=[];
+  ['FIBER','INTLINK','WIRE','METRO'].forEach(r=>{
+    const arr=AppState.cacheRedes[r];
+    if(Array.isArray(arr))todas.push(...arr.map(x=>({...x,_rede:r})));
+  });
+  return todas;
+}
+
+/* extrai o prefixo do projeto diretamente do nome da CTO,
+   sem depender do prefixCatalog (que vem dos técnicos e pode estar incompleto).
+   Ex: "CTO-TO2-2-5" → "TO2"
+       "AUT04-002"   → "AUT04"
+       "CTO-PAR12-001" → "PAR12"
+   Estratégia: pegar o primeiro segmento (separado por hífen) que não seja
+   palavras reservadas (CTO, BOX, CEO, etc.) e que tenha ao menos 2 chars. */
+function _prefixoDaCTO(nomeCTO){
+  const RESERVADAS=/^(CTO|BOX|CEO|CEL|CEP|DIO|DIV|NAP|NAB|OLT|CEO|POP|RACK|SPLITTER|WIRE|FIBER|INTLINK|METRO|AM|BR|RR|PA|TO|AC|RO|AP|MA)$/i;
+  const partes=normGpon(nomeCTO).split('-').filter(Boolean);
+  for(const p of partes){
+    if(!RESERVADAS.test(p)&&p.length>=2&&/[A-Z]/.test(p))return p;
+  }
+  return '';
+}
+
+/* extrai a posição da GPON dentro do projeto a partir do nome da CTO.
+   O número logo após o prefixo do projeto é a posição (1-8), conforme
+   convenção: cada projeto ocupa 8 GPONs em sequência.
+   Ex: "CTO-TO2-8-5"      → projeto TO2, posição 8
+       "WIRE-CTO-TO2-2-5" → projeto TO2, posição 2 */
+function _posicaoDaCTO(nomeCTO,projeto){
+  if(!projeto)return null;
+  const partes=normGpon(nomeCTO).split('-').filter(Boolean);
+  const pj=normGpon(projeto);
+  const idx=partes.findIndex(p=>p===pj);
+  if(idx>=0&&idx+1<partes.length){
+    const n=parseInt(partes[idx+1],10);
+    if(!isNaN(n)&&n>=1&&n<=8)return n;
+  }
+  return null;
+}
+
+/* calcula dados OLT + GPON referência a partir de uma CTO */
+function _resolverCTO(enc){
+  /* prefixo direto do nome da CTO é mais confiável que o catálogo de técnicos */
+  const prefixoDireto=_prefixoDaCTO(enc.cto);
+  const prefixoCatalog=getPrefixFromCTO(enc.cto);
+  /* prefixo direto tem prioridade; catálogo só como fallback se direto falhar */
+  const prefixo=prefixoDireto||prefixoCatalog;
+
+  let oltNome='-',oltModelo='-',gponRange='-',gponRef='-',familia='-';
+  if(!prefixo)return{oltNome,oltModelo,gponRange,gponRef,familia,prefixo:''};
+  if(!AppState.oltDB.length)return{oltNome,oltModelo,gponRange,gponRef,familia,prefixo};
+
+  /* busca OLT: primeiro match exato de projeto, depois parcial — mas
+     só faz match parcial se o prefixo tiver ao menos 3 chars para
+     evitar falsos positivos com strings vazias ou muito curtas */
+  const pn=normGpon(prefixo);
+  let oltMatch=null;
+  if(pn.length>=2){
+    /* 1) match exato: algum projeto da OLT === prefixo */
+    oltMatch=AppState.oltDB.find(o=>{
+      const projs=gponExtrairProjetos(o.nome);
+      return projs.some(p=>normGpon(p)===pn);
+    });
+    /* 2) match por inclusão mútua, apenas se prefixo tem ≥3 chars */
+    if(!oltMatch&&pn.length>=3){
+      oltMatch=AppState.oltDB.find(o=>{
+        const projs=gponExtrairProjetos(o.nome);
+        return projs.some(p=>{
+          const np=normGpon(p);
+          return np.includes(pn)||pn.includes(np);
+        });
+      });
+    }
+  }
+
+  if(oltMatch){
+    oltNome=oltMatch.nome;oltModelo=oltMatch.modelo;
+    const projs=gponExtrairProjetos(oltNome);
+    /* encontrar índice do projeto que bate com o prefixo */
+    let projIdx=projs.findIndex(p=>normGpon(p)===pn);
+    if(projIdx<0&&pn.length>=3){
+      projIdx=projs.findIndex(p=>{
+        const np=normGpon(p);return np.includes(pn)||pn.includes(np);
+      });
+    }
+    if(projIdx>=0){
+      gponRange=gponRangePortas(oltModelo,projIdx,projs.length);
+      const m=oltModelo.toUpperCase();
+      /* posição da GPON dentro do projeto = número após o prefixo na CTO (1-8) */
+      const posicao=_posicaoDaCTO(enc.cto,projs[projIdx])||1;
+      /* família: PROJETO-posição-X (último segmento permanece X) */
+      familia=`${projs[projIdx]}-${posicao}-X`;
+      /* GPON de referência precisa: porta = (índice do projeto no slot)*8 + posição */
+      if(m.includes('DM4615')){
+        gponRef=`1/1/${projIdx*8+posicao}`;
+      } else if(m.includes('DM4618')){
+        let slotRef=1,projIdxLocal=projIdx;
+        if(projs.length===8&&projIdx>=4){slotRef=2;projIdxLocal=projIdx-4;}
+        gponRef=`1/${slotRef}/${projIdxLocal*8+posicao}`;
+      }
+      /* DM4610 e outros: GPON ref permanece '-' (sem mapeamento de porta) */
+    } else if(projs.length>0){
+      /* OLT encontrada mas projeto não mapeado: retorna sem família falsa */
+      familia='-';
+    }
+  }
+  /* fallback final: se ainda sem família e temos prefixo direto do nome */
+  if(familia==='-'&&prefixoDireto)familia=prefixoDireto+'-X-X';
+  return{oltNome,oltModelo,gponRange,gponRef,familia,prefixo:prefixoDireto||prefixo};
+}
+
+/* autocomplete em tempo real */
+function renderCtoAC(query){
+  const ac=$('ctoAC');
+  if(!ac)return;
+  if(!query||query.length<2){ac.classList.remove('open');return}
+  const todas=_todasCtos();
+  if(!todas.length){ac.classList.remove('open');return}
+  const q=normGpon(query);
+  const matches=todas.filter(c=>normGpon(c.cto||'').includes(q)).slice(0,30);
+  if(!matches.length){ac.classList.remove('open');return}
+  const MAX_SHOW=12;
+  const visible=matches.slice(0,MAX_SHOW);
+  ac.innerHTML=visible.map(c=>`<div class="cto-ac-item" data-cto="${c.cto}"><span class="cto-ac-item-name">${c.cto}</span><span class="cto-ac-item-rede">${c._rede}</span></div>`).join('');
+  if(matches.length>MAX_SHOW){
+    ac.insertAdjacentHTML('beforeend',`<div class="cto-ac-count">+${matches.length-MAX_SHOW} resultados — refine a busca</div>`);
+  }
+  ac.classList.add('open');
+  ac.querySelectorAll('.cto-ac-item').forEach(el=>{
+    el.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      $('ctoLookupInput').value=el.dataset.cto;
+      ac.classList.remove('open');
+      buscarFamiliaPorCTO();
+    });
+  });
+}
+
+async function buscarFamiliaPorCTO(){
+  const input=($('ctoLookupInput').value||'').trim();
+  const result=$('ctoLookupResult');
+  const ac=$('ctoAC');if(ac)ac.classList.remove('open');
+  if(!input){result.innerHTML='';result.className='cto-lookup-result';return}
+  /* aguardar OLTs se necessário */
+  if(AppState.oltDBStatus!=='ready'){
+    result.className='cto-lookup-result visible';
+    result.innerHTML='<div class="cto-lookup-not-found" style="color:var(--blue)">&#8987; Carregando banco de OLTs, aguarde...</div>';
+    try{await _aguardarOLTs()}catch(e){
+      result.className='cto-lookup-result erro visible';
+      result.innerHTML='<div class="cto-lookup-not-found">&#9888; Falha ao carregar OLTs ('+e+'). Verifique a conexão e tente novamente.</div>';
+      return;
+    }
+  }
+  const todas=_todasCtos();
+  if(!todas.length){
+    result.className='cto-lookup-result erro visible';
+    result.innerHTML='<div class="cto-lookup-not-found">&#9432; As redes ainda estão carregando. Acesse uma rede no formulário principal primeiro e tente novamente.</div>';
+    return;
+  }
+  const qn=normGpon(input);
+  const enc=todas.find(c=>normGpon(c.cto||'')===qn)||todas.find(c=>normGpon(c.cto||'').includes(qn)&&qn.length>=3);
+  if(!enc){
+    result.className='cto-lookup-result erro visible';
+    result.innerHTML=`<div class="cto-lookup-not-found">CTO "<strong>${input}</strong>" não encontrada nas redes carregadas.<br><span style="font-size:.7rem;opacity:.7">Acesse cada rede no formulário principal para carregá-la.</span></div>`;
+    return;
+  }
+  const{oltNome,oltModelo,gponRange,gponRef,familia,prefixo}=_resolverCTO(enc);
+  const redeLabel=enc._rede||'-';
+  result.className='cto-lookup-result visible';
+  const oltNaoEncontrada=oltNome==='-'&&prefixo;
+  result.innerHTML=`<div class="cto-result-grid">
+    <div class="cto-result-field"><span class="cto-result-label">CTO</span><span class="cto-result-value">${enc.cto}</span></div>
+    <div class="cto-result-field"><span class="cto-result-label">Rede</span><span class="cto-result-value">${redeLabel}</span></div>
+    <div class="cto-result-field"><span class="cto-result-label">OLT</span><span class="cto-result-value">${oltNome}</span></div>
+    <div class="cto-result-field"><span class="cto-result-label">Modelo</span><span class="cto-result-value">${oltModelo}</span></div>
+    ${oltNaoEncontrada?`<div class="cto-result-field" style="grid-column:span 2"><span class="cto-result-label">Prefixo detectado</span><span class="cto-result-value" style="color:var(--amber)">${prefixo} <span style="font-size:.72rem;font-weight:500;opacity:.7">— OLT não encontrada no banco. Verifique se as OLTs estão carregadas.</span></span></div>`:''}
+    ${gponRange!=='-'?`<div class="cto-result-field" style="grid-column:span 2"><span class="cto-result-label">Slot · Portas</span><span class="cto-result-value">${gponRange}</span></div>`:''}
+    ${gponRef!=='-'?`<div class="cto-result-gpon" style="grid-column:span 2"><span class="cto-result-gpon-label">GPON ref.</span><span class="cto-result-gpon-value">${gponRef}</span></div>`:''}
+    <div class="cto-result-familia"><span class="cto-result-familia-label">Fam&#237;lia</span><span class="cto-result-familia-value">${familia!=='-'?familia:'Não identificada'}</span></div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════
+   PREVENTIVA — LISTA COM BUSCA
+════════════════════════════════════════ */
+function renderPrevivaLista(){
+  const el=$('listaPreventiva');if(!el)return;
+  const itens=getTipoAC('NORMAL','PREVENTIVA');
+  if(!itens.length){el.innerHTML='<div class="info-msg">Carregando op&#231;&#245;es...</div>';return}
+  el.innerHTML=itens.map((t,i)=>`<div class="prev-item"><input type="radio" name="prevCheck" id="prv${i}" value="${t.valor}"><label for="prv${i}">${t.label}</label></div>`).join('');
+}
+
+function filtrarPreventiva(){
+  const v=normGpon(($('filtroPreventiva')||{}).value||'');
+  document.querySelectorAll('.prev-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'});
+}
+
+function getSelectedPreventiva(){
+  const s=document.querySelector('input[name="prevCheck"]:checked');
+  return s?s.value:'';
+}
+
+/* ════════════════════════════════════════
+   GPON helpers
+════════════════════════════════════════ */
+function gponExpandirRange(p1,p2){const m1=p1.match(/^([A-Za-z_]+?)(\d+)$/),m2=p2.match(/^([A-Za-z_]+?)(\d+)$/);if(!m1||!m2||m1[1]!==m2[1])return[p1,p2];const pf=m1[1],n1=parseInt(m1[2]),n2=parseInt(m2[2]),r=[];for(let i=n1;i<=n2;i++)r.push(pf+i);return r}
+function gponExtrairProjetos(nome){const partes=nome.split('-'),semOlt=partes.filter(p=>!p.toUpperCase().startsWith('OLT')),raw=semOlt.slice(4);if(raw.length===2)return gponExpandirRange(raw[0],raw[1]);return raw}
+function gponRangePortas(modelo,idx,total){const m=modelo.toUpperCase();if(m.includes('DM4615')){const ini=idx*8+1;return`Slot 1 · ${ini}–${ini+7}`}if(m.includes('DM4618')){if(total===8){if(idx<4){const ini=idx*8+1;return`Slot 1 · ${ini}–${ini+7}`}const li=idx-4,ini=li*8+1;return`Slot 2 · ${ini}–${ini+7}`}const ini=idx*8+1;return`Slot 1 · ${ini}–${ini+7}`}return''}
+function gponFormatarFamilia(projeto,gponStr){const p=gponStr.split('/');if(p.length!==3)return`${projeto}-X`;const porta=parseInt(p[2]);const posNaFamilia=((porta-1)%8)+1;return`${projeto}-${posNaFamilia}-X`}
+function gponParaProjeto(nome,modelo,gponStr){const p=gponStr.split('/');if(p.length!==3)return{erro:'Use o formato chassi/slot/porta (ex: 1/1/5)'};const slot=parseInt(p[1]),porta=parseInt(p[2]);if(isNaN(slot)||isNaN(porta))return{erro:'GPON inválida'};const projs=gponExtrairProjetos(nome),m=modelo.toUpperCase();if(m.includes('DM4615')){if(slot!==1)return{erro:`DM4615 não possui slot ${slot}`};if(porta<1||porta>16)return{erro:`Porta ${porta} fora do range (1–16)`};const idx=Math.floor((porta-1)/8);return idx<projs.length?{projeto:projs[idx],projetos:projs,idx}:{erro:'Porta não mapeada'}}if(m.includes('DM4618')){const total=projs.length;let idx;if(total===8){if(slot===1){if(porta<1||porta>32)return{erro:'Slot 1: porta deve ser 1–32'};idx=Math.floor((porta-1)/8)}else if(slot===2){if(porta<1||porta>32)return{erro:'Slot 2: porta deve ser 1–32'};idx=4+Math.floor((porta-1)/8)}else return{erro:`Slot ${slot} inválido`}}else if(total===4){if(slot!==1)return{erro:'Apenas 1 slot ativo neste DM4618'};if(porta<1||porta>32)return{erro:'Porta deve ser 1–32'};idx=Math.floor((porta-1)/8)}else return{erro:`${total} projetos mapeados (esperado 4 ou 8)`};return idx<projs.length?{projeto:projs[idx],projetos:projs,idx}:{erro:`Porta fora do range (${total} projetos)`}}if(m.includes('DM4610'))return projs.length>0?{projeto:projs[0],projetos:projs,idx:0}:{erro:'Sem projetos mapeados'};return{erro:`Modelo desconhecido: ${modelo}`}}
+
+function normGpon(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s/g,'')}
+
+function carregarOLTs(){if(AppState.oltDBStatus!=='idle')return;AppState.oltDBStatus='loading';const s=document.createElement('script');s.src=`${GAS_URL}?aba=OLTs&callback=cbOLTs`;s.onerror=()=>{AppState.oltDBStatus='error'};document.body.appendChild(s);window.cbOLTs=d=>{AppState.oltDB=(d||[]).map(x=>({nome:String(x.col1||x.nome||'').trim(),modelo:String(x.col2||x.modelo||'').trim().toUpperCase()})).filter(o=>o.nome);AppState.oltDBStatus='ready'}}
+
+function renderGponLista(){const wrap=$('gponListaWrap'),tags=$('gponListaTags');if(!AppState.gponLista.length){wrap.classList.remove('visible');return}wrap.classList.add('visible');tags.innerHTML=AppState.gponLista.map((g,i)=>`<div class="gpon-tag"><span>${g.familia} <span style="opacity:.55;font-size:.65rem">${g.gpon} · ${g.olt.split('-').slice(0,4).join('-')}...</span></span><button class="btn-remove" onclick="removerGpon(${i})">&#10005;</button></div>`).join('')}
+window.removerGpon=function(i){AppState.gponLista.splice(i,1);renderGponLista();atualizarTecnicosGpon()};
+function adicionarGpon(){const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim();if(!olt||!modelo||!gponStr||!AppState.gponProjetoAtual)return;const res=gponParaProjeto(olt,modelo,gponStr);if(res.erro){showToast(res.erro,'error');return}const familia=gponFormatarFamilia(res.projeto,gponStr);if(AppState.gponLista.some(g=>g.gpon===gponStr&&g.olt===olt)){showToast('GPON já adicionada.','error');return}AppState.gponLista.push({olt,modelo,gpon:gponStr,projeto:res.projeto,familia});renderGponLista();$('gponInputPorta').value='';$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;atualizarTecnicosGpon();showToast('✓ GPON adicionada.')}
+
+function renderGponAC(query){const ac=$('gponAC');if(!query||query.length<2){ac.classList.remove('open');return}if(AppState.oltDBStatus==='loading'){ac.innerHTML='<div class="gpon-ac-item" style="color:var(--text3)">Carregando OLTs...</div>';ac.classList.add('open');return}const q=normGpon(query);const matches=AppState.oltDB.filter(o=>normGpon(o.nome).includes(q)).slice(0,14);if(!matches.length){ac.classList.remove('open');return}ac.innerHTML=matches.map((o,i)=>`<div class="gpon-ac-item" data-nome="${o.nome}" data-modelo="${o.modelo}"><span style="font-size:.76rem">${o.nome}</span><span class="gpon-ac-modelo">${o.modelo}</span></div>`).join('');ac.classList.add('open');ac.querySelectorAll('.gpon-ac-item').forEach(el=>{el.addEventListener('mousedown',e=>{e.preventDefault();$('gponInputOlt').value=el.dataset.nome;$('gponInputModelo').value=el.dataset.modelo;ac.classList.remove('open');executarConsultaGpon()})})}
+
+function executarConsultaGpon(){const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),box=$('gponResultBox'),badge=$('gponResultBadge'),badgeGpon=$('gponBadgeGpon'),badgeProjeto=$('gponBadgeProjeto'),badgeRange=$('gponBadgeRange'),meta=$('gponOltMeta');AppState.gponProjetoAtual=null;if(!olt||!modelo||!gponStr){box.classList.remove('visible');atualizarTecnicosGpon();return}const res=gponParaProjeto(olt,modelo,gponStr);box.classList.add('visible');if(res.erro){badge.className='gpon-result-badge erro';badgeGpon.className='gpon-badge-gpon erro';badgeGpon.textContent='ERRO';badgeProjeto.className='gpon-badge-projeto erro';badgeProjeto.textContent=res.erro;badgeRange.textContent='';meta.innerHTML='';AppState.gponProjetoAtual=null}else{badge.className='gpon-result-badge';const familiaFmt=gponFormatarFamilia(res.projeto,gponStr);badgeGpon.className='gpon-badge-gpon';badgeGpon.textContent=`GPON ${gponStr}`;badgeProjeto.className='gpon-badge-projeto';badgeProjeto.textContent=familiaFmt;const range=gponRangePortas(modelo,res.idx,res.projetos.length);badgeRange.textContent=range;meta.innerHTML=`<span><strong>${olt}</strong></span><span>Modelo: <strong>${modelo}</strong></span>`;AppState.gponProjetoAtual=res.projeto;$('btnAdicionarGpon').classList.add('visible');atualizarTecnicosGpon()}}
+
+function getTecnicosGponElegiveis(){let tecs=AppState.tecnicos;const proj=AppState.gponLista.length>0?AppState.gponLista[0].projeto:AppState.gponProjetoAtual;if(proj){const pNorm=normGpon(proj);tecs=tecs.filter(t=>t.prefixos&&t.prefixos.some(p=>pNorm.includes(normGpon(p))||normGpon(p).includes(pNorm)))}const r=DOM.gponRede.value;if(r==='FIBER')tecs=tecs.filter(t=>t.empresa.toUpperCase().includes('CONNECT'));else if(r==='INTLINK')tecs=tecs.filter(t=>t.empresa.toUpperCase().includes('EXTRA'));return tecs}
+function renderGponEmpresas(){const el=DOM.gponEmpresa,atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}let tecs=getTecnicosGponElegiveis();const empresas=[...new Set(tecs.map(t=>t.empresa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));if(!empresas.length){el.innerHTML='<option value="" disabled selected>Nenhuma empresa para este projeto</option>';return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});if(empresas.includes(atual)){el.value=atual;return}const proj=AppState.gponLista.length>0?AppState.gponLista[0].projeto:AppState.gponProjetoAtual;if(proj){const pNorm=normGpon(proj);const empMatch=tecs.find(t=>t.prefixos&&t.prefixos.some(p=>normGpon(p)===pNorm));if(empMatch&&empresas.includes(empMatch.empresa)){el.value=empMatch.empresa;atualizarTecnicosGponSemRenderEmpresas();return}}if(empresas.length===1)el.value=empresas[0]}
+function atualizarTecnicosGponSemRenderEmpresas(){const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
+function atualizarTecnicosGpon(){renderGponEmpresas();const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
+
+document.addEventListener('DOMContentLoaded',()=>{gerarGridPortas();bindEvents();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC()});
+
+function bindEvents(){
+  DOM.rede.addEventListener('change',aoMudarRede);
+  DOM.tipo.addEventListener('change',handleAcionamentoChange);
+  DOM.detalheAtenuacao.addEventListener('change',handleDetalheAtenuacaoChange);
+  DOM.empresa.addEventListener('change',renderTecnicos);
+  DOM.empresaMetro.addEventListener('change',renderTecnosCabo);
+  DOM.inputFamilia.addEventListener('input',atualizarPreviewRamal);
+  DOM.inputBackbone.addEventListener('input',atualizarResumo);
+  DOM.filtro.addEventListener('input',filtrarCTOs);
+  DOM.btnBuscarCabo.addEventListener('click',buscarCabosProximos);
+  DOM.btnGerarOS.addEventListener('click',gerarOS);
+  DOM.btnGerarOSMetro.addEventListener('click',gerarOSMetro);
+  DOM.btnLimparTudo.addEventListener('click',limparTudo);
+  DOM.btnLimparTudo2.addEventListener('click',limparTudo);
+  DOM.listaCTOs.addEventListener('change',e=>{if(e.target.name==='ctoCheck')handleCTOToggle(e.target)});
+  DOM.gridPortas.addEventListener('change',atualizarResumo);
+  $('btnFecharModal').addEventListener('click',fecharModal);
+  $('btnEditarOS').addEventListener('click',fecharModal);
+  $('operadorSelect').addEventListener('change',async e=>{try{localStorage.setItem('noc-operador',e.target.value)}catch(err){}atualizarTextoModal();try{await navigator.clipboard.writeText(construirMensagemComOperador())}catch(err){}});
+  $('copyModal').addEventListener('click',e=>{if(e.target===$('copyModal'))fecharModal()});
+  $('btnSeguir').addEventListener('click',async()=>{const rede=AppState.modoIdent?DOM.gponRede.value:DOM.rede.value,msg=construirMensagemComOperador();let hubUrl=null;if(rede==='WIRE')hubUrl='https://clickip.hubsoft.com.br/rede/rede/pop';else if(rede==='FIBER')hubUrl='https://fibernetwork.hubsoft.com.br/rede/rede/pop';else if(rede==='INTLINK')hubUrl='https://intlink.hubsoft.com.br/rede/rede/pop';try{await navigator.clipboard.writeText(msg)}catch(err){}fecharModal();const w=hubUrl?window.open(hubUrl,'_blank'):null;if(!w&&hubUrl)showToast('Popup bloqueado!','error',5000);else if(hubUrl)showToast('✓ Hubsoft aberto!')});
+  $('filtroTecCabo').addEventListener('input',filtrarTecsCabo);
+  $('filtroTec').addEventListener('input',filtrarTecs);
+  $('filtroTecGpon').addEventListener('input',filtrarTecGpon);
+  $('filtroPreventiva').addEventListener('input',filtrarPreventiva);
+  // IDENTIFICAÇÃO
+  $('btnIdentificacao').addEventListener('click',toggleIdentPanel);
+  document.querySelectorAll('.ident-sub-btn').forEach(btn=>{
+    btn.addEventListener('click',function(e){e.stopPropagation();setIdentMode(this.dataset.mode)});
+  });
+  $('btnBuscarFamilia').addEventListener('click',buscarFamiliaPorCTO);
+  const _ctoLk=$('ctoLookupInput');
+  if(_ctoLk){
+    _ctoLk.addEventListener('input',()=>renderCtoAC(_ctoLk.value));
+    _ctoLk.addEventListener('keydown',e=>{if(e.key==='Enter'){$('ctoAC').classList.remove('open');buscarFamiliaPorCTO()}if(e.key==='Escape')$('ctoAC').classList.remove('open')});
+    _ctoLk.addEventListener('blur',()=>setTimeout(()=>{const ac=$('ctoAC');if(ac)ac.classList.remove('open')},160));
+    _ctoLk.addEventListener('focus',()=>{if(_ctoLk.value.length>=2)renderCtoAC(_ctoLk.value)});
+  }
+  // GPON painel
+  const inputOlt=$('gponInputOlt');
+  inputOlt.addEventListener('input',()=>{$('gponInputModelo').value='';AppState.gponProjetoAtual=null;renderGponAC(inputOlt.value)});
+  inputOlt.addEventListener('blur',()=>setTimeout(()=>$('gponAC').classList.remove('open'),160));
+  inputOlt.addEventListener('focus',()=>{if(inputOlt.value.length>=2)renderGponAC(inputOlt.value)});
+  $('gponInputPorta').addEventListener('input',()=>{if($('gponInputModelo').value)executarConsultaGpon()});
+  $('gponInputPorta').addEventListener('keydown',e=>{if(e.key==='Enter')executarConsultaGpon()});
+  DOM.gponRede.addEventListener('change',atualizarTecnicosGpon);
+  DOM.gponTipo.addEventListener('change',()=>{const t=DOM.gponTipo.value;DOM.gponBoxDetalheAtenuacao.classList.toggle('hidden',!t.includes('ATENUACAO'));if(!t.includes('ATENUACAO'))DOM.gponDetalheAtenuacao.value=''});
+  DOM.gponEmpresa.addEventListener('change',atualizarTecnicosGpon);
+  $('btnAdicionarGpon').addEventListener('click',adicionarGpon);
+  $('btnGerarOSGpon').addEventListener('click',gerarOSGpon);
+  $('btnLimparGpon').addEventListener('click',limparGpon);
+}
+
+function filtrarTecsCabo(){const v=normGpon($('filtroTecCabo').value);DOM.listaTecsCabo.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
+function filtrarTecs(){const v=normGpon($('filtroTec').value);DOM.listaTecs.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
+function filtrarTecGpon(){const v=normGpon($('filtroTecGpon').value);DOM.gponListaTecs.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
+
+function getTipoAC(contexto,pai=''){return AppState.tipoAC.filter(t=>t.contexto===contexto&&t.pai===pai).sort((a,b)=>a.ordem-b.ordem)}
+function preencherSelect(elId,itens,placeholder){const el=$(elId);if(!el)return;const atual=el.value;el.innerHTML=`<option value="" disabled selected>${placeholder}</option>`;itens.forEach(t=>{el.insertAdjacentHTML('beforeend',`<option value="${t.valor}">${t.label}</option>`)});if(atual&&itens.some(t=>t.valor===atual))el.value=atual}
+function renderTodosSelects(){
+  const tipoItens=getTipoAC('NORMAL');
+  if(!tipoItens.some(t=>t.valor==='BACKBONE')){tipoItens.push({contexto:'NORMAL',valor:'BACKBONE',label:'BACKBONE',pai:'',ordem:99});tipoItens.sort((a,b)=>a.ordem-b.ordem)}
+  preencherSelect('tipo',tipoItens,'O que está acontecendo?');
+  renderSubDetalhes();
+  preencherSelect('problemaMetro',getTipoAC('METRO'),'Selecione o problema...');
+  const gponItens=getTipoAC('GPON');
+  preencherSelect('gponTipo',gponItens,'Selecione...');
+  if(gponItens.length){const el=$('gponTipo');if(!el.value||el.value==='')el.value=gponItens[0].valor}
+  preencherSelect('gponDetalheAtenuacao',getTipoAC('GPON','REDE DE ACESSO - ATENUACAO'),'Selecione...');
+  if(!DOM.boxDetalhePreventiva.classList.contains('hidden'))renderPrevivaLista();
+}
+function renderSubDetalhes(){preencherSelect('detalheAtenuacao',getTipoAC('NORMAL','REDE DE ACESSO - ATENUACAO'),'Selecione...');/* preventiva agora é lista */}
+
+function carregarTipoAC(){
+  if(AppState.tipoACStatus!=='idle')return;
+  AppState.tipoACStatus='loading';
+  window.cbTipoAC=function(d){
+    AppState.tipoAC=(d||[]).map(function(x){return{contexto:String(x.col1||'').trim().toUpperCase(),valor:String(x.col2||'').trim(),label:String(x.col3||'').trim(),pai:String(x.col4||'').trim(),ordem:parseInt(x.col5||'99')||99}}).filter(function(t){return t.contexto&&t.valor});
+    AppState.tipoACStatus='ready';
+    renderTodosSelects();
+  };
+  const s=document.createElement('script');
+  s.src=GAS_URL+'?aba=TIPO-AC&callback=cbTipoAC&nc='+Date.now();
+  s.onerror=function(){AppState.tipoACStatus='error';['tipo','problemaMetro','gponTipo'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<option value="" disabled selected>Erro — verifique a aba TIPO-AC</option>'})};
+  document.body.appendChild(s);
+}
+
+function carregarTecnicos(){if(AppState.tecnicosStatus==='loading')return;AppState.tecnicosStatus='loading';AppState.tecnicos=[];const s=document.createElement('script');s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;s.onerror=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos.</div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderGponEmpresas()};document.body.appendChild(s);window.cbTec=d=>{AppState.tecnicosStatus='ready';AppState.tecnicos=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));atualizarCatalogoPrefixos();renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderTecnicos();renderTecnosCabo();renderGponEmpresas()}}
+function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
+function aoMudarRede(){const r=DOM.rede.value,m=r==='METRO';DOM.wrapper.classList.toggle('metro-mode',m);DOM.sidebar.classList.toggle('visible',m);DOM.sidebar.style.display=m?'none':'';if(m){DOM.boxMetro.classList.remove('hidden');DOM.boxRede.classList.add('hidden');if(!AppState.cacheRedes['METRO'])fetchCaboMetro();else renderStatusBar()}else{DOM.boxMetro.classList.add('hidden');DOM.boxRede.classList.remove('hidden');carregarCTOs(r)}atualizarResumo()}
+function carregarCTOs(rede){DOM.listaCTOs.innerHTML='<div class="loading-text">Carregando...</div>';desmarcarTudo('ctoCheck');atualizarResumo();if(AppState.cacheRedes[rede]){AppState.baseDados=AppState.cacheRedes[rede];renderListaCTOs(AppState.baseDados);renderTecnicos();return}const cb=`cbRede_${rede}`,s=document.createElement('script');s.src=`${GAS_URL}?aba=${rede}&callback=${cb}`;s.onerror=()=>DOM.listaCTOs.innerHTML='<div class="info-msg">Erro ao carregar CTOs.</div>';document.body.appendChild(s);window[cb]=d=>{const n=d.map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x}));AppState.cacheRedes[rede]=n;AppState.baseDados=n;renderListaCTOs(n);renderTecnicos()}}
+function fetchCaboMetro(){if(AppState.cacheRedes['METRO'])return;AppState.cacheRedes['METRO']='LOADING';renderStatusBar();const s=document.createElement('script');s.src=`${GAS_URL}?callback=cbMetro`;s.onerror=()=>{AppState.cacheRedes['METRO']='ERRO';renderStatusBar()};document.body.appendChild(s);window.cbMetro=d=>{const n=d.map(x=>({...x,ozmap:x.col1||x.ozmap,localizacao:x.col2||x.localizacao,tipo:x.col3,nivel:x.col4||x.nivel,comprimento:x.col5||x.comprimento}));AppState.cacheRedes['METRO']=n;renderStatusBar()}}
+function renderStatusBar(){const s=AppState.cacheRedes['METRO'];if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;else if(s==='ERRO')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--red)">Falha ao carregar cabos.</div>`;else if(Array.isArray(s))DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados.</div>`;else DOM.statusBar.innerHTML=''}
+function haversine(a,b,c,d){const R=6371000,e=(c-a)*Math.PI/180,f=(d-b)*Math.PI/180,g=Math.sin(e/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(f/2)**2;return R*2*Math.atan2(Math.sqrt(g),Math.sqrt(1-g))}
+function distToSegment(u,p1,p2){const dx=p2.lng-p1.lng,dy=p2.lat-p1.lat;if(dx===0&&dy===0)return haversine(u.lat,u.lng,p1.lat,p1.lng);let t=((u.lng-p1.lng)*dx+(u.lat-p1.lat)*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));return haversine(u.lat,u.lng,p1.lat+t*dy,p1.lng+t*dx)}
+function parseCoordenada(s){s=s.trim();let m=s.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);if(m)return{lat:+m[1],lng:+m[2]};m=s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);if(m)return{lat:+m[1],lng:+m[2]};m=s.match(/[?&]q=(-?\d+\.\d+)[,+](-?\d+\.\d+)/);if(m)return{lat:+m[1],lng:+m[2]};return null}
+function extrairCoordsCabo(str){str=String(str||'').trim();if(!str||str==='undefined')return[];if(str.includes(';')){const c=[];str.split(',').forEach(p=>{const x=p.trim().split(';');if(x.length>=2){const la=+x[0],ln=+x[1];if(!isNaN(la)&&!isNaN(ln))c.push({lat:la,lng:ln})}});if(c.length)return c}return[...str.matchAll(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/g)].map(m=>({lat:+m[2],lng:+m[1]}))}
+function buscarCabosProximos(){const coord=parseCoordenada(DOM.inputCoordenada.value);if(!coord){DOM.resultadoCabos.innerHTML=`<div class="info-msg">Coordenada inválida.</div>`;return}const dm=AppState.cacheRedes['METRO'];if(!Array.isArray(dm)){DOM.resultadoCabos.innerHTML=`<div class="info-msg">Banco ainda carregando...</div>`;return}const RAIO=30,cv=new Map();dm.forEach(row=>{const nome=String(row.ozmap||row.cto||'').trim(),coords=String(row.localizacao||row.lat||'').trim(),pts=extrairCoordsCabo(coords);if(!pts.length)return;const nivel=String(row.nivel||'').trim().toUpperCase();if(nivel==='PROJETO')return;let best=Infinity;if(pts.length===1){best=haversine(coord.lat,coord.lng,pts[0].lat,pts[0].lng)}else{for(let i=0;i<pts.length-1;i++){const d=distToSegment(coord,pts[i],pts[i+1]);if(d<best)best=d}}if(best<=RAIO&&!cv.has(nome)){cv.set(nome,{nome,dist:best,tipo:String(row.tipo||'').trim(),nivel:String(row.nivel||'').trim(),comp:String(row.comprimento||'').trim()})}});const enc=Array.from(cv.values()).sort((a,b)=>a.dist-b.dist);if(!enc.length){DOM.resultadoCabos.innerHTML=`<div class="info-msg">Nenhum cabo no raio de ${RAIO}m.</div>`;return}const ci=DOM.inputCoordenada.value.trim();DOM.resultadoCabos.innerHTML=enc.map(c=>`<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp||'-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('')}
+
+function getTecnicosElegiveis(){let tecs=AppState.tecnicos;const ctosSel=getSelectedCTOs();if(ctosSel.length>0){const ps=[...new Set(ctosSel.map(c=>getPrefixFromCTO(c.cto)).filter(Boolean))];if(ps.length>0)tecs=tecs.filter(t=>t.prefixos&&t.prefixos.some(p=>ps.includes(p)));else tecs=[]}else if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO'){tecs=[]}else{const r=DOM.rede.value;if(r==='FIBER')tecs=tecs.filter(t=>t.empresa.toUpperCase().includes('CONNECT'));else if(r==='INTLINK')tecs=tecs.filter(t=>t.empresa.toUpperCase().includes('EXTRA'))}return tecs}
+function renderEmpresas(selectEl){const el=selectEl||DOM.empresa;if(!el)return;const atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}if(AppState.tecnicosStatus==='error'){el.innerHTML='<option value="" disabled selected>Erro ao carregar</option>';return}let tecs=(el.id==='empresaMetro')?AppState.tecnicos:getTecnicosElegiveis();const empresas=[...new Set(tecs.map(t=>t.empresa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));if(!empresas.length){el.innerHTML='<option value="" disabled selected>Nenhuma empresa disponível</option>';return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});if(empresas.includes(atual))el.value=atual;else if(empresas.length===1&&el.id==='empresa')el.value=empresas[0]}
+function renderTecnosCabo(){renderEmpresas(DOM.empresaMetro);const ftc=$('filtroTecCabo');if(ftc)ftc.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Carregando...</div>';return}const emp=DOM.empresaMetro.value;if(!emp){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}let lista=AppState.tecnicos.filter(t=>t.empresa===emp);if(!lista.length){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Nenhum técnico.</div>';return}DOM.listaTecsCabo.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join('')}
+function getPrefixFromCTO(n){const u=normGpon(n);return AppState.prefixCatalog.find(p=>u.includes(p))||''}
+function buscarCTOsPorFragmento(f){const fn=normGpon(f);if(!fn)return[];return AppState.baseDados.filter(c=>normGpon(c.cto).includes(fn))}
+function getSelectedCTOs(){if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim());return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb=>AppState.baseDados.find(b=>b.cto===cb.value)).filter(Boolean)}
+function handleAcionamentoChange(){
+  const t=DOM.tipo.value;
+  desmarcarTudo('ctoCheck');desmarcarTudoPortas();
+  const filhosAtenuacao=getTipoAC('NORMAL','REDE DE ACESSO - ATENUACAO');
+  const isAtenuacao=t==='REDE DE ACESSO - ATENUACAO'||filhosAtenuacao.some(f=>f.pai===t&&t.includes('ATENUACAO'));
+  const isPreventiva=t==='PREVENTIVA';
+  const isBackbone=t==='BACKBONE';
+  DOM.boxDetalheAtenuacao.classList.toggle('hidden',!isAtenuacao);
+  if(isAtenuacao)DOM.detalheAtenuacao.value='';
+  DOM.boxDetalhePreventiva.classList.toggle('hidden',!isPreventiva);
+  if(isPreventiva){renderPrevivaLista();document.querySelectorAll('input[name="prevCheck"]:checked').forEach(r=>r.checked=false);const fp=$('filtroPreventiva');if(fp)fp.value=''}
+  DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');
+  DOM.boxBackbone.classList.toggle('hidden',!isBackbone);
+  if(isBackbone){DOM.inputBackbone.value='';DOM.boxBuscaCTO.classList.add('hidden')}
+  else{DOM.boxBuscaCTO.classList.remove('hidden')}
+  DOM.boxPortas.classList.add('hidden');
+  AppState.multiSelectAllowed=true;
+  atualizarResumo();renderTecnicos();
+}
+function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');AppState.multiSelectAllowed=true;if(d==='PORTA CTO ATENUADA'){DOM.boxPortas.classList.remove('hidden');AppState.multiSelectAllowed=false}else if(d==='RAMAL GPON ATENUADO'){DOM.boxFamilia.classList.remove('hidden');DOM.previewRamal.classList.remove('hidden');DOM.boxBuscaCTO.classList.add('hidden');atualizarPreviewRamal()}atualizarResumo();renderTecnicos()}
+function handleCTOToggle(cb){const d=DOM.detalheAtenuacao.value;if(DOM.tipo.value!=='REDE DE ACESSO - ATENUACAO'){atualizarResumo();renderTecnicos();return}if(d==='PORTA CTO ATENUADA'&&cb.checked)DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});else if(d==='RAMAL GPON ATENUADO'&&cb.checked){cb.checked=false;return}atualizarResumo();renderTecnicos()}
+function renderListaCTOs(lista){if(!lista||!lista.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}DOM.listaCTOs.innerHTML=lista.sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true})).map((item,i)=>`<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join('')}
+function renderTecnicos(){renderEmpresas(DOM.empresa);const ft=$('filtroTec');if(ft)ft.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecs.innerHTML='<div class="info-msg">Carregando técnicos...</div>';return}const emp=DOM.empresa.value;if(!emp){DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';return}const lista=getTecnicosElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.listaTecs.innerHTML='<div class="info-msg">Nenhum técnico disponível.</div>';return}DOM.listaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('')}
+function atualizarPreviewRamal(){if(DOM.detalheAtenuacao.value!=='RAMAL GPON ATENUADO')return;const frag=DOM.inputFamilia.value,enc=buscarCTOsPorFragmento(frag);if(!frag.trim())DOM.listaPreview.innerHTML='<div class="info-msg">Digite o prefixo.</div>';else if(!enc.length)DOM.listaPreview.innerHTML=`<div class="preview-item">Nenhuma CTO encontrada</div>`;else DOM.listaPreview.innerHTML=enc.map(c=>`<div class="preview-item">${c.cto}</div>`).join('');atualizarResumo();renderTecnicos()}
+function atualizarResumo(){const sel=Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked'));let html=sel.map(c=>`<div class="tag"><span>${c.value}</span><button class="btn-remove" onclick="removerCTO('${c.id}')">&#10005;</button></div>`).join('');const tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value;if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='RAMAL GPON ATENUADO'){const f=DOM.inputFamilia.value.trim();if(f){const enc=buscarCTOsPorFragmento(f);html+=`<div class="tag warning"><span>${f} (${enc.length} CTOs)</span></div>`}}if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(ps.length)html+=`<div class="tag"><span>Portas: ${ps.join(', ')}</span></div>`}if(tipo==='BACKBONE'){const tb=(DOM.inputBackbone.value||'').trim();if(tb)html+=`<div class="tag"><span>${tb}</span></div>`}DOM.resumoCTOs.innerHTML=html||'<div class="info-msg">Nenhuma seleção.</div>'}
+window.removerCTO=id=>{const el=$(id);if(el)el.checked=false;atualizarResumo();renderTecnicos()};
+function filtrarCTOs(){const v=normGpon(DOM.filtro.value);DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
+function desmarcarTudo(n){document.querySelectorAll(`input[name="${n}"]:checked`).forEach(c=>c.checked=false)}
+function desmarcarTudoPortas(){DOM.gridPortas.querySelectorAll('input:checked').forEach(c=>c.checked=false)}
+function exibirModal(c){AppState.conteudoCopiado=c;$('copyModal').classList.add('active');atualizarTextoModal()}
+function fecharModal(){$('copyModal').classList.remove('active')}
+function carregarOperadores(){const s=document.createElement('script');s.src=`${GAS_URL}?aba=OPERADOR&callback=cbOp`;s.onerror=()=>console.warn('Erro operadores');document.body.appendChild(s);window.cbOp=d=>{AppState.operadores=d.map(x=>({nome:(x.col1||'').trim(),setor:(x.col2||'').trim()})).filter(o=>o.nome).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));renderOperadores()}}
+function getOperadorKey(op){return`${op.nome}|||${op.setor||''}`}
+function renderOperadores(){const sel=$('operadorSelect');if(!sel)return;const salvo=sel.value||localStorage.getItem('noc-operador')||'';sel.innerHTML='<option value="">&#8212; Nenhum operador &#8212;</option>';AppState.operadores.forEach(op=>{const o=document.createElement('option');o.value=getOperadorKey(op);o.textContent=op.setor?`${op.nome} - ${op.setor}`:op.nome;sel.appendChild(o)});if(salvo!==''&&AppState.operadores.some(op=>getOperadorKey(op)===salvo))sel.value=salvo;atualizarTextoModal()}
+function construirMensagemComOperador(base=AppState.conteudoCopiado){const chave=$('operadorSelect').value;let msg=base;const op=AppState.operadores.find(item=>getOperadorKey(item)===chave);if(op)msg=`_*${op.nome}${op.setor?` - {${op.setor}}`:''}:*_\n\n`+msg;return msg}
+function atualizarTextoModal(){const el=$('copyModalText');if(!el)return;el.textContent=construirMensagemComOperador()}
+
+async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='',trechoBackbone='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else if(tipo==='BACKBONE'){trechoBackbone=(DOM.inputBackbone.value||'').trim();if(!trechoBackbone)throw new Error('Informe o trecho afetado (Ex: PONTO A <> PONTO B).')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;if(tipo==='BACKBONE')corpo+=`🔗 Trecho: ${trechoBackbone}\n\n`;ctos.forEach(info=>{const link=(info.lat&&info.lng)?`https://www.google.com/maps?q=${info.lat},${info.lng}`:'Sem coordenadas';corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+
+async function gerarOSMetro(){const btn=DOM.btnGerarOSMetro;try{btn.innerHTML='Gerando...';btn.disabled=true;const emp=DOM.empresaMetro.value,problema=$('problemaMetro').value;const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));const cards=DOM.resultadoCabos.querySelectorAll('.cabo-card');if(!emp)throw new Error('Selecione a empresa.');if(!problema)throw new Error('Selecione o tipo de problema.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(!cards.length)throw new Error('Busque os cabos antes de gerar.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const coordRaw=DOM.inputCoordenada.value.trim(),cp=parseCoordenada(coordRaw);const locLink=cp?`https://www.google.com/maps?q=${cp.lat},${cp.lng}`:coordRaw;let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;cards.forEach((card,idx)=>{const rows={};card.querySelectorAll('.cabo-card-row').forEach(row=>{const l=(row.querySelector('.cabo-label')?.textContent||'').trim().toLowerCase(),v=(row.querySelector('.cabo-value')?.textContent||'').trim();if(l&&v)rows[l]=v});const dist=(card.querySelector('.cabo-dist')?.textContent||'').trim();corpo+=`⚡ Cabo: ${rows['cabo']||'-'}\n📌 Localização: ${locLink}\n`;if(rows['tipo'])corpo+=`⚙️ Tipo: ${rows['tipo']}\n`;if(rows['nível'])corpo+=`🌐 Nível: ${rows['nível']}\n`;if(rows['comprimento'])corpo+=`📋 Comprimento: ${rows['comprimento']}\n`;if(dist)corpo+=`📐 ${dist}\n`;if(idx<cards.length-1)corpo+=`\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+
+async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+
+function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
+const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}showToast('✓ Limpo.')}
+function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.inputBackbone.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('prevCheck');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.boxBackbone.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.multiSelectAllowed=true;renderStatusBar();showToast('✓ Formulário limpo.')}
+</script>
+</body>
+</html>
