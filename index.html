@@ -40,7 +40,11 @@ main{position:relative;z-index:1;min-height:100vh;padding:48px 40px;display:flex
 .sidebar-inner{padding:32px}
 .floating-sidebar::-webkit-scrollbar{width:4px}
 .floating-sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.theme-toggle{position:fixed;top:20px;right:24px;z-index:200;display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--border);border-radius:30px;padding:6px 12px 6px 8px;box-shadow:var(--shadow);cursor:pointer;user-select:none;transition:background .3s,border-color .3s}
+.top-bar-fixed{position:fixed;top:20px;right:24px;z-index:200;display:flex;align-items:center;gap:10px}
+.ozmap-btn{display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s ease;box-shadow:var(--shadow);color:var(--text2);text-decoration:none;flex-shrink:0;font-family:'Share Tech Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.ozmap-btn:hover{background:var(--bg3);transform:translateY(-2px);border-color:var(--blue2);color:var(--blue)}
+.ozmap-btn svg{width:15px;height:15px;flex-shrink:0}
+.theme-toggle{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--border);border-radius:30px;padding:6px 12px 6px 8px;box-shadow:var(--shadow);cursor:pointer;user-select:none;transition:background .3s,border-color .3s}
 .toggle-track{width:54px;height:20px;border-radius:10px;background:var(--border);position:relative;transition:background .3s}
 [data-theme="dark"] .toggle-track{background:var(--blue)}
 [data-theme="ben10"] .toggle-track{background:#00e639}
@@ -300,7 +304,7 @@ main{padding:16px 12px}
 .wrapper.metro-mode .floating-sidebar{right:0;position:static;width:100%;height:auto;border-radius:12px}
 .copy-modal-content{width:96%;max-height:93vh}
 .music-controls{bottom:8px;right:8px}
-.theme-toggle{top:12px;right:12px}
+.top-bar-fixed{top:12px;right:12px}
 .gpon-search-row{grid-template-columns:1fr 100px}
 .ident-submenu{flex-direction:column}
 }
@@ -388,11 +392,17 @@ main{padding:16px 12px}
 <canvas id="gotSnow"></canvas>
 <canvas id="cursorGlow"></canvas>
 
+<div class="top-bar-fixed">
+<a href="https://clickip.ozmap.com.br:9994/app/" target="_blank" rel="noopener noreferrer" class="ozmap-btn" title="Abrir OZMAP em nova guia" aria-label="Abrir OZMAP">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+<span>OZMAP</span>
+</a>
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
 <span id="themeIcon" style="font-size:13px">&#9728;</span>
 <div class="toggle-track"><div class="toggle-thumb"></div></div>
 <span class="toggle-label" id="toggleLabel">Tema Claro</span>
 </button>
+</div>
 
 <div class="vol-wrap">
 <div class="vol-slider-container">
