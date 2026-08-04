@@ -1356,35 +1356,68 @@ function carregarCTOs(rede){DOM.listaCTOs.innerHTML='<div class="loading-text">C
 
 /* ════════════════════════════════════════
    REDE METRO — cabos vêm de MÚLTIPLAS abas com prefixo "CABOS-"
-   (ex: CABOS-INT-AZS, CABOS-WIRE-XXX, uma por região/filial).
-   Não existe uma única aba "METRO": é preciso buscar cada aba
-   CABOS-* individualmente e agregar tudo em AppState.cacheRedes['METRO'].
-════════════════════════════════════════ */
-
-/* ════════════════════════════════════════
-   REDE METRO — cabos vêm de MÚLTIPLAS abas com prefixo "CABOS-"
    (ex: CABOS-INT-AZS, CABOS-WIRE-...). O próprio Apps Script já agrega
    tudo: quando `aba` não é informado (ou é "TODOS_CABOS"), o backend
    percorre todas as abas que começam com "CABOS-" e concatena os dados
    (ver buscarTodosOsCabos() no doGet()). Por isso uma única chamada já
-   basta — não é necessário descobrir/listar as abas no front-end. */
+   basta — não é necessário descobrir/listar as abas no front-end.
+
+   Como são MUITAS abas, essa agregação no backend pode demorar bastante
+   (cada aba é lida por completo, uma a uma, numa única execução). Por
+   isso existe um TIMEOUT abaixo: se a resposta não chegar em tempo, a
+   tela para de esperar e mostra um erro claro com opção de tentar de
+   novo, em vez de ficar "Carregando..." pra sempre sem explicação. */
+const TIMEOUT_CABO_METRO_MS=30000; // ajustar se a agregação de muitas abas legitimamente demorar mais que isso
+
 function fetchCaboMetro(){
   if(AppState.cacheRedes['METRO'])return;
   AppState.cacheRedes['METRO']='LOADING';
   renderStatusBar();
+  let respondeu=false;
+  const timer=setTimeout(()=>{
+    if(!respondeu){
+      respondeu=true;
+      AppState.cacheRedes['METRO']='TIMEOUT';
+      renderStatusBar();
+    }
+  },TIMEOUT_CABO_METRO_MS);
   const s=document.createElement('script');
   s.src=`${GAS_URL}?aba=TODOS_CABOS&callback=cbMetro`; // valor explícito por clareza; omitir o parâmetro tem o mesmo efeito no backend atual
-  s.onerror=()=>{AppState.cacheRedes['METRO']='ERRO';renderStatusBar()};
+  s.onerror=()=>{
+    if(!respondeu){
+      respondeu=true;
+      clearTimeout(timer);
+      AppState.cacheRedes['METRO']='ERRO';
+      renderStatusBar();
+    }
+  };
   document.body.appendChild(s);
   window.cbMetro=d=>{
+    if(respondeu)return; // resposta tardia chegando depois do timeout já ter disparado — ignora
+    respondeu=true;
+    clearTimeout(timer);
     const n=(d||[]).map(x=>({...x,ozmap:x.col1||x.ozmap,localizacao:x.col2||x.localizacao,tipo:x.col3,nivel:x.col4||x.nivel,comprimento:x.col5||x.comprimento}));
     AppState.cacheRedes['METRO']=n;
     renderStatusBar()
   }
 }
+/* Permite tentar de novo depois de um erro/timeout, sem precisar recarregar
+   a página inteira (antes, uma vez travado em ERRO/TIMEOUT, não tinha como
+   sair desse estado por dentro do app). */
+function _retryCaboMetro(){
+  AppState.cacheRedes['METRO']=null;
+  fetchCaboMetro();
+}
 /* ═══ fim REDE METRO ═══ */
 
-function renderStatusBar(){const s=AppState.cacheRedes['METRO'];if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;else if(s==='ERRO')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--red)">Falha ao carregar cabos.</div>`;else if(Array.isArray(s))DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados.</div>`;else DOM.statusBar.innerHTML=''}
+function renderStatusBar(){
+  const s=AppState.cacheRedes['METRO'];
+  if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando (pode levar até ${Math.round(TIMEOUT_CABO_METRO_MS/1000)}s — são várias abas)...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;
+  else if(s==='ERRO')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Falha ao carregar cabos. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
+  else if(s==='TIMEOUT')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--amber)">&#9888; O carregamento demorou mais que ${Math.round(TIMEOUT_CABO_METRO_MS/1000)}s e foi cancelado (pode ser lentidão do servidor ao ler muitas abas). <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
+  else if(Array.isArray(s))DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados.</div>`;
+  else DOM.statusBar.innerHTML='';
+}
 function haversine(a,b,c,d){const R=6371000,e=(c-a)*Math.PI/180,f=(d-b)*Math.PI/180,g=Math.sin(e/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(f/2)**2;return R*2*Math.atan2(Math.sqrt(g),Math.sqrt(1-g))}
 /* corrige a escala de longitude pelo cosseno da latitude local antes de
    interpolar o ponto mais próximo no segmento — em Manaus (lat ≈ -3°) o
