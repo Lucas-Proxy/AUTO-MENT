@@ -788,12 +788,7 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
 const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[]};
-/* separa por quebra de linha, ponto-e-vírgula, vírgula OU ESPAÇO — a coluna
-   "Caixa de Atuação" (col4) guarda os códigos separados por espaço (ex:
-   "SE MO MZ JP NC JT CD TRA V3 V2 RD AD TO"), e sem incluir \s aqui a
-   célula inteira virava um único bloco colado, nunca batendo com nenhum
-   prefixo de CTO individual na comparação de técnicos elegíveis */
-function splitListaValores(v){return String(v||'').split(/[\n;,\s]+/).map(x=>x.trim()).filter(Boolean)}
+function splitListaValores(v){return String(v||'').split(/[\n;,]+/).map(x=>x.trim()).filter(Boolean)}
 function atualizarCatalogoPrefixos(){AppState.prefixCatalog=[...new Set(AppState.tecnicos.flatMap(t=>t.prefixos||[]))].filter(Boolean).sort((a,b)=>b.length-a.length||a.localeCompare(b,'pt-BR',{sensitivity:'base'}))}
 const $=id=>document.getElementById(id);
 const DOM={
