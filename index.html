@@ -788,7 +788,14 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
 const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[]};
-function splitListaValores(v){return String(v||'').split(/[\n;,]+/).map(x=>x.trim()).filter(Boolean)}
+/* separa por quebra de linha, ponto-e-vírgula, vírgula OU ESPAÇO — a coluna
+   "Caixa de Atuação" (col4) guarda os códigos separados por espaço (ex:
+   "SE MO MZ JP NC JT CD TRA V3 V2 RD AD TO"), e sem incluir \s aqui a
+   célula inteira virava um único bloco colado, nunca batendo com nenhum
+   prefixo de CTO individual na comparação de técnicos elegíveis. Essa é a
+   única mudança desta versão — nada relacionado ao carregamento ou exibição
+   de CTOs foi alterado, pois splitListaValores só é usada para os técnicos. */
+function splitListaValores(v){return String(v||'').split(/[\n;,\s]+/).map(x=>x.trim()).filter(Boolean)}
 function atualizarCatalogoPrefixos(){AppState.prefixCatalog=[...new Set(AppState.tecnicos.flatMap(t=>t.prefixos||[]))].filter(Boolean).sort((a,b)=>b.length-a.length||a.localeCompare(b,'pt-BR',{sensitivity:'base'}))}
 const $=id=>document.getElementById(id);
 const DOM={
@@ -1523,6 +1530,22 @@ function filtroEmpresaPorRede(rede){
   return null;
 }
 
+/* REGRAS DE FALLBACK EXPLÍCITO — mapeiam um padrão de PROJETO direto para
+   uma empresa, sem depender do casamento automático por catálogo de
+   prefixos dos técnicos (que pode falhar por inconsistência de dados na
+   planilha). Servem de rede de segurança: mesmo que a Caixa de Atuação de
+   nenhum técnico bata, a empresa listada aqui SEMPRE aparece disponível
+   para o projeto correspondente.
+   Adicionar novas regras aqui conforme necessário (padrão → empresa). */
+const REGRAS_FALLBACK_EMPRESA=[
+  {padrao:/^RD\d+$/i,empresa:'CONNECT'} // toda CTO de projeto RDx (RD1, RD13, RD24...) é sempre CONNECT
+];
+function empresaFallbackPorPrefixo(prefixoDireto){
+  if(!prefixoDireto)return null;
+  const regra=REGRAS_FALLBACK_EMPRESA.find(r=>r.padrao.test(prefixoDireto));
+  return regra?regra.empresa:null;
+}
+
 function getTecnicosElegiveis(){
   let tecs=AppState.tecnicos;
 
@@ -1536,8 +1559,21 @@ function getTecnicosElegiveis(){
   const ctosSel=getSelectedCTOs();
   if(ctosSel.length>0){
     const ps=[...new Set(ctosSel.map(c=>getPrefixFromCTO(c.cto)).filter(Boolean))];
-    if(ps.length>0)tecs=tecs.filter(t=>t.prefixos&&t.prefixos.some(p=>ps.includes(p)));
-    else tecs=[];
+    /* fallback explícito: além do casamento normal por catálogo de
+       prefixos, qualquer CTO cujo projeto bata com uma REGRA_FALLBACK
+       garante que a empresa da regra apareça, independente do que o
+       catálogo de técnicos disser */
+    const empresasFallback=[...new Set(
+      ctosSel.map(c=>empresaFallbackPorPrefixo(_prefixoDaCTO(c.cto))).filter(Boolean)
+    )];
+    if(ps.length>0||empresasFallback.length>0){
+      tecs=tecs.filter(t=>
+        (t.prefixos&&t.prefixos.some(p=>ps.includes(p)))||
+        empresasFallback.includes(t.empresa)
+      );
+    }else{
+      tecs=[];
+    }
   }else if(
     (DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')||
     DOM.tipo.value==='REDE DE ACESSO - HIGIENIZACAO DE CTO'
