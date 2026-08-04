@@ -1386,33 +1386,46 @@ function fetchCaboMetro(){
 
 function renderStatusBar(){const s=AppState.cacheRedes['METRO'];if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;else if(s==='ERRO')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--red)">Falha ao carregar cabos.</div>`;else if(Array.isArray(s))DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados.</div>`;else DOM.statusBar.innerHTML=''}
 function haversine(a,b,c,d){const R=6371000,e=(c-a)*Math.PI/180,f=(d-b)*Math.PI/180,g=Math.sin(e/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(f/2)**2;return R*2*Math.atan2(Math.sqrt(g),Math.sqrt(1-g))}
-function distToSegment(u,p1,p2){const dx=p2.lng-p1.lng,dy=p2.lat-p1.lat;if(dx===0&&dy===0)return haversine(u.lat,u.lng,p1.lat,p1.lng);let t=((u.lng-p1.lng)*dx+(u.lat-p1.lat)*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));return haversine(u.lat,u.lng,p1.lat+t*dy,p1.lng+t*dx)}
+/* corrige a escala de longitude pelo cosseno da latitude local antes de
+   interpolar o ponto mais próximo no segmento — em Manaus (lat ≈ -3°) o
+   efeito é pequeno, mas deixa o cálculo geometricamente correto em vez de
+   tratar graus de lat/lng como se tivessem o mesmo tamanho em metros */
+function distToSegment(u,p1,p2){
+  const latRef=(p1.lat+p2.lat)/2;
+  const k=Math.cos(latRef*Math.PI/180)||1;
+  const dx=(p2.lng-p1.lng)*k,dy=p2.lat-p1.lat;
+  if(dx===0&&dy===0)return haversine(u.lat,u.lng,p1.lat,p1.lng);
+  const ux=(u.lng-p1.lng)*k,uy=u.lat-p1.lat;
+  let t=(ux*dx+uy*dy)/(dx*dx+dy*dy);
+  t=Math.max(0,Math.min(1,t));
+  return haversine(u.lat,u.lng,p1.lat+t*dy,p1.lng+t*(dx/k));
+}
 function parseCoordenada(s){s=s.trim();let m=s.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);if(m)return{lat:+m[1],lng:+m[2]};m=s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);if(m)return{lat:+m[1],lng:+m[2]};m=s.match(/[?&]q=(-?\d+\.\d+)[,+](-?\d+\.\d+)/);if(m)return{lat:+m[1],lng:+m[2]};return null}
 
-/* CONFIRMAR ANTES DE SUBIR EM PRODUÇÃO: peça uma linha real de uma aba
-   CABOS-* com mais de um ponto (formato sem ";") e confira no Google Maps
-   se o 1º número da dupla é longitude ou latitude. Ajuste o flag abaixo
-   conforme o resultado real dos dados — os dois formatos aceitos (com ";"
-   e com espaço) passam a usar a MESMA convenção, então só é preciso
-   validar uma vez com uma amostra real da planilha. */
-const METRO_LNG_PRIMEIRO=true; // true = "lng lat" | false = "lat lng"
-
+/* Extrai TODOS os pares de coordenadas de uma célula "Localização", em
+   QUALQUER formato de separador (";", ",", espaço, ou combinações) — em
+   vez de tentar adivinhar o formato da planilha, pega todos os números
+   decimais na ordem em que aparecem e agrupa de 2 em 2.
+   Para cada par, classifica automaticamente qual é latitude e qual é
+   longitude pelo MÓDULO do valor: na região de operação (Amazonas/Manaus)
+   a latitude sempre fica perto de 0 (~0 a 10) e a longitude sempre fica
+   bem maior (~50 a 75) — as faixas não se sobrepõem, então não é preciso
+   confirmar a convenção usada em cada aba, nem manter um flag manual.
+   ATENÇÃO: se um dia o sistema passar a cobrir uma região fora do padrão
+   Norte/Amazonas onde módulo de lat e lng possam ficar próximos, esse
+   heurístico precisa ser revisto. */
 function extrairCoordsCabo(str){
   str=String(str||'').trim();
   if(!str||str==='undefined')return[];
-  const montarPonto=(n1,n2)=>METRO_LNG_PRIMEIRO?{lng:n1,lat:n2}:{lat:n1,lng:n2};
-  if(str.includes(';')){
-    const c=[];
-    str.split(',').forEach(p=>{
-      const x=p.trim().split(';');
-      if(x.length>=2){
-        const n1=+x[0],n2=+x[1];
-        if(!isNaN(n1)&&!isNaN(n2))c.push(montarPonto(n1,n2));
-      }
-    });
-    if(c.length)return c;
+  const numeros=[...str.matchAll(/-?\d+\.\d+/g)].map(m=>parseFloat(m[0])).filter(n=>!isNaN(n));
+  const pontos=[];
+  for(let i=0;i+1<numeros.length;i+=2){
+    const n1=numeros[i],n2=numeros[i+1];
+    const a1=Math.abs(n1),a2=Math.abs(n2);
+    if(a1<a2)pontos.push({lat:n1,lng:n2});
+    else pontos.push({lat:n2,lng:n1});
   }
-  return[...str.matchAll(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/g)].map(m=>montarPonto(+m[1],+m[2]));
+  return pontos;
 }
 function buscarCabosProximos(){
   const coord=parseCoordenada(DOM.inputCoordenada.value);
@@ -1434,21 +1447,34 @@ function buscarCabosProximos(){
         if(d<best)best=d;
       }
     }
-    if(best<=RAIO){
-      /* mantém o segmento MAIS PRÓXIMO encontrado para este cabo, em vez do
-         primeiro — um mesmo cabo pode ter várias linhas/segmentos na
-         planilha, e a primeira encontrada na iteração não é necessariamente
-         a mais próxima do ponto buscado */
-      const existente=cv.get(nome);
-      if(!existente||best<existente.dist){
-        cv.set(nome,{nome,dist:best,tipo:String(row.tipo||'').trim(),nivel:String(row.nivel||'').trim(),comp:String(row.comprimento||'').trim()});
-      }
+    /* mantém o segmento MAIS PRÓXIMO encontrado para este cabo, em vez do
+       primeiro — um mesmo cabo pode ter várias linhas/segmentos na
+       planilha, e a primeira encontrada na iteração não é necessariamente
+       a mais próxima do ponto buscado. Guarda TODOS os cabos calculados
+       (não só os dentro do raio) para permitir o fallback abaixo. */
+    const existente=cv.get(nome);
+    if(!existente||best<existente.dist){
+      cv.set(nome,{nome,dist:best,tipo:String(row.tipo||'').trim(),nivel:String(row.nivel||'').trim(),comp:String(row.comprimento||'').trim()});
     }
   });
-  const enc=Array.from(cv.values()).sort((a,b)=>a.dist-b.dist);
-  if(!enc.length){DOM.resultadoCabos.innerHTML=`<div class="info-msg">Nenhum cabo no raio de ${RAIO}m.</div>`;return}
+  const todos=Array.from(cv.values()).sort((a,b)=>a.dist-b.dist);
   const ci=DOM.inputCoordenada.value.trim();
-  DOM.resultadoCabos.innerHTML=enc.map(c=>`<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp||'-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
+  if(!todos.length){
+    DOM.resultadoCabos.innerHTML=`<div class="info-msg">Nenhum cabo mapeado nas abas CABOS-* carregadas.</div>`;
+    return;
+  }
+  const dentroDoRaio=todos.filter(c=>c.dist<=RAIO);
+  let aviso='',lista;
+  if(dentroDoRaio.length){
+    lista=dentroDoRaio;
+  }else{
+    /* nenhum cabo dentro do raio de 30m — em vez de dizer simplesmente
+       "nenhum cabo encontrado", mostra os mais próximos mesmo assim, com
+       a distância real, para servir de referência/diagnóstico */
+    lista=todos.slice(0,5);
+    aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Nenhum cabo dentro do raio de ${RAIO}m. Mostrando os ${lista.length} mais próximos encontrados:</div>`;
+  }
+  DOM.resultadoCabos.innerHTML=aviso+lista.map(c=>`<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp||'-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
 }
 
 /* normaliza o nome da empresa removendo espaços/traços/underscores/pontos,
