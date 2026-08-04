@@ -1593,7 +1593,27 @@ function renderTecnosCabo(){renderEmpresas(DOM.empresaMetro);const ftc=$('filtro
    como "D2" dentro de "QD22" ou "TO" dentro da palavra "CTO" — em vez do
    prefixo de projeto correto (ex: "V2" em "CTO-V2-6-4-QD22-BL420"). */
 function getPrefixFromCTO(n){const alvo=_prefixoDaCTO(n)||normGpon(n);return AppState.prefixCatalog.find(p=>alvo.includes(p))||''}
-function buscarCTOsPorFragmento(f){const fn=normBusca(f);if(!fn)return[];return AppState.baseDados.filter(c=>normBusca(c.cto).includes(fn))}
+/* normaliza preservando os hífens como delimitadores de segmento (só
+   remove acentuação/caixa e outros caracteres) — usada especificamente na
+   busca por fragmento do Ramal GPON, para diferenciar de normBusca (que
+   remove hífens e é usada nos filtros de texto livre do restante do app) */
+function normFragmentoComHifen(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'')}
+function _escapeRegex(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+/* exige que o fragmento comece logo no início do nome OU logo após um
+   hífen — evita que um fragmento curto (ex: "rd") dê falso positivo no
+   meio de outra palavra que só contém as mesmas letras por coincidência
+   (ex: "TRD3" contém "RD", mas é um projeto sem nenhuma relação com "RD").
+   Como efeito colateral também corrige um problema irmão: fragmentos como
+   "rd13-5" deixam de agrupar por engano a CTO de um projeto "RD1" junto
+   com as de "RD13" — só porque, ao remover os hífens, "1-3-5" e "13-5"
+   produziam a mesma sequência de dígitos. Agora cada projeto respeita seu
+   próprio limite de segmento. */
+function buscarCTOsPorFragmento(f){
+  const fn=normFragmentoComHifen(String(f||'').trim());
+  if(!fn)return[];
+  const regex=new RegExp('(^|-)'+_escapeRegex(fn));
+  return AppState.baseDados.filter(c=>regex.test(normFragmentoComHifen(c.cto)));
+}
 function getSelectedCTOs(){if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim());return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb=>AppState.baseDados.find(b=>b.cto===cb.value)).filter(Boolean)}
 function handleAcionamentoChange(){
   const t=DOM.tipo.value;
