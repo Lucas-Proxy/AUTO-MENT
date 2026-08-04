@@ -787,7 +787,7 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
-const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[]};
+const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],ctosStatus:'idle'};
 /* separa por quebra de linha, ponto-e-vírgula, vírgula OU ESPAÇO — a coluna
    "Caixa de Atuação" (col4) guarda os códigos separados por espaço (ex:
    "SE MO MZ JP NC JT CD TRA V3 V2 RD AD TO"), e sem incluir \s aqui a
@@ -1359,7 +1359,47 @@ function carregarTipoAC(){
 function carregarTecnicos(){if(AppState.tecnicosStatus==='loading')return;AppState.tecnicosStatus='loading';AppState.tecnicos=[];const s=document.createElement('script');s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;s.onerror=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos.</div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderGponEmpresas()};document.body.appendChild(s);window.cbTec=d=>{AppState.tecnicosStatus='ready';AppState.tecnicos=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));atualizarCatalogoPrefixos();renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderTecnicos();renderTecnosCabo();renderGponEmpresas()}}
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
 function aoMudarRede(){const r=DOM.rede.value,isMetro=r==='METRO',isBackbone=r==='BACKBONE';DOM.wrapper.classList.toggle('metro-mode',isMetro||isBackbone);DOM.sidebar.classList.toggle('visible',isMetro||isBackbone);DOM.sidebar.style.display=(isMetro||isBackbone)?'none':'';DOM.boxMetro.classList.toggle('hidden',!isMetro);DOM.boxBackboneRede.classList.toggle('hidden',!isBackbone);DOM.boxRede.classList.toggle('hidden',isMetro||isBackbone);if(isMetro){if(!AppState.cacheRedes['METRO'])fetchCaboMetro();else renderStatusBar()}else if(isBackbone){renderTecnicosBackbone()}else{carregarCTOs(r)}atualizarResumo()}
-function carregarCTOs(rede){DOM.listaCTOs.innerHTML='<div class="loading-text">Carregando...</div>';desmarcarTudo('ctoCheck');atualizarResumo();if(AppState.cacheRedes[rede]){AppState.baseDados=AppState.cacheRedes[rede];renderListaCTOs(AppState.baseDados);renderTecnicos();return}const cb=`cbRede_${rede}`,s=document.createElement('script');s.src=`${GAS_URL}?aba=${rede}&callback=${cb}`;s.onerror=()=>DOM.listaCTOs.innerHTML='<div class="info-msg">Erro ao carregar CTOs.</div>';document.body.appendChild(s);window[cb]=d=>{const n=d.map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x}));AppState.cacheRedes[rede]=n;AppState.baseDados=n;renderListaCTOs(n);renderTecnicos()}}
+/* ctosStatus rastreia se a lista de CTOs da rede atual já chegou do servidor.
+   Sem isso, o app não conseguia distinguir "essa CTO não existe" de "os
+   dados ainda estão a caminho" — e o preview do Ramal GPON mostrava
+   "Nenhuma CTO encontrada" mesmo quando a busca só tinha rodado cedo
+   demais, sem nunca se corrigir quando os dados finalmente chegavam. */
+function carregarCTOs(rede){
+  DOM.listaCTOs.innerHTML='<div class="loading-text">Carregando...</div>';
+  desmarcarTudo('ctoCheck');
+  atualizarResumo();
+  if(AppState.cacheRedes[rede]){
+    AppState.baseDados=AppState.cacheRedes[rede];
+    AppState.ctosStatus='ready';
+    renderListaCTOs(AppState.baseDados);
+    renderTecnicos();
+    atualizarPreviewRamal();
+    return;
+  }
+  AppState.ctosStatus='loading';
+  AppState.baseDados=[];
+  atualizarPreviewRamal(); // mostra "carregando" imediatamente, se estiver no modo ramal
+  const cb=`cbRede_${rede}`,s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=${rede}&callback=${cb}`;
+  s.onerror=()=>{
+    AppState.ctosStatus='error';
+    DOM.listaCTOs.innerHTML='<div class="info-msg">Erro ao carregar CTOs.</div>';
+    atualizarPreviewRamal();
+  };
+  document.body.appendChild(s);
+  window[cb]=d=>{
+    const n=(d||[]).map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x}));
+    AppState.cacheRedes[rede]=n;
+    AppState.baseDados=n;
+    AppState.ctosStatus='ready';
+    renderListaCTOs(n);
+    renderTecnicos();
+    /* re-executa a busca por fragmento agora que os dados chegaram — antes,
+       se o usuário já tivesse digitado o prefixo durante o carregamento, a
+       tela ficava travada em "Nenhuma CTO encontrada" para sempre */
+    atualizarPreviewRamal();
+  }
+}
 
 /* ════════════════════════════════════════
    REDE METRO — cabos vêm de MÚLTIPLAS abas com prefixo "CABOS-"
@@ -1635,7 +1675,33 @@ function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desma
 function handleCTOToggle(cb){const d=DOM.detalheAtenuacao.value;if(DOM.tipo.value!=='REDE DE ACESSO - ATENUACAO'){atualizarResumo();renderTecnicos();return}if(d==='PORTA CTO ATENUADA'&&cb.checked)DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});else if(d==='RAMAL GPON ATENUADO'&&cb.checked){cb.checked=false;return}atualizarResumo();renderTecnicos()}
 function renderListaCTOs(lista){if(!lista||!lista.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}DOM.listaCTOs.innerHTML=lista.sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true})).map((item,i)=>`<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join('')}
 function renderTecnicos(){renderEmpresas(DOM.empresa);const ft=$('filtroTec');if(ft)ft.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecs.innerHTML='<div class="info-msg">Carregando técnicos...</div>';return}const emp=DOM.empresa.value;if(!emp){DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';return}const lista=getTecnicosElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.listaTecs.innerHTML='<div class="info-msg">Nenhum técnico disponível.</div>';return}DOM.listaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('')}
-function atualizarPreviewRamal(){if(DOM.detalheAtenuacao.value!=='RAMAL GPON ATENUADO')return;const frag=DOM.inputFamilia.value,enc=buscarCTOsPorFragmento(frag);if(!frag.trim())DOM.listaPreview.innerHTML='<div class="info-msg">Digite o prefixo.</div>';else if(!enc.length)DOM.listaPreview.innerHTML=`<div class="preview-item">Nenhuma CTO encontrada</div>`;else DOM.listaPreview.innerHTML=enc.map(c=>`<div class="preview-item">${c.cto}</div>`).join('');atualizarResumo();renderTecnicos()}
+function atualizarPreviewRamal(){
+  if(DOM.detalheAtenuacao.value!=='RAMAL GPON ATENUADO')return;
+  const frag=DOM.inputFamilia.value;
+  if(!frag.trim()){
+    DOM.listaPreview.innerHTML='<div class="info-msg">Digite o prefixo.</div>';
+    atualizarResumo();renderTecnicos();return;
+  }
+  /* estados de carregamento tratados ANTES de concluir "não encontrou" —
+     dizer "Nenhuma CTO encontrada" enquanto os dados ainda estão vindo do
+     servidor é informação falsa e faz o operador achar que a CTO não existe */
+  if(AppState.ctosStatus==='loading'){
+    DOM.listaPreview.innerHTML='<div class="loading-text">Carregando CTOs da rede... a busca será refeita automaticamente.</div>';
+    atualizarResumo();renderTecnicos();return;
+  }
+  if(AppState.ctosStatus==='error'){
+    DOM.listaPreview.innerHTML='<div class="info-msg" style="color:var(--red)">&#9888; Falha ao carregar as CTOs desta rede. Selecione a rede novamente.</div>';
+    atualizarResumo();renderTecnicos();return;
+  }
+  if(!AppState.baseDados.length){
+    DOM.listaPreview.innerHTML='<div class="info-msg" style="color:var(--amber)">Selecione a Rede de Atuação para carregar as CTOs.</div>';
+    atualizarResumo();renderTecnicos();return;
+  }
+  const enc=buscarCTOsPorFragmento(frag);
+  if(!enc.length)DOM.listaPreview.innerHTML=`<div class="preview-item">Nenhuma CTO encontrada com "${frag.trim()}"</div>`;
+  else DOM.listaPreview.innerHTML=enc.map(c=>`<div class="preview-item">${c.cto}</div>`).join('');
+  atualizarResumo();renderTecnicos();
+}
 function atualizarResumo(){const sel=Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked'));let html=sel.map(c=>`<div class="tag"><span>${c.value}</span><button class="btn-remove" onclick="removerCTO('${c.id}')">&#10005;</button></div>`).join('');const tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value;if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='RAMAL GPON ATENUADO'){const f=DOM.inputFamilia.value.trim();if(f){const enc=buscarCTOsPorFragmento(f);html+=`<div class="tag warning"><span>${f} (${enc.length} CTOs)</span></div>`}}if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(ps.length)html+=`<div class="tag"><span>Portas: ${ps.join(', ')}</span></div>`}DOM.resumoCTOs.innerHTML=html||'<div class="info-msg">Nenhuma seleção.</div>'}
 window.removerCTO=id=>{const el=$(id);if(el)el.checked=false;atualizarResumo();renderTecnicos()};
 function filtrarCTOs(){const v=normBusca(DOM.filtro.value);DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it=>{it.style.display=normBusca(it.textContent).includes(v)?'':'none'})}
@@ -1745,7 +1811,7 @@ async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Ge
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}showToast('✓ Limpo.')}
-function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.multiSelectAllowed=true;renderStatusBar();showToast('✓ Formulário limpo.')}
+function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.multiSelectAllowed=true;renderStatusBar();showToast('✓ Formulário limpo.')}
 </script>
 </body>
 </html>
