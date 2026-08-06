@@ -146,8 +146,17 @@ input::placeholder{color:var(--text3)}
 .cable-search-box input{flex:1}
 .btn-buscar-cabo{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:8px;padding:10px 16px;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:0 2px 8px rgba(26,111,219,.3)}
 .btn-buscar-cabo:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,111,219,.4)}
+.btn-geo{background:var(--bg2);border:1px solid var(--border);color:var(--blue);border-radius:8px;width:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.05rem;cursor:pointer;transition:all .2s}
+.btn-geo:hover{background:var(--blue-l);border-color:var(--blue2);transform:translateY(-1px)}
+.btn-geo:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-geo.loading{animation:geoSpin 1s linear infinite}
+@keyframes geoSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .cabo-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;animation:slideIn .15s ease-out;transition:all .2s}
 .cabo-card:hover{border-color:var(--blue2)}
+.cabo-card.mais-proximo{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal),0 4px 14px rgba(14,158,126,.15)}
+.cabo-card-badge{display:inline-flex;align-items:center;gap:4px;background:var(--teal-l);color:var(--teal);font-size:.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin-bottom:8px;font-family:'Share Tech Mono',monospace}
+.cabo-maps-link{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--blue);text-decoration:none;margin-top:8px}
+.cabo-maps-link:hover{text-decoration:underline}
 .cabo-card:last-child{margin-bottom:0}
 .cabo-card-row{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
 .cabo-card-row:last-child{margin-bottom:0}
@@ -604,6 +613,7 @@ IDENTIFICA&#199;&#195;O
 <label>Coordenada ou Link Google Maps</label>
 <div class="cable-search-box">
 <input type="text" id="inputCoordenada" placeholder="Ex: -3.09869, -60.01261">
+<button class="btn-geo" id="btnUsarLocalizacao" type="button" title="Usar minha localiza&#231;&#227;o atual">&#128205;</button>
 <button class="btn-buscar-cabo" id="btnBuscarCabo">Buscar</button>
 </div>
 </div>
@@ -666,7 +676,6 @@ IDENTIFICA&#199;&#195;O
 <input type="text" id="inputOtdrDio" placeholder="DIO" autocomplete="off" style="flex:1;min-width:0">
 <input type="text" id="inputOtdrBandeja" placeholder="Bandeja" autocomplete="off" style="flex:1;min-width:0">
 <input type="text" id="inputOtdrPorta" placeholder="Porta" autocomplete="off" style="flex:1;min-width:0">
-</div>
 </div>
 </div>
 <div class="form-group" style="margin-top:18px">
@@ -787,7 +796,7 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
-const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],ctosStatus:'idle'};
+const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],ctosStatus:'idle',metroCacheTimestamp:null,metroLoadingStartedAt:null,caboBuscaPendente:false};
 /* separa por quebra de linha, ponto-e-vírgula, vírgula OU ESPAÇO — a coluna
    "Caixa de Atuação" (col4) guarda os códigos separados por espaço (ex:
    "SE MO MZ JP NC JT CD TRA V3 V2 RD AD TO"), e sem incluir \s aqui a
@@ -1267,7 +1276,7 @@ function renderGponEmpresas(){const el=DOM.gponEmpresa,atual=el.value;if(AppStat
 function atualizarTecnicosGponSemRenderEmpresas(){const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
 function atualizarTecnicosGpon(){renderGponEmpresas();const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
 
-document.addEventListener('DOMContentLoaded',()=>{gerarGridPortas();bindEvents();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC()});
+document.addEventListener('DOMContentLoaded',()=>{gerarGridPortas();bindEvents();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC();fetchCaboMetro();/* pré-carrega os cabos da Rede Metro em paralelo com o resto da tela, para que a espera aconteça em segundo plano em vez de só quando o operador seleciona essa rede */});
 
 function bindEvents(){
   DOM.rede.addEventListener('change',aoMudarRede);
@@ -1278,6 +1287,8 @@ function bindEvents(){
   DOM.inputFamilia.addEventListener('input',atualizarPreviewRamal);
   DOM.filtro.addEventListener('input',filtrarCTOs);
   DOM.btnBuscarCabo.addEventListener('click',buscarCabosProximos);
+  const _btnGeo=$('btnUsarLocalizacao');
+  if(_btnGeo)_btnGeo.addEventListener('click',usarLocalizacaoAtual);
   DOM.btnGerarOS.addEventListener('click',gerarOS);
   DOM.btnGerarOSMetro.addEventListener('click',gerarOSMetro);
   DOM.btnLimparTudo.addEventListener('click',limparTudo);
@@ -1416,10 +1427,55 @@ function carregarCTOs(rede){
    novo, em vez de ficar "Carregando..." pra sempre sem explicação. */
 const TIMEOUT_CABO_METRO_MS=30000; // ajustar se a agregação de muitas abas legitimamente demorar mais que isso
 
-function fetchCaboMetro(){
-  if(AppState.cacheRedes['METRO'])return;
+/* CACHE LOCAL DE CABOS (METRO) — a causa real da demora é o backend: ele
+   agrega TODAS as abas "CABOS-*" a cada chamada (ver comentário acima).
+   Enquanto isso não for otimizado no Apps Script, guardamos aqui uma cópia
+   no localStorage do navegador com validade limitada, para que reabrir a
+   página não obrigue a esperar de novo pelos mesmos dados. Isso não reduz
+   o tempo da PRIMEIRA carga — só evita repetir a espera em cargas
+   subsequentes dentro da janela de validade. O pré-carregamento no
+   DOMContentLoaded (ver fetchCaboMetro() chamado lá) faz essa primeira
+   espera acontecer em paralelo com o resto da tela, em vez de só quando o
+   operador seleciona Rede Metro. */
+const METRO_CACHE_KEY='noc-metro-cabos-cache-v1';
+const METRO_CACHE_TTL_MS=60*60*1000; // 1 hora — aumente se os cabos mudarem raramente, diminua se precisar de dados sempre muito recentes
+
+function _salvarCacheMetroLocal(dados,timestamp){
+  try{
+    localStorage.setItem(METRO_CACHE_KEY,JSON.stringify({t:timestamp,d:dados}));
+  }catch(e){
+    console.warn('Não foi possível salvar cache de cabos no localStorage (dados grandes ou storage cheio):',e);
+  }
+}
+
+function _lerCacheMetroLocal(){
+  try{
+    const raw=localStorage.getItem(METRO_CACHE_KEY);
+    if(!raw)return null;
+    const obj=JSON.parse(raw);
+    if(!obj||!Array.isArray(obj.d)||typeof obj.t!=='number')return null;
+    if(Date.now()-obj.t>METRO_CACHE_TTL_MS)return null;
+    return obj;
+  }catch(e){
+    return null;
+  }
+}
+
+function fetchCaboMetro(forcar){
+  if(!forcar){
+    if(AppState.cacheRedes['METRO'])return; // já carregado, carregando, ou com erro/timeout registrado — não duplica a chamada
+    const cache=_lerCacheMetroLocal();
+    if(cache){
+      AppState.cacheRedes['METRO']=cache.d;
+      AppState.metroCacheTimestamp=cache.t;
+      renderStatusBar();
+      return;
+    }
+  }
   AppState.cacheRedes['METRO']='LOADING';
+  AppState.metroLoadingStartedAt=Date.now();
   renderStatusBar();
+  _garantirTimerMetro(); // atualiza a barra de status a cada segundo enquanto durar o carregamento, em vez de deixá-la travada
   let respondeu=false;
   const timer=setTimeout(()=>{
     if(!respondeu){
@@ -1445,24 +1501,60 @@ function fetchCaboMetro(){
     clearTimeout(timer);
     const n=(d||[]).map(x=>({...x,ozmap:x.col1||x.ozmap,localizacao:x.col2||x.localizacao,tipo:x.col3,nivel:x.col4||x.nivel,comprimento:x.col5||x.comprimento}));
     AppState.cacheRedes['METRO']=n;
-    renderStatusBar()
+    AppState.metroCacheTimestamp=Date.now();
+    _salvarCacheMetroLocal(n,AppState.metroCacheTimestamp);
+    renderStatusBar();
+    /* se o operador já tinha tentado buscar um cabo enquanto os dados
+       ainda estavam a caminho, a busca fica "pendente" (ver
+       buscarCabosProximos) e é refeita automaticamente agora — sem isso,
+       ele teria que lembrar de clicar em Buscar de novo por conta própria */
+    if(AppState.caboBuscaPendente){
+      AppState.caboBuscaPendente=false;
+      buscarCabosProximos();
+    }
   }
+}
+/* mantém a barra de status "vivendo" a cada segundo enquanto o estado for
+   LOADING, só para mostrar o tempo decorrido — evita a sensação de tela
+   travada que uma barra de progresso estática (sempre em 50%) dava */
+let _metroTimerHandle=null;
+function _garantirTimerMetro(){
+  if(_metroTimerHandle)return;
+  _metroTimerHandle=setInterval(()=>{
+    if(AppState.cacheRedes['METRO']==='LOADING'){
+      renderStatusBar();
+    }else{
+      clearInterval(_metroTimerHandle);
+      _metroTimerHandle=null;
+    }
+  },1000);
 }
 /* Permite tentar de novo depois de um erro/timeout, sem precisar recarregar
    a página inteira (antes, uma vez travado em ERRO/TIMEOUT, não tinha como
-   sair desse estado por dentro do app). */
+   sair desse estado por dentro do app). forcar=true ignora o cache local,
+   garantindo que "Tentar novamente"/"Atualizar" sempre busquem dados novos
+   direto do servidor. */
 function _retryCaboMetro(){
   AppState.cacheRedes['METRO']=null;
-  fetchCaboMetro();
+  fetchCaboMetro(true);
 }
 /* ═══ fim REDE METRO ═══ */
 
 function renderStatusBar(){
   const s=AppState.cacheRedes['METRO'];
-  if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando (pode levar até ${Math.round(TIMEOUT_CABO_METRO_MS/1000)}s — são várias abas)...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;
+  if(s==='LOADING'){
+    const totalSeg=Math.round(TIMEOUT_CABO_METRO_MS/1000);
+    const decorrido=AppState.metroLoadingStartedAt?Math.floor((Date.now()-AppState.metroLoadingStartedAt)/1000):0;
+    const pct=Math.min(96,Math.round((decorrido/totalSeg)*100)); // nunca chega a 100% sozinha — 100% real só quando os dados chegam
+    DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando cabos... ${decorrido}s (pode levar até ${totalSeg}s — são várias abas)</div><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
+  }
   else if(s==='ERRO')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Falha ao carregar cabos. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
   else if(s==='TIMEOUT')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--amber)">&#9888; O carregamento demorou mais que ${Math.round(TIMEOUT_CABO_METRO_MS/1000)}s e foi cancelado (pode ser lentidão do servidor ao ler muitas abas). <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
-  else if(Array.isArray(s))DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados.</div>`;
+  else if(Array.isArray(s)){
+    const idadeMin=AppState.metroCacheTimestamp?Math.max(0,Math.round((Date.now()-AppState.metroCacheTimestamp)/60000)):null;
+    const idadeTxt=idadeMin===null?'':(idadeMin<1?' (agora mesmo)':` (dados de há ${idadeMin} min)`);
+    DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados${idadeTxt}. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Atualizar</a></div>`;
+  }
   else DOM.statusBar.innerHTML='';
 }
 function haversine(a,b,c,d){const R=6371000,e=(c-a)*Math.PI/180,f=(d-b)*Math.PI/180,g=Math.sin(e/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(f/2)**2;return R*2*Math.atan2(Math.sqrt(g),Math.sqrt(1-g))}
@@ -1511,7 +1603,16 @@ function buscarCabosProximos(){
   const coord=parseCoordenada(DOM.inputCoordenada.value);
   if(!coord){DOM.resultadoCabos.innerHTML=`<div class="info-msg">Coordenada inválida.</div>`;return}
   const dm=AppState.cacheRedes['METRO'];
-  if(!Array.isArray(dm)){DOM.resultadoCabos.innerHTML=`<div class="info-msg">Banco ainda carregando...</div>`;return}
+  if(!Array.isArray(dm)){
+    /* em vez de só avisar e deixar o operador ter que lembrar de clicar
+       em Buscar de novo, marca a busca como pendente — ela é refeita
+       automaticamente sozinha assim que os cabos terminarem de carregar
+       (ver o callback cbMetro dentro de fetchCaboMetro) */
+    AppState.caboBuscaPendente=true;
+    DOM.resultadoCabos.innerHTML=`<div class="loading-text">&#8987; Cabos ainda carregando — a busca por "${DOM.inputCoordenada.value.trim()}" ser&#225; feita automaticamente quando estiver pronto.</div>`;
+    return;
+  }
+  AppState.caboBuscaPendente=false;
   const RAIO=30,cv=new Map();
   dm.forEach(row=>{
     const nome=String(row.ozmap||row.cto||'').trim(),coords=String(row.localizacao||row.lat||'').trim(),pts=extrairCoordsCabo(coords);
@@ -1554,7 +1655,35 @@ function buscarCabosProximos(){
     lista=todos.slice(0,5);
     aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Nenhum cabo dentro do raio de ${RAIO}m. Mostrando os ${lista.length} mais próximos encontrados:</div>`;
   }
-  DOM.resultadoCabos.innerHTML=aviso+lista.map(c=>`<div class="cabo-card"><div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp||'-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div></div>`).join('');
+  const mapsLink=`https://www.google.com/maps?q=${coord.lat},${coord.lng}`;
+  DOM.resultadoCabos.innerHTML=aviso+lista.map((c,idx)=>`<div class="cabo-card${idx===0?' mais-proximo':''}">${idx===0?'<div class="cabo-card-badge">&#9679; Mais pr&#243;ximo</div>':''}<div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${ci}</span></div><div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div><div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp||'-'}</span></div><div class="cabo-dist">${c.dist.toFixed(1)}m</div><a class="cabo-maps-link" href="${mapsLink}" target="_blank" rel="noopener noreferrer">&#128205; Abrir localização buscada no Maps</a></div>`).join('');
+}
+
+/* usa a geolocalização do próprio navegador (dispositivo do técnico em
+   campo) para preencher a coordenada automaticamente, em vez de precisar
+   copiar/colar do Google Maps — e já dispara a busca sozinha */
+function usarLocalizacaoAtual(){
+  if(!navigator.geolocation){showToast('Geolocalização não suportada neste navegador.','error');return}
+  const btn=$('btnUsarLocalizacao');
+  if(btn){btn.disabled=true;btn.classList.add('loading')}
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      if(btn){btn.disabled=false;btn.classList.remove('loading')}
+      const lat=pos.coords.latitude.toFixed(6),lng=pos.coords.longitude.toFixed(6);
+      DOM.inputCoordenada.value=`${lat}, ${lng}`;
+      showToast('✓ Localização obtida.');
+      buscarCabosProximos();
+    },
+    err=>{
+      if(btn){btn.disabled=false;btn.classList.remove('loading')}
+      let msg='Não foi possível obter sua localização.';
+      if(err.code===1)msg='Permissão de localização negada pelo navegador.';
+      else if(err.code===2)msg='Localização indisponível no momento.';
+      else if(err.code===3)msg='Tempo esgotado ao obter localização.';
+      showToast(msg,'error',4000);
+    },
+    {enableHighAccuracy:true,timeout:10000,maximumAge:0}
+  );
 }
 
 /* normaliza o nome da empresa removendo espaços/traços/underscores/pontos,
