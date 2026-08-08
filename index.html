@@ -397,11 +397,19 @@ main{padding:16px 12px}
 #slaView{display:none;position:relative;z-index:1;min-height:100vh;padding:34px 40px 90px}
 #slaView.ativo{display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
 body.sla-aberto main{display:none}
-.sla-header{max-width:1600px;margin:0 auto 24px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+/* alternância dos botões da barra fixa: uma barra só, conteúdo por modo —
+   evita ter dois "Atualizar" na tela e a colisão com o ícone de volume */
+.so-sla{display:none!important}
+body.sla-aberto .so-normal{display:none!important}
+body.sla-aberto .so-sla{display:flex!important}
+.btn-sla-fechar:hover{border-color:var(--red)!important;color:var(--red)!important;background:var(--red-l)!important}
+/* cabeçalho empilhado à esquerda: a coluna da direita fica livre para a
+   barra fixa e o controle de volume, sem sobreposição em nenhuma largura */
+.sla-header{max-width:1600px;margin:0 auto 24px;display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding-right:300px}
+.sla-header-txt{display:flex;flex-direction:column}
 .sla-titulo{font-family:'Bebas Neue',cursive;font-size:2.1rem;letter-spacing:6px;color:var(--text);line-height:1;text-transform:uppercase}
 .sla-titulo .hl{color:var(--blue)}
 .sla-sub-titulo{font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-top:6px}
-.sla-header-acoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .sla-resumo{display:flex;gap:8px;flex-wrap:wrap}
 .sla-kpi{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;box-shadow:var(--shadow);min-width:104px}
 .sla-kpi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -463,9 +471,9 @@ body.sla-aberto main{display:none}
 .sla-aviso.erro .sla-aviso-txt{color:var(--red)}
 .sla-rodape{max-width:1600px;margin:22px auto 0;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px;text-align:center}
 @media(max-width:1024px){
-#slaView{padding:16px 12px 90px}
+#slaView{padding:74px 12px 90px}
 .sla-grid{grid-template-columns:1fr;gap:14px}
-.sla-header{flex-direction:column;align-items:stretch}
+.sla-header{padding-right:0;gap:12px}
 .sla-titulo{font-size:1.7rem}
 }
 
@@ -489,12 +497,16 @@ body.sla-aberto main{display:none}
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
 <span>OZMAP</span>
 </a>
-<button class="ozmap-btn" id="btnSla" title="Abrir o painel de SLA dos acionamentos" aria-label="Painel de SLA">
+<button class="ozmap-btn so-normal" id="btnSla" title="Abrir o painel de SLA dos acionamentos" aria-label="Painel de SLA">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
 <span>SLA</span>
 <span id="slaBadgeTopo" class="sla-badge-topo hidden">0</span>
 </button>
-<button class="ozmap-btn" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
+<button class="ozmap-btn so-normal" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+<span>Atualizar</span>
+</button>
+<button class="ozmap-btn so-sla" id="btnSlaAtualizar" title="Buscar agora os chamados na planilha" aria-label="Atualizar chamados">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 <span>Atualizar</span>
 </button>
@@ -502,6 +514,10 @@ body.sla-aberto main{display:none}
 <span id="themeIcon" style="font-size:13px">&#9728;</span>
 <div class="toggle-track"><div class="toggle-thumb"></div></div>
 <span class="toggle-label" id="toggleLabel">Tema Claro</span>
+</button>
+<button class="ozmap-btn so-sla btn-sla-fechar" id="btnSlaFechar" title="Voltar para o formul&#225;rio de acionamento (Esc)" aria-label="Fechar painel de SLA">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+<span>Fechar</span>
 </button>
 </div>
 
@@ -874,21 +890,11 @@ IDENTIFICA&#199;&#195;O
 
 <section id="slaView">
 <div class="sla-header">
-<div>
+<div class="sla-header-txt">
 <div class="sla-titulo"><span class="hl">Painel</span> de SLA</div>
 <div class="sla-sub-titulo">Acionamentos em andamento &middot; SLA padr&#227;o de 4 horas</div>
 </div>
-<div class="sla-header-acoes">
 <div class="sla-resumo" id="slaResumo"></div>
-<button class="ozmap-btn" id="btnSlaAtualizar" title="Buscar agora os chamados na planilha">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-<span>Atualizar</span>
-</button>
-<button class="ozmap-btn" id="btnSlaFechar" title="Voltar para o formul&#225;rio de acionamento">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-<span>Fechar</span>
-</button>
-</div>
 </div>
 <div class="sla-grid" id="slaGrid"></div>
 <div class="sla-rodape" id="slaRodape"></div>
