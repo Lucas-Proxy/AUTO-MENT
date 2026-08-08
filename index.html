@@ -445,7 +445,7 @@ body.sla-aberto .so-sla{display:flex!important}
 .sla-kpi.alerta  .sla-kpi-dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
 .sla-kpi.ok      .sla-kpi-dot{background:var(--teal);box-shadow:0 0 8px var(--teal)}
 .sla-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(233px,1fr));gap:13px;align-items:start}
-.sla-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;box-shadow:var(--shadow2);display:flex;flex-direction:column;position:relative;transition:border-color .3s,box-shadow .3s,opacity .4s;animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both}
+.sla-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;box-shadow:var(--shadow2);display:flex;flex-direction:column;position:relative;transition:border-color .3s,box-shadow .3s,opacity .4s,transform .4s;animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both}
 .sla-card-faixa{height:4px;width:100%;background:var(--teal)}
 .sla-card-corpo{padding:12px 13px 13px;display:flex;flex-direction:column;gap:9px;flex:1}
 .sla-card-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -1643,12 +1643,23 @@ function carregarSla(silencioso){
   }
   return jsonp({acao:'listarSla'},25000).then(r=>{
     if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
+    const agoraMs=Date.now();
     AppState.sla.itens=(r.itens||[]).map(x=>({
       ...x,
       aberturaMs:Number(x.aberturaMs)||0,
       encerramentoMs:Number(x.encerramentoMs)||0,
       slaHoras:Number(x.slaHoras)||SLA_HORAS_PADRAO
-    })).filter(x=>x.aberturaMs>0);
+    })).filter(x=>x.aberturaMs>0)
+    /* O backend devolve os encerrados por uma janela maior (30 min) para que
+       outros operadores fiquem sabendo do encerramento. Mas o painel só os
+       exibe por 5 min. Sem este filtro, um chamado encerrado há mais tempo
+       chegava, era desenhado e só então o tick o removia com o fade — o que
+       fazia ele "piscar" na tela a cada recarga e a cada atualização.
+       Exceção: se o card já está na tela, deixa passar para o tick fazer a
+       saída suave em vez de ele sumir de repente. */
+    .filter(x=>!x.encerramentoMs
+                || (agoraMs-x.encerramentoMs)<=SLA_SUMIR_APOS_ENCERRAR_MS
+                || AppState.sla.nodes.has(x.id));
     AppState.sla.status='ok';AppState.sla.erro='';
     AppState.sla.ultimaAtualizacao=Date.now();
     if(AppState.sla.aberto)renderSla();
@@ -1717,6 +1728,16 @@ function renderSla(){
   if(!st.itens.length){
     grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum acionamento em aberto.<br>Os chamados aparecem aqui assim que uma Ordem de Servi&ccedil;o for gerada.</div></div>`;
     st.nodes.clear();renderResumoSla();return;
+  }
+
+  /* Se a lista de chamados é a mesma de antes, atualiza só os dados e deixa
+     o tick cuidar de tempo/cor/ordem. Refazer os cards a cada busca (45s)
+     reiniciaria a animação de entrada de todos eles sem necessidade. */
+  const idsNovos=st.itens.map(i=>i.id).sort().join('|');
+  const idsAtuais=Array.from(st.nodes.keys()).sort().join('|');
+  if(st.nodes.size&&idsNovos===idsAtuais){
+    st.itens.forEach(item=>{const n=st.nodes.get(item.id);if(n)n.item=item});
+    tickSla();return;
   }
 
   grid.innerHTML='';st.nodes.clear();
