@@ -397,6 +397,10 @@ main{padding:16px 12px}
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
 <span>OZMAP</span>
 </a>
+<button class="ozmap-btn" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+<span>Atualizar</span>
+</button>
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
 <span id="themeIcon" style="font-size:13px">&#9728;</span>
 <div class="toggle-track"><div class="toggle-thumb"></div></div>
@@ -788,6 +792,68 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
 const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],ctosStatus:'idle'};
+
+/* ═══════════════════════════════════════════
+   CACHE LOCAL (localStorage) — acelera as consultas
+   Guarda uma cópia dos dados já processados (CTOs de cada rede, OLTs,
+   técnicos, operadores e cabos da Metro) no navegador do próprio usuário.
+   Na próxima vez que a página abrir, se o cache ainda for válido, o app
+   usa esses dados na hora — sem esperar o Apps Script responder — e só
+   volta a buscar no servidor quando o cache expira (TTL) ou quando o
+   usuário clica em "Atualizar" (botão no canto superior direito).
+   Se o localStorage estiver cheio/bloqueado, cacheSet falha em silêncio
+   e o app continua funcionando normalmente, só sem o ganho de velocidade. */
+const CACHE_VERSAO='v1'; // mude este valor para invalidar todo o cache de uma vez (ex: mudou o formato dos dados)
+const CACHE_PREFIXO=`noc-cache-${CACHE_VERSAO}-`;
+const CACHE_TTL_MS={
+  OLTs:2*60*60*1000,            // 2h — banco de OLTs muda pouco
+  TECNICOS:30*60*1000,          // 30min — escala/equipe pode mudar no dia
+  OPERADOR:2*60*60*1000,        // 2h
+  REDE_FIBER:60*60*1000,        // 1h — CTOs da rede FIBER
+  REDE_INTLINK:60*60*1000,      // 1h — CTOs da rede INTLINK
+  REDE_WIRE:60*60*1000,         // 1h — CTOs da rede WIRE
+  REDE_METRO_CABOS:2*60*60*1000 // 2h — é a busca mais pesada (pode levar até 30s sem cache)
+};
+function cacheSet(chave,dados){
+  try{
+    localStorage.setItem(CACHE_PREFIXO+chave,JSON.stringify({t:Date.now(),d:dados}));
+  }catch(e){/* localStorage cheio ou bloqueado — segue sem cache */}
+}
+function cacheGet(chave){
+  try{
+    const raw=localStorage.getItem(CACHE_PREFIXO+chave);
+    if(!raw)return null;
+    const obj=JSON.parse(raw);
+    if(!obj||typeof obj.t!=='number'||obj.d===undefined)return null;
+    const ttl=CACHE_TTL_MS[chave]||30*60*1000;
+    if(Date.now()-obj.t>ttl)return null; // expirado
+    return obj.d;
+  }catch(e){return null}
+}
+function cacheLimparTudo(){
+  try{
+    Object.keys(localStorage).filter(k=>k.startsWith(CACHE_PREFIXO)).forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+}
+/* botão "Atualizar" da barra superior: ignora o cache local e busca tudo de
+   novo no servidor — útil logo depois de cadastrar um técnico, CTO ou OLT
+   novo na planilha, sem precisar esperar o TTL expirar sozinho. */
+function atualizarDadosForcado(){
+  cacheLimparTudo();
+  AppState.cacheRedes={};
+  AppState.oltDB=[];AppState.oltDBStatus='idle';
+  AppState.tecnicos=[];AppState.tecnicosStatus='idle';
+  AppState.operadores=[];
+  AppState.baseDados=[];AppState.ctosStatus='idle';
+  showToast('↻ Cache limpo. Recarregando dados...');
+  carregarOperadores();
+  carregarTecnicos();
+  const redeAtual=DOM.rede.value;
+  if(redeAtual==='METRO')fetchCaboMetro();
+  else if(redeAtual&&redeAtual!=='BACKBONE')carregarCTOs(redeAtual);
+  if(AppState.modoIdent==='gpon')carregarOLTs();
+  if(AppState.modoIdent==='cto')garantirRedesCarregadas();
+}
 /* separa por quebra de linha, ponto-e-vírgula, vírgula OU ESPAÇO — a coluna
    "Caixa de Atuação" (col4) guarda os códigos separados por espaço (ex:
    "SE MO MZ JP NC JT CD TRA V3 V2 RD AD TO"), e sem incluir \s aqui a
@@ -830,6 +896,7 @@ function applyThemeUI(t){$('toggleLabel').textContent=THEME_LABELS[t]||t;const i
 function toggleTheme(){const c=document.documentElement.getAttribute('data-theme'),i=THEME_ORDER.indexOf(c),n=THEME_ORDER[(i+1)%THEME_ORDER.length];document.documentElement.setAttribute('data-theme',n);applyThemeUI(n);try{localStorage.setItem('noc-theme',n)}catch(e){}}
 function setTheme(t){document.documentElement.setAttribute('data-theme',t);applyThemeUI(t);try{localStorage.setItem('noc-theme',t)}catch(e){}}
 $('themeToggle').addEventListener('click',toggleTheme);
+$('btnAtualizarCache').addEventListener('click',atualizarDadosForcado);
 
 (function(){const cv=$('ben10Aliens');if(!cv)return;const ctx=cv.getContext('2d');let W,H,aliens=[];function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}window.addEventListener('resize',resize);resize();const SHAPES=[(ctx,s)=>{ctx.beginPath();ctx.ellipse(0,0,s*.6,s,0,0,Math.PI*2);ctx.fill();ctx.fillRect(-s*.9,-s*.3,s*.4,s*.15);ctx.fillRect(s*.5,-s*.3,s*.4,s*.15);ctx.fillRect(-s*.8,0,s*.35,s*.15);ctx.fillRect(s*.45,0,s*.35,s*.15);ctx.beginPath();ctx.arc(0,-s*.85,s*.35,0,Math.PI*2);ctx.fill()},(ctx,s)=>{ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*.5,-s*.3);ctx.lineTo(s*.4,s*.6);ctx.lineTo(-s*.4,s*.6);ctx.lineTo(-s*.5,-s*.3);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(-s*.15,-s);ctx.lineTo(0,-s*1.35);ctx.lineTo(s*.15,-s);ctx.closePath();ctx.fill()},(ctx,s)=>{ctx.beginPath();ctx.ellipse(0,0,s*.3,s*.8,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(0,-s*.7,s*.35,s*.2,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(-s*.1,s*.7);ctx.quadraticCurveTo(-s*.6,s*1.2,-s*.3,s*1.4);ctx.lineTo(s*.05,s*.8);ctx.closePath();ctx.fill()}];function spawnAlien(){const s=14+Math.random()*28;aliens.push({x:Math.random()*W,y:H+s*2,size:s,vy:-(0.3+Math.random()*.6),vx:(Math.random()-.5)*.4,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.008,opacity:.06+Math.random()*.12,shape:SHAPES[Math.floor(Math.random()*SHAPES.length)],wobble:Math.random()*Math.PI*2,wobbleSpeed:.005+Math.random()*.01})}function draw(){requestAnimationFrame(draw);if(document.documentElement.getAttribute('data-theme')!=='ben10'){ctx.clearRect(0,0,W,H);return}ctx.clearRect(0,0,W,H);if(aliens.length<25&&Math.random()<.03)spawnAlien();for(let i=aliens.length-1;i>=0;i--){const a=aliens[i];a.y+=a.vy;a.wobble+=a.wobbleSpeed;a.x+=a.vx+Math.sin(a.wobble)*.3;a.rot+=a.rotSpeed;if(a.y<-a.size*3){aliens.splice(i,1);continue}ctx.save();ctx.translate(a.x,a.y);ctx.rotate(a.rot);ctx.globalAlpha=a.opacity;ctx.fillStyle='#000';a.shape(ctx,a.size);ctx.restore()}}for(let i=0;i<12;i++){spawnAlien();aliens[aliens.length-1].y=Math.random()*H}draw()})();
 
@@ -985,15 +1052,18 @@ function setIdentMode(mode){
 
 function garantirRedesCarregadas(){
   ['FIBER','INTLINK','WIRE'].forEach(r=>{
-    if(!AppState.cacheRedes[r]){
-      const cb=`cbIdentRede_${r}`;
-      const s=document.createElement('script');
-      s.src=`${GAS_URL}?aba=${r}&callback=${cb}`;
-      document.body.appendChild(s);
-      window[cb]=d=>{
-        AppState.cacheRedes[r]=d.map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x,_rede:r}));
-      };
-    }
+    if(AppState.cacheRedes[r])return; // já em memória
+    const cache=cacheGet('REDE_'+r);
+    if(cache){AppState.cacheRedes[r]=cache;return} // hidratado do cache local
+    const cb=`cbIdentRede_${r}`;
+    const s=document.createElement('script');
+    s.src=`${GAS_URL}?aba=${r}&callback=${cb}`;
+    document.body.appendChild(s);
+    window[cb]=d=>{
+      const n=d.map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x,_rede:r}));
+      AppState.cacheRedes[r]=n;
+      cacheSet('REDE_'+r,n);
+    };
   });
   if(AppState.oltDBStatus==='idle')carregarOLTs();
 }
@@ -1240,7 +1310,21 @@ function normGpon(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u03
    do hífen como separador estrutural. */
 function normBusca(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
 
-function carregarOLTs(){if(AppState.oltDBStatus!=='idle')return;AppState.oltDBStatus='loading';const s=document.createElement('script');s.src=`${GAS_URL}?aba=OLTs&callback=cbOLTs`;s.onerror=()=>{AppState.oltDBStatus='error'};document.body.appendChild(s);window.cbOLTs=d=>{AppState.oltDB=(d||[]).map(x=>({nome:String(x.col1||x.nome||'').trim(),modelo:String(x.col2||x.modelo||'').trim().toUpperCase()})).filter(o=>o.nome);AppState.oltDBStatus='ready'}}
+function carregarOLTs(){
+  if(AppState.oltDBStatus!=='idle')return;
+  const cache=cacheGet('OLTs');
+  if(cache){AppState.oltDB=cache;AppState.oltDBStatus='ready';return}
+  AppState.oltDBStatus='loading';
+  const s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=OLTs&callback=cbOLTs`;
+  s.onerror=()=>{AppState.oltDBStatus='error'};
+  document.body.appendChild(s);
+  window.cbOLTs=d=>{
+    const lista=(d||[]).map(x=>({nome:String(x.col1||x.nome||'').trim(),modelo:String(x.col2||x.modelo||'').trim().toUpperCase()})).filter(o=>o.nome);
+    AppState.oltDB=lista;AppState.oltDBStatus='ready';
+    cacheSet('OLTs',lista);
+  }
+}
 
 function renderGponLista(){const wrap=$('gponListaWrap'),tags=$('gponListaTags');if(!AppState.gponLista.length){wrap.classList.remove('visible');return}wrap.classList.add('visible');tags.innerHTML=AppState.gponLista.map((g,i)=>`<div class="gpon-tag"><span>${g.familia} <span style="opacity:.55;font-size:.65rem">${g.gpon} · ${g.olt.split('-').slice(0,4).join('-')}...</span></span><button class="btn-remove" onclick="removerGpon(${i})">&#10005;</button></div>`).join('')}
 window.removerGpon=function(i){AppState.gponLista.splice(i,1);renderGponLista();atualizarTecnicosGpon()};
@@ -1356,7 +1440,28 @@ function carregarTipoAC(){
   renderTodosSelects();
 }
 
-function carregarTecnicos(){if(AppState.tecnicosStatus==='loading')return;AppState.tecnicosStatus='loading';AppState.tecnicos=[];const s=document.createElement('script');s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;s.onerror=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos.</div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderGponEmpresas()};document.body.appendChild(s);window.cbTec=d=>{AppState.tecnicosStatus='ready';AppState.tecnicos=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));atualizarCatalogoPrefixos();renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderTecnicos();renderTecnosCabo();renderGponEmpresas()}}
+function _aplicarTecnicos(lista){
+  AppState.tecnicosStatus='ready';
+  AppState.tecnicos=lista;
+  atualizarCatalogoPrefixos();
+  renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);
+  renderTecnicos();renderTecnosCabo();renderGponEmpresas();
+}
+function carregarTecnicos(){
+  if(AppState.tecnicosStatus==='loading')return;
+  const cache=cacheGet('TECNICOS');
+  if(cache){_aplicarTecnicos(cache);return}
+  AppState.tecnicosStatus='loading';AppState.tecnicos=[];
+  const s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;
+  s.onerror=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos.</div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderGponEmpresas()};
+  document.body.appendChild(s);
+  window.cbTec=d=>{
+    const lista=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+    cacheSet('TECNICOS',lista);
+    _aplicarTecnicos(lista);
+  }
+}
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
 function aoMudarRede(){const r=DOM.rede.value,isMetro=r==='METRO',isBackbone=r==='BACKBONE';DOM.wrapper.classList.toggle('metro-mode',isMetro||isBackbone);DOM.sidebar.classList.toggle('visible',isMetro||isBackbone);DOM.sidebar.style.display=(isMetro||isBackbone)?'none':'';DOM.boxMetro.classList.toggle('hidden',!isMetro);DOM.boxBackboneRede.classList.toggle('hidden',!isBackbone);DOM.boxRede.classList.toggle('hidden',isMetro||isBackbone);if(isMetro){if(!AppState.cacheRedes['METRO'])fetchCaboMetro();else renderStatusBar()}else if(isBackbone){renderTecnicosBackbone()}else{carregarCTOs(r)}atualizarResumo()}
 /* ctosStatus rastreia se a lista de CTOs da rede atual já chegou do servidor.
@@ -1368,6 +1473,10 @@ function carregarCTOs(rede){
   DOM.listaCTOs.innerHTML='<div class="loading-text">Carregando...</div>';
   desmarcarTudo('ctoCheck');
   atualizarResumo();
+  if(!AppState.cacheRedes[rede]){
+    const cache=cacheGet('REDE_'+rede);
+    if(cache)AppState.cacheRedes[rede]=cache;
+  }
   if(AppState.cacheRedes[rede]){
     AppState.baseDados=AppState.cacheRedes[rede];
     AppState.ctosStatus='ready';
@@ -1398,6 +1507,7 @@ function carregarCTOs(rede){
        se o usuário já tivesse digitado o prefixo durante o carregamento, a
        tela ficava travada em "Nenhuma CTO encontrada" para sempre */
     atualizarPreviewRamal();
+    cacheSet('REDE_'+rede,n);
   }
 }
 
@@ -1418,6 +1528,12 @@ const TIMEOUT_CABO_METRO_MS=30000; // ajustar se a agregação de muitas abas le
 
 function fetchCaboMetro(){
   if(AppState.cacheRedes['METRO'])return;
+  const cache=cacheGet('REDE_METRO_CABOS');
+  if(cache){
+    AppState.cacheRedes['METRO']=cache;
+    renderStatusBar();
+    return;
+  }
   AppState.cacheRedes['METRO']='LOADING';
   renderStatusBar();
   let respondeu=false;
@@ -1445,7 +1561,8 @@ function fetchCaboMetro(){
     clearTimeout(timer);
     const n=(d||[]).map(x=>({...x,ozmap:x.col1||x.ozmap,localizacao:x.col2||x.localizacao,tipo:x.col3,nivel:x.col4||x.nivel,comprimento:x.col5||x.comprimento}));
     AppState.cacheRedes['METRO']=n;
-    renderStatusBar()
+    renderStatusBar();
+    cacheSet('REDE_METRO_CABOS',n);
   }
 }
 /* Permite tentar de novo depois de um erro/timeout, sem precisar recarregar
@@ -1709,7 +1826,19 @@ function desmarcarTudo(n){document.querySelectorAll(`input[name="${n}"]:checked`
 function desmarcarTudoPortas(){DOM.gridPortas.querySelectorAll('input:checked').forEach(c=>c.checked=false)}
 function exibirModal(c){AppState.conteudoCopiado=c;$('copyModal').classList.add('active');atualizarTextoModal()}
 function fecharModal(){$('copyModal').classList.remove('active')}
-function carregarOperadores(){const s=document.createElement('script');s.src=`${GAS_URL}?aba=OPERADOR&callback=cbOp`;s.onerror=()=>console.warn('Erro operadores');document.body.appendChild(s);window.cbOp=d=>{AppState.operadores=d.map(x=>({nome:(x.col1||'').trim(),setor:(x.col2||'').trim()})).filter(o=>o.nome).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));renderOperadores()}}
+function carregarOperadores(){
+  const cache=cacheGet('OPERADOR');
+  if(cache){AppState.operadores=cache;renderOperadores();return}
+  const s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=OPERADOR&callback=cbOp`;
+  s.onerror=()=>console.warn('Erro operadores');
+  document.body.appendChild(s);
+  window.cbOp=d=>{
+    AppState.operadores=d.map(x=>({nome:(x.col1||'').trim(),setor:(x.col2||'').trim()})).filter(o=>o.nome).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+    renderOperadores();
+    cacheSet('OPERADOR',AppState.operadores);
+  }
+}
 function getOperadorKey(op){return`${op.nome}|||${op.setor||''}`}
 function renderOperadores(){const sel=$('operadorSelect');if(!sel)return;const salvo=sel.value||localStorage.getItem('noc-operador')||'';sel.innerHTML='<option value="">&#8212; Nenhum operador &#8212;</option>';AppState.operadores.forEach(op=>{const o=document.createElement('option');o.value=getOperadorKey(op);o.textContent=op.setor?`${op.nome} - ${op.setor}`:op.nome;sel.appendChild(o)});if(salvo!==''&&AppState.operadores.some(op=>getOperadorKey(op)===salvo))sel.value=salvo;atualizarTextoModal()}
 function construirMensagemComOperador(base=AppState.conteudoCopiado){const chave=$('operadorSelect').value;let msg=base;const op=AppState.operadores.find(item=>getOperadorKey(item)===chave);if(op)msg=`_*${op.nome}${op.setor?` - {${op.setor}}`:''}:*_\n\n`+msg;return msg}
