@@ -44,6 +44,7 @@ main{position:relative;z-index:1;min-height:100vh;padding:48px 40px;display:flex
 .ozmap-btn{display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s ease;box-shadow:var(--shadow);color:var(--text2);text-decoration:none;flex-shrink:0;font-family:'Share Tech Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase}
 .ozmap-btn:hover{background:var(--bg3);transform:translateY(-2px);border-color:var(--blue2);color:var(--blue)}
 .ozmap-btn svg{width:15px;height:15px;flex-shrink:0}
+.sla-badge-topo{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-family:'Share Tech Mono',monospace;font-size:.58rem;font-weight:700;line-height:1;animation:pulse 1.4s ease-in-out infinite}
 .theme-toggle{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--border);border-radius:30px;padding:6px 12px 6px 8px;box-shadow:var(--shadow);cursor:pointer;user-select:none;transition:background .3s,border-color .3s}
 .toggle-track{width:54px;height:20px;border-radius:10px;background:var(--border);position:relative;transition:background .3s}
 [data-theme="dark"] .toggle-track{background:var(--blue)}
@@ -390,6 +391,84 @@ main{padding:16px 12px}
 [data-theme="got"] .logo-badge{animation:gotEmber 2.4s ease-in-out infinite}
 @keyframes gotEmber{0%,100%{box-shadow:0 0 20px rgba(201,168,76,.4),0 0 50px rgba(139,26,26,.15)}50%{box-shadow:0 0 28px rgba(201,168,76,.65),0 0 60px rgba(139,26,26,.3)}}
 
+/* ═══════════════════════════════════════════════════════
+   PAINEL DE SLA — tela cheia, cards no estilo relógio
+═══════════════════════════════════════════════════════ */
+#slaView{display:none;position:relative;z-index:1;min-height:100vh;padding:34px 40px 90px}
+#slaView.ativo{display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
+body.sla-aberto main{display:none}
+.sla-header{max-width:1600px;margin:0 auto 24px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.sla-titulo{font-family:'Bebas Neue',cursive;font-size:2.1rem;letter-spacing:6px;color:var(--text);line-height:1;text-transform:uppercase}
+.sla-titulo .hl{color:var(--blue)}
+.sla-sub-titulo{font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-top:6px}
+.sla-header-acoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sla-resumo{display:flex;gap:8px;flex-wrap:wrap}
+.sla-kpi{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;box-shadow:var(--shadow);min-width:104px}
+.sla-kpi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sla-kpi-num{font-family:'Bebas Neue',cursive;font-size:1.5rem;line-height:1;color:var(--text);letter-spacing:1px}
+.sla-kpi-rot{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
+.sla-kpi.critico .sla-kpi-dot{background:var(--red);box-shadow:0 0 8px var(--red)}
+.sla-kpi.alerta  .sla-kpi-dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.sla-kpi.ok      .sla-kpi-dot{background:var(--teal);box-shadow:0 0 8px var(--teal)}
+.sla-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px;align-items:start}
+.sla-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:0;overflow:hidden;box-shadow:var(--shadow2);display:flex;flex-direction:column;position:relative;transition:border-color .3s,box-shadow .3s,opacity .4s;animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both}
+.sla-card-faixa{height:4px;width:100%;background:var(--teal)}
+.sla-card-corpo{padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px;flex:1}
+.sla-card-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sla-badge-rede{font-family:'Share Tech Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b);white-space:nowrap}
+.sla-abertura{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--text3);letter-spacing:1px;white-space:nowrap}
+.sla-card-tipo{font-size:.86rem;font-weight:700;color:var(--text);line-height:1.3;letter-spacing:.2px}
+.sla-relogio{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0 2px}
+.sla-ring-wrap{position:relative;width:158px;height:158px}
+.sla-ring{width:100%;height:100%;transform:rotate(-90deg)}
+.sla-ring circle{fill:none;stroke-linecap:round}
+.sla-ring .anel-fundo{stroke:var(--border);stroke-width:9}
+.sla-ring .anel-frente{stroke-width:9;transition:stroke-dashoffset .6s ease,stroke .4s ease}
+.sla-ring-centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none}
+.sla-tempo{font-family:'Share Tech Mono',monospace;font-size:1.62rem;font-weight:700;color:var(--text);letter-spacing:1px;line-height:1;font-variant-numeric:tabular-nums}
+.sla-tempo-rot{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
+.sla-excedente{font-family:'Share Tech Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:1px;color:var(--red);text-transform:uppercase}
+.sla-info{display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--border);padding-top:12px}
+.sla-linha{display:flex;flex-direction:column;gap:2px}
+.sla-linha-rot{font-family:'Share Tech Mono',monospace;font-size:.54rem;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+.sla-linha-val{font-size:.8rem;font-weight:600;color:var(--text2);line-height:1.35;word-break:break-word}
+.sla-linha-val.destaque{color:var(--text)}
+.sla-alvo-extra{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--text3);margin-top:2px}
+.sla-btn-encerrar{width:100%;margin-top:auto;padding:11px 14px;border:1px solid var(--border2);border-radius:10px;background:var(--bg3);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.sla-btn-encerrar:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-l)}
+.sla-btn-encerrar.confirmando{border-color:var(--red);color:var(--red);background:var(--red-l);animation:selectPop .3s cubic-bezier(.34,1.56,.64,1)}
+.sla-btn-encerrar:disabled{opacity:.5;cursor:not-allowed}
+/* — estados — */
+.sla-card.estado-DENTRO .sla-card-faixa{background:var(--teal)}
+.sla-card.estado-DENTRO .anel-frente{stroke:var(--teal)}
+.sla-card.estado-ATENCAO{border-color:rgba(217,119,6,.45)}
+.sla-card.estado-ATENCAO .sla-card-faixa{background:var(--amber)}
+.sla-card.estado-ATENCAO .anel-frente{stroke:var(--amber)}
+.sla-card.estado-ATENCAO .sla-tempo{color:var(--amber)}
+.sla-card.estado-ESTOURADO{border-color:var(--red);box-shadow:var(--shadow2),0 0 0 1px var(--red);animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both,slaPulsar 1.6s ease-in-out infinite}
+.sla-card.estado-ESTOURADO .sla-card-faixa{background:var(--red)}
+.sla-card.estado-ESTOURADO .anel-frente{stroke:var(--red)}
+.sla-card.estado-ESTOURADO .sla-tempo{color:var(--red)}
+.sla-card.estado-ESTOURADO .sla-badge-rede{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.35)}
+@keyframes slaPulsar{0%,100%{box-shadow:var(--shadow2),0 0 0 1px var(--red),0 0 0 0 rgba(220,38,38,.32)}50%{box-shadow:var(--shadow2),0 0 0 1px var(--red),0 0 26px 5px rgba(220,38,38,.34)}}
+.sla-card.estado-FINALIZADO{opacity:.5;filter:grayscale(1)}
+.sla-card.estado-FINALIZADO .sla-card-faixa{background:var(--text3)}
+.sla-card.estado-FINALIZADO .anel-frente{stroke:var(--text3)}
+.sla-card.estado-FINALIZADO .sla-tempo{color:var(--text3)}
+.sla-card.saindo{opacity:0;transform:scale(.94)}
+/* — estados vazio / carregando / erro — */
+.sla-aviso{max-width:1600px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:52px 24px;text-align:center;box-shadow:var(--shadow)}
+.sla-aviso-icone{font-size:2.2rem;opacity:.35;margin-bottom:12px}
+.sla-aviso-txt{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--text3);letter-spacing:1px;line-height:1.7}
+.sla-aviso.erro .sla-aviso-txt{color:var(--red)}
+.sla-rodape{max-width:1600px;margin:22px auto 0;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px;text-align:center}
+@media(max-width:1024px){
+#slaView{padding:16px 12px 90px}
+.sla-grid{grid-template-columns:1fr;gap:14px}
+.sla-header{flex-direction:column;align-items:stretch}
+.sla-titulo{font-size:1.7rem}
+}
+
 /* — cursor de brilho ambiente — */
 #cursorGlow{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 
@@ -410,6 +489,11 @@ main{padding:16px 12px}
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
 <span>OZMAP</span>
 </a>
+<button class="ozmap-btn" id="btnSla" title="Abrir o painel de SLA dos acionamentos" aria-label="Painel de SLA">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+<span>SLA</span>
+<span id="slaBadgeTopo" class="sla-badge-topo hidden">0</span>
+</button>
 <button class="ozmap-btn" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 <span>Atualizar</span>
@@ -787,6 +871,28 @@ IDENTIFICA&#199;&#195;O
 </aside>
 </div>
 </main>
+
+<section id="slaView">
+<div class="sla-header">
+<div>
+<div class="sla-titulo"><span class="hl">Painel</span> de SLA</div>
+<div class="sla-sub-titulo">Acionamentos em andamento &middot; SLA padr&#227;o de 4 horas</div>
+</div>
+<div class="sla-header-acoes">
+<div class="sla-resumo" id="slaResumo"></div>
+<button class="ozmap-btn" id="btnSlaAtualizar" title="Buscar agora os chamados na planilha">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+<span>Atualizar</span>
+</button>
+<button class="ozmap-btn" id="btnSlaFechar" title="Voltar para o formul&#225;rio de acionamento">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+<span>Fechar</span>
+</button>
+</div>
+</div>
+<div class="sla-grid" id="slaGrid"></div>
+<div class="sla-rodape" id="slaRodape"></div>
+</section>
 
 <div class="signature">
 <span class="signature-name">Lucas Paes</span>
@@ -1380,7 +1486,370 @@ function renderGponEmpresas(){const el=DOM.gponEmpresa,atual=el.value;if(AppStat
 function atualizarTecnicosGponSemRenderEmpresas(){const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
 function atualizarTecnicosGpon(){renderGponEmpresas();const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
 
-document.addEventListener('DOMContentLoaded',()=>{gerarGridPortas();bindEvents();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC()});
+/* ════════════════════════════════════════════════════════
+   PAINEL DE SLA
+   ════════════════════════════════════════════════════════
+   Cada "Gerar Ordem de Serviço" registra uma linha na aba TEMPORARIO
+   com o horário de abertura. O painel lê essas linhas e mostra um card
+   por acionamento, com o tempo correndo e a cor conforme o SLA.
+   Todo o cálculo é feito a partir do epoch de abertura (coluna L), não
+   de texto formatado — assim não depende de fuso nem de locale. */
+const SLA_HORAS_PADRAO=4;             // SLA padrão, em horas
+const SLA_PCT_ATENCAO=0.75;           // 75% do prazo → amarelo
+const SLA_SUMIR_APOS_ENCERRAR_MS=5*60*1000;   // card finalizado some após 5 min
+const SLA_POLL_ABERTO_MS=45000;       // recarrega a cada 45s com o painel aberto
+const SLA_POLL_FUNDO_MS=120000;       // e a cada 2 min em segundo plano (só o contador do topo)
+const SLA_RING_R=68;
+const SLA_RING_C=2*Math.PI*SLA_RING_R;
+
+AppState.sla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
+              ultimaAtualizacao:0,timerTick:null,timerPoll:null,jaAvisado:{}};
+
+/* ── utilitários ── */
+function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function _slaFmtDur(ms){
+  const total=Math.max(0,Math.floor(ms/1000));
+  const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(h)}:${p(m)}:${p(s)}`;
+}
+function _slaFmtHora(ms){
+  const d=new Date(ms);
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+/* junta itens de uma lista respeitando um limite de caracteres, indicando
+   quantos ficaram de fora — mantém a URL do JSONP num tamanho seguro */
+function _slaListaCap(arr,max){
+  const lista=(arr||[]).filter(Boolean).map(String);
+  if(!lista.length)return '';
+  const dentro=[];let len=0;
+  for(const x of lista){if(len+x.length+2>max)break;dentro.push(x);len+=x.length+2}
+  if(!dentro.length)dentro.push(lista[0].slice(0,max));
+  const resto=lista.length-dentro.length;
+  return dentro.join(', ')+(resto>0?` …+${resto}`:'');
+}
+function _slaCap(s,max){s=String(s||'');return s.length>max?s.slice(0,max)+'…':s}
+
+/* chamada JSONP genérica, com timeout e limpeza do callback */
+let _jsonpSeq=0;
+function jsonp(params,timeoutMs=20000){
+  return new Promise((resolve,reject)=>{
+    const cb='_jcb'+(++_jsonpSeq)+'_'+Date.now();
+    const qs=Object.keys(params)
+      .map(k=>encodeURIComponent(k)+'='+encodeURIComponent(params[k]==null?'':params[k]))
+      .join('&');
+    const s=document.createElement('script');
+    let pronto=false;
+    const limpar=()=>{clearTimeout(t);try{delete window[cb]}catch(e){window[cb]=undefined}if(s.parentNode)s.parentNode.removeChild(s)};
+    const t=setTimeout(()=>{if(!pronto){pronto=true;limpar();reject(new Error('Tempo esgotado'))}},timeoutMs);
+    window[cb]=d=>{if(pronto)return;pronto=true;limpar();resolve(d)};
+    s.onerror=()=>{if(!pronto){pronto=true;limpar();reject(new Error('Falha de conexão'))}};
+    s.src=`${GAS_URL}?${qs}&callback=${cb}`;
+    document.body.appendChild(s);
+  });
+}
+
+/* ── estado de cada chamado ── */
+function _slaCalc(item){
+  const fim=item.encerramentoMs||Date.now();
+  const decorrido=Math.max(0,fim-item.aberturaMs);
+  const limite=(Number(item.slaHoras)||SLA_HORAS_PADRAO)*3600000;
+  const pct=limite>0?decorrido/limite:0;
+  let estado;
+  if(item.encerramentoMs)estado='FINALIZADO';
+  else if(pct>=1)estado='ESTOURADO';
+  else if(pct>=SLA_PCT_ATENCAO)estado='ATENCAO';
+  else estado='DENTRO';
+  return{decorrido,limite,pct,estado,excedente:Math.max(0,decorrido-limite)};
+}
+/* ordena: estourado primeiro, depois por proporção do SLA consumida;
+   finalizados sempre no fim */
+function _slaOrdenar(itens){
+  return itens.slice().sort((a,b)=>{
+    const ca=_slaCalc(a),cb=_slaCalc(b);
+    const fa=ca.estado==='FINALIZADO'?1:0,fb=cb.estado==='FINALIZADO'?1:0;
+    if(fa!==fb)return fa-fb;
+    if(cb.pct!==ca.pct)return cb.pct-ca.pct;
+    return a.aberturaMs-b.aberturaMs;
+  });
+}
+
+/* ── registro no momento de gerar a OS ── */
+function _slaOperadorAtual(){
+  const chave=($('operadorSelect')||{}).value||'';
+  const op=AppState.operadores.find(o=>getOperadorKey(o)===chave);
+  return op?(op.setor?`${op.nome} - ${op.setor}`:op.nome):'';
+}
+function registrarSla(d){
+  const operador=_slaOperadorAtual();
+  const rede=_slaCap(d.rede,40),tipo=_slaCap(d.tipo,140),alvo=_slaCap(d.alvo,240);
+  const empresa=_slaCap(d.empresa,60),tecnicos=_slaCap(d.tecnicos,200);
+  const resumo=_slaCap(`[${rede}] ${tipo}${alvo?' · '+alvo:''}${empresa?' · '+empresa:''}`,500);
+  const id='OS'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,6).toUpperCase();
+  jsonp({acao:'abrirSla',id,resumo,rede,tipo,alvo,empresa,tecnicos,operador,
+         aberturaMs:Date.now(),slaHoras:SLA_HORAS_PADRAO},25000)
+    .then(r=>{
+      if(r&&r.ok){showToast('⏱ Acionamento entrou no painel de SLA.');atualizarBadgeSla()}
+      else showToast('OS gerada, mas falhou ao registrar no SLA: '+((r&&r.erro)||'erro'),'error',5000);
+    })
+    .catch(e=>showToast('OS gerada, mas não entrou no painel de SLA ('+e.message+').','error',5000));
+}
+
+/* ── carregar / renderizar ── */
+function carregarSla(silencioso){
+  if(!silencioso&&AppState.sla.status!=='carregando'){
+    AppState.sla.status='carregando';
+    if(AppState.sla.aberto&&!AppState.sla.itens.length)renderSla();
+  }
+  return jsonp({acao:'listarSla'},25000).then(r=>{
+    if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
+    AppState.sla.itens=(r.itens||[]).map(x=>({
+      ...x,
+      aberturaMs:Number(x.aberturaMs)||0,
+      encerramentoMs:Number(x.encerramentoMs)||0,
+      slaHoras:Number(x.slaHoras)||SLA_HORAS_PADRAO
+    })).filter(x=>x.aberturaMs>0);
+    AppState.sla.status='ok';AppState.sla.erro='';
+    AppState.sla.ultimaAtualizacao=Date.now();
+    if(AppState.sla.aberto)renderSla();
+    atualizarBadgeSla();
+    return AppState.sla.itens;
+  }).catch(e=>{
+    AppState.sla.status='erro';AppState.sla.erro=e.message||String(e);
+    if(AppState.sla.aberto)renderSla();
+    return null;
+  });
+}
+
+function atualizarBadgeSla(){
+  const badge=$('slaBadgeTopo');if(!badge)return;
+  const estourados=AppState.sla.itens.filter(i=>!i.encerramentoMs&&_slaCalc(i).estado==='ESTOURADO').length;
+  badge.textContent=estourados;
+  badge.classList.toggle('hidden',estourados===0);
+}
+
+function _slaCardHTML(item){
+  const c=_slaCalc(item);
+  const tecnicos=item.tecnicos?item.tecnicos.replace(/@\d+\s*/g,''):'';
+  return `<div class="sla-card-faixa"></div>
+<div class="sla-card-corpo">
+  <div class="sla-card-topo">
+    <span class="sla-badge-rede">${_esc(item.rede||'—')}</span>
+    <span class="sla-abertura">${_slaFmtHora(item.aberturaMs)}</span>
+  </div>
+  <div class="sla-card-tipo">${_esc(item.tipo||'Acionamento')}</div>
+  <div class="sla-relogio">
+    <div class="sla-ring-wrap">
+      <svg class="sla-ring" viewBox="0 0 160 160">
+        <circle class="anel-fundo" cx="80" cy="80" r="${SLA_RING_R}"></circle>
+        <circle class="anel-frente" cx="80" cy="80" r="${SLA_RING_R}"
+                stroke-dasharray="${SLA_RING_C.toFixed(1)}" stroke-dashoffset="${SLA_RING_C.toFixed(1)}"></circle>
+      </svg>
+      <div class="sla-ring-centro">
+        <div class="sla-tempo">00:00:00</div>
+        <div class="sla-tempo-rot">de ${_slaFmtDur(c.limite)}</div>
+      </div>
+    </div>
+    <div class="sla-excedente"></div>
+  </div>
+  <div class="sla-info">
+    ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Alvo</span><span class="sla-linha-val destaque">${_esc(item.alvo)}</span></div>`:''}
+    ${item.empresa?`<div class="sla-linha"><span class="sla-linha-rot">Empresa</span><span class="sla-linha-val">${_esc(item.empresa)}</span></div>`:''}
+    ${tecnicos?`<div class="sla-linha"><span class="sla-linha-rot">T&eacute;cnicos</span><span class="sla-linha-val">${_esc(tecnicos)}</span></div>`:''}
+    ${item.operador?`<div class="sla-linha"><span class="sla-linha-rot">Aberto por</span><span class="sla-linha-val">${_esc(item.operador)}</span></div>`:''}
+  </div>
+  <button class="sla-btn-encerrar" data-id="${_esc(item.id)}">Encerrar chamado</button>
+</div>`;
+}
+
+function renderSla(){
+  const grid=$('slaGrid');if(!grid)return;
+  const st=AppState.sla;
+
+  if(st.status==='erro'){
+    grid.innerHTML=`<div class="sla-aviso erro" style="grid-column:1/-1"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
+    st.nodes.clear();renderResumoSla();return;
+  }
+  if(st.status==='carregando'&&!st.itens.length){
+    grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#8987;</div><div class="sla-aviso-txt">Carregando chamados...</div></div>`;
+    st.nodes.clear();renderResumoSla();return;
+  }
+  if(!st.itens.length){
+    grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum acionamento em aberto.<br>Os chamados aparecem aqui assim que uma Ordem de Servi&ccedil;o for gerada.</div></div>`;
+    st.nodes.clear();renderResumoSla();return;
+  }
+
+  grid.innerHTML='';st.nodes.clear();
+  _slaOrdenar(st.itens).forEach(item=>{
+    const card=document.createElement('article');
+    card.className='sla-card';
+    card.dataset.id=item.id;
+    card.innerHTML=_slaCardHTML(item);
+    grid.appendChild(card);
+    st.nodes.set(item.id,{
+      card,item,
+      tempo:card.querySelector('.sla-tempo'),
+      anel:card.querySelector('.anel-frente'),
+      excedente:card.querySelector('.sla-excedente'),
+      botao:card.querySelector('.sla-btn-encerrar')
+    });
+  });
+  tickSla();
+}
+
+/* Atualiza tempo, anel e cor SEM recriar os cards — recriar a cada segundo
+   reiniciaria as animações e perderia o estado do botão de confirmação.
+   A reordenação usa a propriedade CSS `order`, que reposiciona no grid sem
+   mexer nos nós do DOM. */
+function tickSla(){
+  const st=AppState.sla;
+  if(!st.aberto||!st.nodes.size)return;
+  const ordem=_slaOrdenar(st.itens);
+  const agora=Date.now();
+  const paraRemover=[];
+
+  ordem.forEach((item,idx)=>{
+    const n=st.nodes.get(item.id);if(!n)return;
+    const c=_slaCalc(item);
+
+    // finalizado há mais de 5 min: some da tela
+    if(item.encerramentoMs&&(agora-item.encerramentoMs)>SLA_SUMIR_APOS_ENCERRAR_MS){
+      paraRemover.push(item.id);return;
+    }
+
+    n.card.style.order=idx;
+    const classeEstado='estado-'+c.estado;
+    if(!n.card.classList.contains(classeEstado)){
+      n.card.classList.remove('estado-DENTRO','estado-ATENCAO','estado-ESTOURADO','estado-FINALIZADO');
+      n.card.classList.add(classeEstado);
+      // avisa uma única vez quando um chamado estoura com o painel aberto
+      if(c.estado==='ESTOURADO'&&!st.jaAvisado[item.id]){
+        st.jaAvisado[item.id]=true;
+        showToast(`⚠ SLA estourado: ${item.rede||''} ${item.tipo||''}`.trim(),'error',5000);
+      }
+    }
+    if(n.tempo)n.tempo.textContent=_slaFmtDur(c.decorrido);
+    if(n.anel)n.anel.setAttribute('stroke-dashoffset',(SLA_RING_C*(1-Math.min(c.pct,1))).toFixed(1));
+    if(n.excedente){
+      n.excedente.textContent=c.excedente>0?`+${_slaFmtDur(c.excedente)} al&eacute;m do SLA`.replace('&eacute;','é'):'';
+    }
+    if(n.botao&&item.encerramentoMs){
+      n.botao.disabled=true;
+      n.botao.textContent=item.encerradoPor?`Encerrado por ${item.encerradoPor}`:'Encerrado';
+    }
+  });
+
+  if(paraRemover.length){
+    paraRemover.forEach(id=>{
+      const n=st.nodes.get(id);
+      if(n){n.card.classList.add('saindo');setTimeout(()=>{if(n.card.parentNode)n.card.parentNode.removeChild(n.card)},400)}
+      st.nodes.delete(id);
+      st.itens=st.itens.filter(i=>i.id!==id);
+    });
+    if(!st.itens.length)setTimeout(renderSla,450);
+  }
+  renderResumoSla();
+  atualizarBadgeSla();
+}
+
+function renderResumoSla(){
+  const el=$('slaResumo');if(!el)return;
+  const abertos=AppState.sla.itens.filter(i=>!i.encerramentoMs);
+  const conta={ESTOURADO:0,ATENCAO:0,DENTRO:0};
+  abertos.forEach(i=>{conta[_slaCalc(i).estado]++});
+  el.innerHTML=
+    `<div class="sla-kpi critico"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.ESTOURADO}</span><br><span class="sla-kpi-rot">Estourado${conta.ESTOURADO===1?'':'s'}</span></span></div>`+
+    `<div class="sla-kpi alerta"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.ATENCAO}</span><br><span class="sla-kpi-rot">Aten&ccedil;&atilde;o</span></span></div>`+
+    `<div class="sla-kpi ok"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.DENTRO}</span><br><span class="sla-kpi-rot">No prazo</span></span></div>`;
+  const rod=$('slaRodape');
+  if(rod){
+    rod.textContent=AppState.sla.ultimaAtualizacao
+      ? `Atualizado às ${_slaFmtHora(AppState.sla.ultimaAtualizacao).split(' ')[1]} · atualiza sozinho a cada ${Math.round(SLA_POLL_ABERTO_MS/1000)}s`
+      : '';
+  }
+}
+
+/* ── encerrar chamado (dois cliques para confirmar) ── */
+function encerrarChamadoSla(id,botao){
+  if(!botao)return;
+  if(botao.dataset.confirmando!=='1'){
+    botao.dataset.confirmando='1';
+    botao.classList.add('confirmando');
+    botao.textContent='Confirmar encerramento?';
+    clearTimeout(botao._t);
+    botao._t=setTimeout(()=>{
+      botao.dataset.confirmando='0';
+      botao.classList.remove('confirmando');
+      botao.textContent='Encerrar chamado';
+    },4000);
+    return;
+  }
+  clearTimeout(botao._t);
+  botao.dataset.confirmando='0';
+  botao.classList.remove('confirmando');
+  botao.disabled=true;botao.textContent='Encerrando...';
+  jsonp({acao:'encerrarSla',id,encerramentoMs:Date.now(),encerradoPor:_slaOperadorAtual()},25000)
+    .then(r=>{
+      if(r&&r.ok){
+        const item=AppState.sla.itens.find(i=>i.id===id);
+        if(item){item.encerramentoMs=r.encerramentoMs||Date.now();item.encerradoPor=_slaOperadorAtual()}
+        showToast(r.jaEstava?'Esse chamado já havia sido encerrado.':'✓ Chamado encerrado.');
+        tickSla();
+      }else{
+        botao.disabled=false;botao.textContent='Encerrar chamado';
+        showToast('Não foi possível encerrar: '+((r&&r.erro)||'erro'),'error',5000);
+      }
+    })
+    .catch(e=>{
+      botao.disabled=false;botao.textContent='Encerrar chamado';
+      showToast('Falha ao encerrar ('+e.message+').','error',5000);
+    });
+}
+
+/* ── abrir / fechar o painel ── */
+function abrirPainelSla(){
+  AppState.sla.aberto=true;
+  document.body.classList.add('sla-aberto');
+  $('slaView').classList.add('ativo');
+  window.scrollTo(0,0);
+  renderSla();
+  carregarSla();
+  clearInterval(AppState.sla.timerTick);
+  AppState.sla.timerTick=setInterval(tickSla,1000);
+  _reprogramarPollSla();
+}
+function fecharPainelSla(){
+  AppState.sla.aberto=false;
+  document.body.classList.remove('sla-aberto');
+  $('slaView').classList.remove('ativo');
+  clearInterval(AppState.sla.timerTick);
+  AppState.sla.timerTick=null;
+  _reprogramarPollSla();
+}
+function alternarPainelSla(){AppState.sla.aberto?fecharPainelSla():abrirPainelSla()}
+/* com o painel aberto busca com mais frequência; fechado, só o suficiente
+   para manter o contador de estourados do botão do topo em dia */
+function _reprogramarPollSla(){
+  clearInterval(AppState.sla.timerPoll);
+  const intervalo=AppState.sla.aberto?SLA_POLL_ABERTO_MS:SLA_POLL_FUNDO_MS;
+  AppState.sla.timerPoll=setInterval(()=>carregarSla(true),intervalo);
+}
+
+function bindEventsSla(){
+  $('btnSla').addEventListener('click',alternarPainelSla);
+  $('btnSlaFechar').addEventListener('click',fecharPainelSla);
+  $('btnSlaAtualizar').addEventListener('click',()=>{carregarSla();showToast('↻ Buscando chamados...')});
+  $('slaGrid').addEventListener('click',e=>{
+    const b=e.target.closest('.sla-btn-encerrar');
+    if(b&&!b.disabled)encerrarChamadoSla(b.dataset.id,b);
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.sla.aberto)fecharPainelSla()});
+  // primeira carga em segundo plano, sem atrapalhar o carregamento da tela
+  setTimeout(()=>{carregarSla(true);_reprogramarPollSla()},4000);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC()});
 
 function bindEvents(){
   DOM.rede.addEventListener('change',aoMudarRede);
@@ -1940,9 +2409,9 @@ function renderOperadores(){const sel=$('operadorSelect');if(!sel)return;const s
 function construirMensagemComOperador(base=AppState.conteudoCopiado){const chave=$('operadorSelect').value;let msg=base;const op=AppState.operadores.find(item=>getOperadorKey(item)===chave);if(op)msg=`_*${op.nome}${op.setor?` - {${op.setor}}`:''}:*_\n\n`+msg;return msg}
 function atualizarTextoModal(){const el=$('copyModalText');if(!el)return;el.textContent=construirMensagemComOperador()}
 
-async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;ctos.forEach(info=>{const link=(info.lat&&info.lng)?`https://www.google.com/maps?q=${info.lat},${info.lng}`:'Sem coordenadas';corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;ctos.forEach(info=>{const link=(info.lat&&info.lng)?`https://www.google.com/maps?q=${info.lat},${info.lng}`:'Sem coordenadas';corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · ${ctos.length} CTOs: ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas ${portas}`:_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
-async function gerarOSMetro(){const btn=DOM.btnGerarOSMetro;try{btn.innerHTML='Gerando...';btn.disabled=true;const emp=DOM.empresaMetro.value,problema=$('problemaMetro').value;const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));const cards=DOM.resultadoCabos.querySelectorAll('.cabo-card');if(!emp)throw new Error('Selecione a empresa.');if(!problema)throw new Error('Selecione o tipo de problema.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(!cards.length)throw new Error('Busque os cabos antes de gerar.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const coordRaw=DOM.inputCoordenada.value.trim(),cp=parseCoordenada(coordRaw);const locLink=cp?`https://www.google.com/maps?q=${cp.lat},${cp.lng}`:coordRaw;let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;cards.forEach((card,idx)=>{const rows={};card.querySelectorAll('.cabo-card-row').forEach(row=>{const l=(row.querySelector('.cabo-label')?.textContent||'').trim().toLowerCase(),v=(row.querySelector('.cabo-value')?.textContent||'').trim();if(l&&v)rows[l]=v});const dist=(card.querySelector('.cabo-dist')?.textContent||'').trim();corpo+=`⚡ Cabo: ${rows['cabo']||'-'}\n📌 Localização: ${locLink}\n`;if(rows['tipo'])corpo+=`⚙️ Tipo: ${rows['tipo']}\n`;if(rows['nível'])corpo+=`🌐 Nível: ${rows['nível']}\n`;if(rows['comprimento'])corpo+=`📋 Comprimento: ${rows['comprimento']}\n`;if(dist)corpo+=`📐 ${dist}\n`;if(idx<cards.length-1)corpo+=`\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOSMetro(){const btn=DOM.btnGerarOSMetro;try{btn.innerHTML='Gerando...';btn.disabled=true;const emp=DOM.empresaMetro.value,problema=$('problemaMetro').value;const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));const cards=DOM.resultadoCabos.querySelectorAll('.cabo-card');if(!emp)throw new Error('Selecione a empresa.');if(!problema)throw new Error('Selecione o tipo de problema.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(!cards.length)throw new Error('Busque os cabos antes de gerar.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const coordRaw=DOM.inputCoordenada.value.trim(),cp=parseCoordenada(coordRaw);const locLink=cp?`https://www.google.com/maps?q=${cp.lat},${cp.lng}`:coordRaw;let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;cards.forEach((card,idx)=>{const rows={};card.querySelectorAll('.cabo-card-row').forEach(row=>{const l=(row.querySelector('.cabo-label')?.textContent||'').trim().toLowerCase(),v=(row.querySelector('.cabo-value')?.textContent||'').trim();if(l&&v)rows[l]=v});const dist=(card.querySelector('.cabo-dist')?.textContent||'').trim();corpo+=`⚡ Cabo: ${rows['cabo']||'-'}\n📌 Localização: ${locLink}\n`;if(rows['tipo'])corpo+=`⚙️ Tipo: ${rows['tipo']}\n`;if(rows['nível'])corpo+=`🌐 Nível: ${rows['nível']}\n`;if(rows['comprimento'])corpo+=`📋 Comprimento: ${rows['comprimento']}\n`;if(dist)corpo+=`📐 ${dist}\n`;if(idx<cards.length-1)corpo+=`\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}registrarSla({rede:'METRO',tipo:problema,alvo:`${_slaListaCap(Array.from(cards).map(c=>((c.querySelector('.cabo-value')||{}).textContent||'').trim()),170)}${coordRaw?' · '+coordRaw:''}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 /* ════════════════════════════════════════
    BACKBONE — painel próprio (rede independente, sem restrição de empresa,
@@ -2027,12 +2496,15 @@ async function gerarOSBackbone(){
     corpo+=`🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;
     const msgFinal=construirMensagemComOperador(corpo);
     try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}
+    registrarSla({rede:'BACKBONE',tipo:'ACIONAMENTO DE BACKBONE'+(otdrTipo?' · OTDR '+otdrTipo:''),
+      alvo:_slaListaCap(trechosFinal,190)+(otdrLocal?' · OTDR: '+otdrLocal:''),
+      empresa:emp,tecnicos:tecsStr});
     exibirModal(corpo);
   }catch(err){showToast(err.message,'error',4000)}
   finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}
 }
 
-async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:`${_slaListaCap(listaFinal.map(g=>g.familia),150)} · OLT ${listaFinal[0].olt}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}atualizarTodosEstadosAllTec();showToast('✓ Limpo.')}
