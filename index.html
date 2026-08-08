@@ -205,6 +205,18 @@ input::placeholder{color:var(--text3)}
 .tec-search-wrap{position:relative;margin-bottom:6px}
 .tec-search-wrap input[type="text"]{padding-left:34px;font-size:.82rem}
 .tec-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--text3);pointer-events:none;line-height:1}
+/* ═══ TÉCNICOS — BARRA (busca + botão ALL) E LISTA EM 3 COLUNAS ═══ */
+.tec-toolbar{display:flex;gap:8px;align-items:stretch;margin-bottom:6px}
+.tec-toolbar .tec-search-wrap{flex:1;margin-bottom:0;min-width:0}
+.btn-all-tec{flex-shrink:0;min-width:80px;padding:0 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.btn-all-tec:hover:not(:disabled){border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
+.btn-all-tec.ativo{background:var(--blue-l);border-color:var(--blue2);color:var(--blue);box-shadow:0 0 0 2px var(--blue-b)}
+.btn-all-tec:disabled{opacity:.35;cursor:not-allowed}
+.tec-count{font-size:.62rem;font-family:'Share Tech Mono',monospace;color:var(--text3);letter-spacing:1px;text-align:right;margin-top:6px;min-height:12px}
+/* lista de técnicos em grade de 3 colunas (as demais listas seguem em flex) */
+.stack-list{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start}
+.stack-list .info-msg,.stack-list .loading-text{grid-column:1/-1}
+.stack-list .stack-item label{padding:7px 8px;font-size:.73rem;white-space:normal;text-align:center;word-break:break-word;line-height:1.25;min-height:36px;letter-spacing:.2px}
 /* ═══════════════════════════════════════════
    IDENTIFICAÇÃO — BOTÃO COMPACTO + SUBMENU
 ═══════════════════════════════════════════ */
@@ -307,6 +319,7 @@ main{padding:16px 12px}
 .top-bar-fixed{top:12px;right:12px}
 .gpon-search-row{grid-template-columns:1fr 100px}
 .ident-submenu{flex-direction:column}
+.stack-list{grid-template-columns:repeat(2,1fr)}
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -345,7 +358,7 @@ main{padding:16px 12px}
 .gpon-lista-wrap.visible{animation:panelFadeSlide .3s cubic-bezier(.22,1,.36,1)}
 
 /* — ripple dinâmico nos botões — */
-.btn,.btn-buscar-cabo,.btn-seguir,.btn-editar,.btn-identificacao,.ident-sub-btn,.m-btn:not(#btnFarmarAura){position:relative;overflow:hidden}
+.btn,.btn-buscar-cabo,.btn-seguir,.btn-editar,.btn-identificacao,.ident-sub-btn,.btn-all-tec,.m-btn:not(#btnFarmarAura){position:relative;overflow:hidden}
 .ripple-el{position:absolute;border-radius:50%;transform:scale(0);pointer-events:none;background:rgba(70,110,160,.24);animation:rippleAnim .55s ease-out forwards}
 .btn-main .ripple-el,.btn-seguir .ripple-el,.btn-buscar-cabo .ripple-el{background:rgba(255,255,255,.5)}
 [data-theme="dark"] .ripple-el{background:rgba(160,200,255,.2)}
@@ -575,11 +588,15 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div class="form-group">
 <label>T&#233;cnicos Dispon&#237;veis</label>
+<div class="tec-toolbar">
 <div class="tec-search-wrap">
 <span class="tec-search-icon">&#128269;</span>
 <input type="text" id="filtroTecGpon" placeholder="Buscar t&#233;cnico..." autocomplete="off">
 </div>
+<button type="button" class="btn-all-tec" id="btnAllTecGpon" title="Selecionar/limpar todos os t&#233;cnicos listados">ALL</button>
+</div>
 <div id="gponListaTecs" class="stack-list"><div class="info-msg">Identifique a GPON e selecione a rede.</div></div>
+<div class="tec-count" id="countTecGpon"></div>
 </div>
 <div class="button-group">
 <button class="btn btn-main" id="btnGerarOSGpon">Gerar Ordem de Servi&#231;o</button>
@@ -624,11 +641,15 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div class="form-group">
 <label>T&#233;cnicos Dispon&#237;veis</label>
+<div class="tec-toolbar">
 <div class="tec-search-wrap">
 <span class="tec-search-icon">&#128269;</span>
 <input type="text" id="filtroTecCabo" placeholder="Buscar t&#233;cnico..." autocomplete="off">
 </div>
+<button type="button" class="btn-all-tec" id="btnAllTecCabo" title="Selecionar/limpar todos os t&#233;cnicos listados">ALL</button>
+</div>
 <div id="listaTecsCabo" class="stack-list"><div class="info-msg">Selecione a empresa.</div></div>
+<div class="tec-count" id="countTecCabo"></div>
 </div>
 <div class="button-group">
 <button class="btn btn-main" id="btnGerarOSMetro">Gerar Ordem de Servi&#231;o</button>
@@ -679,11 +700,15 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div class="form-group">
 <label>T&#233;cnicos Dispon&#237;veis</label>
+<div class="tec-toolbar">
 <div class="tec-search-wrap">
 <span class="tec-search-icon">&#128269;</span>
 <input type="text" id="filtroTecBackbone" placeholder="Buscar t&#233;cnico..." autocomplete="off">
 </div>
+<button type="button" class="btn-all-tec" id="btnAllTecBackbone" title="Selecionar/limpar todos os t&#233;cnicos listados">ALL</button>
+</div>
 <div id="listaTecsBackbone" class="stack-list"><div class="info-msg">Selecione a empresa.</div></div>
+<div class="tec-count" id="countTecBackbone"></div>
 </div>
 <div class="button-group">
 <button class="btn btn-main" id="btnGerarOSBackbone">Gerar Ordem de Servi&#231;o</button>
@@ -724,11 +749,15 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div class="form-group">
 <label>T&#233;cnicos Dispon&#237;veis</label>
+<div class="tec-toolbar">
 <div class="tec-search-wrap">
 <span class="tec-search-icon">&#128269;</span>
 <input type="text" id="filtroTec" placeholder="Buscar t&#233;cnico..." autocomplete="off">
 </div>
+<button type="button" class="btn-all-tec" id="btnAllTec" title="Selecionar/limpar todos os t&#233;cnicos listados">ALL</button>
+</div>
 <div id="listaTecs" class="stack-list"><div class="info-msg">Selecione empresa e CTOs.</div></div>
+<div class="tec-count" id="countTec"></div>
 </div>
 <div class="button-group">
 <button class="btn btn-main" id="btnGerarOS">Gerar Ordem de Servi&#231;o</button>
@@ -908,7 +937,7 @@ $('btnAtualizarCache').addEventListener('click',atualizarDadosForcado);
 
 /* ripple dinâmico ao clicar em qualquer botão principal (não altera nenhuma lógica de clique existente) */
 document.addEventListener('click',function(e){
-  const btn=e.target.closest('.btn,.btn-buscar-cabo,.btn-seguir,.btn-editar,.btn-identificacao,.ident-sub-btn,.m-btn');
+  const btn=e.target.closest('.btn,.btn-buscar-cabo,.btn-seguir,.btn-editar,.btn-identificacao,.ident-sub-btn,.btn-all-tec,.m-btn');
   if(!btn||btn.id==='btnFarmarAura')return;
   const rect=btn.getBoundingClientRect();
   const ripple=document.createElement('span');
@@ -1412,11 +1441,78 @@ function bindEvents(){
   $('filtroTecBackbone').addEventListener('input',filtrarTecBackbone);
   DOM.btnGerarOSBackbone.addEventListener('click',gerarOSBackbone);
   DOM.btnLimparBackbone.addEventListener('click',limparTudo);
+  // TÉCNICOS — botão ALL das quatro listas
+  _bindTecnicosAll();
 }
 
-function filtrarTecsCabo(){const v=normGpon($('filtroTecCabo').value);DOM.listaTecsCabo.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
-function filtrarTecs(){const v=normGpon($('filtroTec').value);DOM.listaTecs.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
-function filtrarTecGpon(){const v=normGpon($('filtroTecGpon').value);DOM.gponListaTecs.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
+/* ════════════════════════════════════════
+   TÉCNICOS — BOTÃO "ALL" E CONTADOR
+   ════════════════════════════════════════
+   Um mesmo mecanismo serve às quatro listas (rede normal, metro,
+   backbone e GPON). O botão alterna entre marcar e desmarcar TODOS os
+   técnicos VISÍVEIS na lista — se houver um texto no campo de busca,
+   ele age só sobre o resultado filtrado, que é o comportamento
+   esperado de quem filtrou primeiro para depois selecionar em lote. */
+const TEC_LISTAS=[
+  {lista:'listaTecs',        btn:'btnAllTec',        count:'countTec'},
+  {lista:'listaTecsCabo',    btn:'btnAllTecCabo',    count:'countTecCabo'},
+  {lista:'listaTecsBackbone',btn:'btnAllTecBackbone',count:'countTecBackbone'},
+  {lista:'gponListaTecs',    btn:'btnAllTecGpon',    count:'countTecGpon'}
+];
+function _tecInputs(container,apenasVisiveis){
+  return Array.from(container.querySelectorAll('.stack-item'))
+    .filter(it=>!apenasVisiveis||it.style.display!=='none')
+    .map(it=>it.querySelector('input[type="checkbox"]'))
+    .filter(Boolean);
+}
+function toggleTodosTecs(listaId){
+  const c=$(listaId);if(!c)return;
+  const visiveis=_tecInputs(c,true);
+  if(!visiveis.length)return;
+  /* se todos os visíveis já estão marcados, o clique limpa a seleção */
+  const todosMarcados=visiveis.every(i=>i.checked);
+  visiveis.forEach(i=>{i.checked=!todosMarcados});
+  atualizarEstadoAllTec(listaId);
+}
+function atualizarEstadoAllTec(listaId){
+  const cfg=TEC_LISTAS.find(x=>x.lista===listaId);if(!cfg)return;
+  const c=$(cfg.lista);if(!c)return;
+  const btn=$(cfg.btn),cnt=$(cfg.count);
+  const todos=_tecInputs(c,false),visiveis=_tecInputs(c,true);
+  const marcados=todos.filter(i=>i.checked).length;
+  if(btn){
+    const tudoVisivelMarcado=visiveis.length>0&&visiveis.every(i=>i.checked);
+    btn.textContent=tudoVisivelMarcado?'LIMPAR':'ALL';
+    btn.classList.toggle('ativo',tudoVisivelMarcado);
+    btn.disabled=!visiveis.length;
+  }
+  if(cnt){
+    cnt.textContent=todos.length
+      ? `${marcados} de ${todos.length} selecionado${marcados===1?'':'s'}`
+      : '';
+  }
+}
+function atualizarTodosEstadosAllTec(){TEC_LISTAS.forEach(cfg=>atualizarEstadoAllTec(cfg.lista))}
+/* Liga cada lista ao seu botão/contador. Usa MutationObserver para que o
+   estado se atualize sozinho sempre que a lista for redesenhada (troca de
+   empresa, de rede, limpar formulário etc.), sem precisar chamar a
+   atualização manualmente em cada uma das funções de render. */
+function _bindTecnicosAll(){
+  TEC_LISTAS.forEach(cfg=>{
+    const c=$(cfg.lista),btn=$(cfg.btn);
+    if(!c)return;
+    if(btn)btn.addEventListener('click',()=>toggleTodosTecs(cfg.lista));
+    c.addEventListener('change',()=>atualizarEstadoAllTec(cfg.lista));
+    try{
+      new MutationObserver(()=>atualizarEstadoAllTec(cfg.lista)).observe(c,{childList:true});
+    }catch(e){/* navegador sem MutationObserver: botão segue funcionando no clique */}
+    atualizarEstadoAllTec(cfg.lista);
+  });
+}
+
+function filtrarTecsCabo(){const v=normGpon($('filtroTecCabo').value);DOM.listaTecsCabo.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'});atualizarEstadoAllTec('listaTecsCabo')}
+function filtrarTecs(){const v=normGpon($('filtroTec').value);DOM.listaTecs.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'});atualizarEstadoAllTec('listaTecs')}
+function filtrarTecGpon(){const v=normGpon($('filtroTecGpon').value);DOM.gponListaTecs.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'});atualizarEstadoAllTec('gponListaTecs')}
 
 function getTipoAC(contexto,pai=''){return AppState.tipoAC.filter(t=>t.contexto===contexto&&t.pai===pai).sort((a,b)=>a.ordem-b.ordem)}
 function preencherSelect(elId,itens,placeholder){const el=$(elId);if(!el)return;const atual=el.value;el.innerHTML=`<option value="" disabled selected>${placeholder}</option>`;itens.forEach(t=>{el.insertAdjacentHTML('beforeend',`<option value="${t.valor}">${t.label}</option>`)});if(atual&&itens.some(t=>t.valor===atual))el.value=atual}
@@ -1862,7 +1958,7 @@ function renderTecnicosBackbone(){
   if(!lista.length){DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Nenhum técnico.</div>';return}
   DOM.listaTecsBackbone.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckBackbone" id="tbb${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tbb${i}">${t.nome}</label></div>`).join('');
 }
-function filtrarTecBackbone(){const v=normGpon($('filtroTecBackbone').value);DOM.listaTecsBackbone.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'})}
+function filtrarTecBackbone(){const v=normGpon($('filtroTecBackbone').value);DOM.listaTecsBackbone.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'});atualizarEstadoAllTec('listaTecsBackbone')}
 function getOtdrTipo(){const s=document.querySelector('input[name="otdrTipo"]:checked');return s?s.value:''}
 function atualizarCamposOtdr(){const tipo=getOtdrTipo();DOM.otdrCeoExtra.classList.toggle('hidden',tipo!=='CEO');DOM.otdrPopExtra.classList.toggle('hidden',tipo!=='POP')}
 
@@ -1939,8 +2035,8 @@ async function gerarOSBackbone(){
 async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
-const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}showToast('✓ Limpo.')}
-function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.multiSelectAllowed=true;renderStatusBar();showToast('✓ Formulário limpo.')}
+const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}atualizarTodosEstadosAllTec();showToast('✓ Limpo.')}
+function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.multiSelectAllowed=true;renderStatusBar();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
 </script>
 </body>
 </html>
