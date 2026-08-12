@@ -1028,6 +1028,10 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
 <div class="info-msg" style="margin-bottom:12px">Ao encerrar manualmente, seu e-mail será registrado na planilha junto com a justificativa.</div>
+<div class="form-group" id="wrapDataNormalizacaoEncerrar" style="display:none">
+<label>DATA/HORA NORMALIZAÇÃO <span style="color:var(--red)">*</span></label>
+<input type="datetime-local" id="dataNormalizacaoEncerrarSla">
+</div>
 <div class="form-group">
 <label>JUSTIFICATIVA <span style="color:var(--red)">*</span></label>
 <textarea id="justificativaEncerrarSla" rows="3" placeholder="Por que este chamado está sendo encerrado?"></textarea>
@@ -2016,6 +2020,14 @@ function abrirModalEncerrarSla(id, rede) {
   $('idEncerrarSla').value = id;
   $('redeEncerrarSla').value = rede || 'SLA';
   $('justificativaEncerrarSla').value = '';
+  
+  if (rede === 'TIM') {
+    $('wrapDataNormalizacaoEncerrar').style.display = 'block';
+    $('dataNormalizacaoEncerrarSla').value = '';
+  } else {
+    $('wrapDataNormalizacaoEncerrar').style.display = 'none';
+  }
+  
   $('modalEncerrarSla').classList.add('visible');
   $('justificativaEncerrarSla').focus();
 }
@@ -2026,9 +2038,14 @@ function confirmarEncerrarSla() {
   const id = $('idEncerrarSla').value;
   const rede = $('redeEncerrarSla').value;
   const just = $('justificativaEncerrarSla').value.trim();
+  const dataNorm = $('dataNormalizacaoEncerrarSla').value;
   
   if (!just) {
     showToast('A justificativa é obrigatória.', 'error', 3000);
+    return;
+  }
+  if (rede === 'TIM' && !dataNorm) {
+    showToast('A data e hora de normalização é obrigatória.', 'error', 3000);
     return;
   }
   
@@ -2039,7 +2056,8 @@ function confirmarEncerrarSla() {
     acao: 'encerrarAdminSla',
     id: id,
     rede: rede,
-    justificativa: just
+    justificativa: just,
+    dataNormalizacao: dataNorm
   }, 25000)
     .then(r => {
       if (r && r.ok) {
@@ -2353,18 +2371,26 @@ function gerarRelatorioTim(){
       return;
     }
     
-    let tempoTotalMinutos = 0;
+    let tempoRespostaMinutos = 0;
     let finalizados = 0;
     
     const linhas = r.relatorio.map(item => {
-      const dt = new Date(item.abertura);
-      const aberturaStr = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+      const dtAber = item.aberturaMs ? new Date(item.aberturaMs) : new Date(item.abertura);
+      const aberturaStr = `${String(dtAber.getDate()).padStart(2,'0')}/${String(dtAber.getMonth()+1).padStart(2,'0')} ${String(dtAber.getHours()).padStart(2,'0')}:${String(dtAber.getMinutes()).padStart(2,'0')}`;
+      const abMs = dtAber.getTime();
       
-      let tempoText = '-';
-      if(item.minutos){
-         tempoText = `${Math.floor(item.minutos / 60)}h${item.minutos % 60}m`;
-         tempoTotalMinutos += item.minutos;
+      let tempoTextResp = '-';
+      let tempoTextNorm = '-';
+      
+      if (item.respostaMs) {
+         const diff = Math.max(0, Math.floor((item.respostaMs - abMs) / 60000));
+         tempoTextResp = `${Math.floor(diff / 60)}h${diff % 60}m`;
+         tempoRespostaMinutos += diff;
          finalizados++;
+      }
+      if (item.dataNormalizacao) {
+         const diff = Math.max(0, Math.floor((item.dataNormalizacao - abMs) / 60000));
+         tempoTextNorm = `${Math.floor(diff / 60)}h${diff % 60}m`;
       }
       
       return `
@@ -2374,20 +2400,21 @@ function gerarRelatorioTim(){
           <td style="padding:8px">${item.designacao || '-'}</td>
           <td style="padding:8px">${item.dataHoraFalha || '-'}</td>
           <td style="padding:8px">${item.protocolo || '-'}</td>
-          <td style="padding:8px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${item.assunto}">${item.assunto}</td>
-          <td style="padding:8px">${tempoText}</td>
-          <td style="padding:8px; color:${item.status==='FINALIZADO'?'var(--teal)':'var(--amber)'}">${item.status}</td>
+          <td style="padding:8px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${item.assunto}">${item.assunto}</td>
+          <td style="padding:8px">${tempoTextResp}</td>
+          <td style="padding:8px">${tempoTextNorm}</td>
+          <td style="padding:8px; color:${item.status==='FINALIZADO'||item.status==='ENCERRADO ADMIN'?'var(--teal)':'var(--amber)'}">${item.status}</td>
         </tr>
       `;
     }).join('');
     
-    const mediaTempo = finalizados > 0 ? Math.round(tempoTotalMinutos / finalizados) : 0;
+    const mediaTempo = finalizados > 0 ? Math.round(tempoRespostaMinutos / finalizados) : 0;
     const mediaText = mediaTempo > 0 ? `${Math.floor(mediaTempo / 60)}h${mediaTempo % 60}m` : '-';
     
     div.innerHTML = `
       <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding:10px; background:var(--bg3); border-radius:4px">
         <div><strong>Total de Chamados:</strong> ${r.relatorio.length}</div>
-        <div><strong>Tempo Médio p/ Retorno (SLA):</strong> ${mediaText}</div>
+        <div><strong>Tempo Médio p/ Retorno TIM (SLA):</strong> ${mediaText}</div>
       </div>
       <div style="overflow-x:auto">
         <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left">
@@ -2399,7 +2426,8 @@ function gerarRelatorioTim(){
               <th style="padding:8px">Falha em</th>
               <th style="padding:8px">Protocolo (AU)</th>
               <th style="padding:8px">Assunto</th>
-              <th style="padding:8px">Tempo SLA</th>
+              <th style="padding:8px">Tempo Resp.</th>
+              <th style="padding:8px">Tempo Normaliz.</th>
               <th style="padding:8px">Status</th>
             </tr>
           </thead>
