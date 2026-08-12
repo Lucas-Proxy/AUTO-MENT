@@ -447,14 +447,19 @@ main{padding:16px 12px}
 /* ═══════════════════════════════════════════════════════
    PAINEL DE SLA — tela cheia, cards no estilo relógio
 ═══════════════════════════════════════════════════════ */
-#slaView{display:none;position:relative;z-index:1;min-height:100vh;padding:34px 40px 90px}
-#slaView.ativo{display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
-body.sla-aberto main{display:none}
+#slaView, #tcSlaView {display:none;position:relative;z-index:1;min-height:100vh;padding:34px 40px 90px}
+#slaView.ativo, #tcSlaView.ativo {display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
+body.sla-aberto main, body.tcsla-aberto main {display:none}
 /* alternância dos botões da barra fixa: uma barra só, conteúdo por modo —
    evita ter dois "Atualizar" na tela e a colisão com o ícone de volume */
-.so-sla{display:none!important}
-body.sla-aberto .so-normal{display:none!important}
-body.sla-aberto .so-sla{display:flex!important}
+.so-sla, .so-tcsla {display:none!important}
+
+body.sla-aberto .so-normal {display:none!important}
+body.sla-aberto .so-sla {display:flex!important}
+
+body.tcsla-aberto .so-normal {display:none!important}
+body.tcsla-aberto .so-sla {display:none!important}
+body.tcsla-aberto .so-tcsla {display:flex!important}
 .btn-sla-fechar:hover{border-color:var(--red)!important;color:var(--red)!important;background:var(--red-l)!important}
 /* cabeçalho empilhado à esquerda: a coluna da direita fica livre para a
    barra fixa e o controle de volume, sem sobreposição em nenhuma largura */
@@ -547,7 +552,7 @@ body.sla-aberto .so-sla{display:flex!important}
 <canvas id="cursorGlow"></canvas>
 
 <div class="top-bar-fixed">
-<a href="https://clickip.ozmap.com.br:9994/app/" target="_blank" rel="noopener noreferrer" class="ozmap-btn" title="Abrir OZMAP em nova guia" aria-label="Abrir OZMAP">
+<a href="https://clickip.ozmap.com.br:9994/app/" target="_blank" rel="noopener noreferrer" class="ozmap-btn so-normal" title="Abrir OZMAP em nova guia" aria-label="Abrir OZMAP">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
 <span>OZMAP</span>
 </a>
@@ -562,16 +567,29 @@ body.sla-aberto .so-sla{display:flex!important}
 </button>
 <button class="ozmap-btn so-sla" id="btnSlaAtualizar" title="Buscar agora os chamados na planilha" aria-label="Atualizar chamados">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-<span>Atualizar</span>
+<span>Atualizar SLA</span>
+</button>
+<button class="ozmap-btn so-sla" id="btnTcSla" title="Abrir painel T/C-SLA de E-mails" aria-label="Painel T/C-SLA">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+<span>T/C-SLA</span>
+<span id="tcSlaBadgeTopo" class="sla-badge-topo hidden">0</span>
 </button>
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
 <span id="themeIcon" style="font-size:13px">&#9728;</span>
 <div class="toggle-track"><div class="toggle-thumb"></div></div>
 <span class="toggle-label" id="toggleLabel">Tema Claro</span>
 </button>
-<button class="ozmap-btn so-sla btn-sla-fechar" id="btnSlaFechar" title="Voltar para o formul&#225;rio de acionamento (Esc)" aria-label="Fechar painel de SLA">
+<button class="ozmap-btn so-sla btn-sla-fechar" id="btnSlaFechar" title="Voltar para o formulário de acionamento (Esc)" aria-label="Fechar painel de SLA">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 <span>Fechar</span>
+</button>
+<button class="ozmap-btn so-tcsla" id="btnTcSlaAtualizar" title="Buscar agora os chamados no Gmail" aria-label="Atualizar T/C-SLA">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+<span>Atualizar</span>
+</button>
+<button class="ozmap-btn so-tcsla btn-sla-fechar" id="btnTcSlaFechar" title="Voltar para o painel de SLA (Esc)" aria-label="Fechar painel de T/C-SLA">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+<span>Fechar T/C-SLA</span>
 </button>
 </div>
 
@@ -963,10 +981,46 @@ IDENTIFICA&#199;&#195;O
 <div class="sla-rodape" id="slaRodape"></div>
 </section>
 
+<section id="tcSlaView">
+<div class="sla-header">
+<div class="sla-header-txt">
+<div class="sla-titulo" style="display:flex;align-items:center"><span class="hl">T/C-SLA</span> (E-mails TIM) <button class="btn-add-sla" style="width:auto;padding:0 12px;margin-left:12px;font-size:0.75rem" onclick="abrirModalRelatorioTim()" title="Relatório">Relatório</button></div>
+<div class="sla-sub-titulo">E-mails enviados para TIM &middot; Aguardando protocolo AU &middot; SLA alvo: 30 min</div>
+</div>
+<div class="sla-resumo" id="tcSlaResumo"></div>
+</div>
+<div class="sla-grid" id="tcSlaGrid"></div>
+<div class="sla-rodape" id="tcSlaRodape"></div>
+</section>
+
 <div class="signature">
 <span class="signature-name">Lucas Paes</span>
 <div class="signature-line"></div>
 <span class="signature-role">ANALYST &#183; NOC</span>
+</div>
+<div class="copy-modal" id="modalRelatorioTim">
+<div class="copy-modal-content" style="max-width:800px; max-height: 90vh; display: flex; flex-direction: column;">
+<div class="copy-modal-header">
+<span>RELATÓRIO T/C-SLA (TIM)</span>
+<button onclick="fecharModalRelatorioTim()">&#10005;</button>
+</div>
+<div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
+<div style="display:flex; gap:12px; margin-bottom:16px; align-items:flex-end;">
+  <div class="form-group" style="margin-bottom:0">
+    <label>Data Início</label>
+    <input type="date" id="relatorioTimInicio">
+  </div>
+  <div class="form-group" style="margin-bottom:0">
+    <label>Data Fim</label>
+    <input type="date" id="relatorioTimFim">
+  </div>
+  <button class="btn btn-main" style="padding:8px 16px; height:38px" onclick="gerarRelatorioTim()">Gerar</button>
+</div>
+<div id="relatorioTimConteudo" style="background:var(--bg); border-radius:6px; padding:12px; min-height: 200px">
+  <div class="info-msg">Selecione o período e clique em Gerar.</div>
+</div>
+</div>
+</div>
 </div>
 
 <div class="copy-modal" id="modalSlaManual">
@@ -1638,6 +1692,9 @@ const SLA_RING_C=2*Math.PI*SLA_RING_R;
 AppState.sla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,jaAvisado:{}};
 
+AppState.tcSla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
+              ultimaAtualizacao:0,timerTick:null,timerPoll:null};
+
 /* ── utilitários ── */
 function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function _slaFmtDur(ms){
@@ -1966,6 +2023,7 @@ function encerrarChamadoSla(id,botao){
 
 /* ── abrir / fechar o painel ── */
 function abrirPainelSla(){
+  if(AppState.tcSla.aberto) fecharPainelTcSla();
   AppState.sla.aberto=true;
   document.body.classList.add('sla-aberto');
   $('slaView').classList.add('ativo');
@@ -2004,6 +2062,264 @@ function bindEventsSla(){
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.sla.aberto)fecharPainelSla()});
   // primeira carga em segundo plano, sem atrapalhar o carregamento da tela
   setTimeout(()=>{carregarSla(true);_reprogramarPollSla()},4000);
+
+  // TC-SLA
+  $('btnTcSla').addEventListener('click',alternarPainelTcSla);
+  $('btnTcSlaFechar').addEventListener('click',fecharPainelTcSla);
+  $('btnTcSlaAtualizar').addEventListener('click',()=>{carregarTcSla();showToast('↻ Buscando chamados no Gmail...')});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.tcSla.aberto)fecharPainelTcSla()});
+  setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},6000);
+}
+
+/* ════════════════════════════════════════════════════════
+   PAINEL T/C-SLA
+   ════════════════════════════════════════════════════════ */
+function carregarTcSla(silencioso, retentativas=1){
+  if(!silencioso&&AppState.tcSla.status!=='carregando'){
+    AppState.tcSla.status='carregando';
+    if(AppState.tcSla.aberto&&!AppState.tcSla.itens.length)renderTcSla();
+  }
+  return jsonp({acao:'listarTcSla'},45000).then(r=>{
+    if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
+    const agoraMs=Date.now();
+    AppState.tcSla.itens=(r.itens||[]).map(x=>({
+      ...x,
+      aberturaMs:Number(x.aberturaMs)||0,
+      encerramentoMs:Number(x.encerramentoMs)||0,
+      slaHoras:Number(x.slaHoras)||0.5
+    })).filter(x=>x.aberturaMs>0)
+    .filter(x=>!x.encerramentoMs
+                || (agoraMs-x.encerramentoMs)<=SLA_SUMIR_APOS_ENCERRAR_MS
+                || AppState.tcSla.nodes.has(x.id));
+    AppState.tcSla.status='ok';AppState.tcSla.erro='';
+    AppState.tcSla.ultimaAtualizacao=Date.now();
+    if(AppState.tcSla.aberto)renderTcSla();
+    atualizarBadgeTcSla();
+    return AppState.tcSla.itens;
+  }).catch(e=>{
+    if(retentativas>0) return carregarTcSla(silencioso, retentativas - 1);
+    AppState.tcSla.status='erro';AppState.tcSla.erro=e.message||String(e);
+    if(AppState.tcSla.aberto)renderTcSla();
+    return null;
+  });
+}
+
+function atualizarBadgeTcSla(){
+  const badge=$('tcSlaBadgeTopo');if(!badge)return;
+  const estourados=AppState.tcSla.itens.filter(i=>!i.encerramentoMs&&_slaCalc(i).estado==='ESTOURADO').length;
+  badge.textContent=estourados;
+  badge.classList.toggle('hidden',estourados===0);
+}
+
+function renderTcSla(){
+  const grid=$('tcSlaGrid');if(!grid)return;
+  const st=AppState.tcSla;
+  if(st.status==='erro'){
+    grid.innerHTML=`<div class="sla-aviso erro" style="grid-column:1/-1"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados do Gmail.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
+    st.nodes.clear();renderResumoTcSla();return;
+  }
+  if(st.status==='carregando'&&!st.itens.length){
+    grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#8987;</div><div class="sla-aviso-txt">Carregando e-mails da TIM...</div></div>`;
+    st.nodes.clear();renderResumoTcSla();return;
+  }
+  if(!st.itens.length){
+    grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum e-mail aguardando protocolo.</div></div>`;
+    st.nodes.clear();renderResumoTcSla();return;
+  }
+  const idsNovos=st.itens.map(i=>i.id).sort().join('|');
+  const idsAtuais=Array.from(st.nodes.keys()).sort().join('|');
+  if(st.nodes.size&&idsNovos===idsAtuais){
+    st.itens.forEach(item=>{const n=st.nodes.get(item.id);if(n)n.item=item});
+    tickTcSla();return;
+  }
+  grid.innerHTML='';st.nodes.clear();
+  _slaOrdenar(st.itens).forEach(item=>{
+    const card=document.createElement('article');
+    card.className='sla-card';
+    card.dataset.id=item.id;
+    // hide the encerrar button since it's auto-resolved by email
+    let html = _slaCardHTML(item);
+    html = html.replace('<button class="sla-btn-encerrar"', '<button class="sla-btn-encerrar hidden" style="display:none"');
+    card.innerHTML=html;
+    grid.appendChild(card);
+    st.nodes.set(item.id,{
+      card,item,
+      tempo:card.querySelector('.sla-tempo'),
+      anel:card.querySelector('.anel-frente'),
+      excedente:card.querySelector('.sla-excedente')
+    });
+  });
+  tickTcSla();
+}
+
+function tickTcSla(){
+  const st=AppState.tcSla;
+  if(!st.aberto||!st.nodes.size)return;
+  const ordem=_slaOrdenar(st.itens);
+  const agora=Date.now();
+  const paraRemover=[];
+  ordem.forEach((item,idx)=>{
+    const n=st.nodes.get(item.id);if(!n)return;
+    const c=_slaCalc(item);
+    if(item.encerramentoMs&&(agora-item.encerramentoMs)>SLA_SUMIR_APOS_ENCERRAR_MS){paraRemover.push(item.id);return;}
+    n.card.style.order=idx;
+    const classeEstado='estado-'+c.estado;
+    if(!n.card.classList.contains(classeEstado)){
+      n.card.classList.remove('estado-DENTRO','estado-ATENCAO','estado-ESTOURADO','estado-FINALIZADO');
+      n.card.classList.add(classeEstado);
+    }
+    if(n.tempo)n.tempo.textContent=_slaFmtDur(c.decorrido);
+    if(n.anel)n.anel.setAttribute('stroke-dashoffset',(SLA_RING_C*(1-Math.min(c.pct,1))).toFixed(1));
+    if(n.excedente){n.excedente.textContent=c.excedente>0?`+${_slaFmtDur(c.excedente)} al&eacute;m do SLA`.replace('&eacute;','é'):'';}
+  });
+  if(paraRemover.length){
+    paraRemover.forEach(id=>{
+      const n=st.nodes.get(id);
+      if(n){n.card.classList.add('saindo');setTimeout(()=>{if(n.card.parentNode)n.card.parentNode.removeChild(n.card)},400)}
+      st.nodes.delete(id);
+      st.itens=st.itens.filter(i=>i.id!==id);
+    });
+    if(!st.itens.length)setTimeout(renderTcSla,450);
+  }
+  renderResumoTcSla();
+  atualizarBadgeTcSla();
+}
+
+function renderResumoTcSla(){
+  const el=$('tcSlaResumo');if(!el)return;
+  const abertos=AppState.tcSla.itens.filter(i=>!i.encerramentoMs);
+  const conta={ESTOURADO:0,ATENCAO:0,DENTRO:0};
+  abertos.forEach(i=>{conta[_slaCalc(i).estado]++});
+  el.innerHTML=
+    `<div class="sla-kpi critico"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.ESTOURADO}</span><br><span class="sla-kpi-rot">Estourado${conta.ESTOURADO===1?'':'s'}</span></span></div>`+
+    `<div class="sla-kpi alerta"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.ATENCAO}</span><br><span class="sla-kpi-rot">Aten&ccedil;&atilde;o</span></span></div>`+
+    `<div class="sla-kpi ok"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.DENTRO}</span><br><span class="sla-kpi-rot">No prazo</span></span></div>`;
+  const rod=$('tcSlaRodape');
+  if(rod){
+    rod.textContent=AppState.tcSla.ultimaAtualizacao
+      ? `Atualizado às ${_slaFmtHora(AppState.tcSla.ultimaAtualizacao).split(' ')[1]} · atualiza sozinho a cada ${Math.round(SLA_POLL_ABERTO_MS/1000)}s`
+      : '';
+  }
+}
+
+function abrirPainelTcSla(){
+  if(AppState.sla.aberto) fecharPainelSla();
+  AppState.tcSla.aberto=true;
+  document.body.classList.add('tcsla-aberto');
+  $('tcSlaView').classList.add('ativo');
+  window.scrollTo(0,0);
+  renderTcSla();
+  carregarTcSla();
+  clearInterval(AppState.tcSla.timerTick);
+  AppState.tcSla.timerTick=setInterval(tickTcSla,1000);
+  _reprogramarPollTcSla();
+}
+function fecharPainelTcSla(){
+  AppState.tcSla.aberto=false;
+  document.body.classList.remove('tcsla-aberto');
+  $('tcSlaView').classList.remove('ativo');
+  clearInterval(AppState.tcSla.timerTick);
+  AppState.tcSla.timerTick=null;
+  _reprogramarPollTcSla();
+}
+function alternarPainelTcSla(){AppState.tcSla.aberto?fecharPainelTcSla():abrirPainelTcSla()}
+
+function _reprogramarPollTcSla(){
+  clearInterval(AppState.tcSla.timerPoll);
+  const intervalo=AppState.tcSla.aberto?SLA_POLL_ABERTO_MS:SLA_POLL_FUNDO_MS;
+  AppState.tcSla.timerPoll=setInterval(()=>carregarTcSla(true),intervalo);
+}
+
+function abrirModalRelatorioTim(){
+  const hoje = new Date();
+  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  $('relatorioTimInicio').value = primeiroDia.toISOString().split('T')[0];
+  $('relatorioTimFim').value = hoje.toISOString().split('T')[0];
+  $('relatorioTimConteudo').innerHTML = '<div class="info-msg">Selecione o período e clique em Gerar.</div>';
+  $('modalRelatorioTim').classList.add('visible');
+}
+
+function fecharModalRelatorioTim(){
+  $('modalRelatorioTim').classList.remove('visible');
+}
+
+function gerarRelatorioTim(){
+  const inicio = $('relatorioTimInicio').value;
+  const fim = $('relatorioTimFim').value;
+  const div = $('relatorioTimConteudo');
+  
+  if(!inicio || !fim){
+    div.innerHTML = '<div class="info-msg erro" style="color:var(--red)">Preencha ambas as datas.</div>';
+    return;
+  }
+  
+  div.innerHTML = '<div class="info-msg">Gerando relatório, aguarde...</div>';
+  
+  jsonp({acao:'relatorioTim', dataInicio: inicio, dataFim: fim}, 30000).then(r => {
+    if(!r || !r.ok){
+      div.innerHTML = `<div class="info-msg erro" style="color:var(--red)">Erro ao gerar relatório: ${r.erro || 'Falha'}</div>`;
+      return;
+    }
+    
+    if(!r.relatorio || r.relatorio.length === 0){
+      div.innerHTML = '<div class="info-msg">Nenhum chamado encontrado no período.</div>';
+      return;
+    }
+    
+    let tempoTotalMinutos = 0;
+    let finalizados = 0;
+    
+    const linhas = r.relatorio.map(item => {
+      const dt = new Date(item.abertura);
+      const aberturaStr = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+      
+      let tempoText = '-';
+      if(item.minutos){
+         tempoText = `${Math.floor(item.minutos / 60)}h${item.minutos % 60}m`;
+         tempoTotalMinutos += item.minutos;
+         finalizados++;
+      }
+      
+      return `
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:8px">${aberturaStr}</td>
+          <td style="padding:8px">${item.protocolo || '-'}</td>
+          <td style="padding:8px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${item.assunto}">${item.assunto}</td>
+          <td style="padding:8px">${tempoText}</td>
+          <td style="padding:8px; color:${item.status==='FINALIZADO'?'var(--teal)':'var(--amber)'}">${item.status}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    const mediaTempo = finalizados > 0 ? Math.round(tempoTotalMinutos / finalizados) : 0;
+    const mediaText = mediaTempo > 0 ? `${Math.floor(mediaTempo / 60)}h${mediaTempo % 60}m` : '-';
+    
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding:10px; background:var(--bg3); border-radius:4px">
+        <div><strong>Total de Chamados:</strong> ${r.relatorio.length}</div>
+        <div><strong>Tempo Médio p/ Retorno (SLA):</strong> ${mediaText}</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border); color:var(--text3)">
+              <th style="padding:8px">Abertura</th>
+              <th style="padding:8px">Protocolo (AU)</th>
+              <th style="padding:8px">Assunto</th>
+              <th style="padding:8px">Tempo SLA</th>
+              <th style="padding:8px">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhas}
+          </tbody>
+        </table>
+      </div>
+    `;
+    
+  }).catch(e => {
+    div.innerHTML = `<div class="info-msg erro" style="color:var(--red)">Falha de conexão: ${e.message}</div>`;
+  });
 }
 
 /* ═══ TEMA FAV — RIO ENSOLARADO ═══
