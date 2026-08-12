@@ -6,6 +6,7 @@
 <title>ANALISTA DE REDES — NOC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 [data-theme="light"]{--bg:#eef2f7;--bg2:#fff;--bg3:#f5f8fc;--bg4:#e8f0fd;--blue:#1a6fdb;--blue2:#2d84f0;--blue-l:#e8f0fd;--blue-b:#c7dcfb;--teal:#0e9e7e;--teal-l:#e6f7f3;--amber:#d97706;--amber-l:#fef3c7;--red:#dc2626;--red-l:#fee2e2;--border:#d1dce9;--border2:#b8ccdf;--text:#1a2636;--text2:#4a647d;--text3:#8fa8be;--shadow:0 1px 3px rgba(26,111,219,.08),0 4px 16px rgba(26,111,219,.06);--shadow2:0 2px 8px rgba(26,111,219,.12),0 8px 32px rgba(26,111,219,.08);--music-bg:#fff}
 [data-theme="dark"]{--bg:#050c14;--bg2:#0a1828;--bg3:#0e2038;--bg4:#122848;--blue:#3b9eff;--blue2:#60b4ff;--blue-l:rgba(59,158,255,.12);--blue-b:rgba(59,158,255,.25);--teal:#2dd4a4;--teal-l:rgba(45,212,164,.1);--amber:#fbbf24;--amber-l:rgba(251,191,36,.1);--red:#f87171;--red-l:rgba(248,113,113,.1);--border:rgba(59,158,255,.14);--border2:rgba(59,158,255,.28);--text:#cce8f4;--text2:#6aafcc;--text3:#2a5570;--shadow:0 1px 3px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);--shadow2:0 2px 8px rgba(0,0,0,.5),0 8px 32px rgba(0,0,0,.4);--music-bg:#0a1828}
@@ -118,17 +119,17 @@ input::placeholder{color:var(--text3)}
 .preview-list{flex-direction:column;gap:4px}
 .music-player-wrap{display:flex;flex-direction:row;gap:8px;align-items:flex-end;margin-top:10px;width:100%}
 .music-controls{position:fixed;bottom:24px;right:24px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;z-index:100;background:var(--music-bg);padding:10px;border:1px solid var(--border);border-top:3px solid var(--blue);border-radius:12px;box-shadow:var(--shadow2);transition:background .35s,border-color .35s;width:184px}
-.vol-wrap{position:fixed;top:72px;right:20px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .3s ease;z-index:1000;box-shadow:var(--shadow)}
-.vol-wrap:hover{background:var(--bg3);transform:translateY(-2px)}
+.vol-wrap{position:absolute;top:-10px;right:22px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:50%;cursor:pointer;transition:all .3s ease;z-index:1000;box-shadow:var(--shadow)}
+.vol-wrap:hover{background:var(--bg3);transform:scale(1.1)}
 .vol-wrap-music{position:fixed;top:122px;right:20px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .3s ease;z-index:1000;box-shadow:var(--shadow)}
 .vol-wrap-music:hover{background:var(--bg3);transform:translateY(-2px)}
 .vol-wrap-music .vol-icon{font-size:1.1rem}
 .music-controls { transition: transform 0.3s cubic-bezier(.22,1,.36,1), opacity 0.3s ease, visibility 0.3s; }
 .music-controls.minimized { transform: translateY(120%) scale(0.8); opacity: 0; visibility: hidden; pointer-events: none; }
-.vol-slider-container{position:absolute;top:50px;right:0;background:var(--bg2);border:1px solid var(--border);padding:12px 8px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;opacity:0;visibility:hidden;transform:translateY(-10px);transition:all .3s cubic-bezier(.175,.885,.32,1.275);z-index:1001}
+.vol-slider-container{position:absolute;bottom:35px;right:-10px;background:var(--bg2);border:1px solid var(--border);padding:12px 8px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;opacity:0;visibility:hidden;transform:translateY(10px);transition:all .3s cubic-bezier(.175,.885,.32,1.275);z-index:1001}
 .vol-wrap:hover .vol-slider-container{opacity:1;visibility:visible;transform:translateY(0)}
-.vol-slider-vert{appearance:slider-vertical;width:6px;height:100px;cursor:pointer;outline:none;background:var(--bg3)}
-.vol-icon{font-size:1.2rem;opacity:.8;transition:transform .2s}
+.vol-slider-vert{appearance:slider-vertical;width:6px;height:80px;cursor:pointer;outline:none;background:var(--bg3)}
+.vol-icon{font-size:.85rem;opacity:.8;transition:transform .2s}
 .vol-wrap:hover .vol-icon{transform:scale(1.1);opacity:1}
 .port-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .pill-item label,.stack-item label,.port-item label{display:flex;align-items:center;justify-content:center;padding:7px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text2);transition:all .2s;margin:0;font-family:'Inter',sans-serif;letter-spacing:.3px;text-transform:uppercase}
@@ -552,10 +553,7 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 <canvas id="cursorGlow"></canvas>
 
 <div class="top-bar-fixed">
-<a href="https://clickip.ozmap.com.br:9994/app/" target="_blank" rel="noopener noreferrer" class="ozmap-btn so-normal" title="Abrir OZMAP em nova guia" aria-label="Abrir OZMAP">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-<span>OZMAP</span>
-</a>
+
 <button class="ozmap-btn so-normal" id="btnSla" title="Abrir o painel de SLA dos acionamentos" aria-label="Painel de SLA">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
 <span>SLA</span>
@@ -593,13 +591,6 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 </button>
 </div>
 
-<div class="vol-wrap">
-<div class="vol-slider-container">
-<input type="range" id="volSlider" class="vol-slider-vert" min="0" max="1" step="0.05" value="0.5">
-</div>
-<span class="vol-icon" title="Volume da Música">&#128266;</span>
-</div>
-
 <div class="vol-wrap-music" id="btnToggleMusicWrap" onclick="document.getElementById('mControls').classList.toggle('minimized')" title="Mostrar/Ocultar Player de Música">
 <span class="vol-icon">&#127925;</span>
 </div>
@@ -629,6 +620,12 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 <div class="music-player-wrap">
 <div id="mControls" class="music-controls">
 <button class="m-btn" id="btnMinimizarMusica" onclick="document.getElementById('mControls').classList.add('minimized')" style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-weight:bold;z-index:200;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);">&#10005;</button>
+<div class="vol-wrap">
+<div class="vol-slider-container">
+<input type="range" id="volSlider" class="vol-slider-vert" min="0" max="1" step="0.05" value="0.5">
+</div>
+<span class="vol-icon" title="Volume da Música">&#128266;</span>
+</div>
 <button class="m-btn" data-track="1">01</button>
 <button class="m-btn" data-track="2">02</button>
 <button class="m-btn" data-track="3">03</button>
@@ -1014,11 +1011,33 @@ IDENTIFICA&#199;&#195;O
     <label>Data Fim</label>
     <input type="date" id="relatorioTimFim">
   </div>
-  <button class="btn btn-main" style="padding:8px 16px; height:38px" onclick="gerarRelatorioTim()">Gerar</button>
+  <button class="btn btn-main" style="padding:8px 16px; height:38px" onclick="gerarRelatorioTim()">Buscar</button>
+  <button class="btn btn-outline" style="padding:8px 16px; height:38px; display:none" id="btnExportarPDF" onclick="exportarRelatorioPDF()">Exportar PDF</button>
 </div>
 <div id="relatorioTimConteudo" style="background:var(--bg); border-radius:6px; padding:12px; min-height: 200px">
   <div class="info-msg">Selecione o período e clique em Gerar.</div>
 </div>
+</div>
+</div>
+</div>
+<div class="copy-modal" id="modalEncerrarSla">
+<div class="copy-modal-content">
+<div class="copy-modal-header">
+<span>ENCERRAMENTO ADMINISTRATIVO</span>
+<button onclick="fecharModalEncerrarSla()">&#10005;</button>
+</div>
+<div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
+<div class="info-msg" style="margin-bottom:12px">Ao encerrar manualmente, seu e-mail será registrado na planilha junto com a justificativa.</div>
+<div class="form-group">
+<label>JUSTIFICATIVA <span style="color:var(--red)">*</span></label>
+<textarea id="justificativaEncerrarSla" rows="3" placeholder="Por que este chamado está sendo encerrado?"></textarea>
+</div>
+<input type="hidden" id="idEncerrarSla">
+<input type="hidden" id="redeEncerrarSla">
+</div>
+<div class="copy-modal-footer">
+<button class="btn btn-outline" style="min-width:120px" onclick="fecharModalEncerrarSla()">CANCELAR</button>
+<button class="btn btn-main" style="min-width:140px; background:var(--red)" onclick="confirmarEncerrarSla()">ENCERRAR</button>
 </div>
 </div>
 </div>
@@ -1083,6 +1102,7 @@ const TIPO_AC_FIXO=[
 {contexto:'NORMAL',valor:'REDE DE ACESSO - CTO DOWN',label:'CTO DOWN',pai:'',ordem:2},
 {contexto:'NORMAL',valor:'REDE DE ACESSO - HIGIENIZACAO DE CTO',label:'HIGIENIZAÇÃO',pai:'',ordem:3},
 {contexto:'NORMAL',valor:'PREVENTIVA',label:'PREVENTIVA',pai:'',ordem:4},
+{contexto:'NORMAL',valor:'INTERMITÊNCIA',label:'INTERMITÊNCIA',pai:'',ordem:5},
 {contexto:'NORMAL',valor:'CTO ATENUADA',label:'CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:1},
 {contexto:'NORMAL',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
 {contexto:'NORMAL',valor:'RAMAL GPON ATENUADO',label:'Ramal GPON atenuado (múltiplas CTOs)',pai:'REDE DE ACESSO - ATENUACAO',ordem:3},
@@ -1098,6 +1118,7 @@ const TIPO_AC_FIXO=[
 {contexto:'METRO',valor:'TROCA DE POSTE',label:'TROCA DE POSTES',pai:'',ordem:2},
 {contexto:'GPON',valor:'REDE DE ACESSO - GPON DOWN',label:'GPON OFFLINE',pai:'',ordem:1},
 {contexto:'GPON',valor:'REDE DE ACESSO - ATENUACAO',label:'ATENUAÇÃO EM GPON',pai:'',ordem:2},
+{contexto:'GPON',valor:'INTERMITÊNCIA',label:'INTERMITÊNCIA',pai:'',ordem:3},
 {contexto:'GPON',valor:'CTO ATENUADA',label:'CTO ATENUADA (geral)',pai:'REDE DE ACESSO - ATENUACAO',ordem:1},
 {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
@@ -1744,7 +1765,13 @@ function jsonp(params,timeoutMs=45000){
 function _slaCalc(item){
   const fim=item.encerramentoMs||Date.now();
   const decorrido=Math.max(0,fim-item.aberturaMs);
-  const limite=(Number(item.slaHoras)||SLA_HORAS_PADRAO)*3600000;
+  let limite=(Number(item.slaHoras)||SLA_HORAS_PADRAO)*3600000;
+  
+  // Regra de Ciclo Duplo T/C-SLA (Após a TIM responder, o SLA muda para 8h)
+  if(item.respostaMs && !item.encerramentoMs) {
+    limite = 8 * 3600000;
+  }
+  
   const pct=limite>0?decorrido/limite:0;
   let estado;
   if(item.encerramentoMs)estado='FINALIZADO';
@@ -1984,40 +2011,50 @@ function renderResumoSla(){
   }
 }
 
-/* ── encerrar chamado (dois cliques para confirmar) ── */
-function encerrarChamadoSla(id,botao){
-  if(!botao)return;
-  if(botao.dataset.confirmando!=='1'){
-    botao.dataset.confirmando='1';
-    botao.classList.add('confirmando');
-    botao.textContent='Confirmar encerramento?';
-    clearTimeout(botao._t);
-    botao._t=setTimeout(()=>{
-      botao.dataset.confirmando='0';
-      botao.classList.remove('confirmando');
-      botao.textContent='Encerrar chamado';
-    },4000);
+/* ── encerrar chamado administrativamente (Modal) ── */
+function abrirModalEncerrarSla(id, rede) {
+  $('idEncerrarSla').value = id;
+  $('redeEncerrarSla').value = rede || 'SLA';
+  $('justificativaEncerrarSla').value = '';
+  $('modalEncerrarSla').classList.add('visible');
+  $('justificativaEncerrarSla').focus();
+}
+function fecharModalEncerrarSla() {
+  $('modalEncerrarSla').classList.remove('visible');
+}
+function confirmarEncerrarSla() {
+  const id = $('idEncerrarSla').value;
+  const rede = $('redeEncerrarSla').value;
+  const just = $('justificativaEncerrarSla').value.trim();
+  
+  if (!just) {
+    showToast('A justificativa é obrigatória.', 'error', 3000);
     return;
   }
-  clearTimeout(botao._t);
-  botao.dataset.confirmando='0';
-  botao.classList.remove('confirmando');
-  botao.disabled=true;botao.textContent='Encerrando...';
-  jsonp({acao:'encerrarSla',id,encerramentoMs:Date.now(),encerradoPor:_slaOperadorAtual()},25000)
-    .then(r=>{
-      if(r&&r.ok){
-        const item=AppState.sla.itens.find(i=>i.id===id);
-        if(item){item.encerramentoMs=r.encerramentoMs||Date.now();item.encerradoPor=_slaOperadorAtual()}
-        showToast(r.jaEstava?'Esse chamado já havia sido encerrado.':'✓ Chamado encerrado.');
-        tickSla();
-      }else{
-        botao.disabled=false;botao.textContent='Encerrar chamado';
-        showToast('Não foi possível encerrar: '+((r&&r.erro)||'erro'),'error',5000);
+  
+  fecharModalEncerrarSla();
+  showToast('Encerrando chamado...');
+  
+  jsonp({
+    acao: 'encerrarAdminSla',
+    id: id,
+    rede: rede,
+    justificativa: just
+  }, 25000)
+    .then(r => {
+      if (r && r.ok) {
+        showToast('✓ Chamado encerrado administrativamente.');
+        if (rede === 'TIM') {
+          carregarTcSla(true);
+        } else {
+          carregarSla(true);
+        }
+      } else {
+        showToast('Não foi possível encerrar: ' + ((r && r.erro) || 'erro'), 'error', 5000);
       }
     })
-    .catch(e=>{
-      botao.disabled=false;botao.textContent='Encerrar chamado';
-      showToast('Falha ao encerrar ('+e.message+').','error',5000);
+    .catch(e => {
+      showToast('Falha ao encerrar (' + e.message + ').', 'error', 5000);
     });
 }
 
@@ -2057,7 +2094,7 @@ function bindEventsSla(){
   $('btnSlaAtualizar').addEventListener('click',()=>{carregarSla();showToast('↻ Buscando chamados...')});
   $('slaGrid').addEventListener('click',e=>{
     const b=e.target.closest('.sla-btn-encerrar');
-    if(b&&!b.disabled)encerrarChamadoSla(b.dataset.id,b);
+    if(b&&!b.disabled)abrirModalEncerrarSla(b.dataset.id, 'SLA');
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.sla.aberto)fecharPainelSla()});
   // primeira carga em segundo plano, sem atrapalhar o carregamento da tela
@@ -2067,6 +2104,10 @@ function bindEventsSla(){
   $('btnTcSla').addEventListener('click',alternarPainelTcSla);
   $('btnTcSlaFechar').addEventListener('click',fecharPainelTcSla);
   $('btnTcSlaAtualizar').addEventListener('click',()=>{carregarTcSla();showToast('↻ Buscando chamados no Gmail...')});
+  $('tcSlaGrid').addEventListener('click',e=>{
+    const b=e.target.closest('.sla-btn-encerrar');
+    if(b&&!b.disabled)abrirModalEncerrarSla(b.dataset.id, 'TIM');
+  });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.tcSla.aberto)fecharPainelTcSla()});
   setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},6000);
 }
@@ -2113,12 +2154,24 @@ function atualizarBadgeTcSla(){
 
 function _tcSlaCardHTML(item){
   const c=_slaCalc(item);
-  const statusResp = item.encerramentoMs ? 'RESPONDIDO' : (c.estado==='ESTOURADO' ? 'SEM RESPOSTA' : 'AGUARDANDO');
-  const statusCor = item.encerramentoMs ? 'var(--teal)' : (c.estado==='ESTOURADO' ? 'var(--red)' : 'var(--amber)');
+  let statusResp = 'AGUARDANDO TIM';
+  let statusCor = 'var(--amber)';
+  
+  if (item.encerramentoMs) {
+    statusResp = 'NORMALIZADO';
+    statusCor = 'var(--text3)';
+  } else if (item.respostaMs) {
+    statusResp = 'TIM RESPONDEU (AG. NORMALIZAÇÃO)';
+    statusCor = 'var(--blue)';
+  } else if (c.estado === 'ESTOURADO') {
+    statusResp = 'SEM RESPOSTA TIM';
+    statusCor = 'var(--red)';
+  }
+
   return `<div class="sla-card-faixa"></div>
 <div class="sla-card-corpo">
   <div class="sla-card-topo">
-    <span class="sla-badge-rede">TIM</span>
+    <span class="sla-badge-rede" ${item.respostaMs && !item.encerramentoMs ? 'style="background:var(--blue-l);color:var(--blue);border-color:rgba(59,158,255,.35)"' : ''}>TIM</span>
     <span class="sla-abertura">${_slaFmtHora(item.aberturaMs)}</span>
   </div>
   <div class="sla-card-tipo" style="font-size:.82rem;line-height:1.3">${_esc(item.resumo||'Sem Assunto')}</div>
@@ -2127,10 +2180,11 @@ function _tcSlaCardHTML(item){
       <svg class="sla-ring" viewBox="0 0 160 160">
         <circle class="anel-fundo" cx="80" cy="80" r="${SLA_RING_R}"></circle>
         <circle class="anel-frente" cx="80" cy="80" r="${SLA_RING_R}"
-                stroke-dasharray="${SLA_RING_C.toFixed(1)}" stroke-dashoffset="${SLA_RING_C.toFixed(1)}"></circle>
+                stroke-dasharray="${SLA_RING_C.toFixed(1)}" stroke-dashoffset="${SLA_RING_C.toFixed(1)}"
+                ${item.respostaMs && !item.encerramentoMs ? 'style="stroke:var(--blue)"' : ''}></circle>
       </svg>
       <div class="sla-ring-centro">
-        <div class="sla-tempo">00:00:00</div>
+        <div class="sla-tempo" ${item.respostaMs && !item.encerramentoMs ? 'style="color:var(--blue)"' : ''}>00:00:00</div>
         <div class="sla-tempo-rot">de ${_slaFmtDur(c.limite)}</div>
       </div>
     </div>
@@ -2141,8 +2195,9 @@ function _tcSlaCardHTML(item){
     ${item.dataHoraFalha?`<div class="sla-linha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val destaque">${_esc(item.dataHoraFalha)}</span></div>`:''}
     ${item.solicitante?`<div class="sla-linha"><span class="sla-linha-rot">Solicitante</span><span class="sla-linha-val">${_esc(item.solicitante)}</span></div>`:''}
     ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val">${_esc(item.alvo)}</span></div>`:''}
-    <div class="sla-linha"><span class="sla-linha-rot">Retorno TIM</span><span class="sla-linha-val" style="color:${statusCor};font-weight:600">${statusResp}</span></div>
+    <div class="sla-linha"><span class="sla-linha-rot">Status</span><span class="sla-linha-val" style="color:${statusCor};font-weight:600">${statusResp}</span></div>
   </div>
+  <button class="sla-btn-encerrar" data-id="${_esc(item.id)}">Normalizar / Encerrar</button>
 </div>`;
 }
 
@@ -2354,9 +2409,28 @@ function gerarRelatorioTim(){
         </table>
       </div>
     `;
+    $('btnExportarPDF').style.display = 'inline-block';
     
   }).catch(e => {
     div.innerHTML = `<div class="info-msg erro" style="color:var(--red)">Falha de conexão: ${e.message}</div>`;
+  });
+}
+
+function exportarRelatorioPDF() {
+  const elemento = $('relatorioTimConteudo');
+  if(!elemento) return;
+  
+  const opt = {
+    margin:       0.5,
+    filename:     `relatorio_tim_${$('relatorioTimInicio').value}_a_${$('relatorioTimFim').value}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+  };
+  
+  showToast('Gerando PDF...', 'info', 2000);
+  html2pdf().set(opt).from(elemento).save().then(()=>{
+    showToast('✓ PDF gerado com sucesso.');
   });
 }
 
