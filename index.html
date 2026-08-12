@@ -236,6 +236,12 @@ input::placeholder{color:var(--text3)}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--teal);color:var(--text);font-family:'Inter',sans-serif;font-size:.8rem;font-weight:500;padding:10px 18px;border-radius:8px;z-index:2000;opacity:0;transition:opacity .3s ease,transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.error{border-left-color:var(--red);color:var(--red)}
+/* ═══ MODAL SLA MANUAL ═══ */
+.btn-add-sla { background: var(--blue-l); border: 1px solid var(--blue-b); color: var(--blue); width: 26px; height: 26px; border-radius: 6px; font-size: 1.2rem; font-weight: 700; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; margin-left: 12px; }
+.btn-add-sla:hover { background: var(--blue); color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(26,111,219,0.3); }
+.sla-toggles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); }
+.sla-toggle-btn { padding: 6px 12px; border-radius: 20px; font-size: 0.68rem; font-family: 'Share Tech Mono', monospace; letter-spacing: 1px; cursor: pointer; background: var(--bg3); border: 1px solid var(--border); color: var(--text3); transition: all 0.2s; text-transform: uppercase; font-weight: 700; }
+.sla-toggle-btn.active { background: var(--blue-l); border-color: var(--blue2); color: var(--blue); }
 /* ═══ BUSCA TÉCNICOS ═══ */
 .tec-search-wrap{position:relative;margin-bottom:6px}
 .tec-search-wrap input[type="text"]{padding-left:34px;font-size:.82rem}
@@ -938,7 +944,7 @@ IDENTIFICA&#199;&#195;O
 <section id="slaView">
 <div class="sla-header">
 <div class="sla-header-txt">
-<div class="sla-titulo"><span class="hl">Painel</span> de SLA</div>
+<div class="sla-titulo" style="display:flex;align-items:center"><span class="hl">Painel</span> de SLA <button class="btn-add-sla" id="btnOpenSlaManual" onclick="abrirModalSlaManual()" title="Adicionar SLA Manual">+</button></div>
 <div class="sla-sub-titulo">Acionamentos em andamento &middot; SLA padr&#227;o de 4 horas</div>
 </div>
 <div class="sla-resumo" id="slaResumo"></div>
@@ -951,6 +957,55 @@ IDENTIFICA&#199;&#195;O
 <span class="signature-name">Lucas Paes</span>
 <div class="signature-line"></div>
 <span class="signature-role">ANALYST &#183; NOC</span>
+</div>
+
+<div class="copy-modal" id="modalSlaManual">
+<div class="copy-modal-content">
+<div class="copy-modal-header">
+<span>SLA MANUAL</span>
+<button onclick="fecharModalSlaManual()">&#10005;</button>
+</div>
+<div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
+<div class="sla-toggles">
+<div class="sla-toggle-btn active" id="btnTgg-slaManualOs" onclick="toggleSlaCampo('slaManualOs')">O.S</div>
+<div class="sla-toggle-btn active" id="btnTgg-slaManualHoras" onclick="toggleSlaCampo('slaManualHoras')">SLA (HORAS)</div>
+<div class="sla-toggle-btn active" id="btnTgg-slaManualDesc" onclick="toggleSlaCampo('slaManualDesc')">DESCRIÇÃO</div>
+<div class="sla-toggle-btn active" id="btnTgg-slaManualPop" onclick="toggleSlaCampo('slaManualPop')">POP</div>
+</div>
+<div class="form-group" id="wrap-slaManualProblema">
+<label>PROBLEMA/EVENTO <span style="color:var(--red)">*</span></label>
+<input type="text" id="slaManualProblema" placeholder="Digite o problema ou evento">
+</div>
+<div class="form-group" id="wrap-slaManualTecnico">
+<label>TÉCNICO <span style="color:var(--red)">*</span></label>
+<input type="text" id="slaManualTecnico" placeholder="Nome do técnico">
+</div>
+<div class="form-group" id="wrap-slaManualOperador">
+<label>OPERADOR (NOC) <span style="color:var(--red)">*</span></label>
+<select id="slaManualOperador"><option value="" disabled selected>Selecione...</option></select>
+</div>
+<div class="form-group" id="wrap-slaManualOs">
+<label>O.S</label>
+<input type="text" id="slaManualOs" placeholder="Número da OS">
+</div>
+<div class="form-group" id="wrap-slaManualHoras">
+<label>SLA (QUANTAS HORAS)</label>
+<input type="number" id="slaManualHoras" placeholder="Ex: 4" value="4">
+</div>
+<div class="form-group" id="wrap-slaManualDesc">
+<label>DESCRIÇÃO DA ATIVIDADE</label>
+<textarea id="slaManualDesc" rows="3" placeholder="Detalhes adicionais..."></textarea>
+</div>
+<div class="form-group" id="wrap-slaManualPop">
+<label>POP</label>
+<input type="text" id="slaManualPop" placeholder="Ex: POP CENTRO">
+</div>
+</div>
+<div class="copy-modal-footer">
+<button class="btn btn-clear btn-editar" onclick="fecharModalSlaManual()">Cancelar</button>
+<button class="btn btn-main btn-seguir" id="btnSalvarSlaManual" onclick="salvarSlaManual()">Adicionar</button>
+</div>
+</div>
 </div>
 
 <script>
@@ -1246,10 +1301,14 @@ function garantirRedesCarregadas(){
     const cache=cacheGet('REDE_'+r);
     if(cache){AppState.cacheRedes[r]=cache;return} // hidratado do cache local
     const cb=`cbIdentRede_${r}`;
+    let respondeu=false;
+    const timer=setTimeout(()=>{if(!respondeu){respondeu=true;delete window[cb]}},20000);
     const s=document.createElement('script');
     s.src=`${GAS_URL}?aba=${r}&callback=${cb}`;
+    s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);delete window[cb]}};
     document.body.appendChild(s);
     window[cb]=d=>{
+      if(respondeu)return;respondeu=true;clearTimeout(timer);
       const n=d.map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x,_rede:r}));
       AppState.cacheRedes[r]=n;
       cacheSet('REDE_'+r,n);
@@ -1505,11 +1564,16 @@ function carregarOLTs(){
   const cache=cacheGet('OLTs');
   if(cache){AppState.oltDB=cache;AppState.oltDBStatus='ready';return}
   AppState.oltDBStatus='loading';
+  let respondeu=false;
+  const timer=setTimeout(()=>{
+    if(!respondeu){respondeu=true;AppState.oltDBStatus='error'}
+  },20000);
   const s=document.createElement('script');
   s.src=`${GAS_URL}?aba=OLTs&callback=cbOLTs`;
-  s.onerror=()=>{AppState.oltDBStatus='error'};
+  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);AppState.oltDBStatus='error'}};
   document.body.appendChild(s);
   window.cbOLTs=d=>{
+    if(respondeu)return;respondeu=true;clearTimeout(timer);
     const lista=(d||[]).map(x=>({nome:String(x.col1||x.nome||'').trim(),modelo:String(x.col2||x.modelo||'').trim().toUpperCase()})).filter(o=>o.nome);
     AppState.oltDB=lista;AppState.oltDBStatus='ready';
     cacheSet('OLTs',lista);
@@ -2184,11 +2248,15 @@ function carregarTecnicos(){
   const cache=cacheGet('TECNICOS');
   if(cache){_aplicarTecnicos(cache);return}
   AppState.tecnicosStatus='loading';AppState.tecnicos=[];
+  let respondeu=false;
+  const _tecErro=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos. <a href="#" onclick="AppState.tecnicosStatus=\'idle\';carregarTecnicos();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderGponEmpresas()};
+  const timer=setTimeout(()=>{if(!respondeu){respondeu=true;_tecErro()}},20000);
   const s=document.createElement('script');
   s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;
-  s.onerror=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos.</div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderGponEmpresas()};
+  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);_tecErro()}};
   document.body.appendChild(s);
   window.cbTec=d=>{
+    if(respondeu)return;respondeu=true;clearTimeout(timer);
     const lista=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
     cacheSet('TECNICOS',lista);
     _aplicarTecnicos(lista);
@@ -2220,15 +2288,19 @@ function carregarCTOs(rede){
   AppState.ctosStatus='loading';
   AppState.baseDados=[];
   atualizarPreviewRamal(); // mostra "carregando" imediatamente, se estiver no modo ramal
-  const cb=`cbRede_${rede}`,s=document.createElement('script');
-  s.src=`${GAS_URL}?aba=${rede}&callback=${cb}`;
-  s.onerror=()=>{
+  let respondeu=false;
+  const _ctoErro=()=>{
     AppState.ctosStatus='error';
-    DOM.listaCTOs.innerHTML='<div class="info-msg">Erro ao carregar CTOs.</div>';
+    DOM.listaCTOs.innerHTML='<div class="info-msg">Erro ao carregar CTOs. <a href="#" onclick="carregarCTOs(\''+rede+'\');return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>';
     atualizarPreviewRamal();
   };
+  const timer=setTimeout(()=>{if(!respondeu){respondeu=true;_ctoErro()}},20000);
+  const cb=`cbRede_${rede}`,s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=${rede}&callback=${cb}`;
+  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);_ctoErro()}};
   document.body.appendChild(s);
   window[cb]=d=>{
+    if(respondeu)return;respondeu=true;clearTimeout(timer);
     const n=(d||[]).map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x}));
     AppState.cacheRedes[rede]=n;
     AppState.baseDados=n;
@@ -2751,9 +2823,108 @@ function carregarOperadores(){
   }
 }
 function getOperadorKey(op){return`${op.nome}|||${op.setor||''}`}
-function renderOperadores(){const sel=$('operadorSelect');if(!sel)return;const salvo=sel.value||localStorage.getItem('noc-operador')||'';sel.innerHTML='<option value="">&#8212; Nenhum operador &#8212;</option>';AppState.operadores.forEach(op=>{const o=document.createElement('option');o.value=getOperadorKey(op);o.textContent=op.setor?`${op.nome} - ${op.setor}`:op.nome;sel.appendChild(o)});if(salvo!==''&&AppState.operadores.some(op=>getOperadorKey(op)===salvo))sel.value=salvo;atualizarTextoModal()}
+function renderOperadores(){
+  const sel=$('operadorSelect');
+  const selModal=$('slaManualOperador');
+  const salvo=localStorage.getItem('noc-operador')||'';
+  if(sel){
+    const atualSel=sel.value||salvo;
+    sel.innerHTML='<option value="">&#8212; Nenhum operador &#8212;</option>';
+    AppState.operadores.forEach(op=>{const o=document.createElement('option');o.value=getOperadorKey(op);o.textContent=op.setor?`${op.nome} - ${op.setor}`:op.nome;sel.appendChild(o)});
+    if(atualSel!==''&&AppState.operadores.some(op=>getOperadorKey(op)===atualSel))sel.value=atualSel;
+  }
+  if(selModal){
+    const atualMod=selModal.value||salvo;
+    selModal.innerHTML='<option value="">Selecione...</option>';
+    AppState.operadores.forEach(op=>{const o=document.createElement('option');o.value=getOperadorKey(op);o.textContent=op.setor?`${op.nome} - ${op.setor}`:op.nome;selModal.appendChild(o)});
+    if(atualMod!==''&&AppState.operadores.some(op=>getOperadorKey(op)===atualMod))selModal.value=atualMod;
+  }
+  atualizarTextoModal();
+}
 function construirMensagemComOperador(base=AppState.conteudoCopiado){const chave=$('operadorSelect').value;let msg=base;const op=AppState.operadores.find(item=>getOperadorKey(item)===chave);if(op)msg=`_*${op.nome}${op.setor?` - {${op.setor}}`:''}:*_\n\n`+msg;return msg}
 function atualizarTextoModal(){const el=$('copyModalText');if(!el)return;el.textContent=construirMensagemComOperador()}
+
+function abrirModalSlaManual() {
+  if (AppState.operadores.length === 0) carregarOperadores();
+  $('modalSlaManual').classList.add('active');
+}
+function fecharModalSlaManual() {
+  $('modalSlaManual').classList.remove('active');
+}
+function toggleSlaCampo(campoId) {
+  const wrap = $('wrap-' + campoId);
+  const btn = $('btnTgg-' + campoId);
+  const input = $(campoId);
+  if (wrap.classList.contains('hidden')) {
+    wrap.classList.remove('hidden');
+    btn.classList.add('active');
+  } else {
+    wrap.classList.add('hidden');
+    btn.classList.remove('active');
+    input.value = '';
+  }
+}
+function salvarSlaManual() {
+  const prob = $('slaManualProblema').value.trim();
+  const tec = $('slaManualTecnico').value.trim();
+  const opKey = $('slaManualOperador').value;
+  if (!prob) return showToast('Preencha o Problema/Evento', 'error');
+  if (!tec) return showToast('Preencha o Técnico', 'error');
+  if (!opKey) return showToast('Selecione o Operador (NOC)', 'error');
+  
+  const opObj = AppState.operadores.find(item=>getOperadorKey(item)===opKey);
+  const opNome = opObj ? opObj.nome : '';
+  const hs = $('slaManualHoras').value.trim();
+  const os = $('slaManualOs').value.trim();
+  const desc = $('slaManualDesc').value.trim();
+  const pop = $('slaManualPop').value.trim();
+
+  const id = os || ('OS' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,6).toUpperCase());
+  let resumo = prob;
+  if (os) resumo = `[${os}] ` + resumo;
+  if (pop) resumo += ` · ${pop}`;
+  if (desc) resumo += ` · ${desc}`;
+
+  const payload = {
+    acao: 'abrirSla',
+    id: id,
+    resumo: _slaCap(resumo, 500),
+    rede: 'MANUAL',
+    tipo: _slaCap(prob, 140),
+    alvo: _slaCap(pop || desc || 'Acionamento manual', 240),
+    empresa: '-',
+    tecnicos: _slaCap(tec, 200),
+    operador: opNome,
+    aberturaMs: Date.now(),
+    slaHoras: hs ? Number(hs) : (typeof SLA_HORAS_PADRAO !== 'undefined' ? SLA_HORAS_PADRAO : 4)
+  };
+
+  const btn = $('btnSalvarSlaManual');
+  btn.innerHTML = 'Adicionando...';
+  btn.disabled = true;
+
+  jsonp(payload, 25000)
+    .then(r => {
+      if (r && r.ok) {
+        showToast('✓ SLA Manual adicionado com sucesso!');
+        fecharModalSlaManual();
+        $('slaManualProblema').value = '';
+        $('slaManualTecnico').value = '';
+        $('slaManualOs').value = '';
+        $('slaManualDesc').value = '';
+        $('slaManualPop').value = '';
+        if(typeof atualizarBadgeSla === 'function') atualizarBadgeSla();
+        if(typeof listarSla === 'function') listarSla();
+      } else {
+        showToast('Falha ao registrar SLA: ' + ((r && r.erro) || 'erro'), 'error', 5000);
+      }
+    })
+    .catch(e => showToast('Falha na comunicação com SLA (' + e.message + ')', 'error', 5000))
+    .finally(() => {
+      btn.innerHTML = 'Adicionar';
+      btn.disabled = false;
+    });
+}
 
 async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;ctos.forEach(info=>{const link=(info.lat&&info.lng)?`https://www.google.com/maps?q=${info.lat},${info.lng}`:'Sem coordenadas';corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · ${ctos.length} CTOs: ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas ${portas}`:_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
