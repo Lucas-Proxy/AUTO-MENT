@@ -1013,6 +1013,7 @@ IDENTIFICA&#199;&#195;O
   </div>
   <button class="btn btn-main" style="padding:8px 16px; height:38px" onclick="gerarRelatorioTim()">Buscar</button>
   <button class="btn btn-outline" style="padding:8px 16px; height:38px; display:none" id="btnExportarPDF" onclick="exportarRelatorioPDF()">Exportar PDF</button>
+  <button class="btn btn-outline" style="padding:8px 16px; height:38px; display:none" id="btnExportarTXT" onclick="exportarRelatorioTXT()">Exportar TXT</button>
 </div>
 <div id="relatorioTimConteudo" style="background:var(--bg); border-radius:6px; padding:12px; min-height: 200px">
   <div class="info-msg">Selecione o período e clique em Gerar.</div>
@@ -2335,12 +2336,17 @@ function _reprogramarPollTcSla(){
   AppState.tcSla.timerPoll=setInterval(()=>carregarTcSla(true),intervalo);
 }
 
+let _relatorioTimData = null; // guarda os dados já calculados do último relatório, para exportar em PDF/TXT sem depender do HTML renderizado
+
 function abrirModalRelatorioTim(){
   const hoje = new Date();
   const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   $('relatorioTimInicio').value = primeiroDia.toISOString().split('T')[0];
   $('relatorioTimFim').value = hoje.toISOString().split('T')[0];
   $('relatorioTimConteudo').innerHTML = '<div class="info-msg">Selecione o período e clique em Gerar.</div>';
+  $('btnExportarPDF').style.display = 'none';
+  $('btnExportarTXT').style.display = 'none';
+  _relatorioTimData = null;
   $('modalRelatorioTim').classList.add('visible');
 }
 
@@ -2359,7 +2365,10 @@ function gerarRelatorioTim(){
   }
   
   div.innerHTML = '<div class="info-msg">Gerando relatório, aguarde...</div>';
-  
+  $('btnExportarPDF').style.display = 'none';
+  $('btnExportarTXT').style.display = 'none';
+  _relatorioTimData = null;
+
   jsonp({acao:'relatorioTim', dataInicio: inicio, dataFim: fim}, 30000).then(r => {
     if(!r || !r.ok){
       div.innerHTML = `<div class="info-msg erro" style="color:var(--red)">Erro ao gerar relatório: ${r.erro || 'Falha'}</div>`;
@@ -2374,14 +2383,14 @@ function gerarRelatorioTim(){
     let tempoRespostaMinutos = 0;
     let finalizados = 0;
     
-    const linhas = r.relatorio.map(item => {
+    const linhasObj = r.relatorio.map(item => {
       const dtAber = item.aberturaMs ? new Date(item.aberturaMs) : new Date(item.abertura);
       const aberturaStr = `${String(dtAber.getDate()).padStart(2,'0')}/${String(dtAber.getMonth()+1).padStart(2,'0')} ${String(dtAber.getHours()).padStart(2,'0')}:${String(dtAber.getMinutes()).padStart(2,'0')}`;
       const abMs = dtAber.getTime();
-      
+
       let tempoTextResp = '-';
       let tempoTextNorm = '-';
-      
+
       if (item.respostaMs) {
          const diff = Math.max(0, Math.floor((item.respostaMs - abMs) / 60000));
          tempoTextResp = `${Math.floor(diff / 60)}h${diff % 60}m`;
@@ -2392,21 +2401,33 @@ function gerarRelatorioTim(){
          const diff = Math.max(0, Math.floor((item.dataNormalizacao - abMs) / 60000));
          tempoTextNorm = `${Math.floor(diff / 60)}h${diff % 60}m`;
       }
-      
-      return `
+
+      return {
+        abertura: aberturaStr,
+        solicitante: item.solicitante || '-',
+        designacao: item.designacao || '-',
+        falhaEm: item.dataHoraFalha || '-',
+        protocolo: item.protocolo || '-',
+        assunto: item.assunto || '-',
+        tempoResp: tempoTextResp,
+        tempoNorm: tempoTextNorm,
+        status: item.status || '-'
+      };
+    });
+
+    const linhas = linhasObj.map(l => `
         <tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:8px">${aberturaStr}</td>
-          <td style="padding:8px">${item.solicitante || '-'}</td>
-          <td style="padding:8px">${item.designacao || '-'}</td>
-          <td style="padding:8px">${item.dataHoraFalha || '-'}</td>
-          <td style="padding:8px">${item.protocolo || '-'}</td>
-          <td style="padding:8px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${item.assunto}">${item.assunto}</td>
-          <td style="padding:8px">${tempoTextResp}</td>
-          <td style="padding:8px">${tempoTextNorm}</td>
-          <td style="padding:8px; color:${item.status==='FINALIZADO'||item.status==='ENCERRADO ADMIN'?'var(--teal)':'var(--amber)'}">${item.status}</td>
+          <td style="padding:8px">${l.abertura}</td>
+          <td style="padding:8px">${l.solicitante}</td>
+          <td style="padding:8px">${l.designacao}</td>
+          <td style="padding:8px">${l.falhaEm}</td>
+          <td style="padding:8px">${l.protocolo}</td>
+          <td style="padding:8px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${l.assunto}">${l.assunto}</td>
+          <td style="padding:8px">${l.tempoResp}</td>
+          <td style="padding:8px">${l.tempoNorm}</td>
+          <td style="padding:8px; color:${l.status==='FINALIZADO'||l.status==='ENCERRADO ADMIN'?'var(--teal)':'var(--amber)'}">${l.status}</td>
         </tr>
-      `;
-    }).join('');
+      `).join('');
     
     const mediaTempo = finalizados > 0 ? Math.round(tempoRespostaMinutos / finalizados) : 0;
     const mediaText = mediaTempo > 0 ? `${Math.floor(mediaTempo / 60)}h${mediaTempo % 60}m` : '-';
@@ -2437,8 +2458,10 @@ function gerarRelatorioTim(){
         </table>
       </div>
     `;
+    _relatorioTimData = { linhas: linhasObj, inicio, fim, total: r.relatorio.length, mediaText };
     $('btnExportarPDF').style.display = 'inline-block';
-    
+    $('btnExportarTXT').style.display = 'inline-block';
+
   }).catch(e => {
     div.innerHTML = `<div class="info-msg erro" style="color:var(--red)">Falha de conexão: ${e.message}</div>`;
   });
@@ -2452,14 +2475,70 @@ function exportarRelatorioPDF() {
     margin:       0.5,
     filename:     `relatorio_tim_${$('relatorioTimInicio').value}_a_${$('relatorioTimFim').value}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2 },
+    // useCORS: true evita que as fontes do Google Fonts (carregadas de outro
+    // domínio) "contaminem" o canvas e façam a geração falhar em silêncio
+    html2canvas:  { scale: 2, useCORS: true },
     jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
   };
-  
+
   showToast('Gerando PDF...', 'info', 2000);
   html2pdf().set(opt).from(elemento).save().then(()=>{
     showToast('✓ PDF gerado com sucesso.');
+  }).catch(e => {
+    showToast('Falha ao gerar PDF (' + ((e && e.message) || e) + ').', 'error', 6000);
   });
+}
+
+function _montarTextoRelatorioTim(d){
+  const agora = new Date();
+  const agoraStr = `${String(agora.getDate()).padStart(2,'0')}/${String(agora.getMonth()+1).padStart(2,'0')}/${agora.getFullYear()} ${String(agora.getHours()).padStart(2,'0')}:${String(agora.getMinutes()).padStart(2,'0')}`;
+
+  let txt = '';
+  txt += '========================================================\n';
+  txt += 'RELATÓRIO T/C-SLA (TIM) - GRUPO CLICK IP\n';
+  txt += `Período: ${d.inicio} a ${d.fim}\n`;
+  txt += `Gerado em: ${agoraStr}\n`;
+  txt += `Total de chamados: ${d.total}\n`;
+  txt += `Tempo médio de retorno TIM (SLA): ${d.mediaText}\n`;
+  txt += '========================================================\n\n';
+
+  d.linhas.forEach((l, i) => {
+    txt += `[${i + 1}] Abertura: ${l.abertura}\n`;
+    txt += `    Solicitante: ${l.solicitante}\n`;
+    txt += `    Designação: ${l.designacao}\n`;
+    txt += `    Falha em: ${l.falhaEm}\n`;
+    txt += `    Protocolo (AU): ${l.protocolo}\n`;
+    txt += `    Assunto: ${l.assunto}\n`;
+    txt += `    Tempo resposta TIM: ${l.tempoResp}\n`;
+    txt += `    Tempo normalização: ${l.tempoNorm}\n`;
+    txt += `    Status: ${l.status}\n`;
+    txt += '--------------------------------------------------------\n';
+  });
+
+  return txt;
+}
+
+function exportarRelatorioTXT() {
+  if (!_relatorioTimData || !_relatorioTimData.linhas.length) {
+    showToast('Gere o relatório antes de exportar.', 'error', 3000);
+    return;
+  }
+
+  try {
+    const txt = _montarTextoRelatorioTim(_relatorioTimData);
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio_tim_${_relatorioTimData.inicio}_a_${_relatorioTimData.fim}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    showToast('✓ TXT gerado com sucesso.');
+  } catch (e) {
+    showToast('Falha ao gerar TXT (' + ((e && e.message) || e) + ').', 'error', 5000);
+  }
 }
 
 /* ═══ TEMA FAV — RIO ENSOLARADO ═══
