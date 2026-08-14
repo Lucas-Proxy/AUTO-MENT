@@ -494,6 +494,8 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 .sla-ring-centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none}
 .sla-tempo{font-family:'Share Tech Mono',monospace;font-size:1.15rem;font-weight:700;color:var(--text);letter-spacing:1px;line-height:1;font-variant-numeric:tabular-nums}
 .sla-tempo-rot{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
+/* chamado de dias marca 3 dígitos de hora e transbordava o anel */
+.sla-tempo.longo{font-size:.92rem;letter-spacing:0}
 .sla-excedente{font-family:'Share Tech Mono',monospace;font-size:.56rem;font-weight:700;letter-spacing:1px;color:var(--red);text-transform:uppercase}
 .sla-info{display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--border);padding-top:9px}
 .sla-linha{display:flex;flex-direction:column;gap:2px}
@@ -529,7 +531,98 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 .sla-aviso-txt{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--text3);letter-spacing:1px;line-height:1.7}
 .sla-aviso.erro .sla-aviso-txt{color:var(--red)}
 .sla-rodape{max-width:1600px;margin:22px auto 0;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px;text-align:center}
+
+/* ══════════════════════════════════════════════════════════
+   T/C-SLA v3 — FILAS DE TRABALHO
+   ══════════════════════════════════════════════════════════
+   O painel antigo era um grid único ordenado por percentual de SLA. Com
+   prazo de 30 min, tudo que passava de meia hora ficava com percentual
+   acima de 1 — a ordenação virava empate, os cards ficavam todos
+   vermelhos e o painel parava de dizer o que fazer. Aqui cada chamado
+   entra numa fila com um verbo, e o vermelho volta a significar
+   "alguém precisa agir agora".                                        */
+.tc-filtro-wrap{max-width:1600px;margin:0 auto 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tc-filtro{flex:1;min-width:210px;max-width:340px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:.8rem;color:var(--text)}
+.tc-filtro:focus{border-color:var(--blue2);outline:none;box-shadow:0 0 0 3px rgba(59,158,255,.15)}
+.tc-filtro-info{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:1.4px;color:var(--text3);text-transform:uppercase}
+
+/* grid único: os cards ficam um do lado do outro, como antes. A fila a
+   que cada um pertence aparece no selo colorido do próprio card e nos
+   indicadores do topo, que filtram ao clique. */
+.tc-filas{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(233px,1fr));gap:13px;align-items:start}
+.tc-filas .sla-aviso{grid-column:1/-1}
+.sla-card.tc-COBRAR .sla-badge-rede,.sla-card.tc-ESCALONAR .sla-badge-rede{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.35)}
+.sla-card.tc-AGUARDANDO_AU .sla-badge-rede{background:var(--amber-l);color:var(--amber);border-color:rgba(217,119,6,.35)}
+.sla-card.tc-EM_TRATATIVA .sla-badge-rede{background:var(--blue-l);color:var(--blue);border-color:var(--blue-b)}
+.sla-card.tc-AGUARDANDO_NORM .sla-badge-rede,.sla-card.tc-NORMALIZADO .sla-badge-rede{background:var(--bg3);color:var(--text3);border-color:var(--border)}
+.sla-card-topo{flex-wrap:wrap;row-gap:4px}
+.sla-card-topo .sla-badge-rede{max-width:100%}
+.tc-fila{display:block}
+.tc-fila.vazia{display:none}
+.tc-fila-cab{display:flex;align-items:center;gap:10px;margin-bottom:11px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.tc-fila-pino{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.tc-fila-nome{font-family:'Bebas Neue',cursive;font-size:1.02rem;letter-spacing:3.4px;color:var(--text);text-transform:uppercase;line-height:1}
+.tc-fila-cont{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--text3);letter-spacing:1.4px;border:1px solid var(--border);border-radius:20px;padding:1px 8px}
+.tc-fila-dica{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase;margin-left:auto;text-align:right}
+.tc-fila-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(233px,1fr));gap:13px;align-items:start}
+
+/* cores por fila — o pino do cabeçalho e a faixa do card falam a mesma língua */
+.tc-fila[data-fila="COBRAR"] .tc-fila-pino{background:var(--red);box-shadow:0 0 8px var(--red)}
+.tc-fila[data-fila="COBRAR"] .tc-fila-nome{color:var(--red)}
+.tc-fila[data-fila="ESCALONAR"] .tc-fila-pino{background:var(--red);box-shadow:0 0 8px var(--red)}
+.tc-fila[data-fila="ESCALONAR"] .tc-fila-nome{color:var(--red)}
+.tc-fila[data-fila="AGUARDANDO_AU"] .tc-fila-pino{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.tc-fila[data-fila="EM_TRATATIVA"] .tc-fila-pino{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.tc-fila[data-fila="AGUARDANDO_NORM"] .tc-fila-pino{background:var(--text3)}
+.tc-fila[data-fila="NORMALIZADO"] .tc-fila-pino{background:var(--teal);box-shadow:0 0 8px var(--teal)}
+
+/* estados do card. Só COBRAR e ESCALONAR pulsam: são as duas únicas
+   situações em que existe ação humana pendente. */
+.sla-card.tc-COBRAR{border-color:var(--red);box-shadow:var(--shadow2),0 0 0 1px var(--red);animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both,slaPulsar 1.6s ease-in-out infinite}
+.sla-card.tc-COBRAR .sla-card-faixa,.sla-card.tc-ESCALONAR .sla-card-faixa{background:var(--red)}
+.sla-card.tc-COBRAR .anel-frente,.sla-card.tc-ESCALONAR .anel-frente{stroke:var(--red)}
+.sla-card.tc-COBRAR .sla-tempo,.sla-card.tc-ESCALONAR .sla-tempo{color:var(--red)}
+.sla-card.tc-ESCALONAR{border-color:var(--red);box-shadow:var(--shadow2),0 0 0 1px var(--red);animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both,slaPulsar 1.6s ease-in-out infinite}
+.sla-card.tc-AGUARDANDO_AU{border-color:rgba(217,119,6,.45)}
+.sla-card.tc-AGUARDANDO_AU .sla-card-faixa{background:var(--amber)}
+.sla-card.tc-AGUARDANDO_AU .anel-frente{stroke:var(--amber)}
+.sla-card.tc-AGUARDANDO_AU .sla-tempo{color:var(--amber)}
+.sla-card.tc-EM_TRATATIVA .sla-card-faixa{background:var(--blue)}
+.sla-card.tc-EM_TRATATIVA .anel-frente{stroke:var(--blue)}
+.sla-card.tc-EM_TRATATIVA .sla-tempo{color:var(--blue)}
+/* pós-escalonamento não há mais o que fazer — o card fica quieto */
+.sla-card.tc-AGUARDANDO_NORM{opacity:.82}
+.sla-card.tc-AGUARDANDO_NORM .sla-card-faixa{background:var(--text3)}
+.sla-card.tc-AGUARDANDO_NORM .anel-frente{stroke:var(--text3)}
+.sla-card.tc-AGUARDANDO_NORM .sla-tempo{color:var(--text2)}
+.sla-card.tc-NORMALIZADO{opacity:.5;filter:grayscale(1)}
+.sla-card.tc-NORMALIZADO .sla-card-faixa{background:var(--text3)}
+.sla-card.tc-NORMALIZADO .anel-frente{stroke:var(--text3)}
+
+/* linha de ação: o que fazer e quando */
+.tc-acao{display:flex;align-items:center;gap:7px;border-radius:8px;padding:7px 9px;font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:1.1px;text-transform:uppercase;line-height:1.4}
+.tc-acao.urgente{background:var(--red-l);color:var(--red);border:1px solid rgba(220,38,38,.3);font-weight:700}
+.tc-acao.espera{background:var(--amber-l);color:var(--amber);border:1px solid rgba(217,119,6,.28)}
+.tc-acao.calma{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.tc-acao.tratativa{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b)}
+.tc-acao-cron{font-weight:700;white-space:nowrap}
+
+.tc-selo{font-family:'Share Tech Mono',monospace;font-size:.52rem;letter-spacing:1.2px;text-transform:uppercase;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--text3);white-space:nowrap}
+.tc-selo.reincidente{background:var(--amber-l);color:var(--amber);border-color:rgba(217,119,6,.3)}
+.tc-selo.cobrancas{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.28)}
+.tc-card-selos{display:flex;gap:5px;flex-wrap:wrap}
+.tc-btn-secundario{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.tc-btn-secundario:hover{border-color:var(--red);color:var(--red);background:var(--red-l)}
+.tc-btn-secundario:disabled{opacity:.45;cursor:default}
+.sla-kpi.tc-kpi{cursor:pointer;transition:transform .18s,border-color .18s}
+.sla-kpi.tc-kpi:hover{transform:translateY(-2px);border-color:var(--border2)}
+.sla-kpi.tc-kpi.selecionado{border-color:var(--blue2);box-shadow:0 0 0 2px var(--blue-b)}
+.sla-kpi.neutro .sla-kpi-dot{background:var(--text3)}
+.sla-kpi.info .sla-kpi-dot{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+
 @media(max-width:1024px){
+.tc-filas{grid-template-columns:1fr;gap:14px}
+.tc-fila-dica{display:none}
 #slaView{padding:74px 12px 90px}
 .sla-grid{grid-template-columns:1fr;gap:14px}
 .sla-header{padding-right:0;gap:12px}
@@ -982,11 +1075,15 @@ IDENTIFICA&#199;&#195;O
 <div class="sla-header">
 <div class="sla-header-txt">
 <div class="sla-titulo" style="display:flex;align-items:center"><span class="hl">T/C-SLA</span> (E-mails TIM) <button class="btn-add-sla" style="width:auto;padding:0 12px;margin-left:12px;font-size:0.75rem" onclick="abrirModalRelatorioTim()" title="Relatório">Relatório</button></div>
-<div class="sla-sub-titulo">E-mails enviados para TIM &middot; Aguardando protocolo AU &middot; SLA alvo: 30 min</div>
+<div class="sla-sub-titulo">Chamados TIM &middot; AU em 30 min &middot; cobran&ccedil;a a cada 30 min sem AU &middot; escalonamento final em 8h</div>
 </div>
 <div class="sla-resumo" id="tcSlaResumo"></div>
 </div>
-<div class="sla-grid" id="tcSlaGrid"></div>
+<div class="tc-filtro-wrap">
+<input type="text" class="tc-filtro" id="tcSlaFiltro" placeholder="Filtrar por designa&ccedil;&atilde;o, AU, solicitante ou assunto..." autocomplete="off">
+<span class="tc-filtro-info" id="tcSlaFiltroInfo"></span>
+</div>
+<div class="tc-filas" id="tcSlaFilas"></div>
 <div class="sla-rodape" id="tcSlaRodape"></div>
 </section>
 
@@ -1757,7 +1854,8 @@ AppState.sla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,jaAvisado:{}};
 
 AppState.tcSla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
-              ultimaAtualizacao:0,timerTick:null,timerPoll:null};
+              ultimaAtualizacao:0,timerTick:null,timerPoll:null,
+              filtro:'',filaFoco:'',assinatura:''};
 
 /* ── utilitários ── */
 function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -1818,7 +1916,8 @@ function _slaCalc(item){
   const decorrido=Math.max(0,fim-_slaBase(item));
   let limite=(Number(item.slaHoras)||SLA_HORAS_PADRAO)*3600000;
   
-  // Regra de Ciclo Duplo T/C-SLA (Após a TIM responder, o SLA muda para 8h)
+  // Regra herdada do T/C-SLA. O painel da TIM não usa mais esta função —
+  // ele tem o próprio cálculo em _tcCalc, com os dois relógios separados.
   if(item.respostaMs && !item.encerramentoMs) {
     limite = 8 * 3600000;
   }
@@ -2211,9 +2310,21 @@ function bindEventsSla(){
   $('btnTcSla').addEventListener('click',alternarPainelTcSla);
   $('btnTcSlaFechar').addEventListener('click',fecharPainelTcSla);
   $('btnTcSlaAtualizar').addEventListener('click',()=>{carregarTcSla(false,1,true);showToast('↻ Varrendo o Gmail — pode levar alguns segundos...')});
-  $('tcSlaGrid').addEventListener('click',e=>{
+  $('tcSlaFilas').addEventListener('click',e=>{
     const b=e.target.closest('.sla-btn-encerrar');
-    if(b&&!b.disabled)abrirModalEncerrarSla(b.dataset.id, 'TIM');
+    if(b&&!b.disabled){abrirModalEncerrarSla(b.dataset.id,'TIM');return}
+    const esc=e.target.closest('.tc-btn-escalonar');
+    if(esc&&!esc.disabled)registrarEscalonamentoTim(esc.dataset.id,esc);
+  });
+  $('tcSlaFiltro').addEventListener('input',e=>{
+    AppState.tcSla.filtro=e.target.value||'';
+    renderTcSla();
+  });
+  $('tcSlaResumo').addEventListener('click',e=>{
+    const k=e.target.closest('.tc-kpi');if(!k)return;
+    const f=k.dataset.fila||'';
+    AppState.tcSla.filaFoco=(AppState.tcSla.filaFoco===f)?'':f;
+    renderTcSla();
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.tcSla.aberto)fecharPainelTcSla()});
   setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},2500);
@@ -2242,12 +2353,12 @@ function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
   return jsonp({acao:acao},varrerGmail?90000:20000).then(r=>{
     if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
     const agoraMs=Date.now();
-    AppState.tcSla.itens=(r.itens||[]).map(x=>({
+    AppState.tcSla.itens=_tcConsolidar((r.itens||[]).map(x=>({
       ...x,
       aberturaMs:Number(x.aberturaMs)||0,
       encerramentoMs:Number(x.encerramentoMs)||0,
       slaHoras:Number(x.slaHoras)||0.5
-    })).filter(x=>x.aberturaMs>0)
+    }))).filter(x=>x.aberturaMs>0)
     .filter(x=>!x.encerramentoMs
                 || (agoraMs-x.encerramentoMs)<=SLA_SUMIR_APOS_ENCERRAR_MS
                 || AppState.tcSla.nodes.has(x.id));
@@ -2264,40 +2375,230 @@ function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
   });
 }
 
-function atualizarBadgeTcSla(){
-  const badge=$('tcSlaBadgeTopo');if(!badge)return;
-  const estourados=AppState.tcSla.itens.filter(i=>!i.encerramentoMs&&_slaCalc(i).estado==='ESTOURADO').length;
-  badge.textContent=estourados;
-  badge.classList.toggle('hidden',estourados===0);
+/* ── regras de acompanhamento (espelham as do Apps Script) ──
+   O backend já manda o estado pronto, mas o painel fica aberto por horas
+   entre uma varredura e outra. Se ele não recalculasse, um chamado
+   gravado às 09h como AGUARDANDO AU continuaria assim às 11h e a
+   cobrança vencida nunca apareceria na tela. */
+const TC_CADENCIA_MS = 30*60*1000;        // cobrar a cada 30 min sem AU
+const TC_PRAZO_AU_MS = 30*60*1000;        // prazo da TIM devolver o AU
+const TC_ESCALONAMENTO_MS = 8*60*60*1000; // 8h = último escalonamento
+
+const TC_FILAS=[
+  {id:'COBRAR',          nome:'Cobrar agora',            dica:'30 min sem AU desde a abertura ou a última cobrança'},
+  {id:'ESCALONAR',       nome:'Escalonar',               dica:'8h corridas — é o último escalonamento que existe'},
+  {id:'AGUARDANDO_AU',   nome:'Aguardando AU',           dica:'Dentro da janela; o card avisa quando cobrar'},
+  {id:'EM_TRATATIVA',    nome:'Em tratativa',            dica:'AU recebido, dentro das 8h'},
+  {id:'AGUARDANDO_NORM', nome:'Aguardando normalização', dica:'Escalonado — não há mais o que fazer daqui'},
+  {id:'NORMALIZADO',     nome:'Normalizados',            dica:'Encerrados há pouco'}
+];
+const TC_FILA_NOME={};TC_FILAS.forEach(f=>TC_FILA_NOME[f.id]=f.nome);
+
+function _tcTemAu(item){return !!String(item.protocolo||'').trim()}
+function _tcNormAu(v){return String(v||'').replace(/[^0-9A-Za-z]/g,'').toUpperCase()}
+/* O protocolo costuma estar escrito no próprio assunto, como sufixo
+   depois da designação: "INDISPONIBILIDADE DE SWAP - MNSALQCAP480164 -
+   2026101745729". Quando o card chega sem protocolo mas com o número no
+   título, é o mesmo chamado que já está aberto com aquele AU. A
+   designação não confunde: ela é alfanumérica, e aqui só entra um bloco
+   de 10 a 16 dígitos puros. */
+function _tcAuDoTitulo(s){
+  const t=String(s||'');
+  const m=t.match(/[-–—]\s*(\d{10,16})(?!\d)/)||t.match(/(?:^|[\s(\[])(\d{10,16})(?!\d)/);
+  return m?m[1]:'';
+}
+function _tcResumoRuim(s){const t=String(s||'').trim();
+  return !t||t==='Sem Assunto'||/business contact center|contact center|^(re|res|enc|fwd)\s*:/i.test(t)}
+function _tcFalhaMs(v){
+  const m=String(v||'').match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
+  if(!m)return 0;
+  const t=new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5]).getTime();
+  return isNaN(t)?0:t;
 }
 
-/* deixa explícito quando o card é de um chamado antigo ainda em aberto —
-   evita confundir um chamado de dias atrás com o que foi aberto hoje */
+/* ── uma tratativa por protocolo, também na tela ──
+   O AU é a identidade do chamado: nasce quando o corporate devolve o
+   protocolo e vive até a normalização. Se por qualquer motivo chegarem
+   dois registros com o MESMO AU — linha antiga da aba, thread que a TIM
+   abriu à parte, cobrança que virou card — o painel mostra UM card só,
+   com o que há de melhor nos dois. É rede de segurança: mesmo com a aba
+   suja, o NOC não vê card repetido enquanto a varredura não limpa.
+
+   Aproveita para descartar abertura anterior à falha que o próprio
+   chamado relata — é o que fazia um chamado da manhã marcar 102h. */
+function _tcConsolidar(itens){
+  const lista=(itens||[]).map(it=>{
+    const f=_tcFalhaMs(it.dataHoraFalha);
+    if(f&&it.aberturaMs&&it.aberturaMs<f-600000)it.aberturaMs=f;
+    /* card "Aguardando AU" com o protocolo escrito no título: o número
+       está ali, é só ler. Rede de segurança para o caso de a varredura
+       ainda não ter passado. */
+    if(!String(it.protocolo||'').trim()){
+      const doTitulo=_tcAuDoTitulo(it.resumo);
+      if(doTitulo){it.protocolo=doTitulo;it.alvo='Protocolo: '+doTitulo;it.auDoAssunto=true}
+    }
+    return it;
+  });
+
+  /* Agrupa pelo AU e, na falta dele, pelo código de evento da TIM
+     (EVE...) — que é o que amarra a conversa da caixa de escalonamento
+     quando o corporate não devolveu o nosso protocolo inicial. Quem não
+     tem nenhum dos dois é um chamado por si. */
+  const grupos=new Map(),saida=[];
+  lista.forEach(it=>{
+    const au=_tcNormAu(it.protocolo);
+    const chave=au||(it.evento?'EVE:'+String(it.evento).toUpperCase():'');
+    if(!chave){saida.push(it);return}
+    if(!grupos.has(chave))grupos.set(chave,[]);
+    grupos.get(chave).push(it);
+  });
+
+  grupos.forEach(g=>{
+    if(g.length===1){saida.push(g[0]);return}
+    /* andamento: o melhor de todos */
+    const base=g.reduce((a,b)=>(_tcPeso(b)>_tcPeso(a)?b:a));
+    g.forEach(o=>{
+      if(o===base)return;
+      base.recobrancas=Math.max(Number(base.recobrancas)||0,Number(o.recobrancas)||0);
+      base.ultimaCobrancaMs=Math.max(Number(base.ultimaCobrancaMs)||0,Number(o.ultimaCobrancaMs)||0);
+      base.ultimoContatoMs=Math.max(Number(base.ultimoContatoMs)||0,Number(o.ultimoContatoMs)||0);
+      base.escalonadoMs=Number(base.escalonadoMs)||Number(o.escalonadoMs)||0;
+      base.encerramentoMs=Number(base.encerramentoMs)||Number(o.encerramentoMs)||0;
+      const resp=[base.respostaMs,o.respostaMs].map(Number).filter(Boolean);
+      base.respostaMs=resp.length?Math.min.apply(null,resp):0;
+      base.threads=(base.threads||[]).concat(o.threads||[]);
+    });
+    /* descrição: a abertura nossa, quando existir no grupo. É ela que
+       diz qual é a falha e quando o chamado começou — não o aviso
+       automático da TIM, que fala de outra ocorrência. */
+    const desc=g.filter(x=>x.solicitante&&!_tcResumoRuim(x.resumo))
+                .sort((a,b)=>(a.aberturaMs||0)-(b.aberturaMs||0))[0];
+    const fonte=desc||g.find(x=>!_tcResumoRuim(x.resumo))||base;
+    if(fonte!==base){
+      base.resumo=fonte.resumo||base.resumo;
+      if(fonte.solicitante)base.solicitante=fonte.solicitante;
+      if(fonte.designacao)base.designacao=fonte.designacao;
+      if(fonte.dataHoraFalha)base.dataHoraFalha=fonte.dataHoraFalha;
+      const fa=_tcFalhaMs(base.dataHoraFalha);
+      if(fonte.aberturaMs&&(!fa||fonte.aberturaMs>=fa-600000))base.aberturaMs=fonte.aberturaMs;
+    }
+    base.registrosUnificados=g.length;
+    saida.push(base);
+  });
+  return saida;
+}
+/* quanto o registro avançou na tratativa — decide quem carrega o andamento */
+function _tcPeso(x){
+  let p=0;
+  if(x.encerramentoMs)p+=1000;
+  if(x.escalonadoMs)p+=40;
+  if(x.respostaMs)p+=20;
+  p+=(Number(x.recobrancas)||0)*5;
+  if(x.solicitante)p+=8;
+  if(x.dataHoraFalha)p+=6;
+  return p;
+}
+
+function _tcEstado(item,agora){
+  if(item.encerramentoMs)return 'NORMALIZADO';
+  if(!_tcTemAu(item)){
+    const base=Math.max(Number(item.aberturaMs)||0,Number(item.ultimaCobrancaMs)||0);
+    return (agora-base)>=TC_CADENCIA_MS?'COBRAR':'AGUARDANDO_AU';
+  }
+  const decorrido=agora-(Number(item.aberturaMs)||0);
+  if(decorrido<TC_ESCALONAMENTO_MS)return 'EM_TRATATIVA';
+  return Number(item.escalonadoMs)?'AGUARDANDO_NORM':'ESCALONAR';
+}
+
+/* Dois relógios, nunca os dois ao mesmo tempo:
+   • sem AU  → conta a janela de cobrança (30 min), reiniciada a cada
+     cobrança. É esse relógio que diz "cobre de novo".
+   • com AU  → conta até o escalonamento das 8h.
+   • depois do escalonamento o anel para de correr: continuar marcando
+     "+101h além do SLA" não informa nada e só apaga o que é urgente. */
+function _tcCalc(item,agora){
+  agora=agora||Date.now();
+  const estado=_tcEstado(item,agora);
+  const abertura=Number(item.aberturaMs)||0;
+  const fim=Number(item.encerramentoMs)||agora;
+  const total=Math.max(0,fim-abertura);
+  let base=abertura,limite=0,decorrido=total;
+
+  if(estado==='AGUARDANDO_AU'||estado==='COBRAR'){
+    base=Math.max(abertura,Number(item.ultimaCobrancaMs)||0);
+    limite=TC_CADENCIA_MS;
+    decorrido=Math.max(0,agora-base);
+  }else if(estado==='EM_TRATATIVA'||estado==='ESCALONAR'){
+    limite=TC_ESCALONAMENTO_MS;
+    decorrido=total;
+  }
+  const pct=limite>0?decorrido/limite:1;
+  return{estado,total,decorrido,limite,base,pct,
+         restante:limite>0?Math.max(0,limite-decorrido):0,
+         excedente:limite>0?Math.max(0,decorrido-limite):0};
+}
+
+/* o badge do topo conta AÇÃO PENDENTE, não "estourado". Chamado
+   escalonado e aguardando a TIM não é pendência nossa. */
+function atualizarBadgeTcSla(){
+  const badge=$('tcSlaBadgeTopo');if(!badge)return;
+  const agora=Date.now();
+  const n=AppState.tcSla.itens.filter(i=>{
+    const e=_tcEstado(i,agora);return e==='COBRAR'||e==='ESCALONAR';
+  }).length;
+  badge.textContent=n;
+  badge.classList.toggle('hidden',n===0);
+}
+
 function _tcDiasAberto(item){
   const dias=Math.floor((Date.now()-Number(item.aberturaMs||0))/86400000);
   if(dias<1)return '';
-  return ` <span style="color:var(--amber)">· há ${dias} dia${dias>1?'s':''}</span>`;
+  return ` <span style="color:var(--amber)">· ${dias}d</span>`;
 }
-function _tcSlaCardHTML(item){
-  const c=_slaCalc(item);
-  let statusResp = 'AGUARDANDO TIM';
-  let statusCor = 'var(--amber)';
-  
-  if (item.encerramentoMs) {
-    statusResp = 'NORMALIZADO';
-    statusCor = 'var(--text3)';
-  } else if (item.respostaMs) {
-    statusResp = 'TIM RESPONDEU (AG. NORMALIZAÇÃO)';
-    statusCor = 'var(--blue)';
-  } else if (c.estado === 'ESTOURADO') {
-    statusResp = 'SEM RESPOSTA TIM';
-    statusCor = 'var(--red)';
+function _tcDesde(ms){
+  if(!ms)return '';
+  const d=Date.now()-Number(ms);
+  if(d<60000)return 'agora há pouco';
+  if(d<3600000)return `há ${Math.floor(d/60000)} min`;
+  if(d<86400000)return `há ${Math.floor(d/3600000)}h${String(Math.floor((d%3600000)/60000)).padStart(2,'0')}`;
+  const dias=Math.floor(d/86400000);
+  return `há ${dias} dia${dias>1?'s':''}`;
+}
+
+/* a linha que diz o que fazer — é o motivo de o painel existir */
+function _tcAcao(item,c){
+  switch(c.estado){
+    case 'COBRAR':
+      return{classe:'urgente',rot:'Cobrar agora',cron:`atrasado ${_slaFmtDur(c.excedente)}`};
+    case 'AGUARDANDO_AU':
+      return{classe:'espera',rot:'Cobrar em',cron:_slaFmtDur(c.restante)};
+    case 'EM_TRATATIVA':
+      return{classe:'tratativa',rot:'Escalonar em',cron:_slaFmtDur(c.restante)};
+    case 'ESCALONAR':
+      return{classe:'urgente',rot:'Escalonamento final',cron:`8h + ${_slaFmtDur(c.excedente)}`};
+    case 'AGUARDANDO_NORM':
+      return{classe:'calma',rot:'Sem ação · aguardando TIM',cron:_slaFmtDur(c.total)};
+    default:
+      return{classe:'calma',rot:'Normalizado',cron:_slaFmtDur(c.total)};
   }
+}
+
+function _tcSlaCardHTML(item,ctx){
+  const c=_tcCalc(item);
+  const acao=_tcAcao(item,c);
+  const anelCor=(c.estado==='COBRAR'||c.estado==='ESCALONAR')?'var(--red)'
+              :(c.estado==='AGUARDANDO_AU')?'var(--amber)'
+              :(c.estado==='EM_TRATATIVA')?'var(--blue)':'var(--text3)';
+  const reincidente=(ctx&&ctx.reincidencia&&item.designacao&&ctx.reincidencia[item.designacao]>1)
+    ?`<span class="tc-selo reincidente">${ctx.reincidencia[item.designacao]} ativos neste circuito</span>`:'';
+  const selosCobranca=Number(item.recobrancas)>0
+    ?`<span class="tc-selo cobrancas">${Number(item.recobrancas)} cobran&ccedil;a${Number(item.recobrancas)>1?'s':''}</span>`:'';
+  const selos=(reincidente||selosCobranca)?`<div class="tc-card-selos">${reincidente}${selosCobranca}</div>`:'';
 
   return `<div class="sla-card-faixa"></div>
 <div class="sla-card-corpo">
   <div class="sla-card-topo">
-    <span class="sla-badge-rede" ${item.respostaMs && !item.encerramentoMs ? 'style="background:var(--blue-l);color:var(--blue);border-color:rgba(59,158,255,.35)"' : ''}>TIM</span>
+    <span class="sla-badge-rede">${_esc(TC_FILA_NOME[c.estado]||'TIM')}</span>
     <span class="sla-abertura">${_slaFmtHora(item.aberturaMs)}${_tcDiasAberto(item)}</span>
   </div>
   <div class="sla-card-tipo" style="font-size:.82rem;line-height:1.3">${_esc(item.resumo||'Sem Assunto')}</div>
@@ -2307,85 +2608,157 @@ function _tcSlaCardHTML(item){
         <circle class="anel-fundo" cx="80" cy="80" r="${SLA_RING_R}"></circle>
         <circle class="anel-frente" cx="80" cy="80" r="${SLA_RING_R}"
                 stroke-dasharray="${SLA_RING_C.toFixed(1)}" stroke-dashoffset="${SLA_RING_C.toFixed(1)}"
-                ${item.respostaMs && !item.encerramentoMs ? 'style="stroke:var(--blue)"' : ''}></circle>
+                style="stroke:${anelCor}"></circle>
       </svg>
       <div class="sla-ring-centro">
-        <div class="sla-tempo" ${item.respostaMs && !item.encerramentoMs ? 'style="color:var(--blue)"' : ''}>00:00:00</div>
-        <div class="sla-tempo-rot">de ${_slaFmtDur(c.limite)}</div>
+        <div class="sla-tempo">00:00:00</div>
+        <div class="sla-tempo-rot">${c.limite?('de '+_slaFmtDur(c.limite)):'total'}</div>
       </div>
     </div>
     <div class="sla-excedente"></div>
   </div>
+  <div class="tc-acao ${acao.classe}"><span class="tc-acao-rot">${acao.rot}</span><span class="tc-acao-cron">${acao.cron}</span></div>
+  ${selos}
   <div class="sla-info">
-    ${item.designacao?`<div class="sla-linha"><span class="sla-linha-rot">Designa\u00e7\u00e3o</span><span class="sla-linha-val destaque">${_esc(item.designacao)}</span></div>`:''}
+    ${item.designacao?`<div class="sla-linha"><span class="sla-linha-rot">Designação</span><span class="sla-linha-val destaque">${_esc(item.designacao)}</span></div>`:''}
     ${item.dataHoraFalha?`<div class="sla-linha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val destaque">${_esc(item.dataHoraFalha)}</span></div>`:''}
-    ${item.solicitante?`<div class="sla-linha"><span class="sla-linha-rot">Solicitante</span><span class="sla-linha-val">${_esc(item.solicitante)}</span></div>`:''}
-    ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val">${_esc(item.alvo)}</span></div>`:''}
-    ${Number(item.recobrancas)>0?`<div class="sla-linha"><span class="sla-linha-rot">Recobranças</span><span class="sla-linha-val destaque" style="color:var(--amber)">${Number(item.recobrancas)}ª cobrança${item.ultimaCobrancaMs?` · última ${_slaFmtHora(item.ultimaCobrancaMs)}`:''}</span></div>`:''}
-    <div class="sla-linha"><span class="sla-linha-rot">Status</span><span class="sla-linha-val" style="color:${statusCor};font-weight:600">${statusResp}</span></div>
+    <div class="sla-linha"><span class="sla-linha-rot">Solicitante</span><span class="sla-linha-val">${_esc(item.solicitante||'—')}</span></div>
+    <div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val${_tcTemAu(item)?' destaque':''}">${_esc(item.protocolo||'Aguardando AU')}</span></div>
+    ${item.evento?`<div class="sla-linha"><span class="sla-linha-rot">Evento TIM</span><span class="sla-linha-val">${_esc(item.evento)}</span></div>`:''}
+    ${Number(item.recobrancas)>0&&item.ultimaCobrancaMs?`<div class="sla-linha"><span class="sla-linha-rot">&Uacute;ltima cobran&ccedil;a</span><span class="sla-linha-val">${_slaFmtHora(item.ultimaCobrancaMs)}</span></div>`:''}
+    <div class="sla-linha"><span class="sla-linha-rot">&Uacute;ltimo contato</span><span class="sla-linha-val">${_esc(_tcDesde(item.ultimoContatoMs||item.ultimaCobrancaMs||item.aberturaMs)||'—')}</span></div>
+    ${item.escalonadoMs?`<div class="sla-linha"><span class="sla-linha-rot">Escalonado</span><span class="sla-linha-val">${_slaFmtHora(item.escalonadoMs)}</span></div>`:''}
   </div>
+  ${c.estado==='ESCALONAR'?`<button class="tc-btn-escalonar tc-btn-secundario" data-id="${_esc(item.id)}">Registrar escalonamento</button>`:''}
   <button class="sla-btn-encerrar" data-id="${_esc(item.id)}">Normalizar / Encerrar</button>
 </div>`;
 }
 
+/* ── filtro e contexto ── */
+function _tcFiltrar(itens){
+  const q=String(AppState.tcSla.filtro||'').trim().toLowerCase();
+  if(!q)return itens;
+  return itens.filter(i=>[i.designacao,i.protocolo,i.solicitante,i.resumo]
+    .some(v=>String(v||'').toLowerCase().indexOf(q)!==-1));
+}
+/* quantos chamados ATIVOS existem por circuito — dois ou mais na mesma
+   designação é sinal de circuito problemático, não de card duplicado */
+function _tcReincidencia(itens){
+  const m={};
+  itens.forEach(i=>{
+    if(i.encerramentoMs||!i.designacao)return;
+    m[i.designacao]=(m[i.designacao]||0)+1;
+  });
+  return m;
+}
+
+/* prioridade de exibição: a ação humana pendente vem primeiro */
+const TC_ORDEM={COBRAR:0,ESCALONAR:1,AGUARDANDO_AU:2,EM_TRATATIVA:3,AGUARDANDO_NORM:4,NORMALIZADO:5};
+
 function renderTcSla(){
-  const grid=$('tcSlaGrid');if(!grid)return;
+  const wrap=$('tcSlaFilas');if(!wrap)return;
   const st=AppState.tcSla;
+
   if(st.status==='erro'){
-    grid.innerHTML=`<div class="sla-aviso erro" style="grid-column:1/-1"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados do Gmail.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
-    st.nodes.clear();renderResumoTcSla();return;
+    wrap.innerHTML=`<div class="sla-aviso erro"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados do Gmail.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
+    st.nodes.clear();st.assinatura='';renderResumoTcSla();return;
   }
   if(st.status==='carregando'&&!st.itens.length){
-    grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#8987;</div><div class="sla-aviso-txt">Carregando e-mails da TIM...</div></div>`;
-    st.nodes.clear();renderResumoTcSla();return;
+    wrap.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#8987;</div><div class="sla-aviso-txt">Carregando chamados da TIM...</div></div>`;
+    st.nodes.clear();st.assinatura='';renderResumoTcSla();return;
   }
   if(!st.itens.length){
-    grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum e-mail aguardando protocolo.</div></div>`;
-    st.nodes.clear();renderResumoTcSla();return;
+    wrap.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum chamado TIM em aberto.</div></div>`;
+    st.nodes.clear();st.assinatura='';renderResumoTcSla();return;
   }
-  const idsNovos=st.itens.map(i=>i.id).sort().join('|');
-  const idsAtuais=Array.from(st.nodes.keys()).sort().join('|');
-  if(st.nodes.size&&idsNovos===idsAtuais){
-    st.itens.forEach(item=>{const n=st.nodes.get(item.id);if(n)n.item=item});
+
+  const agora=Date.now();
+  const ctx={reincidencia:_tcReincidencia(st.itens)};
+  const visiveis=_tcFiltrar(st.itens).filter(i=>!st.filaFoco||_tcEstado(i,agora)===st.filaFoco);
+
+  /* cobrar > escalonar > aguardando AU > tratativa > aguardando norm.
+     Dentro de cada grupo, o mais atrasado primeiro. */
+  const ordenados=visiveis.slice().sort((a,b)=>{
+    const ea=TC_ORDEM[_tcEstado(a,agora)],eb=TC_ORDEM[_tcEstado(b,agora)];
+    if(ea!==eb)return ea-eb;
+    const ca=_tcCalc(a,agora),cb=_tcCalc(b,agora);
+    if(cb.pct!==ca.pct)return cb.pct-ca.pct;
+    return (a.aberturaMs||0)-(b.aberturaMs||0);
+  });
+
+  /* só refaz o DOM quando a ordem ou a composição muda; nos demais ciclos
+     o tick apenas atualiza cronômetro, anel e linha de ação */
+  const assinatura=ordenados.map(i=>i.id+'~'+_tcEstado(i,agora)+'~'+(i.protocolo||'')
+                   +'~'+(i.recobrancas||0)+'~'+(i.escalonadoMs?1:0)).join('|')
+                   +'#'+(st.filaFoco||'')+'#'+(st.filtro||'');
+  if(st.assinatura===assinatura&&st.nodes.size){
+    visiveis.forEach(i=>{const n=st.nodes.get(i.id);if(n)n.item=i});
     tickTcSla();return;
   }
-  grid.innerHTML='';st.nodes.clear();
-  _slaOrdenar(st.itens).forEach(item=>{
+  st.assinatura=assinatura;
+
+  wrap.innerHTML='';st.nodes.clear();
+  if(!ordenados.length){
+    wrap.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#128269;</div><div class="sla-aviso-txt">Nenhum chamado nesse filtro.</div></div>`;
+  }
+  ordenados.forEach(item=>{
+    const fila=_tcEstado(item,agora);
     const card=document.createElement('article');
-    card.className='sla-card';
+    card.className='sla-card tc-'+fila;
     card.dataset.id=item.id;
-    card.innerHTML=_tcSlaCardHTML(item);
-    grid.appendChild(card);
+    card.innerHTML=_tcSlaCardHTML(item,ctx);
+    wrap.appendChild(card);
     st.nodes.set(item.id,{
-      card,item,
+      card,item,fila,
       tempo:card.querySelector('.sla-tempo'),
       anel:card.querySelector('.anel-frente'),
-      excedente:card.querySelector('.sla-excedente')
+      excedente:card.querySelector('.sla-excedente'),
+      acaoBox:card.querySelector('.tc-acao'),
+      acaoRot:card.querySelector('.tc-acao-rot'),
+      acaoCron:card.querySelector('.tc-acao-cron')
     });
   });
+
+  const info=$('tcSlaFiltroInfo');
+  if(info){
+    const partes=[];
+    if(st.filtro)partes.push(`${ordenados.length} de ${st.itens.length} chamados`);
+    if(st.filaFoco)partes.push(`${TC_FILA_NOME[st.filaFoco]} · clique de novo no indicador para ver tudo`);
+    info.textContent=partes.join(' · ');
+  }
   tickTcSla();
 }
 
 function tickTcSla(){
   const st=AppState.tcSla;
   if(!st.aberto||!st.nodes.size)return;
-  const ordem=_slaOrdenar(st.itens);
   const agora=Date.now();
+  let mudouFila=false;
   const paraRemover=[];
-  ordem.forEach((item,idx)=>{
-    const n=st.nodes.get(item.id);if(!n)return;
-    const c=_slaCalc(item);
-    if(item.encerramentoMs&&(agora-item.encerramentoMs)>SLA_SUMIR_APOS_ENCERRAR_MS){paraRemover.push(item.id);return;}
-    n.card.style.order=idx;
-    const classeEstado='estado-'+c.estado;
-    if(!n.card.classList.contains(classeEstado)){
-      n.card.classList.remove('estado-DENTRO','estado-ATENCAO','estado-ESTOURADO','estado-FINALIZADO');
-      n.card.classList.add(classeEstado);
+
+  st.nodes.forEach((n,id)=>{
+    const item=n.item;if(!item)return;
+    if(item.encerramentoMs&&(agora-item.encerramentoMs)>SLA_SUMIR_APOS_ENCERRAR_MS){paraRemover.push(id);return}
+    const c=_tcCalc(item,agora);
+    if(c.estado!==n.fila){mudouFila=true;return}
+
+    if(n.tempo){
+      const txt=_slaFmtDur(c.decorrido);
+      n.tempo.textContent=txt;
+      n.tempo.classList.toggle('longo',txt.length>8);
     }
-    if(n.tempo)n.tempo.textContent=_slaFmtDur(c.decorrido);
     if(n.anel)n.anel.setAttribute('stroke-dashoffset',(SLA_RING_C*(1-Math.min(c.pct,1))).toFixed(1));
-    if(n.excedente){n.excedente.textContent=c.excedente>0?`+${_slaFmtDur(c.excedente)} al&eacute;m do SLA`.replace('&eacute;','é'):'';}
+    /* o excedente precisa dizer de QUE prazo se trata: passar da janela
+       de cobrança e passar das 8h são coisas diferentes */
+    if(n.excedente){
+      n.excedente.textContent=c.excedente>0
+        ?`+${_slaFmtDur(c.excedente)} ${c.estado==='COBRAR'?'sem cobrar':'além das 8h'}`:'';
+    }
+    const acao=_tcAcao(item,c);
+    if(n.acaoCron)n.acaoCron.textContent=acao.cron;
+    if(n.acaoRot)n.acaoRot.textContent=acao.rot;
   });
+
   if(paraRemover.length){
     paraRemover.forEach(id=>{
       const n=st.nodes.get(id);
@@ -2393,7 +2766,14 @@ function tickTcSla(){
       st.nodes.delete(id);
       st.itens=st.itens.filter(i=>i.id!==id);
     });
-    if(!st.itens.length)setTimeout(renderTcSla,450);
+    st.assinatura='';
+    setTimeout(renderTcSla,450);
+  }else if(mudouFila){
+    /* um chamado mudou de fila (a cobrança venceu, as 8h estouraram):
+       redesenha para ele aparecer no lugar certo */
+    st.assinatura='';
+    renderTcSla();
+    return;
   }
   renderResumoTcSla();
   atualizarBadgeTcSla();
@@ -2401,19 +2781,48 @@ function tickTcSla(){
 
 function renderResumoTcSla(){
   const el=$('tcSlaResumo');if(!el)return;
-  const abertos=AppState.tcSla.itens.filter(i=>!i.encerramentoMs);
-  const conta={ESTOURADO:0,ATENCAO:0,DENTRO:0};
-  abertos.forEach(i=>{conta[_slaCalc(i).estado]++});
+  const agora=Date.now();
+  const conta={};TC_FILAS.forEach(f=>conta[f.id]=0);
+  AppState.tcSla.itens.forEach(i=>{const e=_tcEstado(i,agora);if(conta[e]!==undefined)conta[e]++});
+
+  const foco=AppState.tcSla.filaFoco||'';
+  const kpi=(fila,rot,classe)=>`<div class="sla-kpi tc-kpi ${classe}${foco===fila?' selecionado':''}" data-fila="${fila}" title="Clique para ver só esta fila">`
+    +`<span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta[fila]}</span><br>`
+    +`<span class="sla-kpi-rot">${rot}</span></span></div>`;
+
   el.innerHTML=
-    `<div class="sla-kpi critico"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.ESTOURADO}</span><br><span class="sla-kpi-rot">Estourado${conta.ESTOURADO===1?'':'s'}</span></span></div>`+
-    `<div class="sla-kpi alerta"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.ATENCAO}</span><br><span class="sla-kpi-rot">Aten&ccedil;&atilde;o</span></span></div>`+
-    `<div class="sla-kpi ok"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.DENTRO}</span><br><span class="sla-kpi-rot">No prazo</span></span></div>`;
+    kpi('COBRAR','Cobrar agora','critico')+
+    kpi('ESCALONAR','Escalonar','critico')+
+    kpi('AGUARDANDO_AU','Aguardando AU','alerta')+
+    kpi('EM_TRATATIVA','Em tratativa','info')+
+    kpi('AGUARDANDO_NORM','Aguard. normaliz.','neutro');
+
   const rod=$('tcSlaRodape');
   if(rod){
     rod.textContent=AppState.tcSla.ultimaAtualizacao
-      ? `Atualizado às ${_slaFmtHora(AppState.tcSla.ultimaAtualizacao).split(' ')[1]} · atualiza sozinho a cada ${Math.round(SLA_POLL_ABERTO_MS/1000)}s`
+      ? `Atualizado às ${_slaFmtHora(AppState.tcSla.ultimaAtualizacao).split(' ')[1]} · atualiza sozinho a cada ${Math.round(SLA_POLL_ABERTO_MS/1000)}s · cobrança a cada 30 min sem AU · escalonamento final em 8h`
       : '';
   }
+}
+
+/* registra o escalonamento das 8h: o chamado sai da fila de ação e passa
+   a só aguardar a normalização, que é o que o NOC descreveu */
+function registrarEscalonamentoTim(id,btn){
+  if(btn){btn.disabled=true;btn.textContent='Registrando...'}
+  jsonp({acao:'escalonarTim',id:id},20000).then(r=>{
+    if(r&&r.ok){
+      const it=AppState.tcSla.itens.find(i=>i.id===id);
+      if(it)it.escalonadoMs=r.escalonadoMs||Date.now();
+      showToast('Escalonamento registrado. O chamado agora só aguarda a normalização.');
+      AppState.tcSla.assinatura='';renderTcSla();
+    }else{
+      if(btn){btn.disabled=false;btn.textContent='Registrar escalonamento'}
+      showToast('Não foi possível registrar: '+((r&&r.erro)||'erro'),'error',5000);
+    }
+  }).catch(e=>{
+    if(btn){btn.disabled=false;btn.textContent='Registrar escalonamento'}
+    showToast('Falha ao registrar o escalonamento ('+e.message+').','error',5000);
+  });
 }
 
 function abrirPainelTcSla(){
