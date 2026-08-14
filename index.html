@@ -2265,6 +2265,7 @@ function _tcSlaCardHTML(item){
     ${item.dataHoraFalha?`<div class="sla-linha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val destaque">${_esc(item.dataHoraFalha)}</span></div>`:''}
     ${item.solicitante?`<div class="sla-linha"><span class="sla-linha-rot">Solicitante</span><span class="sla-linha-val">${_esc(item.solicitante)}</span></div>`:''}
     ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val">${_esc(item.alvo)}</span></div>`:''}
+    ${Number(item.recobrancas)>0?`<div class="sla-linha"><span class="sla-linha-rot">Recobranças</span><span class="sla-linha-val destaque" style="color:var(--amber)">${Number(item.recobrancas)}ª cobrança${item.ultimaCobrancaMs?` · última ${_slaFmtHora(item.ultimaCobrancaMs)}`:''}</span></div>`:''}
     <div class="sla-linha"><span class="sla-linha-rot">Status</span><span class="sla-linha-val" style="color:${statusCor};font-weight:600">${statusResp}</span></div>
   </div>
   <button class="sla-btn-encerrar" data-id="${_esc(item.id)}">Normalizar / Encerrar</button>
@@ -2462,6 +2463,7 @@ function gerarRelatorioTim(){
         assunto: item.assunto || '-',
         tempoResp: tempoTextResp,
         tempoNorm: tempoTextNorm,
+        recobrancas: Number(item.recobrancas) || 0,
         status: item.status || '-'
       };
     });
@@ -2562,6 +2564,7 @@ function _montarTextoRelatorioTim(d){
     txt += `    Assunto: ${l.assunto}\n`;
     txt += `    Tempo resposta TIM: ${l.tempoResp}\n`;
     txt += `    Tempo normalização: ${l.tempoNorm}\n`;
+    txt += `    Recobranças (mesmo AU): ${l.recobrancas || 0}\n`;
     txt += `    Status: ${l.status}\n`;
     txt += '--------------------------------------------------------\n';
   });
