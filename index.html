@@ -117,19 +117,66 @@ select option{background:var(--bg2);color:var(--text)}
 input::placeholder{color:var(--text3)}
 .cto-picker,.stack-list,.port-grid,.preview-list{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;max-height:260px;overflow-y:auto;margin-top:6px}
 .preview-list{flex-direction:column;gap:4px}
-.music-player-wrap{display:flex;flex-direction:row;gap:8px;align-items:flex-end;margin-top:10px;width:100%}
-.music-controls{position:fixed;bottom:24px;right:24px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;z-index:100;background:var(--music-bg);padding:10px;border:1px solid var(--border);border-top:3px solid var(--blue);border-radius:12px;box-shadow:var(--shadow2);transition:background .35s,border-color .35s;width:184px}
-.vol-wrap{position:absolute;top:-10px;right:22px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:50%;cursor:pointer;transition:all .3s ease;z-index:1000;box-shadow:var(--shadow)}
-.vol-wrap:hover{background:var(--bg3);transform:scale(1.1)}
-.vol-wrap-music{position:fixed;top:122px;right:20px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .3s ease;z-index:1000;box-shadow:var(--shadow)}
-.vol-wrap-music:hover{background:var(--bg3);transform:translateY(-2px)}
-.vol-wrap-music .vol-icon{font-size:1.1rem}
-.music-controls { transition: transform 0.3s cubic-bezier(.22,1,.36,1), opacity 0.3s ease, visibility 0.3s; }
-.music-controls.minimized { transform: translateY(120%) scale(0.8); opacity: 0; visibility: hidden; pointer-events: none; }
-.vol-slider-container{position:absolute;bottom:35px;right:-10px;background:var(--bg2);border:1px solid var(--border);padding:12px 8px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;opacity:0;visibility:hidden;transform:translateY(10px);transition:all .3s cubic-bezier(.175,.885,.32,1.275);z-index:1001}
-.vol-wrap:hover .vol-slider-container{opacity:1;visibility:visible;transform:translateY(0)}
-.vol-slider-vert{appearance:slider-vertical;width:6px;height:80px;cursor:pointer;outline:none;background:var(--bg3)}
-.vol-icon{font-size:.85rem;opacity:.8;transition:transform .2s}
+/* ══════════════════════════════════════════════════════════
+   PLAYER — dock do canto inferior direito
+   ══════════════════════════════════════════════════════════
+   Antes o painel sumia para fora da tela ao minimizar e voltava por um
+   botão solto no canto OPOSTO, no alto. Quem fechava não achava mais.
+   Agora recolhido e aberto são o MESMO objeto no MESMO canto: a aba
+   cresce a partir de si mesma e volta para si mesma. Recolhido, ela
+   ainda diz o que está tocando. */
+.m-dock{position:fixed;bottom:20px;right:20px;z-index:100}
+/* o painel fica ABSOLUTO ancorado no mesmo canto da aba. Se ficasse no
+   fluxo, o painel recolhido continuaria ocupando altura e empurraria a
+   aba para o meio da tela — e a animação não sairia de onde a aba está. */
+
+/* ── aba (estado recolhido) ── */
+.m-dock-tab{display:inline-flex;align-items:center;gap:9px;height:42px;padding:0 15px;border-radius:21px;
+  background:var(--music-bg);border:1px solid var(--border);border-left:3px solid var(--blue);
+  box-shadow:var(--shadow2);cursor:pointer;color:var(--text2);
+  font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:1.6px;text-transform:uppercase;
+  transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s,border-color .22s,opacity .2s;max-width:280px}
+.m-dock-tab:hover{transform:translateY(-2px);border-color:var(--blue2);color:var(--blue)}
+.m-dock-tab-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-dock.aberto .m-dock-tab{opacity:0;visibility:hidden;pointer-events:none;transform:scale(.9)}
+
+/* equalizador: parado vira três traços; tocando, dança */
+.m-eq{display:inline-flex;align-items:flex-end;gap:2px;height:14px;flex-shrink:0}
+.m-eq i{display:block;width:2.5px;height:3px;border-radius:1px;background:currentColor;opacity:.55}
+.m-dock.tocando .m-eq i{animation:mEq .9s ease-in-out infinite;opacity:1}
+.m-dock.tocando .m-eq i:nth-child(2){animation-delay:.15s}
+.m-dock.tocando .m-eq i:nth-child(3){animation-delay:.3s}
+.m-dock.tocando .m-eq i:nth-child(4){animation-delay:.45s}
+@keyframes mEq{0%,100%{height:3px}50%{height:14px}}
+
+/* ── painel (estado aberto) ── */
+.music-controls{position:absolute;bottom:0;right:0;width:250px;background:var(--music-bg);border:1px solid var(--border);border-top:3px solid var(--blue);
+  border-radius:14px;box-shadow:var(--shadow2);padding:12px;display:flex;flex-direction:column;gap:10px;
+  transform-origin:bottom right;
+  transition:transform .26s cubic-bezier(.22,1,.36,1),opacity .2s ease,visibility .26s}
+.music-controls.minimized{transform:scale(.82) translateY(12px);opacity:0;visibility:hidden;pointer-events:none}
+
+.m-head{display:flex;align-items:center;gap:9px}
+.m-now{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.m-now-rot{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase}
+.m-now-txt{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.m-icon{width:32px;height:32px;flex-shrink:0;border:1px solid var(--border);background:var(--bg3);color:var(--text2);
+  border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;
+  transition:all .18s;font-family:'Share Tech Mono',monospace;padding:0}
+.m-icon:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
+.m-play{width:38px;height:38px;background:var(--blue);border-color:var(--blue);color:#fff;font-size:.9rem}
+.m-play:hover{background:var(--blue2);border-color:var(--blue2);color:#fff}
+
+.m-transport{display:flex;align-items:center;gap:6px}
+.m-vol{flex:1;display:flex;align-items:center;gap:6px;min-width:0;padding-left:4px}
+.m-vol-ico{font-size:.72rem;opacity:.75;flex-shrink:0}
+#volSlider{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border2);outline:none;cursor:pointer}
+#volSlider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--blue);border:2px solid var(--bg2);box-shadow:var(--shadow)}
+#volSlider::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--blue);border:2px solid var(--bg2)}
+
+.m-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.m-sep{height:1px;background:var(--border);margin:1px 0}
 .vol-wrap:hover .vol-icon{transform:scale(1.1);opacity:1}
 .port-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .pill-item label,.stack-item label,.port-item label{display:flex;align-items:center;justify-content:center;padding:7px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text2);transition:all .2s;margin:0;font-family:'Inter',sans-serif;letter-spacing:.3px;text-transform:uppercase}
@@ -198,14 +245,14 @@ input::placeholder{color:var(--text3)}
 .progress-label{font-size:.6rem;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
 .progress-track{background:var(--border);border-radius:4px;height:3px;overflow:hidden}
 .progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));transition:width .4s ease;border-radius:4px}
-.m-btn{width:100%;height:32px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);border-radius:6px;cursor:pointer;font-weight:700;font-size:.7rem;transition:all .2s,color .2s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace}
+.m-btn{width:100%;height:30px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);border-radius:8px;cursor:pointer;font-weight:700;font-size:.68rem;letter-spacing:.5px;transition:all .18s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace}
 .music-controls.aura-active .m-btn{color:#000!important;border-color:rgba(0,0,0,.2)}
 .music-controls.aura-active #btnFarmarAura.active{color:#fff!important}
-.m-btn:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
+.m-btn:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l);transform:translateY(-1px)}
 .m-btn.active{background:var(--blue-l);border-color:var(--blue2);color:var(--blue);box-shadow:0 0 0 2px var(--blue-b)}
-.m-temas{grid-column:span 4;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-#btnStopMusic{grid-column:span 4;width:100%;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2)}
-#btnFarmarAura{grid-column:span 4;width:100%;height:40px;border-radius:8px;cursor:pointer;border:none;font-family:'Share Tech Mono',monospace;font-size:1.05rem;font-weight:700;letter-spacing:2.5px;position:relative;overflow:visible;z-index:1;transition:transform .2s,box-shadow .2s}
+.m-temas{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+#btnStopMusic:hover{border-color:var(--red);color:var(--red);background:var(--red-l)}
+#btnFarmarAura{width:100%;height:40px;border-radius:8px;cursor:pointer;border:none;font-family:'Share Tech Mono',monospace;font-size:1.05rem;font-weight:700;letter-spacing:2.5px;position:relative;overflow:visible;z-index:1;transition:transform .2s,box-shadow .2s}
 [data-theme="light"] #btnFarmarAura{background:linear-gradient(180deg,#1c0600 0%,#0a0200 100%);color:#ffcc77;text-shadow:0 0 6px #ff6600,0 0 12px #cc2200;box-shadow:0 0 6px rgba(255,60,0,.25)}
 [data-theme="dark"] #btnFarmarAura{background:linear-gradient(180deg,#06080f 0%,#020308 100%);color:#d8eaff;text-shadow:0 0 6px #6699ff,0 0 12px #2244cc;box-shadow:0 0 6px rgba(60,100,255,.2)}
 [data-theme="light"] #btnFarmarAura:hover{transform:translateY(-1px);box-shadow:0 0 16px rgba(255,80,0,.5)}
@@ -362,7 +409,8 @@ main{padding:16px 12px}
 .sidebar-inner{padding:20px}
 .wrapper.metro-mode .floating-sidebar{right:0;position:static;width:100%;height:auto;border-radius:12px}
 .copy-modal-content{width:96%;max-height:93vh}
-.music-controls{bottom:8px;right:8px}
+.m-dock{bottom:10px;right:10px}
+.music-controls{width:230px}
 .top-bar-fixed{top:12px;right:12px}
 .gpon-search-row{grid-template-columns:1fr 100px}
 .ident-submenu{flex-direction:column}
@@ -533,7 +581,7 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 .sla-rodape{max-width:1600px;margin:22px auto 0;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px;text-align:center}
 
 /* ══════════════════════════════════════════════════════════
-   T/C-SLA v3 — FILAS DE TRABALHO
+   E-MAIL’S SLA v3 — FILAS DE TRABALHO
    ══════════════════════════════════════════════════════════
    O painel antigo era um grid único ordenado por percentual de SLA. Com
    prazo de 30 min, tudo que passava de meia hora ficava com percentual
@@ -660,9 +708,9 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 <span>Atualizar SLA</span>
 </button>
-<button class="ozmap-btn so-sla" id="btnTcSla" title="Abrir painel T/C-SLA de E-mails" aria-label="Painel T/C-SLA">
+<button class="ozmap-btn so-sla" id="btnTcSla" title="Abrir painel de SLA dos e-mails da TIM" aria-label="Painel E-MAIL’s SLA">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-<span>T/C-SLA</span>
+<span>E-MAIL’S SLA</span>
 <span id="tcSlaBadgeTopo" class="sla-badge-topo hidden">0</span>
 </button>
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
@@ -674,18 +722,14 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 <span>Fechar</span>
 </button>
-<button class="ozmap-btn so-tcsla" id="btnTcSlaAtualizar" title="Buscar agora os chamados no Gmail" aria-label="Atualizar T/C-SLA">
+<button class="ozmap-btn so-tcsla" id="btnTcSlaAtualizar" title="Buscar agora os chamados no Gmail" aria-label="Atualizar E-MAIL’s SLA">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 <span>Atualizar</span>
 </button>
-<button class="ozmap-btn so-tcsla btn-sla-fechar" id="btnTcSlaFechar" title="Voltar para o painel de SLA (Esc)" aria-label="Fechar painel de T/C-SLA">
+<button class="ozmap-btn so-tcsla btn-sla-fechar" id="btnTcSlaFechar" title="Voltar para o painel de SLA (Esc)" aria-label="Fechar painel E-MAIL’s SLA">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-<span>Fechar T/C-SLA</span>
+<span>Fechar E-MAIL’S SLA</span>
 </button>
-</div>
-
-<div class="vol-wrap-music" id="btnToggleMusicWrap" onclick="document.getElementById('mControls').classList.toggle('minimized')" title="Mostrar/Ocultar Player de Música">
-<span class="vol-icon">&#127925;</span>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -710,15 +754,36 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 
 <canvas id="audioVisualizer" class="ambient-visualizer"></canvas>
 
-<div class="music-player-wrap">
-<div id="mControls" class="music-controls">
-<button class="m-btn" id="btnMinimizarMusica" onclick="document.getElementById('mControls').classList.add('minimized')" style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-weight:bold;z-index:200;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);">&#10005;</button>
-<div class="vol-wrap">
-<div class="vol-slider-container">
-<input type="range" id="volSlider" class="vol-slider-vert" min="0" max="1" step="0.05" value="0.5">
+<div class="m-dock" id="mDock">
+<button class="m-dock-tab" id="mDockTab" title="Abrir player de música">
+<span class="m-eq"><i></i><i></i><i></i><i></i></span>
+<span class="m-dock-tab-txt" id="mDockTabTxt">M&uacute;sica</span>
+</button>
+
+<div id="mControls" class="music-controls minimized">
+<div class="m-head">
+<span class="m-eq" style="color:var(--blue)"><i></i><i></i><i></i><i></i></span>
+<div class="m-now">
+<span class="m-now-rot">Tocando</span>
+<span class="m-now-txt" id="mNowTxt">&mdash;</span>
 </div>
-<span class="vol-icon" title="Volume da Música">&#128266;</span>
+<button class="m-icon" id="btnMinimizarMusica" title="Recolher">&#9662;</button>
 </div>
+
+<div class="m-transport">
+<button class="m-icon" id="btnPrevMusic" title="Faixa anterior">&#9198;</button>
+<button class="m-icon m-play" id="btnPlayMusic" title="Tocar / pausar">&#9654;</button>
+<button class="m-icon" id="btnNextMusic" title="Pr&oacute;xima faixa">&#9197;</button>
+<button class="m-icon" id="btnStopMusic" title="Parar">&#9632;</button>
+<div class="m-vol">
+<span class="m-vol-ico">&#128266;</span>
+<input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.5" title="Volume">
+</div>
+</div>
+
+<div class="m-sep"></div>
+
+<div class="m-grid">
 <button class="m-btn" data-track="1">01</button>
 <button class="m-btn" data-track="2">02</button>
 <button class="m-btn" data-track="3">03</button>
@@ -731,19 +796,22 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 <button class="m-btn" data-track="10">10</button>
 <button class="m-btn" data-track="11">11</button>
 <button class="m-btn" data-track="12">12</button>
+</div>
+
 <div class="m-temas">
 <button class="m-btn" data-track="ben10" id="btnBen10Music">B10</button>
 <button class="m-btn" data-track="got" id="btnGotMusic">GOT</button>
 <button class="m-btn" data-track="fav" id="btnFavMusic">FAV</button>
 </div>
-<button class="m-btn" id="btnStopMusic">&#9632; Stop</button>
-<button class="m-btn" id="btnFarmarAura" data-track="13" style="grid-column:span 4">
+
+<button class="m-btn" id="btnFarmarAura" data-track="13">
 <canvas id="borderSparkCanvas"></canvas>
 <canvas id="flameCanvas"></canvas>
 <span class="btn-label">&#128293; FARMAR AURA</span>
 </button>
 </div>
 </div>
+
 <audio id="mPlayer" loop></audio>
 
 <main>
@@ -1063,9 +1131,7 @@ IDENTIFICA&#199;&#195;O
 <div class="sla-header">
 <div class="sla-header-txt">
 <div class="sla-titulo" style="display:flex;align-items:center"><span class="hl">Painel</span> de SLA <button class="btn-add-sla" id="btnOpenSlaManual" onclick="abrirModalSlaManual()" title="Adicionar SLA Manual">+</button></div>
-<div class="sla-sub-titulo">Acionamentos em andamento &middot; SLA padr&#227;o de 4 horas</div>
 </div>
-<div class="sla-resumo" id="slaResumo"></div>
 </div>
 <div class="sla-grid" id="slaGrid"></div>
 <div class="sla-rodape" id="slaRodape"></div>
@@ -1074,13 +1140,11 @@ IDENTIFICA&#199;&#195;O
 <section id="tcSlaView">
 <div class="sla-header">
 <div class="sla-header-txt">
-<div class="sla-titulo" style="display:flex;align-items:center"><span class="hl">T/C-SLA</span> (E-mails TIM) <button class="btn-add-sla" style="width:auto;padding:0 12px;margin-left:12px;font-size:0.75rem" onclick="abrirModalRelatorioTim()" title="Relatório">Relatório</button></div>
-<div class="sla-sub-titulo">Chamados TIM &middot; AU em 30 min &middot; cobran&ccedil;a a cada 30 min sem AU &middot; escalonamento final em 8h</div>
+<div class="sla-titulo" style="display:flex;align-items:center"><span class="hl">E-MAIL’S</span> SLA (TIM) <button class="btn-add-sla" style="width:auto;padding:0 12px;margin-left:12px;font-size:0.75rem" onclick="abrirModalRelatorioTim()" title="Relatório">Relatório</button></div>
 </div>
-<div class="sla-resumo" id="tcSlaResumo"></div>
 </div>
 <div class="tc-filtro-wrap">
-<input type="text" class="tc-filtro" id="tcSlaFiltro" placeholder="Filtrar por designa&ccedil;&atilde;o, AU, solicitante ou assunto..." autocomplete="off">
+<input type="text" class="tc-filtro" id="tcSlaFiltro" placeholder="Filtrar por designa&ccedil;&atilde;o, AU, solicitante, assunto ou fila..." autocomplete="off">
 <span class="tc-filtro-info" id="tcSlaFiltroInfo"></span>
 </div>
 <div class="tc-filas" id="tcSlaFilas"></div>
@@ -1095,7 +1159,7 @@ IDENTIFICA&#199;&#195;O
 <div class="copy-modal" id="modalRelatorioTim">
 <div class="copy-modal-content" style="max-width:800px; max-height: 90vh; display: flex; flex-direction: column;">
 <div class="copy-modal-header">
-<span>RELATÓRIO T/C-SLA (TIM)</span>
+<span>RELATÓRIO E-MAIL’S SLA (TIM)</span>
 <button onclick="fecharModalRelatorioTim()">&#10005;</button>
 </div>
 <div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
@@ -1125,11 +1189,9 @@ IDENTIFICA&#199;&#195;O
 <button onclick="fecharModalEncerrarSla()">&#10005;</button>
 </div>
 <div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
-<div class="info-msg" id="infoEncerrarSla" style="margin-bottom:12px">Ao encerrar manualmente, seu e-mail será registrado na planilha junto com a justificativa.</div>
-<div class="form-group" id="wrapDataNormalizacaoEncerrar" style="display:none">
+<div class="form-group" id="wrapDataNormalizacaoEncerrar">
 <label>DATA/HORA NORMALIZAÇÃO <span style="color:var(--red)">*</span></label>
 <input type="datetime-local" id="dataNormalizacaoEncerrarSla">
-<div style="font-size:.7rem; color:var(--text3); margin-top:5px">Horário em que a TIM confirmou a normalização do circuito. Vem preenchido com o horário atual — ajuste se a normalização foi antes. Não pode ser no futuro.</div>
 </div>
 <div class="form-group">
 <label>JUSTIFICATIVA <span style="color:var(--red)">*</span></label>
@@ -1154,6 +1216,7 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
 <div class="sla-toggles">
+<div class="sla-toggle-btn active" id="btnTgg-slaManualTecnico" onclick="toggleSlaCampo('slaManualTecnico')">TÉCNICO</div>
 <div class="sla-toggle-btn active" id="btnTgg-slaManualOs" onclick="toggleSlaCampo('slaManualOs')">O.S</div>
 <div class="sla-toggle-btn active" id="btnTgg-slaManualHoras" onclick="toggleSlaCampo('slaManualHoras')">SLA (HORAS)</div>
 <div class="sla-toggle-btn active" id="btnTgg-slaManualDesc" onclick="toggleSlaCampo('slaManualDesc')">DESCRIÇÃO</div>
@@ -1176,8 +1239,11 @@ IDENTIFICA&#199;&#195;O
 <button type="button" class="sla-toggle-btn" onclick="ajustarInicioSlaManual(120)">-2 H</button>
 </div>
 </div>
+<!-- TÉCNICO é ligado/desligado pelo botão do topo, como O.S e POP. Ao
+     desligar, o campo é limpo — então nunca sobra um nome antigo de um
+     acionamento anterior. -->
 <div class="form-group" id="wrap-slaManualTecnico">
-<label>TÉCNICO <span style="color:var(--red)">*</span></label>
+<label>TÉCNICO <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
 <input type="text" id="slaManualTecnico" placeholder="Nome do técnico">
 </div>
 <div class="form-group" id="wrap-slaManualOperador">
@@ -1185,8 +1251,12 @@ IDENTIFICA&#199;&#195;O
 <select id="slaManualOperador"><option value="" disabled selected>Selecione...</option></select>
 </div>
 <div class="form-group" id="wrap-slaManualEmpresa">
-<label>EMPRESA <span style="color:var(--red)">*</span></label>
-<select id="slaManualEmpresa"><option value="" disabled selected>Selecione...</option></select>
+<label>EMPRESA <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
+<!-- input + datalist no lugar do select: a lista de empresas conhecidas
+     continua sugerida, mas dá para digitar uma que não está no cadastro
+     (terceirizada nova, parceiro pontual) sem depender da aba TECNICOS -->
+<input type="text" id="slaManualEmpresa" list="listaEmpresasSla" placeholder="Digite ou escolha da lista" autocomplete="off">
+<datalist id="listaEmpresasSla"></datalist>
 </div>
 <div class="form-group" id="wrap-slaManualOs">
 <label>O.S</label>
@@ -1467,12 +1537,75 @@ let currentTrack=null,canvasCtx=null,isAudioSetup=false,vizData=new Array(90).fi
 function setupAudioViz(){if(isAudioSetup)return;const cv=$('audioVisualizer');canvasCtx=cv.getContext('2d');const r=()=>{cv.width=window.innerWidth;cv.height=80};window.addEventListener('resize',r);r();isAudioSetup=true;drawViz()}
 function drawViz(){requestAnimationFrame(drawViz);if(!canvasCtx)return;const cv=$('audioVisualizer');canvasCtx.clearRect(0,0,cv.width,cv.height);const buf=90,bw=cv.width/buf;let x=0;const playing=!DOM.mPlayer.paused&&DOM.mPlayer.currentTime>0;const theme=document.documentElement.getAttribute('data-theme');for(let i=0;i<buf;i++){const tgt=playing?(0.08+Math.random()*.45)*(cv.height-4):2;vizData[i]+=(tgt-vizData[i])*.12;const p=i/buf;let r,g,b;if(theme==='ben10'){r=Math.round(p*20);g=Math.round(200+p*55);b=Math.round(40+p*20)}else if(theme==='got'){r=Math.round(180+p*40);g=Math.round(130+p*30);b=Math.round(20+p*15)}else if(theme==='fav'){r=Math.round(255-p*238);g=Math.round(201-p*38);b=Math.round(60+p*152)}else if(theme==='dark'){r=Math.round(59+p*14);g=Math.round(158-p*30);b=Math.round(255-p*55)}else{r=Math.round(26+p*14);g=Math.round(111+p*47);b=Math.round(219-p*43)}canvasCtx.fillStyle=`rgba(${r},${g},${b},.5)`;canvasCtx.fillRect(x,cv.height-vizData[i],Math.max(bw-1,1),vizData[i]);x+=bw}}
 function setActiveBtn(btn){DOM.musicControls.querySelectorAll('.m-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active')}
-function playTrack(track,btnEl){currentTrack=track;setupAudioViz();if(track==='ben10'){DOM.mPlayer.src='musicaben10.mp3'}else if(track==='got'){DOM.mPlayer.src='musicagame.mp3'}else if(track==='fav'){DOM.mPlayer.src='musicafav.mp3'}else{DOM.mPlayer.src=`musica${track}.mp3`}DOM.mPlayer.play().catch(e=>console.warn('Audio:',e));setActiveBtn(btnEl)}
+
+/* ── dock do player ──────────────────────────────────────────────
+   Abrir e recolher acontecem no mesmo canto e no mesmo objeto: a aba
+   vira painel e o painel vira aba. Recolhido, a aba continua dizendo
+   o que está tocando, então não é preciso abrir para saber. */
+const M_NOMES={ben10:'Ben 10',got:'Game of Thrones',fav:'Favorita','13':'Farmar Aura'};
+const M_FAIXAS=['1','2','3','4','5','6','7','8','9','10','11','12','ben10','got','fav'];
+function _mNome(t){
+  if(t===null||t===undefined||t==='')return '';
+  const k=String(t);
+  return M_NOMES[k]||('Faixa '+k.padStart(2,'0'));
+}
+function abrirPlayer(){
+  $('mDock').classList.add('aberto');
+  DOM.musicControls.classList.remove('minimized');
+  /* os canvas do FARMAR AURA se dimensionam pelo tamanho real do botão.
+     Como o painel nasce recolhido (escalado e oculto), a medida inicial
+     sai errada — remede assim que a animação de abertura termina. */
+  setTimeout(()=>window.dispatchEvent(new Event('resize')),300);
+}
+function recolherPlayer(){
+  $('mDock').classList.remove('aberto');
+  DOM.musicControls.classList.add('minimized');
+}
+function alternarPlayer(){
+  DOM.musicControls.classList.contains('minimized')?abrirPlayer():recolherPlayer();
+}
+/* estado visível do player: nome da faixa, ícone de play/pause e as
+   barrinhas do equalizador — tudo derivado do próprio <audio>, para não
+   existir uma segunda fonte de verdade que possa divergir dele */
+function atualizarPlayerUI(){
+  const tocando=!DOM.mPlayer.paused&&!!DOM.mPlayer.src;
+  const nome=_mNome(currentTrack);
+  $('mNowTxt').textContent=nome||'—';
+  $('mDockTabTxt').textContent=nome?(tocando?nome:nome+' · pausada'):'Música';
+  $('mDock').classList.toggle('tocando',tocando);
+  const bp=$('btnPlayMusic');
+  if(bp){bp.innerHTML=tocando?'&#10073;&#10073;':'&#9654;';bp.title=tocando?'Pausar':'Tocar'}
+}
+function playTrack(track,btnEl){currentTrack=track;setupAudioViz();if(track==='ben10'){DOM.mPlayer.src='musicaben10.mp3'}else if(track==='got'){DOM.mPlayer.src='musicagame.mp3'}else if(track==='fav'){DOM.mPlayer.src='musicafav.mp3'}else{DOM.mPlayer.src=`musica${track}.mp3`}DOM.mPlayer.play().catch(e=>console.warn('Audio:',e));setActiveBtn(btnEl);atualizarPlayerUI()}
+/* pular faixa: anda na lista e clica no botão correspondente, para o
+   destaque do grid acompanhar sozinho */
+function pularFaixa(passo){
+  const i=M_FAIXAS.indexOf(String(currentTrack));
+  const prox=M_FAIXAS[(((i<0?0:i+passo)%M_FAIXAS.length)+M_FAIXAS.length)%M_FAIXAS.length];
+  const alvo=DOM.musicControls.querySelector(`.m-btn[data-track="${prox}"]`);
+  if(alvo)alvo.click();else playTrack(prox,null);
+}
+$('mDockTab').addEventListener('click',abrirPlayer);
+$('btnMinimizarMusica').addEventListener('click',recolherPlayer);
+$('btnPrevMusic').addEventListener('click',()=>pularFaixa(-1));
+$('btnNextMusic').addEventListener('click',()=>pularFaixa(1));
+$('btnPlayMusic').addEventListener('click',()=>{
+  if(!DOM.mPlayer.src){pularFaixa(0);return}
+  DOM.mPlayer.paused?DOM.mPlayer.play().catch(e=>console.warn('Audio:',e)):DOM.mPlayer.pause();
+});
+['play','pause','ended'].forEach(ev=>DOM.mPlayer.addEventListener(ev,atualizarPlayerUI));
+/* Clique fora recolhe. Esc não serve aqui: já é o atalho que fecha os
+   painéis de SLA, e os dois listeners disparariam no mesmo toque. */
+document.addEventListener('click',e=>{
+  if(DOM.musicControls.classList.contains('minimized'))return;
+  if(e.target.closest('#mDock'))return;
+  recolherPlayer();
+});
 DOM.musicControls.querySelectorAll('.m-btn[data-track]').forEach(btn=>{if(btn.id==='btnFarmarAura')return;if(btn.id==='btnBen10Music'){btn.addEventListener('click',function(){setTheme('ben10');playTrack('ben10',this)});return}if(btn.id==='btnGotMusic'){btn.addEventListener('click',function(){setTheme('got');playTrack('got',this)});return}if(btn.id==='btnFavMusic'){btn.addEventListener('click',function(){setTheme('fav');playTrack('fav',this)});return}btn.addEventListener('click',function(){playTrack(this.dataset.track,this)})});
 try{const sv=localStorage.getItem('player-vol');if(sv!==null){DOM.mPlayer.volume=sv;DOM.mVol.value=sv}else{DOM.mPlayer.volume=.5;DOM.mVol.value=.5}}catch(e){}
 DOM.mVol.addEventListener('input',e=>{const v=e.target.value;DOM.mPlayer.volume=v;try{localStorage.setItem('player-vol',v)}catch(err){}});
 let flameActive=false;
-function stopMusica(){DOM.mPlayer.pause();DOM.mPlayer.currentTime=0;currentTrack=null;setActiveBtn(null);flameActive=false;if(DOM.musicControls)DOM.musicControls.classList.remove('aura-active');setTheme('light')}
+function stopMusica(){DOM.mPlayer.pause();DOM.mPlayer.currentTime=0;DOM.mPlayer.removeAttribute('src');currentTrack=null;setActiveBtn(null);flameActive=false;if(DOM.musicControls)DOM.musicControls.classList.remove('aura-active');setTheme('light');atualizarPlayerUI()}
 $('btnStopMusic').addEventListener('click',stopMusica);
 $('flameCanvas').addEventListener('click',e=>{if(flameActive){e.stopPropagation();stopMusica()}});
 
@@ -1916,7 +2049,7 @@ function _slaCalc(item){
   const decorrido=Math.max(0,fim-_slaBase(item));
   let limite=(Number(item.slaHoras)||SLA_HORAS_PADRAO)*3600000;
   
-  // Regra herdada do T/C-SLA. O painel da TIM não usa mais esta função —
+  // Regra herdada do painel da TIM, que não usa mais esta função —
   // ele tem o próprio cálculo em _tcCalc, com os dois relógios separados.
   if(item.respostaMs && !item.encerramentoMs) {
     limite = 8 * 3600000;
@@ -1977,7 +2110,8 @@ function carregarSla(silencioso, retentativas=1){
       aberturaMs:Number(x.aberturaMs)||0,
       inicioMs:Number(x.inicioMs)||0,
       encerramentoMs:Number(x.encerramentoMs)||0,
-      slaHoras:Number(x.slaHoras)||SLA_HORAS_PADRAO
+      slaHoras:Number(x.slaHoras)||SLA_HORAS_PADRAO,
+      normalizacaoMs:Number(x.normalizacaoMs)||0
     })).filter(x=>x.aberturaMs>0)
     /* O backend devolve os encerrados por uma janela maior (30 min) para que
        outros operadores fiquem sabendo do encerramento. Mas o painel só os
@@ -2037,7 +2171,8 @@ function _slaCardHTML(item){
   </div>
   <div class="sla-info">
     <div class="sla-linha"><span class="sla-linha-rot">In&iacute;cio da falha</span><span class="sla-linha-val destaque">${_slaFmtHora(_slaBase(item))}</span></div>
-    ${(Number(item.inicioMs)&&Number(item.inicioMs)<Number(item.aberturaMs)-60000)?`<div class="sla-linha"><span class="sla-linha-rot">Registrado</span><span class="sla-linha-val">${_slaFmtHora(item.aberturaMs)} <span style="color:var(--amber)">(+${_slaFmtDur(item.aberturaMs-item.inicioMs)} depois)</span></span></div>`:''}
+    ${(Number(item.inicioMs)&&Number(item.inicioMs)<Number(item.aberturaMs)-60000)?`<div class="sla-linha"><span class="sla-linha-rot">Registrado</span><span class="sla-linha-val">${_slaFmtHora(item.aberturaMs)}</span></div>`:''}
+    ${Number(item.normalizacaoMs)?`<div class="sla-linha"><span class="sla-linha-rot">Normalizado</span><span class="sla-linha-val destaque">${_slaFmtHora(item.normalizacaoMs)}</span></div>`:''}
     ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Alvo</span><span class="sla-linha-val destaque">${_esc(item.alvo)}</span></div>`:''}
     ${item.empresa?`<div class="sla-linha"><span class="sla-linha-rot">Empresa</span><span class="sla-linha-val">${_esc(item.empresa)}</span></div>`:''}
     ${tecnicos?`<div class="sla-linha"><span class="sla-linha-rot">T&eacute;cnicos</span><span class="sla-linha-val">${_esc(tecnicos)}</span></div>`:''}
@@ -2147,19 +2282,14 @@ function tickSla(){
   atualizarBadgeSla();
 }
 
+/* Os quadrantes de contagem saíram do topo dos dois painéis: ocupavam
+   uma faixa inteira da tela para repetir o que os próprios cards já
+   mostram pela cor. A função ficou só com o rodapé. */
 function renderResumoSla(){
-  const el=$('slaResumo');if(!el)return;
-  const abertos=AppState.sla.itens.filter(i=>!i.encerramentoMs);
-  const conta={ESTOURADO:0,ATENCAO:0,DENTRO:0};
-  abertos.forEach(i=>{conta[_slaCalc(i).estado]++});
-  el.innerHTML=
-    `<div class="sla-kpi critico"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.ESTOURADO}</span><br><span class="sla-kpi-rot">Estourado${conta.ESTOURADO===1?'':'s'}</span></span></div>`+
-    `<div class="sla-kpi alerta"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.ATENCAO}</span><br><span class="sla-kpi-rot">Aten&ccedil;&atilde;o</span></span></div>`+
-    `<div class="sla-kpi ok"><span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta.DENTRO}</span><br><span class="sla-kpi-rot">No prazo</span></span></div>`;
   const rod=$('slaRodape');
   if(rod){
     rod.textContent=AppState.sla.ultimaAtualizacao
-      ? `Atualizado às ${_slaFmtHora(AppState.sla.ultimaAtualizacao).split(' ')[1]} · atualiza sozinho a cada ${Math.round(SLA_POLL_ABERTO_MS/1000)}s`
+      ? `Atualizado às ${_slaFmtHora(AppState.sla.ultimaAtualizacao).split(' ')[1]}`
       : '';
   }
 }
@@ -2180,21 +2310,18 @@ function abrirModalEncerrarSla(id, rede) {
   $('erroEncerrarSla').textContent = '';
   _resetBotaoConfirmarEncerrar();
 
-  if (rede === 'TIM') {
-    $('tituloEncerrarSla').textContent = 'NORMALIZAR / ENCERRAR (TIM)';
-    $('infoEncerrarSla').textContent = 'Registra a normalização junto à TIM. Seu e-mail e a justificativa ficam salvos na planilha TIM-CHAMADOS.';
-    $('wrapDataNormalizacaoEncerrar').style.display = 'block';
-    // pré-preenche com o horário atual (fuso local do navegador) — o operador só ajusta se a normalização foi antes de agora
-    const agora = new Date();
-    const agoraLocalISO = new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    $('dataNormalizacaoEncerrarSla').value = agoraLocalISO;
-    $('dataNormalizacaoEncerrarSla').max = agoraLocalISO;
-  } else {
-    $('tituloEncerrarSla').textContent = 'ENCERRAMENTO ADMINISTRATIVO';
-    $('infoEncerrarSla').textContent = 'Ao encerrar manualmente, seu e-mail será registrado na planilha junto com a justificativa.';
-    $('wrapDataNormalizacaoEncerrar').style.display = 'none';
-    $('dataNormalizacaoEncerrarSla').removeAttribute('max');
-  }
+  /* A data/hora de normalização vale para os DOIS painéis. O momento do
+     clique já fica gravado sozinho; o que faltava era registrar quando o
+     problema normalizou de fato — muitas vezes de madrugada, com o
+     encerramento entrando só no início do turno seguinte. */
+  const agora = new Date();
+  const agoraLocalISO = new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  $('dataNormalizacaoEncerrarSla').value = agoraLocalISO;
+  $('dataNormalizacaoEncerrarSla').max = agoraLocalISO;
+
+  $('tituloEncerrarSla').textContent = rede === 'TIM'
+    ? 'NORMALIZAR / ENCERRAR (TIM)'
+    : 'NORMALIZAR / ENCERRAR';
 
   $('modalEncerrarSla').classList.add('active');
   $('justificativaEncerrarSla').focus();
@@ -2214,11 +2341,11 @@ function confirmarEncerrarSla() {
     showToast('A justificativa é obrigatória.', 'error', 3000);
     return;
   }
-  if (rede === 'TIM' && !dataNorm) {
+  if (!dataNorm) {
     showToast('A data e hora de normalização é obrigatória.', 'error', 3000);
     return;
   }
-  if (rede === 'TIM' && new Date(dataNorm).getTime() > Date.now()) {
+  if (new Date(dataNorm).getTime() > Date.now()) {
     showToast('A data/hora de normalização não pode ser no futuro.', 'error', 4000);
     return;
   }
@@ -2320,18 +2447,12 @@ function bindEventsSla(){
     AppState.tcSla.filtro=e.target.value||'';
     renderTcSla();
   });
-  $('tcSlaResumo').addEventListener('click',e=>{
-    const k=e.target.closest('.tc-kpi');if(!k)return;
-    const f=k.dataset.fila||'';
-    AppState.tcSla.filaFoco=(AppState.tcSla.filaFoco===f)?'':f;
-    renderTcSla();
-  });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.tcSla.aberto)fecharPainelTcSla()});
   setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},2500);
 }
 
 /* ════════════════════════════════════════════════════════
-   PAINEL T/C-SLA
+   PAINEL E-MAIL’S SLA (TIM)
    ════════════════════════════════════════════════════════ */
 /* carregarTcSla(silencioso, retentativas, varrerGmail)
 
@@ -2339,7 +2460,7 @@ function bindEventsSla(){
    varrerGmail = true   → varredura completa do Gmail (dezenas de segundos).
 
    A varredura pesada ficava rodando a cada 2 min mesmo com o painel
-   T/C-SLA fechado. Como o Apps Script atende uma requisição por vez para
+   painel fechado. Como o Apps Script atende uma requisição por vez para
    o mesmo usuário, o painel de SLA ficava na fila atrás dela — era a
    causa principal do carregamento de quase um minuto. Agora o Gmail só é
    varrido sob comando (botão Atualizar) e pelo gatilho de tempo do lado
@@ -2638,7 +2759,11 @@ function _tcSlaCardHTML(item,ctx){
 function _tcFiltrar(itens){
   const q=String(AppState.tcSla.filtro||'').trim().toLowerCase();
   if(!q)return itens;
-  return itens.filter(i=>[i.designacao,i.protocolo,i.solicitante,i.resumo]
+  const agora=Date.now();
+  /* o nome da fila entra na busca: sem os quadrantes clicáveis, é assim
+     que se recorta o painel por estado — digitar "cobrar", "escalonar" */
+  return itens.filter(i=>[i.designacao,i.protocolo,i.evento,i.solicitante,i.resumo,
+                          TC_FILA_NOME[_tcEstado(i,agora)]]
     .some(v=>String(v||'').toLowerCase().indexOf(q)!==-1));
 }
 /* quantos chamados ATIVOS existem por circuito — dois ou mais na mesma
@@ -2780,27 +2905,10 @@ function tickTcSla(){
 }
 
 function renderResumoTcSla(){
-  const el=$('tcSlaResumo');if(!el)return;
-  const agora=Date.now();
-  const conta={};TC_FILAS.forEach(f=>conta[f.id]=0);
-  AppState.tcSla.itens.forEach(i=>{const e=_tcEstado(i,agora);if(conta[e]!==undefined)conta[e]++});
-
-  const foco=AppState.tcSla.filaFoco||'';
-  const kpi=(fila,rot,classe)=>`<div class="sla-kpi tc-kpi ${classe}${foco===fila?' selecionado':''}" data-fila="${fila}" title="Clique para ver só esta fila">`
-    +`<span class="sla-kpi-dot"></span><span><span class="sla-kpi-num">${conta[fila]}</span><br>`
-    +`<span class="sla-kpi-rot">${rot}</span></span></div>`;
-
-  el.innerHTML=
-    kpi('COBRAR','Cobrar agora','critico')+
-    kpi('ESCALONAR','Escalonar','critico')+
-    kpi('AGUARDANDO_AU','Aguardando AU','alerta')+
-    kpi('EM_TRATATIVA','Em tratativa','info')+
-    kpi('AGUARDANDO_NORM','Aguard. normaliz.','neutro');
-
   const rod=$('tcSlaRodape');
   if(rod){
     rod.textContent=AppState.tcSla.ultimaAtualizacao
-      ? `Atualizado às ${_slaFmtHora(AppState.tcSla.ultimaAtualizacao).split(' ')[1]} · atualiza sozinho a cada ${Math.round(SLA_POLL_ABERTO_MS/1000)}s · cobrança a cada 30 min sem AU · escalonamento final em 8h`
+      ? `Atualizado às ${_slaFmtHora(AppState.tcSla.ultimaAtualizacao).split(' ')[1]}`
       : '';
   }
 }
@@ -3015,7 +3123,7 @@ function _montarTextoRelatorioTim(d){
 
   let txt = '';
   txt += '========================================================\n';
-  txt += 'RELATÓRIO T/C-SLA (TIM) - GRUPO CLICK IP\n';
+  txt += 'RELATÓRIO E-MAIL’S SLA (TIM) - GRUPO CLICK IP\n';
   txt += `Período: ${d.inicio} a ${d.fim}\n`;
   txt += `Gerado em: ${agoraStr}\n`;
   txt += `Total de chamados: ${d.total}\n`;
@@ -3935,15 +4043,15 @@ function atualizarTextoModal(){const el=$('copyModalText');if(!el)return;el.text
 
 function abrirModalSlaManual() {
   if (AppState.operadores.length === 0) carregarOperadores();
-  const empSel = $('slaManualEmpresa');
-  if (AppState.tecnicos && AppState.tecnicos.length > 0) {
-    const atual = empSel.value;
-    const empresas = [...new Set(AppState.tecnicos.map(t=>t.empresa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
-    empSel.innerHTML = '<option value="" disabled selected>Selecione...</option>';
-    empresas.forEach(emp => { empSel.insertAdjacentHTML('beforeend', `<option value="${emp}">${emp}</option>`); });
-    if (empresas.includes(atual)) empSel.value = atual;
-  } else {
-    empSel.innerHTML = '<option value="" disabled selected>Empresas indisponíveis</option>';
+  /* EMPRESA virou campo livre com sugestões: a lista da aba TECNICOS
+     alimenta o datalist, mas o que for digitado vale — e vazio também. */
+  const lista = $('listaEmpresasSla');
+  if (lista) {
+    const empresas = (AppState.tecnicos && AppState.tecnicos.length)
+      ? [...new Set(AppState.tecnicos.map(t=>t.empresa).filter(Boolean))]
+          .sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}))
+      : [];
+    lista.innerHTML = empresas.map(emp=>`<option value="${_esc(emp)}"></option>`).join('');
   }
   renderTrechoSlaManual();
   ajustarInicioSlaManual(0);
@@ -4058,11 +4166,12 @@ function salvarSlaManual() {
   const prob = $('slaManualProblema').value.trim();
   const tec = $('slaManualTecnico').value.trim();
   const opKey = $('slaManualOperador').value;
-  const emp = $('slaManualEmpresa').value;
+  /* TÉCNICO e EMPRESA são opcionais: muito acionamento nasce sem
+     técnico definido e sem empresa envolvida, e travar o registro por
+     isso só atrasava a entrada do chamado no painel. */
+  const emp = $('slaManualEmpresa').value.trim();
   if (!prob) return showToast('Preencha o Problema/Evento', 'error');
-  if (!tec) return showToast('Preencha o Técnico', 'error');
   if (!opKey) return showToast('Selecione o Operador (NOC)', 'error');
-  if (!emp) return showToast('Selecione a Empresa', 'error');
 
   /* INÍCIO é obrigatório — é dele que sai a contagem do SLA */
   const agoraMs = Date.now();
