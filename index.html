@@ -1870,7 +1870,7 @@ function carregarSla(silencioso, retentativas=1){
     AppState.sla.status='carregando';
     if(AppState.sla.aberto&&!AppState.sla.itens.length)renderSla();
   }
-  return jsonp({acao:'listarSla'},45000).then(r=>{
+  return jsonp({acao:'listarSla'},20000).then(r=>{
     if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
     const agoraMs=Date.now();
     AppState.sla.itens=(r.itens||[]).map(x=>({
@@ -2205,29 +2205,41 @@ function bindEventsSla(){
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.sla.aberto)fecharPainelSla()});
   // primeira carga em segundo plano, sem atrapalhar o carregamento da tela
-  setTimeout(()=>{carregarSla(true);_reprogramarPollSla()},4000);
+  setTimeout(()=>{carregarSla(true);_reprogramarPollSla()},1200);
 
   // TC-SLA
   $('btnTcSla').addEventListener('click',alternarPainelTcSla);
   $('btnTcSlaFechar').addEventListener('click',fecharPainelTcSla);
-  $('btnTcSlaAtualizar').addEventListener('click',()=>{carregarTcSla();showToast('↻ Buscando chamados no Gmail...')});
+  $('btnTcSlaAtualizar').addEventListener('click',()=>{carregarTcSla(false,1,true);showToast('↻ Varrendo o Gmail — pode levar alguns segundos...')});
   $('tcSlaGrid').addEventListener('click',e=>{
     const b=e.target.closest('.sla-btn-encerrar');
     if(b&&!b.disabled)abrirModalEncerrarSla(b.dataset.id, 'TIM');
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.tcSla.aberto)fecharPainelTcSla()});
-  setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},6000);
+  setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},2500);
 }
 
 /* ════════════════════════════════════════════════════════
    PAINEL T/C-SLA
    ════════════════════════════════════════════════════════ */
-function carregarTcSla(silencioso, retentativas=1){
+/* carregarTcSla(silencioso, retentativas, varrerGmail)
+
+   varrerGmail = false  → lê só a aba TIM-CHAMADOS (resposta em ~1s).
+   varrerGmail = true   → varredura completa do Gmail (dezenas de segundos).
+
+   A varredura pesada ficava rodando a cada 2 min mesmo com o painel
+   T/C-SLA fechado. Como o Apps Script atende uma requisição por vez para
+   o mesmo usuário, o painel de SLA ficava na fila atrás dela — era a
+   causa principal do carregamento de quase um minuto. Agora o Gmail só é
+   varrido sob comando (botão Atualizar) e pelo gatilho de tempo do lado
+   do servidor, que mantém a aba TIM-CHAMADOS em dia. */
+function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
   if(!silencioso&&AppState.tcSla.status!=='carregando'){
     AppState.tcSla.status='carregando';
     if(AppState.tcSla.aberto&&!AppState.tcSla.itens.length)renderTcSla();
   }
-  return jsonp({acao:'listarTcSla'},45000).then(r=>{
+  const acao=varrerGmail?'listarTcSla':'listarTcSlaCache';
+  return jsonp({acao:acao},varrerGmail?90000:20000).then(r=>{
     if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
     const agoraMs=Date.now();
     AppState.tcSla.itens=(r.itens||[]).map(x=>({
@@ -2245,7 +2257,7 @@ function carregarTcSla(silencioso, retentativas=1){
     atualizarBadgeTcSla();
     return AppState.tcSla.itens;
   }).catch(e=>{
-    if(retentativas>0) return carregarTcSla(silencioso, retentativas - 1);
+    if(retentativas>0) return carregarTcSla(silencioso, retentativas - 1, varrerGmail);
     AppState.tcSla.status='erro';AppState.tcSla.erro=e.message||String(e);
     if(AppState.tcSla.aberto)renderTcSla();
     return null;
@@ -2404,7 +2416,9 @@ function abrirPainelTcSla(){
   $('tcSlaView').classList.add('ativo');
   window.scrollTo(0,0);
   renderTcSla();
-  carregarTcSla();
+  /* mostra na hora o que já está na planilha e só então varre o Gmail,
+     para o painel não abrir em branco esperando a busca */
+  carregarTcSla(true).then(()=>carregarTcSla(false,1,true));
   clearInterval(AppState.tcSla.timerTick);
   AppState.tcSla.timerTick=setInterval(tickTcSla,1000);
   _reprogramarPollTcSla();
