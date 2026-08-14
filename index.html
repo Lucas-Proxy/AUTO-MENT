@@ -1061,10 +1061,23 @@ IDENTIFICA&#199;&#195;O
 <div class="sla-toggle-btn active" id="btnTgg-slaManualHoras" onclick="toggleSlaCampo('slaManualHoras')">SLA (HORAS)</div>
 <div class="sla-toggle-btn active" id="btnTgg-slaManualDesc" onclick="toggleSlaCampo('slaManualDesc')">DESCRIÇÃO</div>
 <div class="sla-toggle-btn active" id="btnTgg-slaManualPop" onclick="toggleSlaCampo('slaManualPop')">POP</div>
+<div class="sla-toggle-btn active" id="btnTgg-slaManualTrecho" onclick="toggleSlaCampo('slaManualTrecho')">TRECHO</div>
 </div>
 <div class="form-group" id="wrap-slaManualProblema">
 <label>PROBLEMA/EVENTO <span style="color:var(--red)">*</span></label>
 <input type="text" id="slaManualProblema" placeholder="Digite o problema ou evento">
+</div>
+<div class="form-group" id="wrap-slaManualInicio">
+<label>IN&Iacute;CIO DO PROBLEMA/FALHA <span style="color:var(--red)">*</span></label>
+<input type="datetime-local" id="slaManualInicio" step="60">
+<div id="slaManualInicioAviso" style="margin-top:6px;font-size:.72rem;color:var(--text3);font-family:'Share Tech Mono',monospace"></div>
+<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+<button type="button" class="sla-toggle-btn" onclick="ajustarInicioSlaManual(0)">AGORA</button>
+<button type="button" class="sla-toggle-btn" onclick="ajustarInicioSlaManual(15)">-15 MIN</button>
+<button type="button" class="sla-toggle-btn" onclick="ajustarInicioSlaManual(30)">-30 MIN</button>
+<button type="button" class="sla-toggle-btn" onclick="ajustarInicioSlaManual(60)">-1 H</button>
+<button type="button" class="sla-toggle-btn" onclick="ajustarInicioSlaManual(120)">-2 H</button>
+</div>
 </div>
 <div class="form-group" id="wrap-slaManualTecnico">
 <label>TÉCNICO <span style="color:var(--red)">*</span></label>
@@ -1093,6 +1106,19 @@ IDENTIFICA&#199;&#195;O
 <div class="form-group" id="wrap-slaManualPop">
 <label>POP</label>
 <input type="text" id="slaManualPop" placeholder="Ex: POP CENTRO">
+</div>
+<div class="form-group" id="wrap-slaManualTrecho">
+<label>TRECHO AFETADO</label>
+<div style="display:flex;align-items:center;gap:8px">
+<input type="text" id="slaManualTrechoA" placeholder="Ex: MANAUS" autocomplete="off" style="flex:1;min-width:0">
+<span style="font-weight:700;color:var(--text3);flex-shrink:0;font-family:'Share Tech Mono',monospace">&lt;&gt;</span>
+<input type="text" id="slaManualTrechoB" placeholder="Ex: ITACOATIARA" autocomplete="off" style="flex:1;min-width:0">
+</div>
+<button class="btn-add-gpon visible" id="btnAdicionarTrechoSla" style="margin-top:8px" onclick="adicionarTrechoSlaManual()">+ Adicionar</button>
+<div class="gpon-lista-wrap" id="slaManualTrechoWrap">
+<div class="gpon-lista-label">Trechos Adicionados</div>
+<div class="gpon-lista-tags" id="slaManualTrechoTags"></div>
+</div>
 </div>
 </div>
 <div class="copy-modal-footer">
@@ -1130,7 +1156,7 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
-const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],ctosStatus:'idle'};
+const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],slaManualTrechos:[],ctosStatus:'idle'};
 
 /* ═══════════════════════════════════════════
    CACHE LOCAL (localStorage) — acelera as consultas
@@ -1778,10 +1804,18 @@ function jsonp(params,timeoutMs=45000){
   });
 }
 
-/* ── estado de cada chamado ── */
+/* ── estado de cada chamado ──
+   A contagem parte do INÍCIO DA FALHA (coluna Q da aba TEMPORARIO), não
+   do instante em que o chamado foi registrado no MENT. Chamado antigo,
+   ou acionamento gerado por uma OS que não informa início, continua
+   contando a partir da abertura. */
+function _slaBase(item){
+  const ini=Number(item.inicioMs)||0, ab=Number(item.aberturaMs)||0;
+  return (ini && ini<=ab) ? ini : ab;
+}
 function _slaCalc(item){
   const fim=item.encerramentoMs||Date.now();
-  const decorrido=Math.max(0,fim-item.aberturaMs);
+  const decorrido=Math.max(0,fim-_slaBase(item));
   let limite=(Number(item.slaHoras)||SLA_HORAS_PADRAO)*3600000;
   
   // Regra de Ciclo Duplo T/C-SLA (Após a TIM responder, o SLA muda para 8h)
@@ -1805,7 +1839,7 @@ function _slaOrdenar(itens){
     const fa=ca.estado==='FINALIZADO'?1:0,fb=cb.estado==='FINALIZADO'?1:0;
     if(fa!==fb)return fa-fb;
     if(cb.pct!==ca.pct)return cb.pct-ca.pct;
-    return a.aberturaMs-b.aberturaMs;
+    return _slaBase(a)-_slaBase(b);
   });
 }
 
@@ -1842,6 +1876,7 @@ function carregarSla(silencioso, retentativas=1){
     AppState.sla.itens=(r.itens||[]).map(x=>({
       ...x,
       aberturaMs:Number(x.aberturaMs)||0,
+      inicioMs:Number(x.inicioMs)||0,
       encerramentoMs:Number(x.encerramentoMs)||0,
       slaHoras:Number(x.slaHoras)||SLA_HORAS_PADRAO
     })).filter(x=>x.aberturaMs>0)
@@ -1884,7 +1919,7 @@ function _slaCardHTML(item){
 <div class="sla-card-corpo">
   <div class="sla-card-topo">
     <span class="sla-badge-rede">${_esc(item.rede||'—')}</span>
-    <span class="sla-abertura">${_slaFmtHora(item.aberturaMs)}</span>
+    <span class="sla-abertura">${_slaFmtHora(_slaBase(item))}</span>
   </div>
   <div class="sla-card-tipo">${_esc(item.tipo||'Acionamento')}</div>
   <div class="sla-relogio">
@@ -1902,6 +1937,8 @@ function _slaCardHTML(item){
     <div class="sla-excedente"></div>
   </div>
   <div class="sla-info">
+    <div class="sla-linha"><span class="sla-linha-rot">In&iacute;cio da falha</span><span class="sla-linha-val destaque">${_slaFmtHora(_slaBase(item))}</span></div>
+    ${(Number(item.inicioMs)&&Number(item.inicioMs)<Number(item.aberturaMs)-60000)?`<div class="sla-linha"><span class="sla-linha-rot">Registrado</span><span class="sla-linha-val">${_slaFmtHora(item.aberturaMs)} <span style="color:var(--amber)">(+${_slaFmtDur(item.aberturaMs-item.inicioMs)} depois)</span></span></div>`:''}
     ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Alvo</span><span class="sla-linha-val destaque">${_esc(item.alvo)}</span></div>`:''}
     ${item.empresa?`<div class="sla-linha"><span class="sla-linha-rot">Empresa</span><span class="sla-linha-val">${_esc(item.empresa)}</span></div>`:''}
     ${tecnicos?`<div class="sla-linha"><span class="sla-linha-rot">T&eacute;cnicos</span><span class="sla-linha-val">${_esc(tecnicos)}</span></div>`:''}
@@ -2746,6 +2783,16 @@ function bindEvents(){
   $('btnLimparGpon').addEventListener('click',limparGpon);
   // BACKBONE
   DOM.btnAdicionarTrecho.addEventListener('click',adicionarTrecho);
+  /* Enter em qualquer um dos dois pontos adiciona o trecho no SLA MANUAL */
+  ['slaManualTrechoA','slaManualTrechoB'].forEach(idCampo=>{
+    const el=$(idCampo);
+    if(el)el.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();adicionarTrechoSlaManual()}});
+  });
+  /* recalcula o aviso de SLA restante ao mexer no início ou nas horas */
+  ['slaManualInicio','slaManualHoras'].forEach(idCampo=>{
+    const el=$(idCampo);
+    if(el){el.addEventListener('change',atualizarAvisoInicioSlaManual);el.addEventListener('input',atualizarAvisoInicioSlaManual)}
+  });
   DOM.inputBackbonePontoA.addEventListener('keydown',e=>{if(e.key==='Enter')adicionarTrecho()});
   DOM.inputBackbonePontoB.addEventListener('keydown',e=>{if(e.key==='Enter')adicionarTrecho()});
   document.querySelectorAll('input[name="otdrTipo"]').forEach(r=>r.addEventListener('change',atualizarCamposOtdr));
@@ -3468,7 +3515,47 @@ function abrirModalSlaManual() {
   } else {
     empSel.innerHTML = '<option value="" disabled selected>Empresas indisponíveis</option>';
   }
+  renderTrechoSlaManual();
+  ajustarInicioSlaManual(0);
   $('modalSlaManual').classList.add('active');
+}
+
+/* ── INÍCIO DO PROBLEMA (obrigatório) ──────────────────────────────
+   O relógio do SLA passa a contar deste horário, e não do momento em
+   que o chamado foi registrado. Os atalhos existem justamente para o
+   caso mais comum: já se passaram alguns minutos até lembrar de lançar. */
+function _dtLocalParaInput(ms){
+  const d=new Date(ms);
+  const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function _slaManualInicioMs(){
+  const v=($('slaManualInicio').value||'').trim();
+  if(!v)return 0;
+  const ms=new Date(v).getTime();
+  return isNaN(ms)?0:ms;
+}
+function ajustarInicioSlaManual(minutosAtras){
+  $('slaManualInicio').value=_dtLocalParaInput(Date.now()-(Number(minutosAtras)||0)*60000);
+  atualizarAvisoInicioSlaManual();
+}
+function atualizarAvisoInicioSlaManual(){
+  const el=$('slaManualInicioAviso');if(!el)return;
+  const ms=_slaManualInicioMs();
+  if(!ms){el.textContent='';el.style.color='var(--text3)';return}
+  const diff=Date.now()-ms;
+  if(diff<-60000){el.textContent='⚠ Início no futuro — corrija antes de registrar.';el.style.color='var(--red)';return}
+  if(diff>7*24*3600000){el.textContent='⚠ Início há mais de 7 dias — confira a data.';el.style.color='var(--red)';return}
+  if(diff<60000){el.textContent='SLA conta a partir de agora.';el.style.color='var(--text3)';return}
+  const h=(Number($('slaManualHoras').value)||SLA_HORAS_PADRAO)*3600000;
+  const restante=h-diff;
+  /* o campo só tem precisão de minuto; arredonda para não mostrar
+     segundos quebrados que confundem quem acabou de clicar no atalho */
+  const arred=v=>_slaFmtDur(Math.round(Math.abs(v)/60000)*60000);
+  el.textContent=restante>0
+    ? `A falha começou há ${arred(diff)} · restam ${arred(restante)} de SLA.`
+    : `A falha começou há ${arred(diff)} · o SLA já estará ESTOURADO em ${arred(restante)}.`;
+  el.style.color=restante>0?(restante<h*(1-SLA_PCT_ATENCAO)?'var(--amber)':'var(--text3)'):'var(--red)';
 }
 function fecharModalSlaManual() {
   $('modalSlaManual').classList.remove('active');
@@ -3476,15 +3563,66 @@ function fecharModalSlaManual() {
 function toggleSlaCampo(campoId) {
   const wrap = $('wrap-' + campoId);
   const btn = $('btnTgg-' + campoId);
-  const input = $(campoId);
+  if (!wrap || !btn) return;
   if (wrap.classList.contains('hidden')) {
     wrap.classList.remove('hidden');
     btn.classList.add('active');
   } else {
     wrap.classList.add('hidden');
     btn.classList.remove('active');
-    input.value = '';
+    /* TRECHO não tem um input único (são dois pontos + lista de tags),
+       então limpa tudo o que estiver dentro do bloco */
+    const input = $(campoId);
+    if (input && typeof input.value !== 'undefined') {
+      input.value = '';
+    } else {
+      wrap.querySelectorAll('input, textarea').forEach(el => { el.value = ''; });
+    }
+    if (campoId === 'slaManualTrecho') {
+      AppState.slaManualTrechos = [];
+      renderTrechoSlaManual();
+    }
   }
+}
+
+/* ── TRECHO no SLA MANUAL ──────────────────────────────────────────
+   Mesmo padrão do acionamento de Backbone: dois pontos (A <> B), botão
+   para acumular vários trechos e lista de tags removíveis. É o campo que
+   diz DE ONDE é o problema; vai para a coluna ALVO do painel de SLA. */
+function renderTrechoSlaManual() {
+  const wrap = $('slaManualTrechoWrap'), tags = $('slaManualTrechoTags');
+  if (!wrap || !tags) return;
+  if (!AppState.slaManualTrechos.length) { wrap.classList.remove('visible'); tags.innerHTML = ''; return; }
+  wrap.classList.add('visible');
+  tags.innerHTML = AppState.slaManualTrechos.map((t, i) =>
+    `<div class="gpon-tag"><span>${_esc(t)}</span><button class="btn-remove" onclick="removerTrechoSlaManual(${i})">&#10005;</button></div>`
+  ).join('');
+}
+window.removerTrechoSlaManual = function (i) {
+  AppState.slaManualTrechos.splice(i, 1);
+  renderTrechoSlaManual();
+};
+function adicionarTrechoSlaManual() {
+  const a = ($('slaManualTrechoA').value || '').trim().toUpperCase();
+  const b = ($('slaManualTrechoB').value || '').trim().toUpperCase();
+  if (!a || !b) { showToast('Preencha os dois pontos do trecho.', 'error'); return; }
+  const trecho = `${a} <> ${b}`;
+  if (AppState.slaManualTrechos.includes(trecho)) { showToast('Esse trecho já foi adicionado.', 'error'); return; }
+  AppState.slaManualTrechos.push(trecho);
+  renderTrechoSlaManual();
+  $('slaManualTrechoA').value = '';
+  $('slaManualTrechoB').value = '';
+  $('slaManualTrechoA').focus();
+  showToast('✓ Trecho adicionado.');
+}
+/* consolida a lista com o par que ficou digitado e não foi adicionado */
+function _slaManualTrechosFinal() {
+  const a = ($('slaManualTrechoA').value || '').trim().toUpperCase();
+  const b = ($('slaManualTrechoB').value || '').trim().toUpperCase();
+  if ((a && !b) || (!a && b)) throw new Error('Preencha os dois pontos do trecho (ou deixe ambos vazios).');
+  const lista = [...AppState.slaManualTrechos];
+  if (a && b) { const atual = `${a} <> ${b}`; if (!lista.includes(atual)) lista.push(atual); }
+  return lista;
 }
 function salvarSlaManual() {
   const prob = $('slaManualProblema').value.trim();
@@ -3495,7 +3633,14 @@ function salvarSlaManual() {
   if (!tec) return showToast('Preencha o Técnico', 'error');
   if (!opKey) return showToast('Selecione o Operador (NOC)', 'error');
   if (!emp) return showToast('Selecione a Empresa', 'error');
-  
+
+  /* INÍCIO é obrigatório — é dele que sai a contagem do SLA */
+  const agoraMs = Date.now();
+  const inicioMs = _slaManualInicioMs();
+  if (!inicioMs) return showToast('Informe o início do problema/falha', 'error');
+  if (inicioMs > agoraMs + 60000) return showToast('O início não pode estar no futuro', 'error', 4000);
+  if (agoraMs - inicioMs > 7 * 24 * 3600000) return showToast('Início há mais de 7 dias. Confira a data informada.', 'error', 5000);
+
   const opObj = AppState.operadores.find(item=>getOperadorKey(item)===opKey);
   const opNome = opObj ? opObj.nome : '';
   const hs = $('slaManualHoras').value.trim();
@@ -3503,18 +3648,27 @@ function salvarSlaManual() {
   const desc = $('slaManualDesc').value.trim();
   const pop = $('slaManualPop').value.trim();
 
+  let trechos = [];
+  try { trechos = _slaManualTrechosFinal(); }
+  catch (e) { return showToast(e.message, 'error'); }
+  const trechoStr = trechos.join(' | ');
+
   const id = os || ('OS' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,6).toUpperCase());
   let resumo = prob;
   if (os) resumo = `[${os}] ` + resumo;
+  if (trechoStr) resumo += ` · Trecho: ${trechoStr}`;
   if (pop) resumo += ` · ${pop}`;
   if (desc) resumo += ` · ${desc}`;
-  
+
+  /* ALVO = onde é o problema. O trecho vem primeiro, por ser a
+     localização mais específica do acionamento. */
   let alvoText = '-';
-  if(pop || desc) {
+  {
       const arr = [];
+      if(trechoStr) arr.push('Trecho: ' + trechoStr);
       if(pop) arr.push(pop);
       if(desc) arr.push(desc);
-      alvoText = arr.join(' · ');
+      if(arr.length) alvoText = arr.join(' · ');
   }
 
   const payload = {
@@ -3527,7 +3681,8 @@ function salvarSlaManual() {
     empresa: _slaCap(emp, 60),
     tecnicos: _slaCap(tec, 200),
     operador: opNome,
-    aberturaMs: Date.now(),
+    aberturaMs: agoraMs,
+    inicioMs: inicioMs,
     slaHoras: hs ? Number(hs) : (typeof SLA_HORAS_PADRAO !== 'undefined' ? SLA_HORAS_PADRAO : 4)
   };
 
@@ -3546,6 +3701,11 @@ function salvarSlaManual() {
         $('slaManualOs').value = '';
         $('slaManualDesc').value = '';
         $('slaManualPop').value = '';
+        $('slaManualTrechoA').value = '';
+        $('slaManualTrechoB').value = '';
+        AppState.slaManualTrechos = [];
+        renderTrechoSlaManual();
+        ajustarInicioSlaManual(0);
         if(typeof atualizarBadgeSla === 'function') atualizarBadgeSla();
         if(typeof listarSla === 'function') listarSla();
       } else {
