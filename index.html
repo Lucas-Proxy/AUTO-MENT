@@ -760,7 +760,10 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 .tc-selo{font-family:'Share Tech Mono',monospace;font-size:0.5825rem;letter-spacing:1.2px;text-transform:uppercase;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--text3);white-space:nowrap}
 .tc-selo.reincidente{background:var(--amber-l);color:var(--amber);border-color:rgba(217,119,6,.3)}
 .tc-selo.cobrancas{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.28)}
-.tc-selo.escalonado{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.3)}
+.tc-selo.escalonado{background:var(--amber-l);color:var(--amber);border-color:rgba(217,119,6,.35)}
+.tc-selo.vinculo{background:var(--blue-l);color:var(--blue);border-color:var(--blue-b);font-weight:700}
+.tc-vinculo-nota{font-family:'Inter',sans-serif;font-size:0.7225rem;line-height:1.45;color:var(--blue);
+  background:var(--blue-l);border:1px solid var(--blue-b);border-radius:7px;padding:7px 9px}
 
 /* ══ TABELA DO RELATÓRIO ═══════════════════════════════════════════
    Chamado e cobranças formam um bloco. A régua grossa marca o começo de
@@ -2882,6 +2885,10 @@ function _tcConsolidar(itens){
     return it;
   });
 
+  /* devolve ao chamado o AU que ficou preso na thread da resposta da TIM,
+     para o agrupamento logo abaixo enxergar que são o mesmo chamado */
+  _tcHerdarAu(lista);
+
   /* Agrupa pelo AU e, na falta dele, pelo código de evento da TIM
      (EVE...) — que é o que amarra a conversa da caixa de escalonamento
      quando o corporate não devolveu o nosso protocolo inicial. Quem não
@@ -3086,7 +3093,12 @@ function _tcSlaCardHTML(item,ctx){
      olhar. A data exata é detalhe e desceu para o bloco expansível. */
   const seloEscalonado=Number(item.escalonadoMs)
     ?`<span class="tc-selo escalonado">Escalonado</span>`:'';
-  const selos=(reincidente||seloEscalonado)?`<div class="tc-card-selos">${reincidente}${seloEscalonado}</div>`:'';
+  /* aviso, não fusão: os dois cards continuam na tela */
+  const vinculo=(ctx&&ctx.vinculos&&ctx.vinculos[item.id])||null;
+  const seloVinculo=vinculo
+    ?`<span class="tc-selo vinculo" title="Mesmo assunto de um chamado j&aacute; aberto e sem falha diferente entre os dois">Poss&iacute;vel resposta</span>`:'';
+  const selos=(reincidente||seloEscalonado||seloVinculo)
+    ?`<div class="tc-card-selos">${reincidente}${seloEscalonado}${seloVinculo}</div>`:'';
   const aberto=TC_EXPANDIDOS.has(String(item.id));
 
   return `<div class="sla-card-faixa"></div>
@@ -3119,6 +3131,7 @@ function _tcSlaCardHTML(item,ctx){
   </div>
   <button class="tc-btn-detalhes" data-id="${_esc(item.id)}" aria-expanded="${aberto}">${aberto?'Menos detalhes':'Detalhes'}</button>
   <div class="tc-detalhes${aberto?'':' hidden'}">
+    ${vinculo?`<div class="tc-vinculo-nota">Mesmo assunto do chamado aberto em <strong>${_slaFmtHora(vinculo.aberturaMs)}</strong>${vinculo.mesmaFalha?', com a mesma data de falha':''}. Pode ser resposta no e-mail que j&aacute; existe, e n&atilde;o chamado novo &mdash; confira antes de tratar como ocorr&ecirc;ncia separada.</div>`:''}
     <div class="tc-acao-dica${dica?'':' hidden'}">${_esc(dica)}</div>
     <div class="sla-info">
       <div class="sla-linha"><span class="sla-linha-rot">Solicitante</span><span class="sla-linha-val">${_esc(item.solicitante||'—')}</span></div>
@@ -3155,6 +3168,108 @@ function _tcReincidencia(itens){
   return m;
 }
 
+/* ── possível resposta dentro de um chamado que já existe ────────────
+   Regra da operação: chamado só se abre com o circuito OFFLINE. Duas falhas
+   em data/hora diferentes significam que o circuito voltou entre uma e
+   outra — são ocorrências distintas e cada uma tem card próprio, mesmo que
+   o assunto e a designação sejam idênticos. Por isso a data da falha é a
+   primeira coisa checada aqui, e não o texto do título.
+
+   O que esta função procura é o contrário: duas conversas com o MESMO
+   assunto e SEM falha diferente entre elas. Quase sempre é alguém
+   respondendo a todos no e-mail que já existe em vez de abrir chamado novo
+   — foi assim que a resposta da TIM ("RE: ...", ou com o cabeçalho do
+   Business Contact Center) virou um segundo card.
+
+   NADA é fundido de propósito: os dois cards continuam, e quem decide é o
+   NOC. Fusão automática por semelhança de título esconderia chamado real,
+   que é pior do que ver um card a mais. */
+const TC_VINCULO_JANELA_MS = 7*24*3600000;
+
+/* tira o que é embrulho de e-mail e não faz parte do assunto */
+function _tcAssuntoBase(s){
+  return String(s||'')
+    .replace(/atendimento\s+business\s+contact\s+center\s*[-–—]\s*tim\s*s\.?\s*a\.?\s*[-–—]?\s*/ig,'')
+    .replace(/^\s*(?:(?:re|res|resp|enc|fw|fwd|em|encaminhar)\s*:\s*)+/ig,'')
+    .replace(/[\s.·|]+$/,'')
+    .replace(/\s+/g,' ')
+    .trim().toUpperCase();
+}
+
+/* velho e novo são a MESMA conversa? Ordem das checagens é a da operação:
+   falha primeiro, título por último. */
+function _tcMesmaConversa(velho,novo){
+  if((novo.aberturaMs||0)<=(velho.aberturaMs||0))return false;
+  if((novo.aberturaMs||0)-(velho.aberturaMs||0)>TC_VINCULO_JANELA_MS)return false;
+
+  /* 1) falhas declaradas e diferentes ⇒ o circuito voltou no meio:
+        são ocorrências distintas */
+  const fv=_tcFalhaMs(velho.dataHoraFalha),fn=_tcFalhaMs(novo.dataHoraFalha);
+  if(fv&&fn&&Math.abs(fv-fn)>600000)return false;
+
+  /* 2) dois AUs diferentes ⇒ a TIM protocolou dois chamados */
+  const av=_tcNormAu(velho.protocolo),an=_tcNormAu(novo.protocolo);
+  if(av&&an&&av!==an)return false;
+
+  /* 3) designações diferentes ⇒ circuitos diferentes */
+  const dv=String(velho.designacao||'').trim().toUpperCase();
+  const dn=String(novo.designacao||'').trim().toUpperCase();
+  if(dv&&dn&&dv!==dn)return false;
+
+  /* 4) e só então o assunto: precisa ser o mesmo e ter substância —
+        título curto demais não identifica nada */
+  const sv=_tcAssuntoBase(velho.resumo),sn=_tcAssuntoBase(novo.resumo);
+  if(!sv||sv.length<10||sv!==sn)return false;
+  return {mesmaFalha:!!(fv&&fn)};
+}
+
+/* O AU da resposta da TIM É o AU do chamado. Quando o corporate responde
+   sem repetir a designação, o backend não consegue casar a resposta com a
+   abertura (_timDonoDoEvento desiste sem designação) e o protocolo fica
+   preso na thread da resposta — o chamado segue "Aguardando AU" com o
+   número já em mãos. Aqui esse número volta para o chamado a que pertence.
+   Não é palpite de layout: é o mesmo par que _tcMesmaConversa reconhece,
+   com as travas de falha, designação e AU conflitante. Depois disso a
+   fusão por AU, que já existia, junta os dois — não por semelhança de
+   título, mas porque o protocolo prova que são o mesmo chamado. */
+function _tcHerdarAu(lista){
+  const abertos=lista.filter(i=>!i.encerramentoMs);
+  abertos.forEach(velho=>{
+    if(String(velho.protocolo||'').trim())return;
+    let melhor=null;
+    abertos.forEach(novo=>{
+      if(novo===velho)return;
+      if(!String(novo.protocolo||'').trim())return;
+      if(!_tcMesmaConversa(velho,novo))return;
+      if(!melhor||(novo.aberturaMs||0)<(melhor.aberturaMs||0))melhor=novo;
+    });
+    if(melhor){
+      velho.protocolo=melhor.protocolo;
+      velho.auHerdadoDe=melhor.id;
+      if(!velho.evento&&melhor.evento)velho.evento=melhor.evento;
+    }
+  });
+  return lista;
+}
+
+function _tcVinculos(itens){
+  const lista=(itens||[]).filter(i=>!i.encerramentoMs);
+  const marca={};
+  for(let a=0;a<lista.length;a++){
+    for(let b=0;b<lista.length;b++){
+      if(a===b)continue;
+      const velho=lista[a],novo=lista[b];
+      const r=_tcMesmaConversa(velho,novo);
+      if(!r)continue;
+      const anterior=marca[novo.id];
+      if(anterior&&(anterior.aberturaMs||0)>=(velho.aberturaMs||0))continue;
+      marca[novo.id]={id:velho.id,resumo:velho.resumo,aberturaMs:velho.aberturaMs,
+                      mesmaFalha:r.mesmaFalha};
+    }
+  }
+  return marca;
+}
+
 /* Prioridade de exibição: a ação humana pendente vem primeiro.
    REFORCAR entra depois de ESCALONAR — escalonar é a última carta que ainda
    temos na mão; reforçar é insistir numa carta já jogada. E vem antes de
@@ -3184,7 +3299,7 @@ function renderTcSla(){
   }
 
   const agora=Date.now();
-  const ctx={reincidencia:_tcReincidencia(st.itens)};
+  const ctx={reincidencia:_tcReincidencia(st.itens),vinculos:_tcVinculos(st.itens)};
   const visiveis=_tcFiltrar(st.itens).filter(i=>!st.filaFoco||_tcEstado(i,agora)===st.filaFoco);
 
   /* cobrar > escalonar > reforçar > aguardando AU > tratativa > aguardando
