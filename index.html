@@ -130,13 +130,49 @@ input::placeholder{color:var(--text3)}
    fluxo, o painel recolhido continuaria ocupando altura e empurraria a
    aba para o meio da tela — e a animação não sairia de onde a aba está. */
 
-/* ── aba (estado recolhido) ── */
-.m-dock-tab{display:inline-flex;align-items:center;gap:9px;height:42px;padding:0 15px;border-radius:21px;
+/* ── aba (estado recolhido) ──
+   Esta aba virou o "pill" de referência do app: os botões de Atualizar e o
+   toggle de tema usam exatamente a mesma regra (.btn-pill), então qualquer
+   ajuste aqui vale para os quatro de uma vez e eles não desalinham com o
+   tempo. font-weight fixo em 400 porque .ozmap-btn traz 700 e a Share Tech
+   Mono só tem um peso — o navegador sintetizava um negrito falso e o botão
+   ficava mais gordo que a aba. */
+.m-dock-tab,.ozmap-btn.btn-pill,.theme-toggle,.acoes-dock{
+  display:inline-flex;align-items:center;gap:9px;height:42px;padding:0 15px;border-radius:21px;
   background:var(--music-bg);border:1px solid var(--border);border-left:3px solid var(--blue);
   box-shadow:var(--shadow2);cursor:pointer;color:var(--text2);
-  font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:1.6px;text-transform:uppercase;
+  font-family:'Share Tech Mono',monospace;font-size:.62rem;font-weight:400;letter-spacing:1.6px;text-transform:uppercase;
   transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s,border-color .22s,opacity .2s;max-width:280px}
-.m-dock-tab:hover{transform:translateY(-2px);border-color:var(--blue2);color:var(--blue)}
+.m-dock-tab:hover,.ozmap-btn.btn-pill:hover,.theme-toggle:hover,.acoes-dock:hover{
+  transform:translateY(-2px);border-color:var(--blue2);color:var(--blue);background:var(--music-bg)}
+/* o rótulo do tema tinha tipografia própria (Inter 600) e cor fixa: sem isto
+   ele não acompanharia nem a fonte nem o azul do hover */
+.theme-toggle .toggle-label{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit}
+
+/* ══ RECOLHER AS AÇÕES DO TOPO (Tema + Atualizar) ══════════════════
+   Mesma ideia da aba de música: um clique some com eles, outro traz de
+   volta, e a escolha fica salva. O botão é o mesmo objeto nos dois
+   estados — expandido é só a seta, recolhido vira a pill "Ações". */
+.acoes-dock{padding:0 13px;gap:0}
+.acoes-ico{font-size:.9rem;line-height:1}
+.acoes-ico-abrir,.acoes-dock-txt{display:none}
+body.acoes-recolhidas .acoes-dock{gap:9px}
+body.acoes-recolhidas .acoes-ico-recolher{display:none}
+body.acoes-recolhidas .acoes-ico-abrir,body.acoes-recolhidas .acoes-dock-txt{display:inline}
+/* precisa vencer os display:flex!important que trocam os botões conforme
+   o painel aberto (.so-normal / .so-sla / .so-tcsla) — daí o !important
+   com seletor mais específico, e não um display:none simples */
+body.acoes-recolhidas .ozmap-btn.btn-pill,
+body.acoes-recolhidas .theme-toggle{display:none!important}
+/* entrada suave só na volta; recolher é imediato porque a barra precisa
+   liberar o espaço na hora */
+body.acoes-voltando .ozmap-btn.btn-pill,
+body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.36,1) both}
+@keyframes acoesVolta{from{opacity:0;transform:translateY(-6px) scale(.94)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  body.acoes-voltando .ozmap-btn.btn-pill,
+  body.acoes-voltando .theme-toggle{animation:none}
+}
 .m-dock-tab-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .m-dock.aberto .m-dock-tab{opacity:0;visibility:hidden;pointer-events:none;transform:scale(.9)}
 
@@ -496,19 +532,42 @@ main{padding:16px 12px}
 /* ═══════════════════════════════════════════════════════
    PAINEL DE SLA — tela cheia, cards no estilo relógio
 ═══════════════════════════════════════════════════════ */
-#slaView, #tcSlaView {display:none;position:relative;z-index:1;min-height:100vh;padding:34px 40px 90px}
+/* O painel é UM só, com duas abas. O cabeçalho (título + abas) fica fora
+   das seções para não repetir e para as abas não piscarem na troca; cada
+   section é o conteúdo de uma aba. */
+#slaTopo{display:none;position:relative;z-index:1;padding:34px 40px 0}
+body.sla-aberto #slaTopo{display:block}
+#slaView, #tcSlaView {display:none;position:relative;z-index:1;min-height:70vh;padding:0 40px 90px}
 #slaView.ativo, #tcSlaView.ativo {display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
-body.sla-aberto main, body.tcsla-aberto main {display:none}
+body.sla-aberto main {display:none}
 /* alternância dos botões da barra fixa: uma barra só, conteúdo por modo —
-   evita ter dois "Atualizar" na tela e a colisão com o ícone de volume */
-.so-sla, .so-tcsla {display:none!important}
+   evita ter dois "Atualizar" na tela e a colisão com o ícone de volume.
+   Com as abas, o modo tcsla deixou de existir: dentro do painel há sempre
+   um Atualizar (que age na aba aberta) e um Fechar. */
+.so-sla {display:none!important}
 
 body.sla-aberto .so-normal {display:none!important}
 body.sla-aberto .so-sla {display:flex!important}
 
-body.tcsla-aberto .so-normal {display:none!important}
-body.tcsla-aberto .so-sla {display:none!important}
-body.tcsla-aberto .so-tcsla {display:flex!important}
+/* ── abas do painel: discretas, logo abaixo do título ── */
+.sla-abas{display:flex;gap:4px;border-bottom:1px solid var(--border);width:100%;max-width:1600px}
+.sla-aba{display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:2px solid transparent;
+  padding:9px 2px;margin-right:22px;cursor:pointer;color:var(--text3);
+  font-family:'Share Tech Mono',monospace;font-size:.68rem;letter-spacing:2px;text-transform:uppercase;
+  transition:color .18s,border-color .18s;margin-bottom:-1px}
+.sla-aba:hover{color:var(--text2)}
+.sla-aba.ativa{color:var(--blue);border-bottom-color:var(--blue)}
+.sla-aba:focus-visible{outline:2px solid var(--blue2);outline-offset:3px;border-radius:3px}
+.sla-aba-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 5px;
+  border-radius:8px;background:var(--red);color:#fff;font-size:.55rem;font-weight:700;line-height:1;letter-spacing:0}
+/* linha de ação da aba Acionamentos: o "+" saiu do título e virou uma ação
+   da aba, com rótulo — antes era um "+" solto que não dizia o que fazia */
+.sla-aba-acoes{max-width:1600px;margin:0 auto 18px;display:flex;align-items:center;gap:2px;padding-top:18px}
+.sla-aba-acoes .btn-add-sla{margin-left:0;width:30px;height:30px}
+.sla-aba-acoes-rot{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:1.6px;
+  color:var(--text3);text-transform:uppercase;margin-left:10px}
+.sla-btn-relatorio{width:auto;padding:0 12px;height:34px;font-size:.7rem;font-weight:700;margin-left:auto;
+  font-family:'Share Tech Mono',monospace;letter-spacing:1.4px;text-transform:uppercase}
 .btn-sla-fechar:hover{border-color:var(--red)!important;color:var(--red)!important;background:var(--red-l)!important}
 /* cabeçalho empilhado à esquerda: a coluna da direita fica livre para a
    barra fixa e o controle de volume, sem sobreposição em nenhuma largura */
@@ -544,6 +603,7 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 .sla-tempo-rot{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
 /* chamado de dias marca 3 dígitos de hora e transbordava o anel */
 .sla-tempo.longo{font-size:.92rem;letter-spacing:0}
+.sla-tempo.extenso{font-size:.78rem;letter-spacing:0}
 .sla-excedente{font-family:'Share Tech Mono',monospace;font-size:.56rem;font-weight:700;letter-spacing:1px;color:var(--red);text-transform:uppercase}
 .sla-info{display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--border);padding-top:9px}
 .sla-linha{display:flex;flex-direction:column;gap:2px}
@@ -671,10 +731,13 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 @media(max-width:1024px){
 .tc-filas{grid-template-columns:1fr;gap:14px}
 .tc-fila-dica{display:none}
-#slaView{padding:74px 12px 90px}
+#slaTopo{padding:74px 12px 0}
+#slaView,#tcSlaView{padding:0 12px 90px}
 .sla-grid{grid-template-columns:1fr;gap:14px}
 .sla-header{padding-right:0;gap:12px}
 .sla-titulo{font-size:1.7rem}
+/* no celular as abas não cabem lado a lado com margem larga */
+.sla-aba{margin-right:14px;letter-spacing:1.2px;font-size:.62rem}
 }
 
 /* — cursor de brilho ambiente — */
@@ -700,18 +763,13 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 <span>SLA</span>
 <span id="slaBadgeTopo" class="sla-badge-topo hidden">0</span>
 </button>
-<button class="ozmap-btn so-normal" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
+<button class="ozmap-btn btn-pill so-normal" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 <span>Atualizar</span>
 </button>
-<button class="ozmap-btn so-sla" id="btnSlaAtualizar" title="Buscar agora os chamados na planilha" aria-label="Atualizar chamados">
+<button class="ozmap-btn btn-pill so-sla" id="btnSlaAtualizar" title="Recarregar a aba aberta" aria-label="Atualizar a aba aberta">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-<span>Atualizar SLA</span>
-</button>
-<button class="ozmap-btn so-sla" id="btnTcSla" title="Abrir painel de SLA dos e-mails da TIM" aria-label="Painel E-MAIL’s SLA">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-<span>E-MAIL’S SLA</span>
-<span id="tcSlaBadgeTopo" class="sla-badge-topo hidden">0</span>
+<span>Atualizar</span>
 </button>
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
 <span id="themeIcon" style="font-size:13px">&#9728;</span>
@@ -722,13 +780,10 @@ body.tcsla-aberto .so-tcsla {display:flex!important}
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 <span>Fechar</span>
 </button>
-<button class="ozmap-btn so-tcsla" id="btnTcSlaAtualizar" title="Buscar agora os chamados no Gmail" aria-label="Atualizar E-MAIL’s SLA">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-<span>Atualizar</span>
-</button>
-<button class="ozmap-btn so-tcsla btn-sla-fechar" id="btnTcSlaFechar" title="Voltar para o painel de SLA (Esc)" aria-label="Fechar painel E-MAIL’s SLA">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-<span>Fechar E-MAIL’S SLA</span>
+<button class="acoes-dock" id="btnAcoesDock" aria-controls="btnAtualizarCache themeToggle" aria-expanded="true" title="Recolher Tema e Atualizar">
+<span class="acoes-ico acoes-ico-recolher" aria-hidden="true">&#187;</span>
+<span class="acoes-ico acoes-ico-abrir" aria-hidden="true">&#9881;</span>
+<span class="acoes-dock-txt">A&ccedil;&otilde;es</span>
 </button>
 </div>
 
@@ -1127,23 +1182,34 @@ IDENTIFICA&#199;&#195;O
 </div>
 </main>
 
-<section id="slaView">
+<div id="slaTopo">
 <div class="sla-header">
 <div class="sla-header-txt">
-<div class="sla-titulo" style="display:flex;align-items:center"><span class="hl">Painel</span> de SLA <button class="btn-add-sla" id="btnOpenSlaManual" onclick="abrirModalSlaManual()" title="Adicionar SLA Manual">+</button></div>
+<div class="sla-titulo"><span class="hl">Painel</span> de SLA</div>
 </div>
+<div class="sla-abas" role="tablist" aria-label="Se&ccedil;&otilde;es do painel de SLA">
+<button class="sla-aba" id="abaAcionamentos" role="tab" aria-controls="slaView" aria-selected="true">
+<span>Acionamentos</span><span class="sla-aba-badge hidden" id="abaAcionamentosBadge" title="Chamados com SLA estourado">0</span>
+</button>
+<button class="sla-aba" id="abaEmails" role="tab" aria-controls="tcSlaView" aria-selected="false">
+<span>E-mail&rsquo;s</span><span class="sla-aba-badge hidden" id="abaEmailsBadge" title="Chamados aguardando a&ccedil;&atilde;o">0</span>
+</button>
+</div>
+</div>
+</div>
+
+<section id="slaView" role="tabpanel" aria-labelledby="abaAcionamentos">
+<div class="sla-aba-acoes">
+<button class="btn-add-sla" id="btnOpenSlaManual" onclick="abrirModalSlaManual()" title="Adicionar O.S. manual ao painel">+</button>
+<span class="sla-aba-acoes-rot">Adicionar O.S. manual</span>
 </div>
 <div class="sla-grid" id="slaGrid"></div>
 <div class="sla-rodape" id="slaRodape"></div>
 </section>
 
-<section id="tcSlaView">
-<div class="sla-header">
-<div class="sla-header-txt">
-<div class="sla-titulo" style="display:flex;align-items:center"><span class="hl">E-MAIL’S</span> SLA (TIM) <button class="btn-add-sla" style="width:auto;padding:0 12px;margin-left:12px;font-size:0.75rem" onclick="abrirModalRelatorioTim()" title="Relatório">Relatório</button></div>
-</div>
-</div>
+<section id="tcSlaView" role="tabpanel" aria-labelledby="abaEmails">
 <div class="tc-filtro-wrap">
+<button class="btn-add-sla sla-btn-relatorio" onclick="abrirModalRelatorioTim()" title="Relat&oacute;rio do per&iacute;odo">Relat&oacute;rio</button>
 <input type="text" class="tc-filtro" id="tcSlaFiltro" placeholder="Filtrar por designa&ccedil;&atilde;o, AU, solicitante, assunto ou fila..." autocomplete="off">
 <span class="tc-filtro-info" id="tcSlaFiltroInfo"></span>
 </div>
@@ -1440,6 +1506,36 @@ function toggleTheme(){const c=document.documentElement.getAttribute('data-theme
 function setTheme(t){document.documentElement.setAttribute('data-theme',t);applyThemeUI(t);try{localStorage.setItem('noc-theme',t)}catch(e){}}
 $('themeToggle').addEventListener('click',toggleTheme);
 $('btnAtualizarCache').addEventListener('click',atualizarDadosForcado);
+
+/* ── recolher/expandir as ações do topo ──────────────────────────
+   Espelha o comportamento da aba de música: o mesmo botão recolhe e
+   devolve, e o estado sobrevive ao reload (localStorage, como o tema e
+   o volume). Se o localStorage estiver bloqueado, apenas não lembra. */
+const ACOES_CHAVE='noc-acoes-recolhidas';
+function aplicarEstadoAcoes(recolhido,animar){
+  document.body.classList.toggle('acoes-recolhidas',recolhido);
+  const b=$('btnAcoesDock');
+  if(b){
+    b.title=recolhido?'Mostrar Tema e Atualizar':'Recolher Tema e Atualizar';
+    b.setAttribute('aria-label',b.title);
+    b.setAttribute('aria-expanded',String(!recolhido));
+  }
+  if(animar&&!recolhido){
+    document.body.classList.add('acoes-voltando');
+    setTimeout(()=>document.body.classList.remove('acoes-voltando'),320);
+  }
+}
+function alternarAcoesDock(){
+  const recolhido=!document.body.classList.contains('acoes-recolhidas');
+  aplicarEstadoAcoes(recolhido,true);
+  try{localStorage.setItem(ACOES_CHAVE,recolhido?'1':'0')}catch(e){}
+}
+$('btnAcoesDock').addEventListener('click',alternarAcoesDock);
+(function(){
+  let salvo=null;
+  try{salvo=localStorage.getItem(ACOES_CHAVE)}catch(e){}
+  aplicarEstadoAcoes(salvo==='1',false);
+})();
 
 (function(){const cv=$('ben10Aliens');if(!cv)return;const ctx=cv.getContext('2d');let W,H,aliens=[];function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}window.addEventListener('resize',resize);resize();const SHAPES=[(ctx,s)=>{ctx.beginPath();ctx.ellipse(0,0,s*.6,s,0,0,Math.PI*2);ctx.fill();ctx.fillRect(-s*.9,-s*.3,s*.4,s*.15);ctx.fillRect(s*.5,-s*.3,s*.4,s*.15);ctx.fillRect(-s*.8,0,s*.35,s*.15);ctx.fillRect(s*.45,0,s*.35,s*.15);ctx.beginPath();ctx.arc(0,-s*.85,s*.35,0,Math.PI*2);ctx.fill()},(ctx,s)=>{ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*.5,-s*.3);ctx.lineTo(s*.4,s*.6);ctx.lineTo(-s*.4,s*.6);ctx.lineTo(-s*.5,-s*.3);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(-s*.15,-s);ctx.lineTo(0,-s*1.35);ctx.lineTo(s*.15,-s);ctx.closePath();ctx.fill()},(ctx,s)=>{ctx.beginPath();ctx.ellipse(0,0,s*.3,s*.8,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(0,-s*.7,s*.35,s*.2,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(-s*.1,s*.7);ctx.quadraticCurveTo(-s*.6,s*1.2,-s*.3,s*1.4);ctx.lineTo(s*.05,s*.8);ctx.closePath();ctx.fill()}];function spawnAlien(){const s=14+Math.random()*28;aliens.push({x:Math.random()*W,y:H+s*2,size:s,vy:-(0.3+Math.random()*.6),vx:(Math.random()-.5)*.4,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.008,opacity:.06+Math.random()*.12,shape:SHAPES[Math.floor(Math.random()*SHAPES.length)],wobble:Math.random()*Math.PI*2,wobbleSpeed:.005+Math.random()*.01})}function draw(){requestAnimationFrame(draw);if(document.documentElement.getAttribute('data-theme')!=='ben10'){ctx.clearRect(0,0,W,H);return}ctx.clearRect(0,0,W,H);if(aliens.length<25&&Math.random()<.03)spawnAlien();for(let i=aliens.length-1;i>=0;i--){const a=aliens[i];a.y+=a.vy;a.wobble+=a.wobbleSpeed;a.x+=a.vx+Math.sin(a.wobble)*.3;a.rot+=a.rotSpeed;if(a.y<-a.size*3){aliens.splice(i,1);continue}ctx.save();ctx.translate(a.x,a.y);ctx.rotate(a.rot);ctx.globalAlpha=a.opacity;ctx.fillStyle='#000';a.shape(ctx,a.size);ctx.restore()}}for(let i=0;i<12;i++){spawnAlien();aliens[aliens.length-1].y=Math.random()*H}draw()})();
 
@@ -1992,11 +2088,24 @@ AppState.tcSla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
 
 /* ── utilitários ── */
 function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+/* Acima de 24h o formato HH:MM:SS virava "27:14:03", e ninguém lê isso de
+   imediato como "um dia e três horas". A partir de 1 dia o contador ganha o
+   prefixo de dias e as horas voltam para a faixa 0-23: 1d 03:14:03.
+   Abaixo de 24h nada muda — segue HH:MM:SS como sempre foi. */
 function _slaFmtDur(ms){
   const total=Math.max(0,Math.floor(ms/1000));
-  const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
+  const dias=Math.floor(total/86400);
+  const h=Math.floor((total%86400)/3600),m=Math.floor((total%3600)/60),s=total%60;
   const p=n=>String(n).padStart(2,'0');
-  return `${p(h)}:${p(m)}:${p(s)}`;
+  return `${dias?dias+'d ':''}${p(h)}:${p(m)}:${p(s)}`;
+}
+/* o contador tem largura fixa no card; o prefixo de dias estoura o espaço,
+   então a fonte encolhe em dois degraus conforme o texto cresce */
+function _slaPintaTempo(el,txt){
+  if(!el)return;
+  el.textContent=txt;
+  el.classList.toggle('longo',txt.length>8&&txt.length<=11);
+  el.classList.toggle('extenso',txt.length>11);
 }
 function _slaFmtHora(ms){
   const d=new Date(ms);
@@ -2138,11 +2247,17 @@ function carregarSla(silencioso, retentativas=1){
   });
 }
 
+/* o mesmo número em dois lugares: no botão SLA da tela principal (painel
+   fechado) e na aba Acionamentos (painel aberto, olhando a outra aba) */
+function _pintaBadgeSla(id,n){
+  const el=$(id);if(!el)return;
+  el.textContent=n;
+  el.classList.toggle('hidden',n===0);
+}
 function atualizarBadgeSla(){
-  const badge=$('slaBadgeTopo');if(!badge)return;
   const estourados=AppState.sla.itens.filter(i=>!i.encerramentoMs&&_slaCalc(i).estado==='ESTOURADO').length;
-  badge.textContent=estourados;
-  badge.classList.toggle('hidden',estourados===0);
+  _pintaBadgeSla('slaBadgeTopo',estourados);
+  _pintaBadgeSla('abaAcionamentosBadge',estourados);
 }
 
 function _slaCardHTML(item){
@@ -2258,7 +2373,7 @@ function tickSla(){
         showToast(`⚠ SLA estourado: ${item.rede||''} ${item.tipo||''}`.trim(),'error',5000);
       }
     }
-    if(n.tempo)n.tempo.textContent=_slaFmtDur(c.decorrido);
+    if(n.tempo)_slaPintaTempo(n.tempo,_slaFmtDur(c.decorrido));
     if(n.anel)n.anel.setAttribute('stroke-dashoffset',(SLA_RING_C*(1-Math.min(c.pct,1))).toFixed(1));
     if(n.excedente){
       n.excedente.textContent=c.excedente>0?`+${_slaFmtDur(c.excedente)} al&eacute;m do SLA`.replace('&eacute;','é'):'';
@@ -2391,28 +2506,92 @@ function confirmarEncerrarSla() {
     });
 }
 
-/* ── abrir / fechar o painel ── */
-function abrirPainelSla(){
-  if(AppState.tcSla.aberto) fecharPainelTcSla();
-  AppState.sla.aberto=true;
+/* ── abrir / fechar o painel e navegar entre as abas ────────────────
+   Antes eram DOIS painéis de tela cheia que se fechavam um ao outro, cada
+   um com seu próprio par de botões no topo. Agora é UM painel com duas
+   abas; o que muda entre elas é apenas qual seção fica visível e qual
+   relógio/poll está rodando.
+
+   AppState.sla.aberto e AppState.tcSla.aberto passam a significar "esta
+   ABA está em primeiro plano" — é exatamente o uso que já faziam (guardas
+   de re-render e cadência do poll), então o resto do código continua
+   valendo sem alteração. A aba em segundo plano fica no poll de fundo,
+   que é o que mantém os badges vivos sem varrer o Gmail à toa. */
+const SLA_ABAS={acionamentos:'slaView',emails:'tcSlaView'};
+
+function painelSlaAberto(){return document.body.classList.contains('sla-aberto')}
+
+function abrirPainelSla(aba){
   document.body.classList.add('sla-aberto');
-  $('slaView').classList.add('ativo');
   window.scrollTo(0,0);
+  selecionarAbaSla(aba||'acionamentos');
+}
+function fecharPainelSla(){
+  document.body.classList.remove('sla-aberto');
+  Object.values(SLA_ABAS).forEach(id=>{const el=$(id);if(el)el.classList.remove('ativo')});
+  _pausarAbaAcionamentos();
+  _pausarAbaEmails();
+  AppState.slaAba=null;
+}
+function alternarPainelSla(){painelSlaAberto()?fecharPainelSla():abrirPainelSla()}
+
+/* sempre abre em ACIONAMENTOS: o botão SLA leva sempre ao mesmo lugar */
+function selecionarAbaSla(aba){
+  if(!SLA_ABAS[aba])aba='acionamentos';
+  if(AppState.slaAba===aba&&painelSlaAberto())return;
+  AppState.slaAba=aba;
+  Object.entries(SLA_ABAS).forEach(([k,id])=>{
+    const el=$(id);if(el)el.classList.toggle('ativo',k===aba);
+  });
+  const bA=$('abaAcionamentos'),bE=$('abaEmails');
+  if(bA){bA.classList.toggle('ativa',aba==='acionamentos');bA.setAttribute('aria-selected',String(aba==='acionamentos'))}
+  if(bE){bE.classList.toggle('ativa',aba==='emails');bE.setAttribute('aria-selected',String(aba==='emails'))}
+  /* pausa a outra ANTES de ativar a escolhida: sem isso os dois setInterval
+     de 1s ficariam rodando juntos depois de algumas idas e vindas */
+  if(aba==='emails'){_pausarAbaAcionamentos();_ativarAbaEmails()}
+  else{_pausarAbaEmails();_ativarAbaAcionamentos()}
+}
+
+function _ativarAbaAcionamentos(){
+  AppState.sla.aberto=true;
   renderSla();
   carregarSla();
   clearInterval(AppState.sla.timerTick);
   AppState.sla.timerTick=setInterval(tickSla,1000);
   _reprogramarPollSla();
 }
-function fecharPainelSla(){
+function _pausarAbaAcionamentos(){
   AppState.sla.aberto=false;
-  document.body.classList.remove('sla-aberto');
-  $('slaView').classList.remove('ativo');
   clearInterval(AppState.sla.timerTick);
   AppState.sla.timerTick=null;
   _reprogramarPollSla();
 }
-function alternarPainelSla(){AppState.sla.aberto?fecharPainelSla():abrirPainelSla()}
+function _ativarAbaEmails(){
+  AppState.tcSla.aberto=true;
+  renderTcSla();
+  /* mostra na hora o que já está na planilha e só então varre o Gmail,
+     para a aba não abrir em branco esperando a busca */
+  carregarTcSla(true).then(()=>carregarTcSla(false,1,true));
+  clearInterval(AppState.tcSla.timerTick);
+  AppState.tcSla.timerTick=setInterval(tickTcSla,1000);
+  _reprogramarPollTcSla();
+}
+function _pausarAbaEmails(){
+  AppState.tcSla.aberto=false;
+  clearInterval(AppState.tcSla.timerTick);
+  AppState.tcSla.timerTick=null;
+  _reprogramarPollTcSla();
+}
+/* um único "Atualizar" no topo: recarrega a aba que está à frente */
+function atualizarAbaSlaAtiva(){
+  if(AppState.slaAba==='emails'){
+    carregarTcSla(false,1,true);
+    showToast('↻ Varrendo o Gmail — pode levar alguns segundos...');
+  }else{
+    carregarSla();
+    showToast('↻ Buscando chamados...');
+  }
+}
 /* com o painel aberto busca com mais frequência; fechado, só o suficiente
    para manter o contador de estourados do botão do topo em dia */
 function _reprogramarPollSla(){
@@ -2424,19 +2603,28 @@ function _reprogramarPollSla(){
 function bindEventsSla(){
   $('btnSla').addEventListener('click',alternarPainelSla);
   $('btnSlaFechar').addEventListener('click',fecharPainelSla);
-  $('btnSlaAtualizar').addEventListener('click',()=>{carregarSla();showToast('↻ Buscando chamados...')});
+  $('btnSlaAtualizar').addEventListener('click',atualizarAbaSlaAtiva);
+  $('abaAcionamentos').addEventListener('click',()=>selecionarAbaSla('acionamentos'));
+  $('abaEmails').addEventListener('click',()=>selecionarAbaSla('emails'));
+  /* setas ← → navegam entre as abas quando o foco está nelas (padrão ARIA) */
+  $('slaTopo').addEventListener('keydown',e=>{
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+    if(!e.target.classList.contains('sla-aba'))return;
+    e.preventDefault();
+    const proxima=AppState.slaAba==='emails'?'acionamentos':'emails';
+    selecionarAbaSla(proxima);
+    $(proxima==='emails'?'abaEmails':'abaAcionamentos').focus();
+  });
   $('slaGrid').addEventListener('click',e=>{
     const b=e.target.closest('.sla-btn-encerrar');
     if(b&&!b.disabled)abrirModalEncerrarSla(b.dataset.id, 'SLA');
   });
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.sla.aberto)fecharPainelSla()});
+  /* Esc fecha o painel inteiro, esteja em qualquer aba */
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&painelSlaAberto())fecharPainelSla()});
   // primeira carga em segundo plano, sem atrapalhar o carregamento da tela
   setTimeout(()=>{carregarSla(true);_reprogramarPollSla()},1200);
 
   // TC-SLA
-  $('btnTcSla').addEventListener('click',alternarPainelTcSla);
-  $('btnTcSlaFechar').addEventListener('click',fecharPainelTcSla);
-  $('btnTcSlaAtualizar').addEventListener('click',()=>{carregarTcSla(false,1,true);showToast('↻ Varrendo o Gmail — pode levar alguns segundos...')});
   $('tcSlaFilas').addEventListener('click',e=>{
     const b=e.target.closest('.sla-btn-encerrar');
     if(b&&!b.disabled){abrirModalEncerrarSla(b.dataset.id,'TIM');return}
@@ -2447,7 +2635,6 @@ function bindEventsSla(){
     AppState.tcSla.filtro=e.target.value||'';
     renderTcSla();
   });
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AppState.tcSla.aberto)fecharPainelTcSla()});
   setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},2500);
 }
 
@@ -2662,13 +2849,13 @@ function _tcCalc(item,agora){
 /* o badge do topo conta AÇÃO PENDENTE, não "estourado". Chamado
    escalonado e aguardando a TIM não é pendência nossa. */
 function atualizarBadgeTcSla(){
-  const badge=$('tcSlaBadgeTopo');if(!badge)return;
   const agora=Date.now();
   const n=AppState.tcSla.itens.filter(i=>{
     const e=_tcEstado(i,agora);return e==='COBRAR'||e==='ESCALONAR';
   }).length;
-  badge.textContent=n;
-  badge.classList.toggle('hidden',n===0);
+  /* agora mora na aba E-mail's — é o que avisa que tem pendência ali sem
+     precisar entrar na aba para descobrir */
+  _pintaBadgeSla('abaEmailsBadge',n);
 }
 
 function _tcDiasAberto(item){
@@ -2867,11 +3054,7 @@ function tickTcSla(){
     const c=_tcCalc(item,agora);
     if(c.estado!==n.fila){mudouFila=true;return}
 
-    if(n.tempo){
-      const txt=_slaFmtDur(c.decorrido);
-      n.tempo.textContent=txt;
-      n.tempo.classList.toggle('longo',txt.length>8);
-    }
+    if(n.tempo)_slaPintaTempo(n.tempo,_slaFmtDur(c.decorrido));
     if(n.anel)n.anel.setAttribute('stroke-dashoffset',(SLA_RING_C*(1-Math.min(c.pct,1))).toFixed(1));
     /* o excedente precisa dizer de QUE prazo se trata: passar da janela
        de cobrança e passar das 8h são coisas diferentes */
@@ -2933,29 +3116,14 @@ function registrarEscalonamentoTim(id,btn){
   });
 }
 
-function abrirPainelTcSla(){
-  if(AppState.sla.aberto) fecharPainelSla();
-  AppState.tcSla.aberto=true;
-  document.body.classList.add('tcsla-aberto');
-  $('tcSlaView').classList.add('ativo');
-  window.scrollTo(0,0);
-  renderTcSla();
-  /* mostra na hora o que já está na planilha e só então varre o Gmail,
-     para o painel não abrir em branco esperando a busca */
-  carregarTcSla(true).then(()=>carregarTcSla(false,1,true));
-  clearInterval(AppState.tcSla.timerTick);
-  AppState.tcSla.timerTick=setInterval(tickTcSla,1000);
-  _reprogramarPollTcSla();
+/* O painel de e-mails virou a aba "E-mail's" — abrir/fechar/alternar agora
+   é responsabilidade de selecionarAbaSla(). Mantidos como atalhos porque
+   ainda são um jeito legítimo de cair direto nessa aba. */
+function abrirPainelTcSla(){abrirPainelSla('emails')}
+function fecharPainelTcSla(){fecharPainelSla()}
+function alternarPainelTcSla(){
+  (painelSlaAberto()&&AppState.slaAba==='emails')?fecharPainelSla():abrirPainelSla('emails');
 }
-function fecharPainelTcSla(){
-  AppState.tcSla.aberto=false;
-  document.body.classList.remove('tcsla-aberto');
-  $('tcSlaView').classList.remove('ativo');
-  clearInterval(AppState.tcSla.timerTick);
-  AppState.tcSla.timerTick=null;
-  _reprogramarPollTcSla();
-}
-function alternarPainelTcSla(){AppState.tcSla.aberto?fecharPainelTcSla():abrirPainelTcSla()}
 
 function _reprogramarPollTcSla(){
   clearInterval(AppState.tcSla.timerPoll);
@@ -3609,7 +3777,11 @@ const CABO_RAIO_MAX=90;       // m · teto absoluto; além disso nada é sugerid
 const CABO_GAP_RELATIVO=15;   // m · quanto um cabo pode estar atrás do mais próximo
 const CABO_SAG_FATOR=0.06;    // 6% do vão vira tolerância de curva
 const CABO_SAG_MAX=12;        // m · teto da tolerância de curva por segmento
-const CABO_NIVEIS_IGNORADOS=['PROJETO','PROJETADO','CANCELADO','DESATIVADO'];
+/* DROP é rede de assinante residencial: não entra em acionamento de METRO.
+   Como todo drop nasce na CTO, um pino fixado na caixa fazia todos os drops
+   daquela CTO aparecerem a poucos centímetros e em ALTA CONFIANÇA, enterrando
+   o cabo de metro que realmente interessa. */
+const CABO_NIVEIS_IGNORADOS=['PROJETO','PROJETADO','CANCELADO','DESATIVADO','DROP'];
 /* faixa geográfica plausível para a operação (Brasil) */
 const GEO_LIMITES={latMin:-34,latMax:6,lngMin:-74,lngMax:-34};
 
@@ -3691,7 +3863,7 @@ function _distSegDetalhe(u,p1,p2){
   const k=Math.cos(latRef*Math.PI/180)||1;
   const dx=(p2.lng-p1.lng)*k,dy=p2.lat-p1.lat;
   const len2=dx*dx+dy*dy;
-  if(len2===0)return{dist:haversine(u.lat,u.lng,p1.lat,p1.lng),t:0,comp:0};
+  if(len2===0)return{dist:haversine(u.lat,u.lng,p1.lat,p1.lng),t:0,comp:0,proj:{lat:p1.lat,lng:p1.lng}};
   const ux=(u.lng-p1.lng)*k,uy=u.lat-p1.lat;
   let t=(ux*dx+uy*dy)/len2;
   t=Math.max(0,Math.min(1,t));
@@ -3699,7 +3871,10 @@ function _distSegDetalhe(u,p1,p2){
   return{
     dist:haversine(u.lat,u.lng,projLat,projLng),
     t,
-    comp:haversine(p1.lat,p1.lng,p2.lat,p2.lng)
+    comp:haversine(p1.lat,p1.lng,p2.lat,p2.lng),
+    /* ponto do próprio cabo mais próximo do pino — é ele que vai para o card,
+       para cada cabo ter uma localização verificável no OZMap */
+    proj:{lat:projLat,lng:projLng}
   };
 }
 /* mantida para compatibilidade */
@@ -3712,7 +3887,8 @@ function analisarCaboProximo(u,pts){
   if(!pts.length)return null;
   if(pts.length===1){
     const d=haversine(u.lat,u.lng,pts[0].lat,pts[0].lng);
-    return{dist:d,distEfetiva:d,tolCurva:0,vaoMaior:0,pontual:true,foraDaExtensao:true};
+    return{dist:d,distEfetiva:d,tolCurva:0,vaoMaior:0,pontual:true,foraDaExtensao:true,
+           ponto:{lat:pts[0].lat,lng:pts[0].lng}};
   }
   let melhor=null,vaoMaior=0;
   for(let i=0;i<pts.length-1;i++){
@@ -3724,6 +3900,7 @@ function analisarCaboProximo(u,pts){
     if(!melhor||efetiva<melhor.distEfetiva){
       melhor={
         dist:r.dist,distEfetiva:efetiva,tolCurva:tol,vaoMaior:0,pontual:false,
+        ponto:r.proj,
         /* projeção travada na primeira ou última ponta = o ponto está além do
            fim do cabo, não ao lado dele */
         foraDaExtensao:(i===0&&r.t<=0.001)||(i===pts.length-2&&r.t>=0.999)
@@ -3745,7 +3922,17 @@ function _limiteBuscaCabo(distMinima){
   return Math.min(CABO_RAIO_MAX,Math.max(CABO_RAIO_BASE,distMinima+CABO_GAP_RELATIVO));
 }
 
-function _cardCaboHTML(c,coordTexto){
+/* Antes o card repetia a coordenada digitada em todas as linhas — ficava
+   idêntica em todos os cabos e parecia valor default. Agora mostra o ponto
+   do próprio cabo mais próximo do pino, que é conferível no OZMap. O pino
+   informado continua indo para a OS, em gerarOSMetro. */
+function _pontoCaboHTML(c){
+  if(!c.ponto||!Number.isFinite(c.ponto.lat)||!Number.isFinite(c.ponto.lng))return'-';
+  const lat=c.ponto.lat.toFixed(6),lng=c.ponto.lng.toFixed(6);
+  return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener" style="color:inherit">${lat}, ${lng}</a>`;
+}
+
+function _cardCaboHTML(c){
   const rotulo={ALTA:'ALTA CONFIANÇA',MEDIA:'CONFIRMAR EM CAMPO',BAIXA:'BAIXA CONFIANÇA'}[c.confianca];
   const notas=[];
   if(c.tolCurva>=1)notas.push(`vão de ${Math.round(c.vaoMaior)}m sem vértice — ${c.tolCurva.toFixed(1)}m de tolerância de curva aplicados`);
@@ -3757,7 +3944,7 @@ function _cardCaboHTML(c,coordTexto){
     <span class="cabo-badge b-${c.confianca}">${rotulo}</span>
   </div>
   <div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome||'-'}</span></div>
-  <div class="cabo-card-row"><span class="cabo-label">Localização</span><span class="cabo-value">${coordTexto}</span></div>
+  <div class="cabo-card-row"><span class="cabo-label">Ponto no cabo</span><span class="cabo-value">${_pontoCaboHTML(c)}</span></div>
   <div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo||'-'}</span></div>
   <div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div>
   <div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp||'-'}</span></div>
@@ -3771,6 +3958,7 @@ function _cardCaboHTML(c,coordTexto){
 function _cardCaboRefHTML(c){
   return `<div class="cabo-card-ref">
   <div class="cabo-card-row"><span class="cabo-label">Cabo (fora do alcance)</span><span class="cabo-value">${c.nome||'-'}</span></div>
+  <div class="cabo-card-row"><span class="cabo-label">Ponto no cabo</span><span class="cabo-value">${_pontoCaboHTML(c)}</span></div>
   <div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div>
   <div class="cabo-dist" style="color:var(--text3)">${c.dist.toFixed(1)}m</div>
 </div>`;
@@ -3794,13 +3982,13 @@ function buscarCabosProximos(){
   }
 
   const cv=new Map();
-  let semGeometria=0;
+  let semGeometria=0,ignoradosNivel=0;
 
   dm.forEach(row=>{
     const nome=String(row.ozmap||row.cto||'').trim();
     if(!nome)return;
     const nivel=String(row.nivel||'').trim().toUpperCase();
-    if(CABO_NIVEIS_IGNORADOS.some(n=>nivel.includes(n)))return;
+    if(CABO_NIVEIS_IGNORADOS.some(n=>nivel.includes(n))){ignoradosNivel++;return}
     const pts=extrairCoordsCabo(String(row.localizacao||row.lat||''));
     if(!pts.length){semGeometria++;return}
     const a=analisarCaboProximo(coord,pts);
@@ -3824,7 +4012,12 @@ function buscarCabosProximos(){
   const todos=[...cv.values()].sort((a,b)=>a.ordem-b.ordem);
 
   if(!todos.length){
-    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo com geometria válida nas abas CABOS-* carregadas${semGeometria?` (${semGeometria} linhas sem coordenada utilizável)`:''}.</div>`;
+    /* sem esta ressalva a mensagem culpava a geometria mesmo quando o motivo
+       real era o filtro de nível (drop/projeto/cancelado) */
+    const motivos=[];
+    if(semGeometria)motivos.push(`${semGeometria} linhas sem coordenada utilizável`);
+    if(ignoradosNivel)motivos.push(`${ignoradosNivel} ignoradas por nível (${CABO_NIVEIS_IGNORADOS.join(', ')})`);
+    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo elegível nas abas CABOS-* carregadas${motivos.length?` (${motivos.join(' · ')})`:''}.</div>`;
     return;
   }
 
@@ -3833,7 +4026,7 @@ function buscarCabosProximos(){
   const selecionados=todos.filter(c=>c.distEfetiva<=limite);
   selecionados.forEach(c=>{c.confianca=_confiancaCabo(c)});
 
-  const resumo=`<div class="cabo-resumo">${todos.length} cabos avaliados &middot; mais próximo a ${dmin.toFixed(1)}m &middot; raio aplicado ${limite.toFixed(0)}m${semGeometria?` &middot; ${semGeometria} sem geometria`:''}</div>`;
+  const resumo=`<div class="cabo-resumo">${todos.length} cabos avaliados &middot; mais próximo a ${dmin.toFixed(1)}m &middot; raio aplicado ${limite.toFixed(0)}m${semGeometria?` &middot; ${semGeometria} sem geometria`:''}${ignoradosNivel?` &middot; ${ignoradosNivel} fora por nível`:''}</div>`;
 
   if(!selecionados.length){
     DOM.resultadoCabos.innerHTML=resumo+
@@ -3850,7 +4043,7 @@ function buscarCabosProximos(){
   }
 
   DOM.resultadoCabos.innerHTML=resumo+aviso+
-    selecionados.map(c=>_cardCaboHTML(c,entrada)).join('');
+    selecionados.map(c=>_cardCaboHTML(c)).join('');
 }
 /* ═══ fim BUSCA DE CABOS v2 ═══ */
 
