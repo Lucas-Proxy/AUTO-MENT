@@ -599,24 +599,27 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-kpi.ok      .sla-kpi-dot{background:var(--teal);box-shadow:0 0 8px var(--teal)}
 .sla-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(233px,1fr));gap:13px;align-items:start}
 /* ── NOTAS ──
-   Cartão mais largo que o de chamado de propósito: aqui o conteúdo é
-   texto para ler, não número para bater o olho. 300px é o mínimo em que
-   uma frase não quebra a cada três palavras. */
-.notas-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:13px;align-items:start}
+   Cartão bem mais largo que o de chamado, de propósito: aqui o conteúdo é
+   texto para ler, não número para bater o olho. 420px é a largura em que
+   uma linha de nota fecha um pensamento inteiro em vez de picotar. Escala
+   pensada para leitura em pé, a alguns metros do monitor do NOC. */
+.notas-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:18px;align-items:start}
 .notas-grid .sla-aviso{grid-column:1/-1}
-.nota-card .sla-card-corpo{gap:10px}
-.nota-card .sla-card-faixa{background:var(--border2)}
+.nota-card .sla-card-corpo{gap:14px;padding:18px 22px 20px}
+.nota-card .tc-selo{font-size:.66rem;letter-spacing:1.3px;padding:3px 10px}
+.nota-card .sla-card-faixa{height:5px;background:var(--border2)}
 /* fixada é o que vale para todo dia; vencendo é o que sai amanhã */
 .nota-card.fixada .sla-card-faixa{background:var(--blue)}
 .nota-card.vencendo .sla-card-faixa{background:var(--amber)}
-.nota-titulo{font-family:'Bebas Neue',cursive;font-size:1.0625rem;letter-spacing:1.6px;color:var(--text);line-height:1.15;text-transform:uppercase}
-.nota-texto{font-size:.815rem;line-height:1.55;color:var(--text2);white-space:pre-wrap;overflow-wrap:anywhere}
-.nota-rodape{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px;border-top:1px solid var(--border);
-  font-family:'Share Tech Mono',monospace;font-size:0.6125rem;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase}
+.nota-titulo{font-family:'Bebas Neue',cursive;font-size:1.7rem;letter-spacing:2.2px;color:var(--text);line-height:1.08;text-transform:uppercase;
+  padding-bottom:11px;border-bottom:1px solid var(--border)}
+.nota-texto{font-size:1.0625rem;line-height:1.6;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
+.nota-rodape{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:11px;border-top:1px solid var(--border);
+  font-family:'Share Tech Mono',monospace;font-size:0.74rem;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase}
 .nota-rodape-sep{opacity:.5}
-.nota-acoes{display:flex;align-items:center;gap:12px}
-.nota-btn{background:none;border:0;padding:2px 0;cursor:pointer;color:var(--text3);
-  font-family:'Share Tech Mono',monospace;font-size:0.6125rem;letter-spacing:1.4px;text-transform:uppercase;
+.nota-acoes{display:flex;align-items:center;gap:16px}
+.nota-btn{background:none;border:0;padding:3px 0;cursor:pointer;color:var(--text3);
+  font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:1.4px;text-transform:uppercase;
   border-bottom:1px dotted var(--border2);transition:color .18s}
 .nota-btn:hover{color:var(--blue)}
 .nota-btn.perigo:hover{color:var(--red)}
@@ -628,7 +631,7 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-card-corpo{padding:12px 13px 13px;display:flex;flex-direction:column;gap:9px;flex:1}
 .sla-card-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .sla-badge-rede{font-family:'Share Tech Mono',monospace;font-size:0.6125rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border-radius:20px;background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b);white-space:nowrap}
-.sla-abertura{font-family:'Share Tech Mono',monospace;font-size:0.6125rem;color:var(--text3);letter-spacing:1px;white-space:nowrap}
+.sla-abertura{font-family:'Share Tech Mono',monospace;font-size:0.7375rem;color:var(--text3);letter-spacing:1px;white-space:nowrap}
 .sla-card-tipo{font-size:0.8225rem;font-weight:700;color:var(--text);line-height:1.3;letter-spacing:.2px}
 .sla-relogio{display:flex;flex-direction:column;align-items:center;gap:2px;padding:2px 0 0}
 .sla-ring-wrap{position:relative;width:118px;height:118px}
@@ -652,6 +655,10 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-linha-rot{font-family:'Share Tech Mono',monospace;font-size:0.5625rem;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
 .sla-linha-val{font-size:0.7825rem;font-weight:600;color:var(--text2);line-height:1.3;word-break:break-word}
 .sla-linha-val.destaque{color:var(--text)}
+/* "Falha em" é o dado que se lê de longe para saber há quanto tempo o
+   circuito está fora: 2px acima do resto do bloco, de propósito */
+.sla-linha.linha-falha .sla-linha-rot{font-size:0.6875rem}
+.sla-linha.linha-falha .sla-linha-val{font-size:0.9075rem}
 .sla-alvo-extra{font-family:'Share Tech Mono',monospace;font-size:0.6625rem;color:var(--text3);margin-top:2px}
 .sla-btn-encerrar{width:100%;margin-top:auto;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;background:var(--bg3);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:0.6625rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .sla-btn-encerrar:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-l)}
@@ -896,6 +903,10 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 #slaTopo{padding:74px 12px 0}
 #slaView,#tcSlaView,#notasView{padding:0 12px 90px}
 .sla-grid{grid-template-columns:1fr;gap:14px}
+.notas-grid{grid-template-columns:1fr;gap:14px}
+.nota-card .sla-card-corpo{padding:16px 16px 18px}
+.nota-titulo{font-size:1.45rem}
+.nota-texto{font-size:1rem}
 .sla-header{padding-right:0;gap:12px}
 .sla-titulo{font-size:1.7625rem}
 /* no celular as abas não cabem lado a lado com margem larga */
@@ -3619,7 +3630,7 @@ function _tcSlaCardHTML(item,ctx){
   <div class="sla-info">
     ${item.designacao?`<div class="sla-linha"><span class="sla-linha-rot">Designação</span><span class="sla-linha-val destaque">${_esc(item.designacao)}</span></div>`:''}
     <div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val${_tcTemAu(item)?' destaque':''}">${_esc(item.protocolo||'Aguardando AU')}</span></div>
-    ${item.dataHoraFalha?`<div class="sla-linha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val destaque">${_esc(item.dataHoraFalha)}</span></div>`:''}
+    ${item.dataHoraFalha?`<div class="sla-linha linha-falha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val destaque">${_esc(item.dataHoraFalha)}</span></div>`:''}
   </div>
   <div class="tc-card-acoes">
     <button class="tc-btn-detalhes" data-id="${_esc(item.id)}" aria-expanded="${aberto}">${aberto?'Menos detalhes':'Detalhes'}</button>
