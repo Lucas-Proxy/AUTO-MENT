@@ -543,8 +543,12 @@ main{padding:16px 12px}
    section é o conteúdo de uma aba. */
 #slaTopo{display:none;position:relative;z-index:1;padding:34px 40px 0}
 body.sla-aberto #slaTopo{display:block}
-#slaView, #tcSlaView {display:none;position:relative;z-index:1;min-height:70vh;padding:0 40px 90px}
-#slaView.ativo, #tcSlaView.ativo {display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
+/* As três seções do painel entram AQUI, não só duas. Faltar nesta lista
+   não deixa a aba quebrada de um jeito visível: a seção simplesmente
+   nunca é escondida — aparece em todas as abas — e, sem o z-index, a
+   seção da aba ativa pinta por cima e engole o clique nos botões dela. */
+#slaView, #tcSlaView, #notasView {display:none;position:relative;z-index:1;min-height:70vh;padding:0 40px 90px}
+#slaView.ativo, #tcSlaView.ativo, #notasView.ativo {display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
 body.sla-aberto main {display:none}
 /* alternância dos botões da barra fixa: uma barra só, conteúdo por modo —
    evita ter dois "Atualizar" na tela e a colisão com o ícone de volume.
@@ -594,6 +598,31 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-kpi.alerta  .sla-kpi-dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
 .sla-kpi.ok      .sla-kpi-dot{background:var(--teal);box-shadow:0 0 8px var(--teal)}
 .sla-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(233px,1fr));gap:13px;align-items:start}
+/* ── NOTAS ──
+   Cartão mais largo que o de chamado de propósito: aqui o conteúdo é
+   texto para ler, não número para bater o olho. 300px é o mínimo em que
+   uma frase não quebra a cada três palavras. */
+.notas-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:13px;align-items:start}
+.notas-grid .sla-aviso{grid-column:1/-1}
+.nota-card .sla-card-corpo{gap:10px}
+.nota-card .sla-card-faixa{background:var(--border2)}
+/* fixada é o que vale para todo dia; vencendo é o que sai amanhã */
+.nota-card.fixada .sla-card-faixa{background:var(--blue)}
+.nota-card.vencendo .sla-card-faixa{background:var(--amber)}
+.nota-titulo{font-family:'Bebas Neue',cursive;font-size:1.0625rem;letter-spacing:1.6px;color:var(--text);line-height:1.15;text-transform:uppercase}
+.nota-texto{font-size:.815rem;line-height:1.55;color:var(--text2);white-space:pre-wrap;overflow-wrap:anywhere}
+.nota-rodape{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px;border-top:1px solid var(--border);
+  font-family:'Share Tech Mono',monospace;font-size:0.6125rem;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase}
+.nota-rodape-sep{opacity:.5}
+.nota-acoes{display:flex;align-items:center;gap:12px}
+.nota-btn{background:none;border:0;padding:2px 0;cursor:pointer;color:var(--text3);
+  font-family:'Share Tech Mono',monospace;font-size:0.6125rem;letter-spacing:1.4px;text-transform:uppercase;
+  border-bottom:1px dotted var(--border2);transition:color .18s}
+.nota-btn:hover{color:var(--blue)}
+.nota-btn.perigo:hover{color:var(--red)}
+.nota-btn.confirmando{color:var(--red);border-bottom-color:var(--red)}
+.nota-btn-arquivar{margin-left:auto}
+.nota-btn:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
 .sla-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;box-shadow:var(--shadow2);display:flex;flex-direction:column;position:relative;transition:border-color .3s,box-shadow .3s,opacity .4s,transform .4s;animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both}
 .sla-card-faixa{height:4px;width:100%;background:var(--teal)}
 .sla-card-corpo{padding:12px 13px 13px;display:flex;flex-direction:column;gap:9px;flex:1}
@@ -769,7 +798,6 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 .tc-acao-dica.hidden{display:none}
 
 .tc-selo{font-family:'Share Tech Mono',monospace;font-size:0.5825rem;letter-spacing:1.2px;text-transform:uppercase;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--text3);white-space:nowrap}
-.tc-selo.reincidente{background:var(--amber-l);color:var(--amber);border-color:rgba(217,119,6,.3)}
 .tc-selo.cobrancas{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.28)}
 .tc-selo.escalonado{background:var(--amber-l);color:var(--amber);border-color:rgba(217,119,6,.35)}
 .tc-selo.vinculo{background:var(--blue-l);color:var(--blue);border-color:var(--blue-b);font-weight:700}
@@ -795,11 +823,14 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
   letter-spacing:1px;text-transform:uppercase;color:var(--amber);border:1px solid rgba(217,119,6,.35);
   border-radius:20px;padding:1px 7px;margin-right:7px}
 /* bloco expansível: o que não decide a próxima ação sai do primeiro olhar */
-.tc-btn-detalhes{align-self:flex-start;background:none;border:0;padding:2px 0;cursor:pointer;color:var(--text3);
+.tc-btn-detalhes,.tc-btn-ir{align-self:flex-start;background:none;border:0;padding:2px 0;cursor:pointer;color:var(--text3);
   font-family:'Share Tech Mono',monospace;font-size:0.6125rem;letter-spacing:1.4px;text-transform:uppercase;
   border-bottom:1px dotted var(--border2);transition:color .18s}
-.tc-btn-detalhes:hover{color:var(--blue)}
-.tc-btn-detalhes:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
+.tc-btn-detalhes:hover,.tc-btn-ir:hover{color:var(--blue)}
+.tc-btn-detalhes:focus-visible,.tc-btn-ir:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
+/* os dois na mesma linha; o IR encostado na direita do card */
+.tc-card-acoes{display:flex;align-items:center;gap:12px}
+.tc-btn-ir{margin-left:auto;text-decoration:none;white-space:nowrap}
 .tc-detalhes{display:flex;flex-direction:column;gap:8px;animation:tcAbre .2s ease both}
 .tc-detalhes.hidden{display:none}
 @keyframes tcAbre{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
@@ -817,7 +848,7 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 .tc-filas{grid-template-columns:1fr;gap:14px}
 .tc-fila-dica{display:none}
 #slaTopo{padding:74px 12px 0}
-#slaView,#tcSlaView{padding:0 12px 90px}
+#slaView,#tcSlaView,#notasView{padding:0 12px 90px}
 .sla-grid{grid-template-columns:1fr;gap:14px}
 .sla-header{padding-right:0;gap:12px}
 .sla-titulo{font-size:1.7625rem}
@@ -1283,6 +1314,9 @@ IDENTIFICA&#199;&#195;O
 <button class="sla-aba" id="abaEmails" role="tab" aria-controls="tcSlaView" aria-selected="false">
 <span>E-mail&rsquo;s</span><span class="sla-aba-badge hidden" id="abaEmailsBadge" title="Chamados aguardando a&ccedil;&atilde;o">0</span>
 </button>
+<button class="sla-aba" id="abaNotas" role="tab" aria-controls="notasView" aria-selected="false">
+<span>Notas</span><span class="sla-aba-badge hidden" id="abaNotasBadge" title="Notas ativas no painel">0</span>
+</button>
 </div>
 </div>
 </div>
@@ -1294,6 +1328,15 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div class="sla-grid" id="slaGrid"></div>
 <div class="sla-rodape" id="slaRodape"></div>
+</section>
+
+<section id="notasView" role="tabpanel" aria-labelledby="abaNotas">
+<div class="sla-aba-acoes">
+<button class="btn-add-sla" id="btnOpenNota" onclick="abrirModalNota()" title="Criar uma nota de informa&ccedil;&atilde;o ou orienta&ccedil;&atilde;o">+</button>
+<span class="sla-aba-acoes-rot">Nova nota</span>
+</div>
+<div class="notas-grid" id="notasGrid"></div>
+<div class="sla-rodape" id="notasRodape"></div>
 </section>
 
 <section id="tcSlaView" role="tabpanel" aria-labelledby="abaEmails">
@@ -1362,6 +1405,46 @@ IDENTIFICA&#199;&#195;O
 </div>
 </div>
 
+<div class="copy-modal" id="modalNota">
+<div class="copy-modal-content">
+<div class="copy-modal-header">
+<span id="tituloModalNota">NOVA NOTA</span>
+<button onclick="fecharModalNota()">&#10005;</button>
+</div>
+<div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
+<!-- os opcionais seguem o mesmo padrão do SLA MANUAL: botão no topo liga
+     e desliga, e desligar limpa o campo -->
+<div class="sla-toggles">
+<div class="sla-toggle-btn" id="btnTgg-notaValidade" onclick="toggleSlaCampo('notaValidade')">VALIDADE</div>
+<div class="sla-toggle-btn" id="btnTgg-notaFixar" role="button" aria-pressed="false" onclick="toggleNotaFixar()">FIXAR NO TOPO</div>
+</div>
+<input type="hidden" id="notaId">
+<div class="form-group" id="wrap-notaTitulo">
+<label>T&Iacute;TULO <span style="color:var(--red)">*</span></label>
+<input type="text" id="notaTitulo" placeholder="Ex: Janela de manuten&ccedil;&atilde;o TIM &mdash; n&atilde;o acionar" maxlength="140" autocomplete="off">
+</div>
+<div class="form-group" id="wrap-notaTexto">
+<label>INFORMA&Ccedil;&Atilde;O / ORIENTA&Ccedil;&Atilde;O <span style="color:var(--red)">*</span></label>
+<textarea id="notaTexto" rows="6" maxlength="1500" placeholder="O que a pr&oacute;xima pessoa do turno precisa saber para agir certo."></textarea>
+<div id="notaTextoContador" style="margin-top:6px;font-size:.72rem;color:var(--text3);font-family:'Share Tech Mono',monospace"></div>
+</div>
+<div class="form-group" id="wrap-notaAutor">
+<label>AUTOR <span style="color:var(--red)">*</span></label>
+<select id="notaAutor"><option value="" disabled selected>Selecione...</option></select>
+</div>
+<div class="form-group hidden" id="wrap-notaValidade">
+<label>VALE AT&Eacute; <span style="color:var(--text3);font-weight:400">(a nota sai do painel sozinha no dia seguinte)</span></label>
+<input type="date" id="notaValidade">
+</div>
+<div id="erroNota" class="info-msg" style="display:none;color:var(--red);margin-top:4px"></div>
+</div>
+<div class="copy-modal-footer">
+<button class="btn btn-outline" style="min-width:120px" onclick="fecharModalNota()">CANCELAR</button>
+<button class="btn btn-main" style="min-width:140px" id="btnSalvarNota" onclick="salvarNotaModal()">SALVAR</button>
+</div>
+</div>
+</div>
+
 <div class="copy-modal" id="modalSlaManual">
 <div class="copy-modal-content">
 <div class="copy-modal-header">
@@ -1371,6 +1454,7 @@ IDENTIFICA&#199;&#195;O
 <div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
 <div class="sla-toggles">
 <div class="sla-toggle-btn active" id="btnTgg-slaManualTecnico" onclick="toggleSlaCampo('slaManualTecnico')">TÉCNICO</div>
+<div class="sla-toggle-btn active" id="btnTgg-slaManualEmpresa" onclick="toggleSlaCampo('slaManualEmpresa')">EMPRESA</div>
 <div class="sla-toggle-btn active" id="btnTgg-slaManualOs" onclick="toggleSlaCampo('slaManualOs')">O.S</div>
 <div class="sla-toggle-btn active" id="btnTgg-slaManualHoras" onclick="toggleSlaCampo('slaManualHoras')">SLA (HORAS)</div>
 <div class="sla-toggle-btn active" id="btnTgg-slaManualDesc" onclick="toggleSlaCampo('slaManualDesc')">DESCRIÇÃO</div>
@@ -2173,6 +2257,14 @@ AppState.sla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
 AppState.tcSla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,
               filtro:'',filaFoco:'',assinatura:''};
+/* Notas não têm cronômetro, então não existe timerTick aqui — só o poll.
+   A assinatura evita redesenhar a lista quando nada mudou: sem ela, o
+   redesenho a cada 60s apagaria o "Confirmar?" do botão de arquivar
+   debaixo da mão de quem estava clicando. */
+AppState.notas={itens:[],aberto:false,status:'idle',erro:'',
+              ultimaAtualizacao:0,timerPoll:null,assinatura:''};
+const NOTAS_POLL_ABERTO_MS=60000;
+const NOTAS_POLL_FUNDO_MS=300000;
 
 /* ── utilitários ── */
 function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -2647,7 +2739,7 @@ function confirmarEncerrarSla() {
    de re-render e cadência do poll), então o resto do código continua
    valendo sem alteração. A aba em segundo plano fica no poll de fundo,
    que é o que mantém os badges vivos sem varrer o Gmail à toa. */
-const SLA_ABAS={acionamentos:'slaView',emails:'tcSlaView'};
+const SLA_ABAS={acionamentos:'slaView',emails:'tcSlaView',notas:'notasView'};
 
 function painelSlaAberto(){return document.body.classList.contains('sla-aberto')}
 
@@ -2675,14 +2767,257 @@ function selecionarAbaSla(aba){
     const el=$(id);if(el)el.classList.toggle('ativo',k===aba);
   });
   document.body.classList.toggle('aba-emails',aba==='emails');
-  const bA=$('abaAcionamentos'),bE=$('abaEmails');
-  if(bA){bA.classList.toggle('ativa',aba==='acionamentos');bA.setAttribute('aria-selected',String(aba==='acionamentos'))}
-  if(bE){bE.classList.toggle('ativa',aba==='emails');bE.setAttribute('aria-selected',String(aba==='emails'))}
-  /* pausa a outra ANTES de ativar a escolhida: sem isso os dois setInterval
-     de 1s ficariam rodando juntos depois de algumas idas e vindas */
-  if(aba==='emails'){_pausarAbaAcionamentos();_ativarAbaEmails()}
-  else{_pausarAbaEmails();_ativarAbaAcionamentos()}
+  /* Com três abas o par de ifs não serve mais: virou tabela. Estado novo
+     esquecido aqui deixava duas abas marcadas como ativas ao mesmo tempo. */
+  const BOTOES={acionamentos:'abaAcionamentos',emails:'abaEmails',notas:'abaNotas'};
+  Object.entries(BOTOES).forEach(([k,id])=>{
+    const b=$(id);if(!b)return;
+    b.classList.toggle('ativa',k===aba);
+    b.setAttribute('aria-selected',String(k===aba));
+  });
+  /* pausa TODAS as outras ANTES de ativar a escolhida: sem isso os
+     setInterval de 1s ficariam rodando juntos depois de algumas idas e
+     vindas entre as abas */
+  if(aba!=='acionamentos')_pausarAbaAcionamentos();
+  if(aba!=='emails')_pausarAbaEmails();
+  if(aba!=='notas')_pausarAbaNotas();
+  if(aba==='acionamentos')_ativarAbaAcionamentos();
+  else if(aba==='emails')_ativarAbaEmails();
+  else _ativarAbaNotas();
 }
+
+function _pausarAbaNotas(){
+  AppState.notas.aberto=false;
+  _reprogramarPollNotas();
+}
+function _ativarAbaNotas(){
+  AppState.notas.aberto=true;
+  renderNotas();
+  carregarNotas();
+  _reprogramarPollNotas();
+}
+function _reprogramarPollNotas(){
+  clearInterval(AppState.notas.timerPoll);
+  const intervalo=AppState.notas.aberto?NOTAS_POLL_ABERTO_MS:NOTAS_POLL_FUNDO_MS;
+  AppState.notas.timerPoll=setInterval(()=>carregarNotas(),intervalo);
+}
+
+/* ═══════════════════════════════════════════════════════
+   NOTAS — a terceira aba
+   ═══════════════════════════════════════════════════════
+   Nota não é chamado: não tem prazo, não tem fila e não tem cronômetro.
+   Então nada aqui recalcula estado — o cartão só mostra o que foi escrito,
+   quem escreveu, quando, e até quando vale. O que o painel faz de
+   inteligente é uma coisa só: tirar da frente o que já não serve
+   (vencida, arquivada) e prender no topo o que vale sempre.            */
+
+function _notaDataCurta(ms){
+  if(!ms)return '';
+  const d=new Date(ms),p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}`;
+}
+function _notaDataISO(ms){
+  const d=new Date(ms),p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+/* quanto falta até a nota sair do painel; -1 quando ela não tem validade.
+   Vale até o FIM do dia: "até 20/08" é o dia 20 inteiro. */
+function _notaVenceEm(item,agora){
+  if(!item||!item.validadeMs)return -1;
+  return Math.max(0,(item.validadeMs+24*3600000)-agora);
+}
+
+function carregarNotas(){
+  const st=AppState.notas;
+  if(st.status==='loading')return Promise.resolve();
+  st.status='loading';
+  return jsonp({acao:'listarNotas'},20000).then(r=>{
+    st.status='idle';
+    if(r&&r.ok){st.itens=r.itens||[];st.erro='';st.ultimaAtualizacao=Date.now()}
+    else st.erro=(r&&r.erro)||'Não foi possível carregar as notas.';
+    renderNotas();atualizarBadgeNotas();
+  }).catch(e=>{
+    st.status='idle';st.erro='Falha ao carregar ('+e.message+').';
+    renderNotas();
+  });
+}
+
+function atualizarBadgeNotas(){_pintaBadgeSla('abaNotasBadge',AppState.notas.itens.length)}
+
+/* o que, mudando, obriga a redesenhar */
+function _notaAssinatura(itens){
+  return itens.map(i=>[i.id,i.atualizadoMs||0,i.fixada?1:0,i.validadeMs||0,(i.titulo||'').length,(i.texto||'').length].join(':')).join('|');
+}
+
+function renderNotas(){
+  const grid=$('notasGrid');if(!grid)return;
+  const st=AppState.notas,agora=Date.now();
+  const rod=$('notasRodape');
+  if(rod)rod.textContent=st.ultimaAtualizacao?`Atualizado às ${_slaFmtHora(st.ultimaAtualizacao).split(' ')[1]}`:'';
+
+  if(st.erro){
+    grid.innerHTML=`<div class="sla-aviso erro"><div class="sla-aviso-icone">!</div><div class="sla-aviso-txt">${_esc(st.erro)}</div></div>`;
+    st.assinatura='erro:'+st.erro;return;
+  }
+  if(!st.itens.length){
+    grid.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#9633;</div><div class="sla-aviso-txt">Nenhuma nota ativa.<br>Use o + para deixar uma informa&ccedil;&atilde;o ou orienta&ccedil;&atilde;o.</div></div>`;
+    st.assinatura='vazio';return;
+  }
+  /* redesenhar à toa apagaria o "Confirmar?" do botão de arquivar debaixo
+     da mão de quem está clicando */
+  const ass=_notaAssinatura(st.itens);
+  if(ass===st.assinatura)return;
+  st.assinatura=ass;
+  grid.innerHTML=st.itens.map(i=>_notaCardHTML(i,agora)).join('');
+}
+
+function _notaCardHTML(item,agora){
+  const restante=_notaVenceEm(item,agora);
+  const vencendo=restante>=0&&restante<=24*3600000;
+  const classes=['sla-card','nota-card'];
+  if(item.fixada)classes.push('fixada');
+  if(vencendo)classes.push('vencendo');
+  const selos=[];
+  if(item.fixada)selos.push('<span class="tc-selo vinculo">Fixada</span>');
+  if(item.validadeMs)selos.push(`<span class="tc-selo${vencendo?' escalonado':''}">Vale at&eacute; ${_esc(_notaDataCurta(item.validadeMs))}</span>`);
+  const quando=item.atualizadoMs||item.criadoMs||0;
+  return `<div class="${classes.join(' ')}">
+  <div class="sla-card-faixa"></div>
+  <div class="sla-card-corpo">
+    ${selos.length?`<div class="tc-card-selos">${selos.join('')}</div>`:''}
+    <div class="nota-titulo">${_esc(item.titulo||'Sem título')}</div>
+    <div class="nota-texto">${_esc(item.texto||'')}</div>
+    <div class="nota-rodape">
+      ${item.autor?`<span>${_esc(item.autor)}</span><span class="nota-rodape-sep">&middot;</span>`:''}
+      <span>${quando?_esc(_slaFmtHora(quando)):''}</span>
+    </div>
+    <div class="nota-acoes">
+      <button class="nota-btn nota-btn-editar" data-id="${_esc(item.id)}">Editar</button>
+      <button class="nota-btn perigo nota-btn-arquivar" data-id="${_esc(item.id)}">Arquivar</button>
+    </div>
+  </div>
+</div>`;
+}
+
+/* ── modal ── */
+function _notaContador(){
+  const tx=$('notaTexto'),el=$('notaTextoContador');
+  if(!tx||!el)return;
+  const n=tx.value.length;
+  el.textContent=n+'/1500';
+  el.style.color=n>1400?'var(--amber)':'var(--text3)';
+}
+
+/* FIXAR não esconde campo nenhum, é um valor: por isso não usa o
+   toggleSlaCampo, que limpa o input ao desligar. */
+function toggleNotaFixar(){
+  const b=$('btnTgg-notaFixar');if(!b)return;
+  const ativo=!b.classList.contains('active');
+  b.classList.toggle('active',ativo);
+  b.setAttribute('aria-pressed',String(ativo));
+}
+
+function abrirModalNota(id){
+  const nota=id?AppState.notas.itens.find(i=>String(i.id)===String(id)):null;
+  $('notaId').value=nota?nota.id:'';
+  $('notaTitulo').value=nota?(nota.titulo||''):'';
+  $('notaTexto').value=nota?(nota.texto||''):'';
+  $('notaValidade').value=(nota&&nota.validadeMs)?_notaDataISO(nota.validadeMs):'';
+  const erro=$('erroNota');erro.style.display='none';erro.textContent='';
+
+  const temVal=!!(nota&&nota.validadeMs);
+  $('wrap-notaValidade').classList.toggle('hidden',!temVal);
+  $('btnTgg-notaValidade').classList.toggle('active',temVal);
+
+  const bf=$('btnTgg-notaFixar'),fix=!!(nota&&nota.fixada);
+  bf.classList.toggle('active',fix);bf.setAttribute('aria-pressed',String(fix));
+
+  const sel=$('notaAutor');
+  if(sel){
+    if(nota&&nota.autor){
+      /* autor de nota antiga pode não estar mais na lista de operadores:
+         entra como opção própria, senão a edição trocaria o nome de quem
+         escreveu sem avisar ninguém */
+      if(!Array.from(sel.options).some(o=>o.value===nota.autor)){
+        const o=document.createElement('option');o.value=nota.autor;o.textContent=nota.autor;sel.appendChild(o);
+      }
+      sel.value=nota.autor;
+    }else{
+      const nome=(localStorage.getItem('noc-operador')||'').split('|||')[0]||'';
+      sel.value=Array.from(sel.options).some(o=>o.value===nome)?nome:'';
+    }
+  }
+  $('tituloModalNota').textContent=nota?'EDITAR NOTA':'NOVA NOTA';
+  const btn=$('btnSalvarNota');btn.disabled=false;btn.textContent='SALVAR';
+  _notaContador();
+  $('modalNota').classList.add('active');
+  setTimeout(()=>{const t=$('notaTitulo');if(t)t.focus()},60);
+}
+function fecharModalNota(){$('modalNota').classList.remove('active')}
+
+function salvarNotaModal(){
+  const erro=$('erroNota');
+  const mostrar=m=>{erro.textContent=m;erro.style.display='block';showToast(m,'error',3500)};
+  erro.style.display='none';
+
+  const titulo=$('notaTitulo').value.trim();
+  const texto=$('notaTexto').value.trim();
+  const autor=$('notaAutor').value;
+  if(!titulo)return mostrar('O título é obrigatório.');
+  if(!texto)return mostrar('O texto da nota é obrigatório.');
+  if(!autor)return mostrar('Selecione o autor.');
+
+  let validadeMs=0;
+  const wrapVal=$('wrap-notaValidade');
+  if(wrapVal&&!wrapVal.classList.contains('hidden')){
+    const v=$('notaValidade').value;
+    if(!v)return mostrar('Informe a data de validade ou desligue o campo VALIDADE.');
+    validadeMs=new Date(v+'T00:00:00').getTime();
+  }
+  const fixada=$('btnTgg-notaFixar').classList.contains('active');
+
+  const btn=$('btnSalvarNota');btn.disabled=true;btn.textContent='SALVANDO...';
+  jsonp({acao:'salvarNota',id:$('notaId').value,titulo:titulo,texto:texto,
+         autor:autor,validadeMs:validadeMs,fixada:fixada?'SIM':''},25000)
+    .then(r=>{
+      btn.disabled=false;btn.textContent='SALVAR';
+      if(r&&r.ok){
+        showToast(r.nova?'✓ Nota criada.':'✓ Nota atualizada.');
+        fecharModalNota();
+        AppState.notas.assinatura='';
+        carregarNotas();
+      }else mostrar('Não foi possível salvar: '+((r&&r.erro)||'erro'));
+    })
+    .catch(e=>{btn.disabled=false;btn.textContent='SALVAR';mostrar('Falha ao salvar ('+e.message+').')});
+}
+
+/* Dois cliques, sem modal: o primeiro pergunta, o segundo faz. Arquivar não
+   apaga nada (a linha fica na aba), então modal seria cerimônia demais —
+   mas um clique só seria acidente fácil num botão que fica ao lado do
+   Editar. Volta sozinho ao normal em 4s. */
+function arquivarNotaCard(btn){
+  if(btn.dataset.confirma!=='1'){
+    btn.dataset.confirma='1';
+    btn.textContent='Confirmar?';
+    btn.classList.add('confirmando');
+    setTimeout(()=>{
+      if(btn.dataset.confirma==='1'){
+        btn.dataset.confirma='';btn.textContent='Arquivar';btn.classList.remove('confirmando');
+      }
+    },4000);
+    return;
+  }
+  const voltar=()=>{btn.disabled=false;btn.textContent='Arquivar';btn.classList.remove('confirmando')};
+  btn.dataset.confirma='';btn.disabled=true;btn.textContent='Arquivando...';
+  const quem=(localStorage.getItem('noc-operador')||'').split('|||')[0]||'';
+  jsonp({acao:'arquivarNota',id:btn.dataset.id,autor:quem},20000)
+    .then(r=>{
+      if(r&&r.ok){showToast('✓ Nota arquivada.');AppState.notas.assinatura='';carregarNotas()}
+      else{voltar();showToast('Não foi possível arquivar: '+((r&&r.erro)||'erro'),'error',4000)}
+    })
+    .catch(e=>{voltar();showToast('Falha ao arquivar ('+e.message+').','error',4000)});
+}
+
 
 function _ativarAbaAcionamentos(){
   AppState.sla.aberto=true;
@@ -2738,14 +3073,27 @@ function bindEventsSla(){
   $('btnSlaAtualizar').addEventListener('click',atualizarAbaSlaAtiva);
   $('abaAcionamentos').addEventListener('click',()=>selecionarAbaSla('acionamentos'));
   $('abaEmails').addEventListener('click',()=>selecionarAbaSla('emails'));
+  $('abaNotas').addEventListener('click',()=>selecionarAbaSla('notas'));
+  $('notasGrid').addEventListener('click',e=>{
+    const ed=e.target.closest('.nota-btn-editar');
+    if(ed){abrirModalNota(ed.dataset.id);return}
+    const ar=e.target.closest('.nota-btn-arquivar');
+    if(ar){arquivarNotaCard(ar);return}
+  });
+  const tx=$('notaTexto');
+  if(tx)tx.addEventListener('input',_notaContador);
   /* setas ← → navegam entre as abas quando o foco está nelas (padrão ARIA) */
   $('slaTopo').addEventListener('keydown',e=>{
     if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
     if(!e.target.classList.contains('sla-aba'))return;
     e.preventDefault();
-    const proxima=AppState.slaAba==='emails'?'acionamentos':'emails';
+    const ordem=['acionamentos','emails','notas'];
+    const i=Math.max(0,ordem.indexOf(AppState.slaAba));
+    const passo=e.key==='ArrowRight'?1:-1;
+    const proxima=ordem[(i+passo+ordem.length)%ordem.length];
     selecionarAbaSla(proxima);
-    $(proxima==='emails'?'abaEmails':'abaAcionamentos').focus();
+    const foco={acionamentos:'abaAcionamentos',emails:'abaEmails',notas:'abaNotas'}[proxima];
+    const el=$(foco);if(el)el.focus();
   });
   $('slaGrid').addEventListener('click',e=>{
     const b=e.target.closest('.sla-btn-encerrar');
@@ -2754,7 +3102,7 @@ function bindEventsSla(){
   /* Esc fecha o painel inteiro, esteja em qualquer aba */
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&painelSlaAberto())fecharPainelSla()});
   // primeira carga em segundo plano, sem atrapalhar o carregamento da tela
-  setTimeout(()=>{carregarSla(true);_reprogramarPollSla()},1200);
+  setTimeout(()=>{carregarSla(true);_reprogramarPollSla();carregarNotas();_reprogramarPollNotas()},1200);
 
   // TC-SLA
   $('tcSlaFilas').addEventListener('click',e=>{
@@ -2763,7 +3111,9 @@ function bindEventsSla(){
       const id=String(det.dataset.id);
       const abrir=!TC_EXPANDIDOS.has(id);
       abrir?TC_EXPANDIDOS.add(id):TC_EXPANDIDOS.delete(id);
-      const box=det.parentElement.querySelector('.tc-detalhes');
+      /* o botão agora vive dentro de .tc-card-acoes, então o bloco de
+         detalhes não é mais irmão dele: procura a partir do card */
+      const box=(det.closest('.sla-card')||det.parentElement).querySelector('.tc-detalhes');
       if(box)box.classList.toggle('hidden',!abrir);
       det.setAttribute('aria-expanded',String(abrir));
       det.textContent=abrir?'Menos detalhes':'Detalhes';
@@ -2853,6 +3203,36 @@ const TC_FILAS=[
   {id:'NORMALIZADO',     nome:'Normalizados',            dica:'Encerrados há pouco'}
 ];
 const TC_FILA_NOME={};TC_FILAS.forEach(f=>TC_FILA_NOME[f.id]=f.nome);
+
+/* ── IR: abre a conversa no Gmail em outra aba ──────────────────
+   Sem /u/N/ na URL de propósito: assim cada um abre na conta em que já
+   está logado, em vez de o painel decidir por todos.
+
+   ATENÇÃO, e é um limite real: o ID de conversa do Gmail é POR CAIXA. Ele
+   vem da caixa que executa o script, então o link direto só resolve para
+   quem estiver logado NAQUELA caixa. Para os outros o Gmail responde
+   "conversa não encontrada". A busca, ao contrário, funciona em qualquer
+   caixa que tenha as mensagens — é por isso que existe a chave abaixo:
+   ligue-a e todo IR passa a ser busca, que é o modo portátil. */
+const TC_GMAIL_BASE='https://mail.google.com/mail/';
+const TC_IR_SEMPRE_BUSCA=false;
+
+function _tcUrlGmail(item){
+  const ths=((item&&item.threads)||[]).map(t=>String(t||'').trim()).filter(Boolean);
+  /* uma conversa só: vai direto nela */
+  if(!TC_IR_SEMPRE_BUSCA&&ths.length===1)
+    return TC_GMAIL_BASE+'#all/'+encodeURIComponent(ths[0]);
+  /* mais de uma (a TIM abre thread própria, com o assunto "Atendimento
+     Business Contact Center"): a busca mostra todas juntas, senão o IR
+     levaria sempre para uma delas e a resposta poderia estar na outra */
+  const termo=String((item&&item.protocolo)||'').trim()
+           || String((item&&item.designacao)||'').trim();
+  if(termo) return TC_GMAIL_BASE+'#search/'+encodeURIComponent(termo);
+  const assunto=_tcAssuntoBase((item&&item.resumo)||'');
+  if(assunto&&assunto.length>=10) return TC_GMAIL_BASE+'#search/'+encodeURIComponent('"'+assunto+'"');
+  /* nada que identifique: melhor não oferecer um link que abre a caixa toda */
+  return ths.length?TC_GMAIL_BASE+'#all/'+encodeURIComponent(ths[0]):'';
+}
 
 function _tcTemAu(item){return !!String(item.protocolo||'').trim()}
 function _tcNormAu(v){return String(v||'').replace(/[^0-9A-Za-z]/g,'').toUpperCase()}
@@ -3140,8 +3520,6 @@ function _tcSlaCardHTML(item,ctx){
                  c.estado==='AGUARDANDO_AU'||c.estado==='REFORCAR')?'var(--red)'
               :(c.estado==='EM_TRATATIVA')?'var(--blue)':'var(--text3)';
   const dica=_tcDica(item,c);
-  const reincidente=(ctx&&ctx.reincidencia&&item.designacao&&ctx.reincidencia[item.designacao]>1)
-    ?`<span class="tc-selo reincidente">${ctx.reincidencia[item.designacao]} ativos neste circuito</span>`:'';
   /* "escalonado" virou selo em vez de linha no rodapé: saber SE foi
      escalonado muda o que dá para fazer, e isso tem que estar no primeiro
      olhar. A data exata é detalhe e desceu para o bloco expansível. */
@@ -3151,9 +3529,10 @@ function _tcSlaCardHTML(item,ctx){
   const vinculo=(ctx&&ctx.vinculos&&ctx.vinculos[item.id])||null;
   const seloVinculo=vinculo
     ?`<span class="tc-selo vinculo" title="Mesmo assunto de um chamado j&aacute; aberto e sem falha diferente entre os dois">Poss&iacute;vel resposta</span>`:'';
-  const selos=(reincidente||seloEscalonado||seloVinculo)
-    ?`<div class="tc-card-selos">${reincidente}${seloEscalonado}${seloVinculo}</div>`:'';
+  const selos=(seloEscalonado||seloVinculo)
+    ?`<div class="tc-card-selos">${seloEscalonado}${seloVinculo}</div>`:'';
   const aberto=TC_EXPANDIDOS.has(String(item.id));
+  const urlIr=_tcUrlGmail(item);
 
   return `<div class="sla-card-faixa"></div>
 <div class="sla-card-corpo">
@@ -3183,7 +3562,10 @@ function _tcSlaCardHTML(item,ctx){
     <div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val${_tcTemAu(item)?' destaque':''}">${_esc(item.protocolo||'Aguardando AU')}</span></div>
     ${item.dataHoraFalha?`<div class="sla-linha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val destaque">${_esc(item.dataHoraFalha)}</span></div>`:''}
   </div>
-  <button class="tc-btn-detalhes" data-id="${_esc(item.id)}" aria-expanded="${aberto}">${aberto?'Menos detalhes':'Detalhes'}</button>
+  <div class="tc-card-acoes">
+    <button class="tc-btn-detalhes" data-id="${_esc(item.id)}" aria-expanded="${aberto}">${aberto?'Menos detalhes':'Detalhes'}</button>
+    ${urlIr?`<a class="tc-btn-ir" href="${_esc(urlIr)}" target="_blank" rel="noopener noreferrer" title="Abrir a conversa desta tratativa no Gmail, em outra aba">Ir &#8599;</a>`:''}
+  </div>
   <div class="tc-detalhes${aberto?'':' hidden'}">
     ${vinculo?`<div class="tc-vinculo-nota">Mesmo assunto do chamado aberto em <strong>${_slaFmtHora(vinculo.aberturaMs)}</strong>${vinculo.mesmaFalha?', com a mesma data de falha':''}. Pode ser resposta no e-mail que j&aacute; existe, e n&atilde;o chamado novo &mdash; confira antes de tratar como ocorr&ecirc;ncia separada.</div>`:''}
     <div class="tc-acao-dica${dica?'':' hidden'}">${_esc(dica)}</div>
@@ -3210,16 +3592,6 @@ function _tcFiltrar(itens){
   return itens.filter(i=>[i.designacao,i.protocolo,i.evento,i.solicitante,i.resumo,
                           TC_FILA_NOME[_tcEstado(i,agora)]]
     .some(v=>String(v||'').toLowerCase().indexOf(q)!==-1));
-}
-/* quantos chamados ATIVOS existem por circuito — dois ou mais na mesma
-   designação é sinal de circuito problemático, não de card duplicado */
-function _tcReincidencia(itens){
-  const m={};
-  itens.forEach(i=>{
-    if(i.encerramentoMs||!i.designacao)return;
-    m[i.designacao]=(m[i.designacao]||0)+1;
-  });
-  return m;
 }
 
 /* ── possível resposta dentro de um chamado que já existe ────────────
@@ -3353,7 +3725,7 @@ function renderTcSla(){
   }
 
   const agora=Date.now();
-  const ctx={reincidencia:_tcReincidencia(st.itens),vinculos:_tcVinculos(st.itens)};
+  const ctx={vinculos:_tcVinculos(st.itens)};
   const visiveis=_tcFiltrar(st.itens).filter(i=>!st.filaFoco||_tcEstado(i,agora)===st.filaFoco);
 
   /* cobrar > escalonar > reforçar > aguardando AU > tratativa > aguardando
@@ -4720,6 +5092,19 @@ function getOperadorKey(op){return`${op.nome}|||${op.setor||''}`}
 function renderOperadores(){
   const sel=$('operadorSelect');
   const selModal=$('slaManualOperador');
+  /* o AUTOR da nota sai da mesma lista: manter dois cadastros de gente
+     seria criar divergência sem motivo */
+  const selNota=$('notaAutor');
+  if(selNota){
+    const atualNota=selNota.value;
+    selNota.innerHTML='<option value="" disabled selected>Selecione...</option>';
+    AppState.operadores.forEach(op=>{
+      const o=document.createElement('option');
+      o.value=op.nome;o.textContent=op.setor?`${op.nome} - ${op.setor}`:op.nome;
+      selNota.appendChild(o);
+    });
+    if(atualNota)selNota.value=atualNota;
+  }
   const salvo=localStorage.getItem('noc-operador')||'';
   if(sel){
     const atualSel=sel.value||salvo;
