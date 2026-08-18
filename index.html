@@ -700,6 +700,8 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 .tc-fila[data-fila="ESCALONAR"] .tc-fila-nome{color:var(--red)}
 .tc-fila[data-fila="REFORCAR"] .tc-fila-pino{background:var(--red);box-shadow:0 0 8px var(--red)}
 .tc-fila[data-fila="REFORCAR"] .tc-fila-nome{color:var(--red)}
+.tc-fila[data-fila="RESPONDER_TIM"] .tc-fila-pino{background:var(--red);box-shadow:0 0 8px var(--red)}
+.tc-fila[data-fila="RESPONDER_TIM"] .tc-fila-nome{color:var(--red)}
 .tc-fila[data-fila="AGUARDANDO_AU"] .tc-fila-pino{background:var(--red);box-shadow:0 0 8px var(--red)}
 .tc-fila[data-fila="AGUARDANDO_AU"] .tc-fila-nome{color:var(--red)}
 .tc-fila[data-fila="EM_TRATATIVA"] .tc-fila-pino{background:var(--blue);box-shadow:0 0 8px var(--blue)}
@@ -726,6 +728,15 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 .sla-card.tc-REFORCAR .sla-card-faixa{background:var(--red)}
 .sla-card.tc-REFORCAR .anel-frente{stroke:var(--red)}
 .sla-card.tc-REFORCAR .sla-tempo{color:var(--red)}
+/* Responder a TIM pulsa junto com COBRAR e ESCALONAR: é ação humana
+   pendente e de resolução rápida — some do painel assim que o e-mail é
+   respondido. O escalonado não pulsa porque fica dias na tela, e card
+   piscando por dias vira ruído; este não fica. */
+.sla-card.tc-RESPONDER_TIM{border-color:var(--red);box-shadow:var(--shadow2),0 0 0 1px var(--red);animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both,slaPulsar 1.6s ease-in-out infinite}
+.sla-card.tc-RESPONDER_TIM .sla-card-faixa{background:var(--red)}
+.sla-card.tc-RESPONDER_TIM .anel-frente{stroke:var(--red)}
+.sla-card.tc-RESPONDER_TIM .sla-tempo{color:var(--red)}
+.sla-card.tc-RESPONDER_TIM .sla-badge-rede{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.35)}
 .sla-card.tc-EM_TRATATIVA .sla-card-faixa{background:var(--blue)}
 .sla-card.tc-EM_TRATATIVA .anel-frente{stroke:var(--blue)}
 .sla-card.tc-EM_TRATATIVA .sla-tempo{color:var(--blue)}
@@ -2259,6 +2270,7 @@ function _slaDurCurta(ms){
   return Math.floor(min/60)+'h'+String(min%60).padStart(2,'0');
 }
 function _tcRotuloPrazo(estado,limite){
+  if(estado==='RESPONDER_TIM')return 'TIM aguarda resposta';
   const nome={
     REFORCAR:'Ciclo de reforço',
     AGUARDANDO_NORM:'Ciclo de reforço',
@@ -2829,6 +2841,9 @@ const TC_ESCALONAMENTO_MS = 8*60*60*1000; // 8h = último escalonamento
 const TC_REFORCO_MS = 60*60*1000;         // 1h entre reforços após escalonar
 
 const TC_FILAS=[
+  /* Primeira da lista: é a única em que alguém do outro lado está
+     literalmente esperando uma resposta nossa. */
+  {id:'RESPONDER_TIM',   nome:'Responder a TIM',         dica:'A TIM escreveu depois de nós — a tratativa está parada esperando retorno'},
   {id:'COBRAR',          nome:'Cobrar agora',            dica:'30 min sem AU desde a abertura ou a última cobrança'},
   {id:'ESCALONAR',       nome:'Escalonar',               dica:'8h corridas — é o último escalonamento que existe'},
   {id:'REFORCAR',        nome:'Reforçar escalonamento',  dica:'Já escalonado — reforçar com a TIM a cada 1h e manter a supervisão ciente'},
@@ -2915,6 +2930,10 @@ function _tcConsolidar(itens){
       base.encerramentoMs=Number(base.encerramentoMs)||Number(o.encerramentoMs)||0;
       const resp=[base.respostaMs,o.respostaMs].map(Number).filter(Boolean);
       base.respostaMs=resp.length?Math.min.apply(null,resp):0;
+      /* respostaMs é a PRIMEIRA mensagem da TIM (o automático do AU) e vale
+         a menor; ultimaTimMs é a mais recente e vale a maior. Trocar uma
+         pela outra apagaria justamente o sinal de que há resposta a dar. */
+      base.ultimaTimMs=Math.max(Number(base.ultimaTimMs)||0,Number(o.ultimaTimMs)||0);
       base.threads=(base.threads||[]).concat(o.threads||[]);
     });
     /* descrição: a abertura nossa, quando existir no grupo. É ela que
@@ -2948,8 +2967,31 @@ function _tcPeso(x){
   return p;
 }
 
+/* Espelha _timBolaComONoc do backend. A TIM não para no AU: depois do
+   e-mail automático ela volta a escrever pedindo curva .SOR, endereço das
+   pontas, confirmação de teste — e isso chegava ao painel só como "último
+   contato", sem nada dizendo que havia resposta a dar.
+   Três condições, todas necessárias:
+     1) o chamado já tem AU (antes dele só existe o e-mail automático);
+     2) a TIM falou DEPOIS desse automático — respostaMs guarda o horário
+        dele, então mensagem única não conta;
+     3) a TIM falou depois de nós; se já respondemos, a bola voltou.      */
+function _tcBolaComONoc(item){
+  if(!item||!_tcTemAu(item))return false;
+  const tim=Number(item.ultimaTimMs)||0;
+  if(!tim)return false;
+  const automatico=Number(item.respostaMs)||0;
+  if(automatico&&tim<=automatico)return false;
+  const nosso=Math.max(Number(item.aberturaMs)||0,Number(item.ultimaCobrancaMs)||0);
+  return tim>nosso;
+}
+
 function _tcEstado(item,agora){
   if(item.encerramentoMs)return 'NORMALIZADO';
+  /* Vence o ciclo de reforço: reforçar escalonamento é insistir numa carta
+     já jogada e pode esperar a próxima hora; pergunta da TIM sem resposta
+     trava a tratativa inteira. */
+  if(_tcBolaComONoc(item))return 'RESPONDER_TIM';
   /* O escalonamento vem ANTES de tudo. Antes, esta checagem só existia no
      ramo de quem já tinha AU: chamado escalonado que nunca recebeu AU caía
      de volta em COBRAR e ficava eternamente marcado como atrasado, como se
@@ -2996,6 +3038,14 @@ function _tcCalc(item,agora){
   }else if(estado==='EM_TRATATIVA'||estado==='ESCALONAR'){
     limite=TC_ESCALONAMENTO_MS;
     decorrido=total;
+  }else if(estado==='RESPONDER_TIM'){
+    /* o anel mede há quanto tempo a TIM está esperando. Sem limite de
+       propósito: não existe prazo acordado para responder, e inventar um
+       aqui criaria compromisso que o NOC não assumiu. A cor vem do estado,
+       não do percentual. */
+    base=Number(item.ultimaTimMs)||abertura;
+    limite=0;
+    decorrido=Math.max(0,agora-base);
   }
   const pct=limite>0?decorrido/limite:1;
   return{estado,total,decorrido,limite,base,pct,
@@ -3008,7 +3058,7 @@ function _tcCalc(item,agora){
 function atualizarBadgeTcSla(){
   const agora=Date.now();
   const n=AppState.tcSla.itens.filter(i=>{
-    const e=_tcEstado(i,agora);return e==='COBRAR'||e==='ESCALONAR'||e==='REFORCAR';
+    const e=_tcEstado(i,agora);return e==='RESPONDER_TIM'||e==='COBRAR'||e==='ESCALONAR'||e==='REFORCAR';
   }).length;
   /* agora mora na aba E-mail's — é o que avisa que tem pendência ali sem
      precisar entrar na aba para descobrir */
@@ -3038,6 +3088,8 @@ function _tcDesde(ms){
    vencido é do prazo, e é assim que ele é nomeado. */
 function _tcAcao(item,c){
   switch(c.estado){
+    case 'RESPONDER_TIM':
+      return{classe:'urgente',rot:'Responder a TIM',cron:`há ${_slaFmtDur(c.decorrido)}`};
     case 'COBRAR':
       return{classe:'urgente',rot:'Cobrar AU',cron:`vencida há ${_slaFmtDur(c.excedente)}`};
     case 'AGUARDANDO_AU':
@@ -3070,6 +3122,8 @@ const TC_EXPANDIDOS=new Set();
 
 
 function _tcDica(item,c){
+  if(c.estado==='RESPONDER_TIM')
+    return 'A TIM escreveu e está aguardando retorno. Responda no próprio e-mail do chamado, com o grupo do NOC em cópia.';
   if(c.estado==='REFORCAR')
     return 'Reforce o mesmo escalonamento com a TIM e mantenha a supervisão do NOC ciente.';
   if(c.estado==='AGUARDANDO_NORM'&&Number(item.escalonadoMs))
@@ -3082,7 +3136,7 @@ function _tcSlaCardHTML(item,ctx){
   const acao=_tcAcao(item,c);
   /* todo prazo de SLA correndo é vermelho; azul só na tratativa dentro das
      8h e cinza no que já saiu da nossa mão */
-  const anelCor=(c.estado==='COBRAR'||c.estado==='ESCALONAR'||
+  const anelCor=(c.estado==='RESPONDER_TIM'||c.estado==='COBRAR'||c.estado==='ESCALONAR'||
                  c.estado==='AGUARDANDO_AU'||c.estado==='REFORCAR')?'var(--red)'
               :(c.estado==='EM_TRATATIVA')?'var(--blue)':'var(--text3)';
   const dica=_tcDica(item,c);
@@ -3274,7 +3328,7 @@ function _tcVinculos(itens){
    REFORCAR entra depois de ESCALONAR — escalonar é a última carta que ainda
    temos na mão; reforçar é insistir numa carta já jogada. E vem antes de
    AGUARDANDO_AU, onde nada venceu: é contagem regressiva dentro do prazo. */
-const TC_ORDEM={COBRAR:0,ESCALONAR:1,REFORCAR:2,AGUARDANDO_AU:3,EM_TRATATIVA:4,AGUARDANDO_NORM:5,NORMALIZADO:6};
+const TC_ORDEM={RESPONDER_TIM:0,COBRAR:1,ESCALONAR:2,REFORCAR:3,AGUARDANDO_AU:4,EM_TRATATIVA:5,AGUARDANDO_NORM:6,NORMALIZADO:7};
 /* Estado novo sem entrada aqui devolvia undefined, e "undefined - 0" é NaN:
    o comparador desistia e a grade saía em ordem aleatória, com card calmo no
    meio de dois vencidos. O fallback garante que o pior caso seja "vai para o
