@@ -4608,12 +4608,15 @@ function _relStatusInterno(st){return /^DUPLICAD/i.test(String(st||'').trim())}
    Duas diferenças conscientes em relação ao painel:
    • a data da falha aqui vem em vários formatos (ISO, "ÀS", DD/MM), então
      usa _relDataMs, que cobre todos, em vez do _tcFalhaMs, restrito a um;
-   • o painel também agrupa pelo código de evento da TIM (EVE...), que o
-     endpoint relatorioTim não devolve. Fica de fora até o Apps Script
-     passar esse campo — é a única regra do painel não replicada aqui. */
+   • o painel também agrupa pelo código de evento da TIM (EVE...). O
+     endpoint relatorioTim passou a devolver esse campo (coluna T), então
+     a regra deixou de faltar aqui: quando não há AU, o evento serve de
+     chave e mantém junto o que a TIM tratou como uma ocorrência só. */
 function _relChaveChamado(it){
   const au=_tcNormAu(it.protocolo)||_tcNormAu(_tcAuDoTitulo(it.assunto||it.resumo));
-  return au||'';
+  if(au) return au;
+  const eve=_tcNormAu(it.evento);
+  return eve?('EVE:'+eve):'';
 }
 
 function _relAgruparChamados(linhas){
@@ -4711,49 +4714,155 @@ function gerarRelatorioTim(){
       return;
     }
 
+    /* prazos vêm do backend para não repetir número mágico aqui */
+    const PRAZO_AU_MIN  = (Number(r.prazoAuMs) || 30*60*1000)/60000;
+    const PRAZO_ESC_MIN = (Number(r.prazoEscalonamentoMs) || 8*60*60*1000)/60000;
+
     const registros = r.relatorio.length;
     const chamados = _relAgruparChamados(r.relatorio);
 
-    let somaResp=0, comResp=0, somaNorm=0, comNorm=0;
-
+    /* ── uma leitura por chamado, respondendo às três perguntas do
+       relatório: quando a designação falhou, se a TIM protocolou (AU) e
+       se precisamos cobrar ─────────────────────────────────────────── */
     const linhasObj = chamados.map(item => {
-      const abMs = Number(item.aberturaMs) || _relDataMs(item.abertura);
-      const respMin = Number(item.respostaMs) ? Math.max(0,(item.respostaMs-abMs)/60000) : null;
-      const normMin = Number(item.dataNormalizacao) ? Math.max(0,(item.dataNormalizacao-abMs)/60000) : null;
-      if(respMin!==null){somaResp+=respMin;comResp++}
-      if(normMin!==null){somaNorm+=normMin;comNorm++}
+      const abMs      = Number(item.aberturaMs) || _relDataMs(item.abertura);
+      const protocolo = String(item.protocolo || '').replace(/^-$/,'').trim();
+      const temAu     = !!protocolo;
+      const auMs      = Number(item.respostaMs) || 0;
+      const auMin     = auMs ? Math.max(0,(auMs - abMs)/60000) : null;
+      const auAtrasado= auMin !== null && auMin > PRAZO_AU_MIN;
+      const normMs    = Number(item.dataNormalizacao) || 0;
+      const normMin   = normMs ? Math.max(0,(normMs - abMs)/60000) : null;
+      const cobrancas = Number(item.cobrancas) || 0;
+      const escMs     = Number(item.escalonadoMs) || 0;
+
+      /* Ordenação por gravidade, não por data: o que interessa é ver
+         primeiro onde a TIM deixou a desejar. Sem AU é o pior caso —
+         significa que a abertura simplesmente não virou protocolo. */
+      let gravidade = 0;
+      if(!temAu)            gravidade += 10000;
+      if(escMs)             gravidade += 2000;
+      if(auAtrasado)        gravidade += 1000;
+      if(normMin === null)  gravidade += 500;
+      gravidade += Math.min(cobrancas, 50) * 20;
+      gravidade += Math.min((auMin || 0)/60, 100);
+
       return {
-        abertura: _relFmtData(abMs,true),
-        falhaEm: _relFmtData(item.dataHoraFalha,true),
-        solicitante: item.solicitante || '-',
-        designacao: item.designacao || '-',
-        protocolo: item.protocolo || '-',
-        tempoResp: respMin===null?null:_relFmtDuracao(respMin),
-        tempoNorm: normMin===null?null:_relFmtDuracao(normMin),
-        cobrancas: Number(item.cobrancas)||0,
+        gravidade, temAu, auAtrasado, auMin, normMin, cobrancas,
+        escalonado: !!escMs,
+        abMs,
+        designacao:   item.designacao || '-',
+        falhaEm:      _relFmtData(item.dataHoraFalha, true),
+        abertura:     _relFmtData(abMs, true),
+        solicitante:  item.solicitante || '-',
+        protocolo:    protocolo || '',
+        evento:       String(item.evento || '').trim(),
+        auQuando:     auMs ? _relFmtData(auMs, true) : '',
+        tempoAu:      auMin === null ? null : _relFmtDuracao(auMin),
+        tempoNorm:    normMin === null ? null : _relFmtDuracao(normMin),
+        normQuando:   normMs ? _relFmtData(normMs, true) : '',
+        escalonadoEm: escMs ? _relFmtData(escMs, true) : '',
+        escalonadoPor: item.escalonadoPor || '',
         cobrancasLista: (item.cobrancasLista||[]).map(c=>({ quando:_relFmtData(c.ms,true) })),
-        status: item.status || '-'
+        status:       item.status || '-',
+        assunto:      String(item.assunto || item.resumo || '').trim()
       };
+    }).sort((a,b)=> b.gravidade - a.gravidade || b.abMs - a.abMs);
+
+    /* ── placar ────────────────────────────────────────────────────── */
+    const semAu        = linhasObj.filter(l=>!l.temAu);
+    const auAtrasados  = linhasObj.filter(l=>l.auAtrasado);
+    const comCobranca  = linhasObj.filter(l=>l.cobrancas>0);
+    const escalonados  = linhasObj.filter(l=>l.escalonado);
+    const naoNorm      = linhasObj.filter(l=>l.normMin===null);
+    const totalCobr    = linhasObj.reduce((s,l)=>s+l.cobrancas,0);
+
+    const temposAu   = linhasObj.filter(l=>l.auMin!==null).map(l=>l.auMin).sort((a,b)=>a-b);
+    const temposNorm = linhasObj.filter(l=>l.normMin!==null).map(l=>l.normMin).sort((a,b)=>a-b);
+    const media   = v => v.length ? v.reduce((s,x)=>s+x,0)/v.length : null;
+    /* mediana entra junto com a média porque um único chamado esquecido
+       por dias distorce a média e esconde o comportamento típico */
+    const mediana = v => { if(!v.length) return null;
+      const m=Math.floor(v.length/2);
+      return v.length%2 ? v[m] : (v[m-1]+v[m])/2; };
+    const dur = x => x===null ? '—' : _relFmtDuracao(x);
+    const pct = n => linhasObj.length ? Math.round(n*100/linhasObj.length) : 0;
+
+    const metrica = (rot,val,alerta) => `
+      <div style="flex:1 1 150px;padding:10px 12px;border-radius:8px;background:var(--bg3);
+                  border-left:3px solid ${alerta?'var(--red)':'var(--border)'}">
+        <div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.4px">${rot}</div>
+        <div style="font-size:1.15rem;font-weight:700;color:${alerta?'var(--red)':'var(--text)'}">${val}</div>
+      </div>`;
+
+    const placar = `
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        ${metrica('Chamados no período', linhasObj.length + (registros!==linhasObj.length?` <span style="font-size:.7rem;font-weight:400;color:var(--text3)">de ${registros} registros</span>`:''), false)}
+        ${metrica('Sem AU (não protocolado)', `${semAu.length} <span style="font-size:.8rem">(${pct(semAu.length)}%)</span>`, semAu.length>0)}
+        ${metrica(`AU fora dos ${Math.round(PRAZO_AU_MIN)} min`, `${auAtrasados.length} <span style="font-size:.8rem">(${pct(auAtrasados.length)}%)</span>`, auAtrasados.length>0)}
+        ${metrica('Precisaram de cobrança', `${comCobranca.length} <span style="font-size:.8rem">(${totalCobr} no total)</span>`, comCobranca.length>0)}
+        ${metrica(`Escalonados (${Math.round(PRAZO_ESC_MIN/60)}h)`, escalonados.length, escalonados.length>0)}
+        ${metrica('Ainda não normalizados', naoNorm.length, naoNorm.length>0)}
+        ${metrica('Até o AU · mediana / média', `${dur(mediana(temposAu))} <span style="font-size:.8rem;color:var(--text3)">/ ${dur(media(temposAu))}</span>`, false)}
+        ${metrica('Até normalizar · mediana / média', `${dur(mediana(temposNorm))} <span style="font-size:.8rem;color:var(--text3)">/ ${dur(media(temposNorm))}</span>`, false)}
+      </div>`;
+
+    /* ── reincidência por designação ───────────────────────────────── */
+    const porDesig = {};
+    linhasObj.forEach(l=>{
+      const k = l.designacao;
+      if(!k || k==='-') return;
+      if(!porDesig[k]) porDesig[k] = { desig:k, n:0, semAu:0, cobr:0 };
+      porDesig[k].n++;
+      if(!l.temAu) porDesig[k].semAu++;
+      porDesig[k].cobr += l.cobrancas;
     });
+    const reincidentes = Object.values(porDesig).filter(d=>d.n>1).sort((a,b)=>b.n-a.n);
+    const blocoReinc = !reincidentes.length ? '' : `
+      <div style="margin-bottom:14px">
+        <div style="font-weight:700;margin-bottom:6px">Designações com mais de uma ocorrência no período</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${reincidentes.map(d=>`
+            <div style="padding:7px 11px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);font-size:.82rem">
+              <strong>${_esc(d.desig)}</strong> · ${d.n}x
+              ${d.semAu?` · <span style="color:var(--red)">${d.semAu} sem AU</span>`:''}
+              ${d.cobr?` · ${d.cobr} cobrança(s)`:''}
+            </div>`).join('')}
+        </div>
+      </div>`;
 
-    const mediaRespText = comResp ? _relFmtDuracao(somaResp/comResp) : '-';
-    const mediaNormText = comNorm ? _relFmtDuracao(somaNorm/comNorm) : '-';
-
-    /* O chamado e suas cobranças formam um bloco: linha grossa só ANTES de
-       cada chamado, nada entre ele e as cobranças que pertencem a ele. Assim
-       o olho separa por grupo, não linha a linha — sem isso não dava para
-       saber a quem a cobrança pertencia. */
+    /* ── tabela ────────────────────────────────────────────────────── */
     const COLS_REL = 9;
-    const linhas = linhasObj.map(l => `
+    const SEM_AU = '<span style="color:var(--red);font-weight:700">NÃO GEROU</span>';
+
+    const linhas = linhasObj.map(l => {
+      const celAu = !l.temAu ? SEM_AU :
+        `<div style="font-weight:700">${_esc(l.protocolo)}</div>` +
+        (l.auQuando?`<div style="font-size:.74rem;color:var(--text3)">${_esc(l.auQuando)}</div>`:'');
+      const celTempoAu = l.tempoAu
+        ? `<span style="font-weight:700;color:${l.auAtrasado?'var(--red)':'var(--teal)'}">${_esc(l.tempoAu)}</span>`
+        : REL_AGUARDANDO;
+      const celNorm = l.tempoNorm
+        ? `<div style="font-weight:700">${_esc(l.tempoNorm)}</div>` +
+          (l.normQuando?`<div style="font-size:.74rem;color:var(--text3)">${_esc(l.normQuando)}</div>`:'')
+        : REL_AGUARDANDO;
+      const celEsc = l.escalonado
+        ? `<div style="color:var(--amber);font-weight:700">Sim</div>` +
+          `<div style="font-size:.74rem;color:var(--text3)">${_esc(l.escalonadoEm)}</div>`
+        : '<span style="color:var(--text3)">—</span>';
+
+      return `
         <tr class="rel-chamado">
-          <td style="white-space:nowrap">${_esc(l.abertura)}</td>
+          <td style="white-space:nowrap;font-weight:700">${_esc(l.designacao)}
+            ${l.evento?`<div style="font-size:.72rem;font-weight:400;color:var(--text3)">${_esc(l.evento)}</div>`:''}</td>
+          <td style="white-space:nowrap">${_esc(l.falhaEm)}
+            <div style="font-size:.72rem;color:var(--text3)">abriu ${_esc(l.abertura)}</div></td>
+          <td style="white-space:nowrap">${celAu}</td>
+          <td style="white-space:nowrap;text-align:center">${celTempoAu}</td>
+          <td style="text-align:center;font-weight:${l.cobrancas?'700':'400'}">${l.cobrancas || '—'}</td>
+          <td style="white-space:nowrap;text-align:center">${celEsc}</td>
+          <td style="white-space:nowrap">${celNorm}</td>
           <td>${_esc(l.solicitante)}</td>
-          <td style="white-space:nowrap;font-weight:600">${_esc(l.designacao)}</td>
-          <td style="white-space:nowrap;font-weight:600">${_esc(l.protocolo)}</td>
-          <td style="white-space:nowrap">${_esc(l.falhaEm)}</td>
-          <td style="white-space:nowrap;font-weight:700">${l.tempoResp?_esc(l.tempoResp):REL_AGUARDANDO}</td>
-          <td style="white-space:nowrap;font-weight:700">${l.tempoNorm?_esc(l.tempoNorm):REL_AGUARDANDO}</td>
-          <td style="text-align:center">${l.cobrancas || '—'}</td>
           <td style="color:${/FINALIZ|ENCERR/i.test(l.status)?'var(--teal)':'var(--amber)'}">${_esc(l.status)}</td>
         </tr>` +
         l.cobrancasLista.map((c,i) => `
@@ -4762,36 +4871,41 @@ function gerarRelatorioTim(){
             <span class="rel-cobranca-tag">Cobran&ccedil;a ${i+1}/${l.cobrancasLista.length}</span>
             ${_esc(c.quando)}
           </td>
-        </tr>`).join('')
-      ).join('');
+        </tr>`).join('');
+    }).join('');
 
-    div.innerHTML = `
-      <div style="display:flex; flex-wrap:wrap; gap:18px; justify-content:space-between; margin-bottom:12px; padding:10px; background:var(--bg3); border-radius:4px">
-        <div><strong>Chamados:</strong> ${chamados.length}${registros!==chamados.length?` <span style="color:var(--text3)">(${registros} registros na aba)</span>`:''}</div>
-        <div><strong>Tempo m&eacute;dio de resposta da TIM:</strong> ${mediaRespText}</div>
-        <div><strong>Tempo m&eacute;dio at&eacute; normalizar:</strong> ${mediaNormText}</div>
-      </div>
+    div.innerHTML = placar + blocoReinc + `
       <div style="overflow-x:auto">
         <table class="rel-tabela">
           <thead>
             <tr>
-              <th>Abertura</th>
-              <th>Quem abriu</th>
               <th style="white-space:nowrap">Designa&ccedil;&atilde;o</th>
-              <th style="white-space:nowrap">Protocolo (AU)</th>
-              <th>Falha em</th>
-              <th>Resposta TIM</th>
-              <th>At&eacute; normalizar</th>
+              <th style="white-space:nowrap">Falhou em</th>
+              <th style="white-space:nowrap">AU</th>
+              <th style="text-align:center">At&eacute; o AU</th>
               <th style="text-align:center">Cobran&ccedil;as</th>
+              <th style="text-align:center">Escalonado</th>
+              <th style="white-space:nowrap">Normalizou</th>
+              <th>Quem abriu</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>${linhas}</tbody>
         </table>
-      </div>
-    `;
-    _relatorioTimData = { linhas: linhasObj, inicio, fim, total: chamados.length,
-                          registros, mediaRespText, mediaNormText };
+      </div>`;
+
+    _relatorioTimData = {
+      linhas: linhasObj, inicio, fim, total: linhasObj.length, registros,
+      prazoAuMin: PRAZO_AU_MIN, prazoEscMin: PRAZO_ESC_MIN,
+      resumo: {
+        semAu: semAu.length, auAtrasados: auAtrasados.length,
+        comCobranca: comCobranca.length, totalCobr,
+        escalonados: escalonados.length, naoNorm: naoNorm.length,
+        medianaAu: mediana(temposAu), mediaAu: media(temposAu),
+        medianaNorm: mediana(temposNorm), mediaNorm: media(temposNorm)
+      },
+      reincidentes
+    };
     $('btnExportarPDF').style.display = 'inline-block';
     $('btnExportarTXT').style.display = 'inline-block';
 
@@ -4800,39 +4914,66 @@ function gerarRelatorioTim(){
   });
 }
 
-function _montarTextoRelatorioTim(d){
+function _relCabecalhoRelatorio(d){
   const agora = new Date(), p = n => String(n).padStart(2,'0');
-  const agoraStr = `${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} ${p(agora.getHours())}:${p(agora.getMinutes())}`;
+  return `${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} ${p(agora.getHours())}:${p(agora.getMinutes())}`;
+}
+
+function _montarTextoRelatorioTim(d){
+  const agoraStr = _relCabecalhoRelatorio(d);
+  const R = d.resumo || {};
+  const dur = x => (x===null||x===undefined) ? '—' : _relFmtDuracao(x);
+  const pct = n => d.total ? Math.round(n*100/d.total) : 0;
 
   let txt = '';
   txt += '========================================================\n';
   txt += 'RELATÓRIO E-MAIL’S SLA (TIM) - GRUPO CLICK IP\n';
   txt += `Período: ${d.inicio} a ${d.fim}\n`;
   txt += `Gerado em: ${agoraStr}\n`;
-  txt += `Chamados: ${d.total}${d.registros&&d.registros!==d.total?` (${d.registros} registros na aba, incluindo cobranças)`:''}\n`;
-  txt += `Tempo médio de resposta da TIM: ${d.mediaRespText}\n`;
-  txt += `Tempo médio até normalizar: ${d.mediaNormText}\n`;
+  txt += '========================================================\n';
+  txt += `Chamados: ${d.total}${d.registros&&d.registros!==d.total?` (de ${d.registros} registros na aba)`:''}\n`;
+  txt += `Sem AU (não protocolado pela TIM): ${R.semAu} (${pct(R.semAu)}%)\n`;
+  txt += `AU fora dos ${Math.round(d.prazoAuMin)} min: ${R.auAtrasados} (${pct(R.auAtrasados)}%)\n`;
+  txt += `Precisaram de cobrança: ${R.comCobranca} (${R.totalCobr} cobranças no total)\n`;
+  txt += `Escalonados (${Math.round(d.prazoEscMin/60)}h): ${R.escalonados}\n`;
+  txt += `Ainda não normalizados: ${R.naoNorm}\n`;
+  txt += `Tempo até o AU — mediana ${dur(R.medianaAu)} / média ${dur(R.mediaAu)}\n`;
+  txt += `Tempo até normalizar — mediana ${dur(R.medianaNorm)} / média ${dur(R.mediaNorm)}\n`;
   txt += '========================================================\n\n';
 
+  if((d.reincidentes||[]).length){
+    txt += 'DESIGNAÇÕES COM MAIS DE UMA OCORRÊNCIA\n';
+    d.reincidentes.forEach(x=>{
+      txt += `  ${x.desig} · ${x.n}x`;
+      if(x.semAu) txt += ` · ${x.semAu} sem AU`;
+      if(x.cobr)  txt += ` · ${x.cobr} cobrança(s)`;
+      txt += '\n';
+    });
+    txt += '\n--------------------------------------------------------\n\n';
+  }
+
+  txt += 'CHAMADOS (dos mais críticos para os menos)\n\n';
   d.linhas.forEach((l, i) => {
-    txt += `[${i + 1}] Abertura: ${l.abertura}\n`;
-    txt += `    Quem abriu: ${l.solicitante}\n`;
-    txt += `    Designação: ${l.designacao}\n`;
-    txt += `    Protocolo (AU): ${l.protocolo}\n`;
-    txt += `    Falha em: ${l.falhaEm}\n`;
-    txt += `    Resposta da TIM: ${l.tempoResp || 'Aguardando'}\n`;
-    txt += `    Até normalizar: ${l.tempoNorm || 'Aguardando'}\n`;
+    txt += `[${i + 1}] Designação: ${l.designacao}${l.evento?`  ·  Evento TIM: ${l.evento}`:''}\n`;
+    txt += `    Falhou em: ${l.falhaEm}   |   Aberto em: ${l.abertura}\n`;
+    txt += `    AU: ${l.temAu ? l.protocolo : '*** NÃO GEROU ***'}`;
+    if(l.auQuando) txt += `  (recebido em ${l.auQuando})`;
+    txt += '\n';
+    txt += `    Até o AU: ${l.tempoAu || 'Aguardando'}${l.auAtrasado?'   <-- FORA DO PRAZO':''}\n`;
     txt += `    Cobranças: ${l.cobrancas || 0}\n`;
     (l.cobrancasLista || []).forEach((c, k) => {
       txt += `      - Cobrança ${k+1}/${l.cobrancasLista.length} · ${c.quando}\n`;
     });
+    txt += `    Escalonado: ${l.escalonado ? `Sim, em ${l.escalonadoEm}${l.escalonadoPor?` por ${l.escalonadoPor}`:''}` : 'Não'}\n`;
+    txt += `    Normalizou: ${l.tempoNorm ? `${l.tempoNorm}${l.normQuando?` (em ${l.normQuando})`:''}` : 'Aguardando'}\n`;
+    txt += `    Quem abriu: ${l.solicitante}\n`;
     txt += `    Status: ${l.status}\n`;
+    if(l.assunto) txt += `    Assunto: ${l.assunto}\n`;
     txt += '--------------------------------------------------------\n';
   });
 
   return txt;
 }
-
 
 function exportarRelatorioTXT() {
   if (!_relatorioTimData || !_relatorioTimData.linhas.length) {
@@ -4854,6 +4995,140 @@ function exportarRelatorioTXT() {
     showToast('✓ TXT gerado com sucesso.');
   } catch (e) {
     showToast('Falha ao gerar TXT (' + ((e && e.message) || e) + ').', 'error', 5000);
+  }
+}
+
+/* ═══ EXPORTAR PDF ═══════════════════════════════════════════════════
+   O botão existia desde sempre no rodapé do modal e chamava uma função
+   que nunca foi escrita — clicar lançava ReferenceError e não acontecia
+   nada. A html2pdf já vinha carregada no topo do arquivo; só faltava isto.
+
+   O PDF é montado num container próprio, em tema claro, em vez de
+   reaproveitar a tabela da tela: o painel é escuro e sairia com fundo
+   preto, gastando toner e ficando ilegível impresso. */
+function exportarRelatorioPDF() {
+  const d = _relatorioTimData;
+  if (!d || !d.linhas.length) {
+    showToast('Gere o relatório antes de exportar.', 'error', 3000);
+    return;
+  }
+  if (typeof html2pdf === 'undefined') {
+    showToast('A biblioteca de PDF não carregou. Use o TXT.', 'error', 5000);
+    return;
+  }
+
+  const btn = $('btnExportarPDF');
+  const rotuloAntes = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = 'Gerando...'; btn.disabled = true; }
+
+  try {
+    const R = d.resumo || {};
+    const dur = x => (x === null || x === undefined) ? '—' : _relFmtDuracao(x);
+    const pct = n => d.total ? Math.round(n * 100 / d.total) : 0;
+    const agora = new Date(), p = n => String(n).padStart(2, '0');
+    const agoraStr = `${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} ${p(agora.getHours())}:${p(agora.getMinutes())}`;
+
+    const VERM = '#b3261e', AMBAR = '#8a6100', VERDE = '#0b6b3a', CINZA = '#666';
+
+    const card = (rot, val, alerta) => `
+      <td style="padding:6px 8px;border:1px solid #ddd;vertical-align:top">
+        <div style="font-size:8pt;color:#666;text-transform:uppercase">${rot}</div>
+        <div style="font-size:12pt;font-weight:bold;color:${alerta ? VERM : '#111'}">${val}</div>
+      </td>`;
+
+    const linhasHtml = d.linhas.map((l, i) => {
+      const au = l.temAu
+        ? `<strong>${_esc(l.protocolo)}</strong>${l.auQuando ? `<br><span style="font-size:7.5pt;color:${CINZA}">${_esc(l.auQuando)}</span>` : ''}`
+        : `<strong style="color:${VERM}">NÃO GEROU</strong>`;
+      const tAu = l.tempoAu
+        ? `<span style="color:${l.auAtrasado ? VERM : VERDE};font-weight:bold">${_esc(l.tempoAu)}</span>`
+        : `<span style="color:${AMBAR}">Aguardando</span>`;
+      const norm = l.tempoNorm
+        ? `<strong>${_esc(l.tempoNorm)}</strong>${l.normQuando ? `<br><span style="font-size:7.5pt;color:${CINZA}">${_esc(l.normQuando)}</span>` : ''}`
+        : `<span style="color:${AMBAR}">Aguardando</span>`;
+      const esc = l.escalonado
+        ? `<span style="color:${AMBAR};font-weight:bold">Sim</span><br><span style="font-size:7.5pt;color:${CINZA}">${_esc(l.escalonadoEm)}</span>`
+        : '—';
+      const cobr = l.cobrancasLista.length
+        ? `<br><span style="font-size:7.5pt;color:${CINZA}">${l.cobrancasLista.map(c => _esc(c.quando)).join(' · ')}</span>`
+        : '';
+      return `
+        <tr style="page-break-inside:avoid">
+          <td style="border:1px solid #ddd;padding:4px 6px">${i + 1}</td>
+          <td style="border:1px solid #ddd;padding:4px 6px"><strong>${_esc(l.designacao)}</strong>${l.evento ? `<br><span style="font-size:7.5pt;color:${CINZA}">${_esc(l.evento)}</span>` : ''}</td>
+          <td style="border:1px solid #ddd;padding:4px 6px">${_esc(l.falhaEm)}<br><span style="font-size:7.5pt;color:${CINZA}">abriu ${_esc(l.abertura)}</span></td>
+          <td style="border:1px solid #ddd;padding:4px 6px">${au}</td>
+          <td style="border:1px solid #ddd;padding:4px 6px;text-align:center">${tAu}</td>
+          <td style="border:1px solid #ddd;padding:4px 6px;text-align:center">${l.cobrancas || '—'}${cobr}</td>
+          <td style="border:1px solid #ddd;padding:4px 6px;text-align:center">${esc}</td>
+          <td style="border:1px solid #ddd;padding:4px 6px">${norm}</td>
+          <td style="border:1px solid #ddd;padding:4px 6px">${_esc(l.status)}</td>
+        </tr>`;
+    }).join('');
+
+    const reinc = (d.reincidentes || []).length ? `
+      <div style="margin:10px 0 4px;font-weight:bold">Designações com mais de uma ocorrência</div>
+      <div style="font-size:8.5pt;line-height:1.6">
+        ${d.reincidentes.map(x => `${_esc(x.desig)} — ${x.n}x${x.semAu ? ` · <span style="color:${VERM}">${x.semAu} sem AU</span>` : ''}${x.cobr ? ` · ${x.cobr} cobrança(s)` : ''}`).join(' &nbsp;|&nbsp; ')}
+      </div>` : '';
+
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:-10000px;top:0;width:1080px;background:#fff;color:#111;' +
+                       'font-family:Arial,Helvetica,sans-serif;font-size:9pt;padding:18px';
+    el.innerHTML = `
+      <div style="border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px">
+        <div style="font-size:14pt;font-weight:bold">Relatório de SLA — chamados TIM</div>
+        <div style="font-size:9pt;color:${CINZA}">Grupo Click IP &nbsp;·&nbsp; Período ${_esc(d.inicio)} a ${_esc(d.fim)} &nbsp;·&nbsp; Gerado em ${agoraStr}</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><tr>
+        ${card('Chamados', d.total, false)}
+        ${card('Sem AU', `${R.semAu} (${pct(R.semAu)}%)`, R.semAu > 0)}
+        ${card(`AU fora dos ${Math.round(d.prazoAuMin)} min`, `${R.auAtrasados} (${pct(R.auAtrasados)}%)`, R.auAtrasados > 0)}
+        ${card('Com cobrança', `${R.comCobranca} (${R.totalCobr})`, R.comCobranca > 0)}
+        ${card(`Escalonados (${Math.round(d.prazoEscMin / 60)}h)`, R.escalonados, R.escalonados > 0)}
+        ${card('Não normalizados', R.naoNorm, R.naoNorm > 0)}
+      </tr><tr>
+        ${card('Até o AU · mediana / média', `${dur(R.medianaAu)} / ${dur(R.mediaAu)}`, false)}
+        ${card('Até normalizar · mediana / média', `${dur(R.medianaNorm)} / ${dur(R.mediaNorm)}`, false)}
+        <td colspan="4" style="border:1px solid #ddd;padding:6px 8px;font-size:8pt;color:${CINZA};vertical-align:middle">
+          Ordenado por gravidade: primeiro o que a TIM não protocolou, depois o que foi escalonado,
+          o que estourou o prazo do AU e o que exigiu mais cobranças.
+        </td>
+      </tr></table>
+      ${reinc}
+      <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:8px">
+        <thead><tr style="background:#f0f0f0">
+          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">#</th>
+          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">Designação</th>
+          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">Falhou em</th>
+          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">AU</th>
+          <th style="border:1px solid #ddd;padding:5px 6px">Até o AU</th>
+          <th style="border:1px solid #ddd;padding:5px 6px">Cobranças</th>
+          <th style="border:1px solid #ddd;padding:5px 6px">Escalonado</th>
+          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">Normalizou</th>
+          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">Status</th>
+        </tr></thead>
+        <tbody>${linhasHtml}</tbody>
+      </table>`;
+    document.body.appendChild(el);
+
+    html2pdf().set({
+      margin: [8, 8, 10, 8],
+      filename: `relatorio_tim_${d.inicio}_a_${d.fim}.pdf`,
+      image: { type: 'jpeg', quality: 0.96 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+      pagebreak: { mode: ['css', 'legacy'] }
+    }).from(el).save()
+      .then(() => showToast('✓ PDF gerado com sucesso.'))
+      .catch(err => showToast('Falha ao gerar PDF (' + ((err && err.message) || err) + ').', 'error', 5000))
+      .finally(() => {
+        el.remove();
+        if (btn) { btn.innerHTML = rotuloAntes; btn.disabled = false; }
+      });
+  } catch (e) {
+    showToast('Falha ao gerar PDF (' + ((e && e.message) || e) + ').', 'error', 5000);
+    if (btn) { btn.innerHTML = rotuloAntes; btn.disabled = false; }
   }
 }
 
