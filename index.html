@@ -4964,38 +4964,172 @@ function parseCoordenada(s){
    colunas trocadas.
 
    Aqui as três situações são tratadas antes de montar o link. Na área de
-   operação |lat| é sempre menor que |lng| e as faixas não se sobrepõem
-   (lat entre -34 e 6, lng entre -74 e -34), então a ordem pode ser
-   corrigida com segurança e um número que não é coordenada é recusado —
-   melhor sair "Sem coordenadas" do que um link que abre no lugar errado. */
+   operação |lat| é sempre menor que |lng|, então a ordem do par pode ser
+   corrigida com segurança.
+
+   IMPORTANTE — o link NUNCA é descartado por causa da faixa geográfica.
+   Numa versão anterior desta função eu usei a checagem de faixa como VETO,
+   e o acionamento passou a sair "Sem coordenadas": ficou pior que o
+   comportamento original, onde o link sempre saía. Coordenada estranha
+   agora vira link do mesmo jeito, com aviso no console — um pino que o
+   técnico consegue conferir vale mais que campo vazio. Só sai
+   "Sem coordenadas" quando não existe par de números nenhum. */
 function coordDaCTO(info){
   if(!info)return null;
-  /* um número por célula, tolerando vírgula decimal e lixo em volta */
-  const umNumero=v=>{
-    const m=String(v==null?'':v).trim().replace(',','.').match(/-?\d+(?:\.\d+)?/);
-    return m?parseFloat(m[0]):NaN;
+  /* todos os números de uma célula, tolerando o que aparece na prática:
+     vírgula decimal, sinal de menos unicode (− – —) que exportação às vezes
+     coloca no lugar do hífen, espaço não separável, grau e texto em volta */
+  const numeros=v=>{
+    const txt=String(v==null?'':v)
+      .replace(/[−–—˗]/g,'-')
+      .replace(/[   ]/g,' ')
+      .replace(/(\d),(?=\d)/g,'$1.');
+    return [...txt.matchAll(/-?\d+(?:\.\d+)?/g)]
+      .map(m=>parseFloat(m[0])).filter(n=>Number.isFinite(n));
   };
-  const aceitar=(a,b)=>{
-    if(!Number.isFinite(a)||!Number.isFinite(b))return null;
-    const lat=Math.abs(a)<Math.abs(b)?a:b;
-    const lng=Math.abs(a)<Math.abs(b)?b:a;
-    return _coordPlausivel(lat,lng)?{lat,lng}:null;
+  /* grau-minuto-segundo, quando a planilha guarda 3°05'55.3"S em vez de
+     decimal. Sem isto os três números (3, 5, 55.3) seriam lidos como se
+     fossem coordenadas soltas e o pino cairia longe, sem ninguém notar.
+     Em pt-BR o hemisfério pode vir como O (Oeste) ou L (Leste). */
+  const grausMinSeg=v=>{
+    const txt=String(v==null?'':v).trim()
+      .replace(/[−–—˗]/g,'-').replace(/(\d),(?=\d)/g,'$1.');
+    if(!/[°º'′"″]/.test(txt)&&!/[NSEWLO]\s*$/i.test(txt))return NaN;
+    const m=txt.match(/(-?\d+(?:\.\d+)?)\s*[°º]?\s*(?:(\d+(?:\.\d+)?)\s*['′]?\s*(?:(\d+(?:\.\d+)?)\s*["″]?)?)?\s*([NSEWLO])?\s*$/i);
+    if(!m)return NaN;
+    const g=parseFloat(m[1]);
+    if(!Number.isFinite(g))return NaN;
+    const min=m[2]?parseFloat(m[2]):0,seg=m[3]?parseFloat(m[3]):0;
+    let dec=Math.abs(g)+min/60+seg/3600;
+    const h=(m[4]||'').toUpperCase();
+    if(g<0||h==='S'||h==='W'||h==='O')dec=-dec;
+    return dec;
   };
-  /* 1) o caso normal: lat e lng em colunas separadas */
-  let r=aceitar(umNumero(info.lat),umNumero(info.lng));
-  if(r)return r;
-  /* 2) as duas coordenadas na mesma célula */
-  for(const campo of [info.lat,info.lng,info.localizacao,info.col2,info.col3]){
-    const txt=String(campo==null?'':campo).replace(/,(\d)/g,'.$1');
-    const nums=[...txt.matchAll(/-?\d+\.\d+/g)].map(m=>parseFloat(m[0]));
-    if(nums.length>=2){r=aceitar(nums[0],nums[1]);if(r)return r}
+  /* DMS tem prioridade: se a célula é DMS, os números soltos dela mentem */
+  const celula=v=>{const d=grausMinSeg(v);return Number.isFinite(d)?[d]:numeros(v)};
+  const a=celula(info.lat),b=celula(info.lng);
+  let par=null;
+  if(a.length&&b.length)  par=[a[0],b[0]];   // coluna B e coluna C — o caso normal
+  else if(a.length>=2)    par=[a[0],a[1]];   // as duas coordenadas na coluna B
+  else if(b.length>=2)    par=[b[0],b[1]];   // as duas na coluna C
+  else{
+    for(const campo of [info.localizacao,info.col2,info.col3]){
+      const n=numeros(campo);
+      if(n.length>=2){par=[n[0],n[1]];break}
+    }
   }
-  return null;
+  if(!par)return null;
+  const [x,y]=par;
+  if(x===0&&y===0)return null;
+  if(Math.abs(x)>180||Math.abs(y)>180)return null;
+  let lat=Math.abs(x)<Math.abs(y)?x:y;
+  let lng=Math.abs(x)<Math.abs(y)?y:x;
+  if(Math.abs(lat)>90)return null;
+
+  /* ── SINAL PERDIDO NA PLANILHA ──────────────────────────────────────
+     Em toda a área de atuação a longitude é OESTE, ou seja, negativa.
+     Longitude POSITIVA na faixa de 34 a 74 graus não existe na operação
+     (cai no Oceano Índico) — só pode ser o sinal de menos que a planilha
+     perdeu. E planilha não perde o sinal de uma coluna só: se a longitude
+     veio sem sinal, a latitude veio sem sinal também, então as duas são
+     corrigidas juntas.
+
+     Longitude já negativa é respeitada exatamente como está. É isso que
+     preserva as CTOs de Roraima, onde a latitude é legitimamente POSITIVA
+     (Boa Vista fica ao norte do equador): lá a longitude vem negativa, não
+     há inversão, e a latitude positiva passa intacta. */
+  let sinalRecuperado=false;
+  if(lng>0&&lng>=34&&lng<=74){
+    lng=-lng;
+    if(lat>0)lat=-lat;
+    sinalRecuperado=true;
+  }
+  /* `confiavel` só informa se o par caiu na faixa esperada — não veta */
+  return {lat,lng,confiavel:_coordPlausivel(lat,lng),sinalRecuperado};
 }
-/* link do Maps de uma CTO, ou null quando a coordenada não é confiável */
+/* ── LINK DO MAPS ────────────────────────────────────────────────────
+   Formato oficial de Maps URLs (developers.google.com/maps/documentation/urls):
+     https://www.google.com/maps/search/?api=1&query=LAT%2CLNG
+   `api=1` é obrigatório e a vírgula vai codificada como %2C.
+
+   O app usava a forma antiga `maps?q=lat,lng`, que é indocumentada. Ela
+   funciona no navegador do desktop, mas o acionamento é colado no WhatsApp
+   e aberto no celular — e é nesse caminho (WhatsApp -> app do Maps) que a
+   forma antiga falha e aparece o "local não encontrado".
+
+   Com a vírgula codificada some também a ambiguidade do separador: %2C
+   passa a ser o ÚNICO separador do parâmetro, então nem um decimal com
+   vírgula que escape da normalização confunde onde a latitude termina.
+
+   6 casas decimais = ~11 cm, precisão de sobra para achar uma caixa, e
+   deixa o link curto no WhatsApp (a planilha às vezes traz 17 dígitos). */
+function linkMaps(lat,lng){
+  if(!Number.isFinite(lat)||!Number.isFinite(lng))return null;
+  const f=n=>String(Number(n.toFixed(6)));
+  return `https://www.google.com/maps/search/?api=1&query=${f(lat)}%2C${f(lng)}`;
+}
+/* Conferência das colunas de coordenada de uma rede, pelo console (F12):
+     verCoordenadas('FIBER')
+   Mostra, CTO por CTO, o que veio CRU da planilha na coluna B e na C, o
+   tipo do dado (número ou texto) e se dá para montar o link. Serve para
+   descobrir se o problema está no dado ou no link, sem adivinhar. */
+function verCoordenadas(rede,limite){
+  const r=String(rede||DOM.rede.value||'').toUpperCase();
+  const base=AppState.cacheRedes[r];
+  if(!Array.isArray(base)){
+    console.warn('Rede %s não carregada. Selecione a rede na tela e rode de novo.',r);
+    return 0;
+  }
+  const linhas=base.map(x=>{
+    const c=coordDaCTO(x);
+    return {
+      CTO:x.cto,
+      'B (latitude)':x.lat,'tipo B':typeof x.lat,
+      'C (longitude)':x.lng,'tipo C':typeof x.lng,
+      LINK:c?'ok':'FALHA',
+      FAIXA:c?(c.confiavel?'ok':'FORA DA REGIAO'):'-',
+      SINAL:c&&c.sinalRecuperado?'RECUPERADO':'-',
+      'lat lida':c?c.lat:'-','lng lida':c?c.lng:'-'
+    };
+  });
+  const falhas=linhas.filter(l=>l.LINK==='FALHA');
+  const fora=linhas.filter(l=>l.FAIXA==='FORA DA REGIAO');
+  const semSinal=linhas.filter(l=>l.SINAL==='RECUPERADO');
+  const virgula=base.filter(x=>/,/.test(String(x.lat))||/,/.test(String(x.lng))).length;
+  const texto=base.filter(x=>typeof x.lat==='string').length;
+  console.log('Rede %s · %s CTOs · %s com vírgula decimal · %s como texto · %s sem link · %s fora da região · %s sem sinal negativo',
+              r,base.length,virgula,texto,falhas.length,fora.length,semSinal.length);
+  console.table(linhas.slice(0,limite||25));
+  if(falhas.length){
+    console.warn('CTOs sem coordenada utilizável: '+falhas.slice(0,40).map(l=>l.CTO).join(', '));
+    const f=base.find(x=>!coordDaCTO(x));
+    if(f)console.warn('Exemplo sem coordenada — %s: B=%o (%s) C=%o (%s)',
+      f.cto,f.lat,typeof f.lat,f.lng,typeof f.lng);
+  }
+  if(fora.length){
+    const e=fora[0];
+    console.warn('Exemplo fora da região — %s: B=%o C=%o -> lat %s, lng %s',
+      e.CTO,e['B (latitude)'],e['C (longitude)'],e['lat lida'],e['lng lida']);
+  }
+  const ex=linhas.find(l=>l.LINK==='ok');
+  if(ex)console.log('exemplo de link gerado: '+linkMapsCTO(base.find(x=>x.cto===ex.CTO)));
+  return falhas.length;
+}
+window.verCoordenadas=verCoordenadas;
+
+/* link do Maps de uma CTO. Só devolve null quando não há par de números
+   nenhum na planilha — fora disso o link sempre sai. */
 function linkMapsCTO(info){
   const c=coordDaCTO(info);
-  return c?`https://www.google.com/maps?q=${c.lat},${c.lng}`:null;
+  if(!c)return null;
+  if(c.sinalRecuperado){
+    console.warn('[CTO] %s: planilha sem o sinal negativo — corrigido para lat %s, lng %s. Vale arrumar na origem.',
+      info&&info.cto,c.lat,c.lng);
+  }else if(!c.confiavel){
+    console.warn('[CTO] %s: coordenada fora da faixa da operação (lat %s, lng %s) — link gerado, confira a planilha.',
+      info&&info.cto,c.lat,c.lng);
+  }
+  return linkMaps(c.lat,c.lng);
 }
 
 /* Extrai os pares de coordenadas da célula "Localização", em qualquer
@@ -5099,7 +5233,7 @@ function _limiteBuscaCabo(distMinima){
 function _pontoCaboHTML(c){
   if(!c.ponto||!Number.isFinite(c.ponto.lat)||!Number.isFinite(c.ponto.lng))return'-';
   const lat=c.ponto.lat.toFixed(6),lng=c.ponto.lng.toFixed(6);
-  return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener" style="color:inherit">${lat}, ${lng}</a>`;
+  return `<a href="${linkMaps(c.ponto.lat,c.ponto.lng)}" target="_blank" rel="noopener" style="color:inherit">${lat}, ${lng}</a>`;
 }
 
 function _cardCaboHTML(c){
@@ -5986,7 +6120,7 @@ async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...'
 /* gerarOSMetro: agora só entram na OS os cabos com a caixa "Incluir na OS"
    marcada. Os cartões de referência (.cabo-card-ref) nunca entram, porque
    esta consulta lê apenas .cabo-card. */
-async function gerarOSMetro(){const btn=DOM.btnGerarOSMetro;try{btn.innerHTML='Gerando...';btn.disabled=true;const emp=DOM.empresaMetro.value,problema=$('problemaMetro').value;const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));const cards=Array.from(DOM.resultadoCabos.querySelectorAll('.cabo-card')).filter(c=>{const chk=c.querySelector('.cabo-check');return !chk||chk.checked});if(!emp)throw new Error('Selecione a empresa.');if(!problema)throw new Error('Selecione o tipo de problema.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(!cards.length)throw new Error('Nenhum cabo marcado. Busque os cabos e marque ao menos um.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const coordRaw=DOM.inputCoordenada.value.trim(),cp=parseCoordenada(coordRaw);const locLink=cp?`https://www.google.com/maps?q=${cp.lat},${cp.lng}`:coordRaw;let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;cards.forEach((card,idx)=>{const rows={};card.querySelectorAll('.cabo-card-row').forEach(row=>{const l=(row.querySelector('.cabo-label')?.textContent||'').trim().toLowerCase(),v=(row.querySelector('.cabo-value')?.textContent||'').trim();if(l&&v)rows[l]=v});const dist=(card.querySelector('.cabo-dist')?.textContent||'').trim();corpo+=`⚡ Cabo: ${rows['cabo']||'-'}\n📌 Localização: ${locLink}\n`;if(rows['tipo'])corpo+=`⚙️ Tipo: ${rows['tipo']}\n`;if(rows['nível'])corpo+=`🌐 Nível: ${rows['nível']}\n`;if(rows['comprimento'])corpo+=`📋 Comprimento: ${rows['comprimento']}\n`;if(dist)corpo+=`📐 ${dist}\n`;if(idx<cards.length-1)corpo+=`\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}registrarSla({rede:'METRO',tipo:problema,alvo:`${_slaListaCap(cards.map(c=>((c.querySelector('.cabo-value')||{}).textContent||'').trim()),170)}${coordRaw?' · '+coordRaw:''}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOSMetro(){const btn=DOM.btnGerarOSMetro;try{btn.innerHTML='Gerando...';btn.disabled=true;const emp=DOM.empresaMetro.value,problema=$('problemaMetro').value;const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));const cards=Array.from(DOM.resultadoCabos.querySelectorAll('.cabo-card')).filter(c=>{const chk=c.querySelector('.cabo-check');return !chk||chk.checked});if(!emp)throw new Error('Selecione a empresa.');if(!problema)throw new Error('Selecione o tipo de problema.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(!cards.length)throw new Error('Nenhum cabo marcado. Busque os cabos e marque ao menos um.');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');const coordRaw=DOM.inputCoordenada.value.trim(),cp=parseCoordenada(coordRaw);const locLink=cp?linkMaps(cp.lat,cp.lng):coordRaw;let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;cards.forEach((card,idx)=>{const rows={};card.querySelectorAll('.cabo-card-row').forEach(row=>{const l=(row.querySelector('.cabo-label')?.textContent||'').trim().toLowerCase(),v=(row.querySelector('.cabo-value')?.textContent||'').trim();if(l&&v)rows[l]=v});const dist=(card.querySelector('.cabo-dist')?.textContent||'').trim();corpo+=`⚡ Cabo: ${rows['cabo']||'-'}\n📌 Localização: ${locLink}\n`;if(rows['tipo'])corpo+=`⚙️ Tipo: ${rows['tipo']}\n`;if(rows['nível'])corpo+=`🌐 Nível: ${rows['nível']}\n`;if(rows['comprimento'])corpo+=`📋 Comprimento: ${rows['comprimento']}\n`;if(dist)corpo+=`📐 ${dist}\n`;if(idx<cards.length-1)corpo+=`\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}registrarSla({rede:'METRO',tipo:problema,alvo:`${_slaListaCap(cards.map(c=>((c.querySelector('.cabo-value')||{}).textContent||'').trim()),170)}${coordRaw?' · '+coordRaw:''}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 /* ════════════════════════════════════════
    BACKBONE — painel próprio (rede independente, sem restrição de empresa,
@@ -6052,7 +6186,7 @@ async function gerarOSBackbone(){
     if(otdrPreenchido&&!otdrTipo)throw new Error('Selecione se a localização do OTDR é CEO ou POP.');
     const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');
     let otdrLink=otdrCoordRaw;
-    if(otdrCoordRaw){const parsed=parseCoordenada(otdrCoordRaw);if(parsed)otdrLink=`https://www.google.com/maps?q=${parsed.lat},${parsed.lng}`}
+    if(otdrCoordRaw){const parsed=parseCoordenada(otdrCoordRaw);if(parsed)otdrLink=linkMaps(parsed.lat,parsed.lng)||otdrCoordRaw}
     let corpo=`🚧 Acionamento para reparo na rede - REDE: BACKBONE\n\n`;
     trechosFinal.forEach(t=>{corpo+=`🔗 Trecho: ${t}\n\n`});
     if(otdrPreenchido){
