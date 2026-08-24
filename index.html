@@ -2456,10 +2456,20 @@ const SLA_POLL_FUNDO_MS=120000;       // e a cada 2 min em segundo plano (só o 
 const SLA_RING_R=68;
 const SLA_RING_C=2*Math.PI*SLA_RING_R;
 
+/* listaMs  = agoraMs (hora do servidor) da última lista APLICADA. Com o
+     polling a cada 3s, mais as respostas de gravação, mais os avisos entre
+     abas, duas listas podem chegar fora de ordem — e aplicar a mais VELHA
+     depois da mais nova ressuscitava card já encerrado. Nenhuma lista mais
+     antiga que esta é aplicada.
+   encerradosLocais = o que ESTE operador acabou de encerrar. Enquanto o
+     servidor não confirmar em todas as respostas em voo, o encerramento
+     local vence: card que o operador fechou não volta vivo na cara dele. */
 AppState.sla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
+  listaMs:0,encerradosLocais:new Map(),
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,jaAvisado:{}};
 
 AppState.tcSla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
+  listaMs:0,encerradosLocais:new Map(),
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,
               filtro:'',filaFoco:'',assinatura:''};
 /* Notas não têm cronômetro, então não existe timerTick aqui — só o poll.
@@ -2650,12 +2660,24 @@ const SYNC_PARADO_MS  = 20000;   // painel aberto, sem interação recente
 const SYNC_FECHADO_MS = 60000;   // painel fechado (só mantém o badge do topo)
 const SYNC_INATIVO_MS = 90000;   // considera "parado" depois disso sem interação
 
+/* Cadência do MODO DIRETO (sem contador de revisão no servidor): aqui cada
+   volta abre a planilha, então não pode ser agressiva. */
+const SYNC_DIRETO_ATIVO_MS  = 15000;
+const SYNC_DIRETO_PARADO_MS = 45000;
+
 const Sync = {
   rev:{sla:0,notas:0,tim:0},
   timer:null,
   ultimaInteracao:Date.now(),
   emVoo:false,
+  emVooDesde:0,
   canal:null,
+  /* null = ainda não sabemos; false = servidor sem a ação `rev` (Apps
+     Script não republicado) e o app cai no modo direto. Sem isto o painel
+     ficava MUDO: o polling antigo tinha sido substituído e o novo desistia
+     em silêncio a cada volta. */
+  revSuportado:null,
+  avisouModoDireto:false,
   /* Marca uma revisão como já conhecida SEM disparar recarga. Usado quando
      a própria resposta da gravação já trouxe a lista: sem isto, o próximo
      rev veria número novo e buscaria a lista de novo — a segunda viagem
@@ -2668,7 +2690,17 @@ const Sync = {
     if(document.hidden)return 0;                      // 0 = não agenda nada
     const algumAberto=AppState.sla.aberto||AppState.tcSla.aberto||AppState.notas.aberto;
     if(!algumAberto)return SYNC_FECHADO_MS;
-    return (Date.now()-Sync.ultimaInteracao<SYNC_INATIVO_MS)?SYNC_ATIVO_MS:SYNC_PARADO_MS;
+    const ativo=Date.now()-Sync.ultimaInteracao<SYNC_INATIVO_MS;
+    if(Sync.revSuportado===false)return ativo?SYNC_DIRETO_ATIVO_MS:SYNC_DIRETO_PARADO_MS;
+    return ativo?SYNC_ATIVO_MS:SYNC_PARADO_MS;
+  },
+  /* MODO DIRETO — busca as listas sem perguntar antes. É o comportamento
+     antigo, usado só quando o servidor não conhece `acao=rev`. */
+  async direto(){
+    const tarefas=[carregarSla(true)];
+    if(AppState.notas.aberto)tarefas.push(carregarNotas());
+    if(AppState.tcSla.aberto)tarefas.push(carregarTcSla(true));
+    await Promise.all(tarefas);
   },
   reprogramar(){
     clearTimeout(Sync.timer);
@@ -2678,10 +2710,16 @@ const Sync = {
   },
   /* Pergunta ao servidor se algo mudou. Não abre planilha nenhuma. */
   async checar(forcar){
-    if(Sync.emVoo)return;
+    /* Trava presa (resposta que nunca chegou) não pode calar o painel para
+       sempre: passados 45s, a volta seguinte tenta de novo. */
+    if(Sync.emVoo){
+      if(Date.now()-Sync.emVooDesde<45000)return;
+      Sync.emVoo=false;
+    }
     if(document.hidden&&!forcar)return;
-    Sync.emVoo=true;
+    Sync.emVoo=true;Sync.emVooDesde=Date.now();
     try{
+      if(Sync.revSuportado===false){await Sync.direto();return}
       /* Diz ao servidor o que já temos e quais áreas interessam. Quando
          algo mudou, a lista volta NESTA MESMA resposta — sem isso seriam
          duas viagens (perguntar e depois buscar) e o outro operador
@@ -2692,7 +2730,23 @@ const Sync = {
       if(AppState.tcSla.aberto)quero.push('tim');
       const r=await jsonp({acao:'rev',quero:quero.join(','),
         sla:Sync.rev.sla,notas:Sync.rev.notas,tim:Sync.rev.tim},15000);
-      if(!r||r.ok!==true)return;
+      /* Servidor não conhece a ação: Apps Script ainda não republicado.
+         Cai no modo direto AGORA e avisa uma vez — em vez de não atualizar
+         mais nada e o operador achar que o painel travou. */
+      if(!r||r.ok!==true){
+        const desconhecida=r&&typeof r.erro==='string'&&/desconhecid/i.test(r.erro);
+        if(desconhecida||r===undefined||(r&&r.ok===false&&!r.erro)){
+          Sync.revSuportado=false;
+          if(!Sync.avisouModoDireto){
+            Sync.avisouModoDireto=true;
+            console.warn('[Sync] servidor sem a ação "rev" — atualização no modo direto (mais lenta). Publique a versão nova do Apps Script.');
+            showToast('Painel em modo lento: publique a versão nova do Apps Script.','error',7000);
+          }
+          await Sync.direto();
+        }
+        return;
+      }
+      Sync.revSuportado=true;
       const listas=r.listas||{};
       const tarefas=[];
       if(Number(r.sla||0)>Sync.rev.sla){
@@ -2791,7 +2845,7 @@ function registrarSla(d){
      acionamento aparecer — 5 a 10s olhando para uma tela que não mudou. */
   const provisorio={id,resumo,rede,tipo,alvo,empresa,tecnicos,operador,
     aberturaMs,inicioMs:0,encerramentoMs:0,slaHoras:SLA_HORAS_PADRAO,
-    normalizacaoMs:0,_pendente:true};
+    normalizacaoMs:0,_pendente:true,_pendenteDesde:Date.now()};
   AppState.sla.itens=[provisorio].concat(AppState.sla.itens);
   if(AppState.sla.aberto)renderSla();
   atualizarBadgeSla();
@@ -2842,18 +2896,55 @@ function carregarSla(silencioso, retentativas=1){
 /* Normaliza e desenha uma lista de acionamentos. Existe separado do
    carregamento porque a resposta de uma GRAVAÇÃO já traz a lista pronta:
    assim a tela é atualizada sem a segunda viagem ao Apps Script. */
-function _aplicarItensSla(brutos){
+const APLICAR_JANELA_LOCAL_MS=3*60*1000;   // por quanto tempo o encerramento local vence
+const PENDENTE_PRAZO_MS=40000;             // card otimista sem confirmação desiste depois disso
+
+/* Descarta uma lista mais velha que a última aplicada. `versaoMs` é o
+   agoraMs devolvido pelo servidor junto da lista. */
+function _listaVelha(st,versaoMs){
+  const v=Number(versaoMs)||0;
+  if(!v)return false;                 // sem versão: não dá para julgar, aplica
+  if(v<st.listaMs)return true;
+  st.listaMs=v;
+  return false;
+}
+/* Encerramentos feitos aqui que o servidor ainda não devolveu */
+function _marcarEncerradoLocal(st,id,encerramentoMs,encerradoPor){
+  if(!id)return;
+  st.encerradosLocais.set(id,{encerramentoMs:Number(encerramentoMs)||Date.now(),
+                              encerradoPor:encerradoPor||'',ts:Date.now()});
+}
+function _aplicarEncerradosLocais(st,itens){
+  const agora=Date.now();
+  st.encerradosLocais.forEach((v,id)=>{if(agora-v.ts>APLICAR_JANELA_LOCAL_MS)st.encerradosLocais.delete(id)});
+  if(!st.encerradosLocais.size)return itens;
+  return itens.map(x=>{
+    const loc=st.encerradosLocais.get(x.id);
+    if(!loc)return x;
+    /* Se o item já vem encerrado, a marca não muda nada — e ela NÃO é
+       apagada aqui de propósito: outras respostas em voo, disparadas antes
+       do encerramento, ainda podem chegar com o card vivo. A marca só sai
+       pelo prazo (APLICAR_JANELA_LOCAL_MS), quando não há mais resposta
+       antiga possível a caminho. */
+    if(x.encerramentoMs)return x;
+    return {...x,encerramentoMs:loc.encerramentoMs,
+            encerradoPor:x.encerradoPor||loc.encerradoPor};
+  });
+}
+
+function _aplicarItensSla(brutos,versaoMs){
+  if(_listaVelha(AppState.sla,versaoMs))return AppState.sla.itens;
   const pendentesAntes=AppState.sla.itens.filter(i=>i._pendente);
   {
     const agoraMs=Date.now();
-    AppState.sla.itens=(brutos||[]).map(x=>({
+    AppState.sla.itens=_aplicarEncerradosLocais(AppState.sla,(brutos||[]).map(x=>({
       ...x,
       aberturaMs:Number(x.aberturaMs)||0,
       inicioMs:Number(x.inicioMs)||0,
       encerramentoMs:Number(x.encerramentoMs)||0,
       slaHoras:Number(x.slaHoras)||SLA_HORAS_PADRAO,
       normalizacaoMs:Number(x.normalizacaoMs)||0
-    })).filter(x=>x.aberturaMs>0)
+    }))).filter(x=>x.aberturaMs>0)
     /* O backend devolve os encerrados por uma janela maior (30 min) para que
        outros operadores fiquem sabendo do encerramento. Mas o painel só os
        exibe por 5 min. Sem este filtro, um chamado encerrado há mais tempo
@@ -2873,7 +2964,12 @@ function _aplicarItensSla(brutos){
     const chegaram={};
     AppState.sla.itens.forEach(i=>{chegaram[i.id]=true});
     (pendentesAntes||[]).forEach(p=>{
-      if(!chegaram[p.id])AppState.sla.itens=[p].concat(AppState.sla.itens);
+      if(chegaram[p.id])return;
+      /* PRAZO. Sem isto, uma gravação que nunca resolve (aba dormiu, rede
+         caiu no meio) deixaria o card pendente sendo reinserido em toda
+         lista, para sempre — um fantasma que nenhuma atualização limpa. */
+      if(Date.now()-(p._pendenteDesde||0)>PENDENTE_PRAZO_MS)return;
+      AppState.sla.itens=[p].concat(AppState.sla.itens);
     });
     AppState.sla.status='ok';AppState.sla.erro='';
     AppState.sla.ultimaAtualizacao=Date.now();
@@ -3130,11 +3226,15 @@ function confirmarEncerrarSla() {
         showToast('✓ Chamado encerrado administrativamente.');
         fecharModalEncerrarSla();
         _resetBotaoConfirmarEncerrar();
-        if (rede === 'TIM') {
-          carregarTcSla(true);
-        } else {
-          carregarSla(true);
-        }
+        /* Marca o encerramento AQUI, antes de aplicar qualquer lista: uma
+           consulta disparada antes deste clique ainda pode estar em voo e
+           voltaria trazendo o card vivo. Enquanto o servidor não confirmar
+           em todas as respostas, o que este operador fez vale. */
+        _marcarEncerradoLocal(rede === 'TIM' ? AppState.tcSla : AppState.sla,
+          id, r.encerramentoMs || Date.now(), r.email || '');
+        /* a resposta da gravação já traz a lista: sem segunda viagem */
+        _concluir(r, rede === 'TIM' ? 'tim' : 'sla',
+                  rede === 'TIM' ? carregarTcSla : carregarSla);
       } else {
         _resetBotaoConfirmarEncerrar();
         const msg = 'Não foi possível encerrar: ' + ((r && r.erro) || 'erro');
@@ -3594,15 +3694,16 @@ function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
     return null;
   });
 }
-function _aplicarItensTcSla(brutos){
+function _aplicarItensTcSla(brutos,versaoMs){
+  if(_listaVelha(AppState.tcSla,versaoMs))return AppState.tcSla.itens;
   {
     const agoraMs=Date.now();
-    AppState.tcSla.itens=_tcConsolidar((brutos||[]).map(x=>({
+    AppState.tcSla.itens=_aplicarEncerradosLocais(AppState.tcSla,_tcConsolidar((brutos||[]).map(x=>({
       ...x,
       aberturaMs:Number(x.aberturaMs)||0,
       encerramentoMs:Number(x.encerramentoMs)||0,
       slaHoras:Number(x.slaHoras)||0.5
-    }))).filter(x=>x.aberturaMs>0)
+    })))).filter(x=>x.aberturaMs>0)
     .filter(x=>!x.encerramentoMs
                 || (agoraMs-x.encerramentoMs)<=SLA_SUMIR_APOS_ENCERRAR_MS
                 || AppState.tcSla.nodes.has(x.id));
