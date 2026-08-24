@@ -2537,7 +2537,55 @@ function _slaAlvoCard(item){
 
 /* chamada JSONP genérica, com timeout e limpeza do callback */
 let _jsonpSeq=0;
+/* ═══ FILA DE REQUISIÇÕES ════════════════════════════════════════════
+   O Apps Script atende as chamadas de um mesmo usuário praticamente em
+   série. Com a checagem a cada 3s somada às listas e às gravações, as
+   chamadas passaram a se empilhar: a de trás esperava a da frente e
+   estourava o timeout de 20s — era o "Falha ao carregar os chamados ·
+   Tempo esgotado" que aparecia e sumia sozinho.
+
+   Duas travas resolvem:
+     · no máximo duas chamadas em voo, o resto espera em fila (e o timeout
+       de cada uma só começa a contar quando ela sai da fila, não enquanto
+       espera);
+     · leituras idênticas ainda em voo são REAPROVEITADAS em vez de
+       duplicadas — dois pedidos simultâneos da mesma lista viram um.
+   Gravação nunca é deduplicada e entra na FRENTE da fila: é nela que o
+   operador está esperando. */
+const JSONP_MAX_SIMULTANEO=2;
+const JSONP_LEITURAS=['listarSla','listarNotas','listarTcSlaCache','listarTcSla','rev','ping'];
+let _jsonpAtivos=0;
+const _jsonpFila=[];
+const _jsonpEmVoo=new Map();
+
+function _jsonpDrenar(){
+  while(_jsonpAtivos<JSONP_MAX_SIMULTANEO&&_jsonpFila.length){
+    const t=_jsonpFila.shift();
+    _jsonpAtivos++;
+    _jsonpBruto(t.params,t.timeoutMs).then(t.resolve,t.reject)
+      .then(()=>{_jsonpAtivos--;_jsonpDrenar()},()=>{_jsonpAtivos--;_jsonpDrenar()});
+  }
+}
+
 function jsonp(params,timeoutMs=45000){
+  const acao=String((params&&params.acao)||'');
+  const ehLeitura=JSONP_LEITURAS.indexOf(acao)!==-1;
+  const chave=ehLeitura?JSON.stringify(params):null;
+  if(chave&&_jsonpEmVoo.has(chave))return _jsonpEmVoo.get(chave);
+  const p=new Promise((resolve,reject)=>{
+    const t={params,timeoutMs,resolve,reject};
+    if(ehLeitura)_jsonpFila.push(t);else _jsonpFila.unshift(t);
+    _jsonpDrenar();
+  });
+  if(chave){
+    _jsonpEmVoo.set(chave,p);
+    const limpar=()=>{if(_jsonpEmVoo.get(chave)===p)_jsonpEmVoo.delete(chave)};
+    p.then(limpar,limpar);
+  }
+  return p;
+}
+
+function _jsonpBruto(params,timeoutMs=45000){
   return new Promise((resolve,reject)=>{
     const cb='_jcb'+(++_jsonpSeq)+'_'+Date.now();
     const qs=Object.keys(params)
@@ -2887,7 +2935,18 @@ function carregarSla(silencioso, retentativas=1){
     if(retentativas>0){
       return carregarSla(silencioso, retentativas - 1);
     }
-    AppState.sla.status='erro';AppState.sla.erro=e.message||String(e);
+    /* Uma atualização que falha NÃO pode apagar o que já está na tela.
+       Antes, um timeout de 20s numa volta de fundo jogava o painel inteiro
+       fora e mostrava a tela vermelha de erro, mesmo com os chamados
+       carregados e válidos em memória — e normalizava sozinho na volta
+       seguinte. Com chamados na mão, a falha vira só um aviso no rodapé. */
+    AppState.sla.erro=e.message||String(e);
+    if(AppState.sla.itens.length){
+      AppState.sla.status='ok';
+      AppState.sla.falhaMs=Date.now();
+    }else{
+      AppState.sla.status='erro';
+    }
     if(AppState.sla.aberto)renderSla();
     return null;
   });
@@ -2971,7 +3030,7 @@ function _aplicarItensSla(brutos,versaoMs){
       if(Date.now()-(p._pendenteDesde||0)>PENDENTE_PRAZO_MS)return;
       AppState.sla.itens=[p].concat(AppState.sla.itens);
     });
-    AppState.sla.status='ok';AppState.sla.erro='';
+    AppState.sla.status='ok';AppState.sla.erro='';AppState.sla.falhaMs=0;
     AppState.sla.ultimaAtualizacao=Date.now();
     if(AppState.sla.aberto)renderSla();
     atualizarBadgeSla();
@@ -3034,7 +3093,7 @@ function renderSla(){
   const grid=$('slaGrid');if(!grid)return;
   const st=AppState.sla;
 
-  if(st.status==='erro'){
+  if(st.status==='erro'&&!st.itens.length){
     grid.innerHTML=`<div class="sla-aviso erro" style="grid-column:1/-1"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
     st.nodes.clear();renderResumoSla();return;
   }
@@ -3144,11 +3203,16 @@ function tickSla(){
    mostram pela cor. A função ficou só com o rodapé. */
 function renderResumoSla(){
   const rod=$('slaRodape');
-  if(rod){
-    rod.textContent=AppState.sla.ultimaAtualizacao
-      ? `Atualizado às ${_slaFmtHora(AppState.sla.ultimaAtualizacao).split(' ')[1]}`
-      : '';
+  if(!rod)return;
+  const st=AppState.sla;
+  let txt=st.ultimaAtualizacao
+    ? `Atualizado às ${_slaFmtHora(st.ultimaAtualizacao).split(' ')[1]}`
+    : '';
+  /* falha de rede recente: avisa sem tirar os cards da tela */
+  if(st.falhaMs&&Date.now()-st.falhaMs<60000){
+    txt+=(txt?' · ':'')+'sem contato com o servidor, tentando de novo';
   }
+  rod.textContent=txt;
 }
 
 /* ── encerrar / normalizar chamado administrativamente (Modal) ── */
@@ -3360,13 +3424,16 @@ function carregarNotas(){
     if(r&&r.ok)_aplicarItensNotas(r.itens);
     else{st.erro=(r&&r.erro)||'Não foi possível carregar as notas.';renderNotas();atualizarBadgeNotas()}
   }).catch(e=>{
-    st.status='idle';st.erro='Falha ao carregar ('+e.message+').';
+    st.status='idle';
+    /* com notas na tela, a falha não apaga nada: só marca o rodapé */
+    if(st.itens.length){st.falhaMs=Date.now();st.erro=''}
+    else st.erro='Falha ao carregar ('+e.message+').';
     renderNotas();
   });
 }
 function _aplicarItensNotas(brutos){
   const st=AppState.notas;
-  st.itens=brutos||[];st.erro='';st.ultimaAtualizacao=Date.now();
+  st.itens=brutos||[];st.erro='';st.falhaMs=0;st.ultimaAtualizacao=Date.now();
   renderNotas();atualizarBadgeNotas();
 }
 
@@ -3689,7 +3756,12 @@ function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
     return AppState.tcSla.itens;
   }).catch(e=>{
     if(retentativas>0) return carregarTcSla(silencioso, retentativas - 1, varrerGmail);
-    AppState.tcSla.status='erro';AppState.tcSla.erro=e.message||String(e);
+    AppState.tcSla.erro=e.message||String(e);
+    if(AppState.tcSla.itens.length){
+      AppState.tcSla.status='ok';AppState.tcSla.falhaMs=Date.now();
+    }else{
+      AppState.tcSla.status='erro';
+    }
     if(AppState.tcSla.aberto)renderTcSla();
     return null;
   });
@@ -3707,7 +3779,7 @@ function _aplicarItensTcSla(brutos,versaoMs){
     .filter(x=>!x.encerramentoMs
                 || (agoraMs-x.encerramentoMs)<=SLA_SUMIR_APOS_ENCERRAR_MS
                 || AppState.tcSla.nodes.has(x.id));
-    AppState.tcSla.status='ok';AppState.tcSla.erro='';
+    AppState.tcSla.status='ok';AppState.tcSla.erro='';AppState.tcSla.falhaMs=0;
     AppState.tcSla.ultimaAtualizacao=Date.now();
     if(AppState.tcSla.aberto)renderTcSla();
     atualizarBadgeTcSla();
