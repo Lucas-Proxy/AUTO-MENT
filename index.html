@@ -682,6 +682,16 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
    circuito está fora: 2px acima do resto do bloco, de propósito */
 .sla-linha.linha-falha .sla-linha-rot{font-size:0.6875rem}
 .sla-linha.linha-falha .sla-linha-val{font-size:0.9075rem}
+/* Bloco de identificação do card de E-mail's: maior que o resto do card de
+   propósito — é por FALHA EM, PROTOCOLO e DESIGNAÇÃO que o operador acha o
+   chamado na tela. Vale só aqui; o painel de Acionamentos fica como estava. */
+.tc-info-chave{gap:8px;padding-top:11px}
+.tc-info-chave .sla-linha-rot{font-size:0.625rem;letter-spacing:1.6px}
+.tc-info-chave .sla-linha-val{font-size:0.955rem;line-height:1.25}
+.tc-info-chave .sla-linha.linha-falha .sla-linha-rot{font-size:0.625rem}
+.tc-info-chave .sla-linha.linha-falha .sla-linha-val{font-size:1.02rem;font-weight:700}
+/* campo sem dado não pode ter o mesmo peso visual de um preenchido */
+.tc-info-chave .sla-linha-val.vazio{color:var(--text3);font-weight:600}
 .sla-alvo-extra{font-family:'Share Tech Mono',monospace;font-size:0.6625rem;color:var(--text3);margin-top:2px}
 .sla-btn-encerrar{width:100%;margin-top:auto;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;background:var(--bg3);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:0.6625rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .sla-btn-encerrar:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-l)}
@@ -4080,8 +4090,12 @@ function _tcDesde(ms){
    vencido é do prazo, e é assim que ele é nomeado. */
 function _tcAcao(item,c){
   switch(c.estado){
+    /* RESPONDER_TIM não ganha linha de ação, pelo mesmo motivo já aplicado
+       a REFORCAR logo abaixo: o selo do topo já diz "Responder a TIM" e o
+       anel já mostra esse mesmo tempo correndo. A linha "Responder a TIM
+       há 01:10:24" repetia as duas coisas embaixo do contador. */
     case 'RESPONDER_TIM':
-      return{classe:'urgente',rot:'Responder a TIM',cron:`há ${_slaFmtDur(c.decorrido)}`};
+      return null;
     case 'COBRAR':
       return{classe:'urgente',rot:'Cobrar AU',cron:`vencida há ${_slaFmtDur(c.excedente)}`};
     case 'AGUARDANDO_AU':
@@ -4180,10 +4194,16 @@ function _tcSlaCardHTML(item,ctx){
   </div>
   ${acao?`<div class="tc-acao ${acao.classe}"><span class="tc-acao-rot">${acao.rot}</span><span class="tc-acao-cron">${acao.cron}</span></div>`:''}
   ${selos}
-  <div class="sla-info">
-    ${item.designacao?`<div class="sla-linha"><span class="sla-linha-rot">Designação</span><span class="sla-linha-val destaque">${_esc(item.designacao)}</span></div>`:''}
-    <div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val${_tcTemAu(item)?' destaque':''}">${_esc(item.protocolo||'Aguardando AU')}</span></div>
-    ${item.dataHoraFalha?`<div class="sla-linha linha-falha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val destaque">${_esc(item.dataHoraFalha)}</span></div>`:''}
+  <!-- Os três campos que identificam o chamado, na ordem em que se lê:
+       FALHA EM, PROTOCOLO, DESIGNAÇÃO. Aparecem SEMPRE, nesta ordem, mesmo
+       vazios: numa grade com muitos cards, linha que aparece e desaparece
+       empurra as outras de lugar e obriga a reler o card inteiro. Posição
+       fixa deixa o olho ir direto. E "—" também informa: sem designação
+       não há circuito para casar. -->
+  <div class="sla-info tc-info-chave">
+    <div class="sla-linha linha-falha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val${item.dataHoraFalha?' destaque':' vazio'}">${_esc(item.dataHoraFalha||'—')}</span></div>
+    <div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val${_tcTemAu(item)?' destaque':' vazio'}">${_esc(item.protocolo||'Aguardando AU')}</span></div>
+    <div class="sla-linha"><span class="sla-linha-rot">Designação</span><span class="sla-linha-val${item.designacao?' destaque':' vazio'}">${_esc(item.designacao||'—')}</span></div>
   </div>
   <div class="tc-card-acoes">
     <button class="tc-btn-detalhes" data-id="${_esc(item.id)}" aria-expanded="${aberto}">${aberto?'Menos detalhes':'Detalhes'}</button>
