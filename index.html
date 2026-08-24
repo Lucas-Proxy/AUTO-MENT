@@ -282,6 +282,13 @@ body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.
 .cabo-badge.b-BAIXA{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.3)}
 .cabo-nota{font-family:'Share Tech Mono',monospace;font-size:.58rem;line-height:1.5;color:var(--text3);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)}
 .cabo-card-ref{background:var(--bg3);border:1px dashed var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:6px;opacity:.72}
+/* cartão da FASE 1: já mostra quem está por perto enquanto os dados vêm.
+   Classe própria de propósito — gerarOSMetro só lê .cabo-card, então um
+   cabo sem dados completos nunca entra na Ordem de Serviço. */
+.cabo-card-pre{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--blue2);border-radius:8px;padding:10px 12px;margin-bottom:6px;animation:slideIn .15s ease-out}
+.cabo-etapa{display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text2);padding:10px 2px}
+.cabo-etapa-spin{width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:caboSpin .7s linear infinite;flex:0 0 auto}
+@keyframes caboSpin{to{transform:rotate(360deg)}}
 .cabo-card-ref .cabo-value{font-size:.8rem}
 .progress-wrap{margin-top:6px}
 .progress-label{font-size:.6rem;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
@@ -1638,7 +1645,7 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
-const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],slaManualTrechos:[],ctosStatus:'idle'};
+const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],slaManualTrechos:[],ctosStatus:'idle',/* Consulta de Cabos v3: caboSrv guarda se a busca por proximidade no servidor esta publicada ('desconhecido' | 'ok' | 'indisponivel'); caboIndexLocal e o indice de bounding box do modo local */caboSrv:'desconhecido',caboSrvMotivo:'',caboIndexLocal:null,caboIndexBase:null,caboIndexMeta:null};
 
 /* ═══════════════════════════════════════════
    CACHE LOCAL (localStorage) — acelera as consultas
@@ -1692,6 +1699,9 @@ function atualizarDadosForcado(){
   AppState.tecnicos=[];AppState.tecnicosStatus='idle';
   AppState.operadores=[];
   AppState.baseDados=[];AppState.ctosStatus='idle';
+  /* o índice de cabos vem dos dados que acabaram de ser descartados */
+  AppState.caboIndexLocal=null;AppState.caboIndexBase=null;AppState.caboIndexMeta=null;
+  AppState.caboSrv='desconhecido';AppState.caboSrvMotivo='';
   showToast('↻ Cache limpo. Recarregando dados...');
   carregarOperadores();
   carregarTecnicos(true);
@@ -4715,7 +4725,7 @@ function carregarTecnicos(forcar){
   }
 }
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
-function aoMudarRede(){const r=DOM.rede.value,isMetro=r==='METRO',isBackbone=r==='BACKBONE';DOM.wrapper.classList.toggle('metro-mode',isMetro||isBackbone);DOM.sidebar.classList.toggle('visible',isMetro||isBackbone);DOM.sidebar.style.display=(isMetro||isBackbone)?'none':'';DOM.boxMetro.classList.toggle('hidden',!isMetro);DOM.boxBackboneRede.classList.toggle('hidden',!isBackbone);DOM.boxRede.classList.toggle('hidden',isMetro||isBackbone);if(isMetro){if(!AppState.cacheRedes['METRO'])fetchCaboMetro();else renderStatusBar()}else if(isBackbone){renderTecnicosBackbone()}else{carregarCTOs(r)}atualizarResumo()}
+function aoMudarRede(){const r=DOM.rede.value,isMetro=r==='METRO',isBackbone=r==='BACKBONE';DOM.wrapper.classList.toggle('metro-mode',isMetro||isBackbone);DOM.sidebar.classList.toggle('visible',isMetro||isBackbone);DOM.sidebar.style.display=(isMetro||isBackbone)?'none':'';DOM.boxMetro.classList.toggle('hidden',!isMetro);DOM.boxBackboneRede.classList.toggle('hidden',!isBackbone);DOM.boxRede.classList.toggle('hidden',isMetro||isBackbone);if(isMetro){/* v3: nada de pre-carga — a busca por proximidade roda no servidor e so precisa da coordenada. O download completo virou fallback, acionado sob demanda por _buscarCabosLocal. */renderStatusBar()}else if(isBackbone){renderTecnicosBackbone()}else{carregarCTOs(r)}atualizarResumo()}
 /* ctosStatus rastreia se a lista de CTOs da rede atual já chegou do servidor.
    Sem isso, o app não conseguia distinguir "essa CTO não existe" de "os
    dados ainda estão a caminho" — e o preview do Ramal GPON mostrava
@@ -4782,6 +4792,27 @@ function carregarCTOs(rede){
    novo, em vez de ficar "Carregando..." pra sempre sem explicação. */
 const TIMEOUT_CABO_METRO_MS=30000; // ajustar se a agregação de muitas abas legitimamente demorar mais que isso
 
+/* Envolve fetchCaboMetro numa promessa: o modo local precisa ESPERAR o
+   download terminar antes de indexar, e antes disso não havia como saber
+   quando os dados chegaram (o callback JSONP só mexia no AppState). */
+function _garantirCabosLocais(){
+  const atual=AppState.cacheRedes['METRO'];
+  if(Array.isArray(atual))return Promise.resolve(true);
+  if(atual==='ERRO'||atual==='TIMEOUT')AppState.cacheRedes['METRO']=null;
+  return new Promise(resolve=>{
+    fetchCaboMetro();
+    const t0=Date.now();
+    const ver=()=>{
+      const e=AppState.cacheRedes['METRO'];
+      if(Array.isArray(e))return resolve(true);
+      if(e==='ERRO'||e==='TIMEOUT')return resolve(false);
+      if(Date.now()-t0>TIMEOUT_CABO_METRO_MS+3000)return resolve(false);
+      setTimeout(ver,250);
+    };
+    ver();
+  });
+}
+
 function fetchCaboMetro(){
   if(AppState.cacheRedes['METRO'])return;
   const cache=cacheGet('REDE_METRO_CABOS');
@@ -4817,6 +4848,7 @@ function fetchCaboMetro(){
     clearTimeout(timer);
     const n=(d||[]).map(x=>({...x,ozmap:x.col1||x.ozmap,localizacao:x.col2||x.localizacao,tipo:x.col3,nivel:x.col4||x.nivel,comprimento:x.col5||x.comprimento}));
     AppState.cacheRedes['METRO']=n;
+    AppState.caboIndexLocal=null;AppState.caboIndexBase=null; // dados novos: reindexa
     renderStatusBar();
     cacheSet('REDE_METRO_CABOS',n);
   }
@@ -4835,7 +4867,8 @@ function renderStatusBar(){
   if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando (pode levar até ${Math.round(TIMEOUT_CABO_METRO_MS/1000)}s — são várias abas)...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;
   else if(s==='ERRO')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Falha ao carregar cabos. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
   else if(s==='TIMEOUT')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--amber)">&#9888; O carregamento demorou mais que ${Math.round(TIMEOUT_CABO_METRO_MS/1000)}s e foi cancelado (pode ser lentidão do servidor ao ler muitas abas). <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
-  else if(Array.isArray(s))DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados.</div>`;
+  else if(Array.isArray(s))DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados no navegador (modo local).</div>`;
+  else if(DOM.rede.value==='METRO')DOM.statusBar.innerHTML=`<div class="info-msg">Cole a coordenada e clique em Buscar — a procura roda no servidor, sem pré-carga.</div>`;
   else DOM.statusBar.innerHTML='';
 }
 function haversine(a,b,c,d){const R=6371000,e=(c-a)*Math.PI/180,f=(d-b)*Math.PI/180,g=Math.sin(e/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(f/2)**2;return R*2*Math.atan2(Math.sqrt(g),Math.sqrt(1-g))}
@@ -5051,60 +5084,223 @@ function _cardCaboRefHTML(c){
 </div>`;
 }
 
-function buscarCabosProximos(){
+/* ═══════════════════════════════════════════════════════════════════════
+   CONSULTA DE CABOS — v3: a busca acontece no SERVIDOR, em duas fases
+   ═══════════════════════════════════════════════════════════════════════
+   POR QUE MUDOU
+   A v2 baixava, ao entrar na Rede Metro, TODAS as linhas de TODAS as abas
+   CABOS-* — inclusive a coluna "Localização", que guarda a polilinha
+   inteira de cada cabo, vértice por vértice. Três consequências:
+     · a espera de dezenas de segundos (e o timeout de 30s) ao escolher
+       "Rede Metro", antes mesmo de digitar qualquer coordenada;
+     · o payload não cabia no localStorage, então cacheSet falhava calado
+       e o download inteiro se repetia a cada entrada na Metro;
+     · cada clique em "Buscar" reparseava a geometria de todos os cabos
+       no navegador, travando a interface.
+
+   COMO FICOU
+     FASE 1  o servidor varre o índice de bounding box (números, sem
+             parsear texto) e devolve QUEM está por perto: nome + a
+             distância mínima possível. A lista aparece na tela na hora.
+     FASE 2  só para os mais próximos o servidor lê a geometria e calcula
+             a distância exata, o tipo, o nível, o comprimento e o ponto
+             do cabo mais perto do pino.
+   O navegador não recebe geometria nenhuma — são alguns KB por busca.
+
+   COMPATIBILIDADE
+   Se o Apps Script ainda não foi republicado com a ação `cabosProximos`,
+   a primeira tentativa falha, o app marca o servidor como indisponível e
+   cai no MODO LOCAL (o comportamento antigo, baixando tudo). O modo local
+   também ficou mais rápido: a geometria passa a ser indexada uma única vez
+   por bounding box e só os candidatos são parseados a cada busca.
+═══════════════════════════════════════════════════════════════════════ */
+const CABO_SRV_TIMEOUT_MS=25000;
+const CABO_SRV_RAIO=400;        // m · varredura normal (a tela ainda aplica CABO_RAIO_MAX)
+/* Se nada aparecer nos 400m, a busca é repetida UMA vez com este raio. Não é
+   para sugerir cabo distante: é para os cartões de referência ("fora do
+   alcance") continuarem aparecendo, que é o que denuncia coordenada errada
+   ou trecho ainda não mapeado no OZMap. Sem isso, um ponto com o cabo mais
+   próximo a 600m só mostraria "nenhum cabo por perto", sem pista nenhuma. */
+const CABO_SRV_RAIO_AMPLO=2000;
+const CABO_LOCAL_CHUNK=400;     // linhas por fatia ao indexar no navegador, para não travar a tela
+/* Quantos candidatos ganham cálculo exato no modo local. Pode ser generoso:
+   aqui não existe round-trip, medir 400 geometrias custa poucos ms. */
+const CABO_LOCAL_MAX_EXATOS=400;
+
+let _caboJsonpSeq=0;
+/* JSONP com Promise, timeout e limpeza do callback global. Sem isso, uma
+   resposta atrasada de uma busca antiga sobrescrevia o resultado da nova. */
+function _caboJsonp(params,timeoutMs){
+  return new Promise((resolve,reject)=>{
+    const cb='cbCabo'+(++_caboJsonpSeq);
+    let s=null,pronto=false;
+    const limpar=()=>{
+      try{delete window[cb]}catch(e){window[cb]=undefined}
+      if(s&&s.parentNode)s.parentNode.removeChild(s);
+    };
+    const timer=setTimeout(()=>{
+      if(pronto)return;pronto=true;limpar();reject(new Error('timeout'));
+    },timeoutMs||CABO_SRV_TIMEOUT_MS);
+    window[cb]=d=>{if(pronto)return;pronto=true;clearTimeout(timer);limpar();resolve(d)};
+    s=document.createElement('script');
+    const qs=Object.keys(params).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+    s.src=`${GAS_URL}?${qs}&callback=${cb}`;
+    s.onerror=()=>{if(pronto)return;pronto=true;clearTimeout(timer);limpar();reject(new Error('rede'))};
+    document.body.appendChild(s);
+  });
+}
+
+let _caboBuscaSeq=0;
+function _caboEtapa(txt){
+  DOM.resultadoCabos.innerHTML=`<div class="cabo-etapa"><span class="cabo-etapa-spin"></span>${_esc(txt)}</div>`;
+}
+function _caboErroCoord(entrada){
+  DOM.resultadoCabos.innerHTML=/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)/i.test(entrada)
+    ? `<div class="info-msg" style="color:var(--amber)">&#9888; Link encurtado do Google Maps não pode ser lido aqui. Abra o link, toque no pino e cole a coordenada — ex: -3.123522, -58.158557</div>`
+    : `<div class="info-msg" style="color:var(--red)">Coordenada não reconhecida. Cole no formato -3.123522, -58.158557 ou um link do Maps com @lat,lng.</div>`;
+}
+
+async function buscarCabosProximos(){
   const entrada=DOM.inputCoordenada.value.trim();
   const coord=parseCoordenada(entrada);
+  if(!coord){_caboErroCoord(entrada);return}
 
-  if(!coord){
-    DOM.resultadoCabos.innerHTML=/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)/i.test(entrada)
-      ? `<div class="info-msg" style="color:var(--amber)">&#9888; Link encurtado do Google Maps não pode ser lido aqui. Abra o link, toque no pino e cole a coordenada — ex: -3.123522, -58.158557</div>`
-      : `<div class="info-msg" style="color:var(--red)">Coordenada não reconhecida. Cole no formato -3.123522, -58.158557 ou um link do Maps com @lat,lng.</div>`;
-    return;
+  const meu=++_caboBuscaSeq;
+  DOM.btnBuscarCabo.disabled=true;
+  DOM.btnBuscarCabo.textContent='Buscando...';
+  try{
+    if(AppState.caboSrv!=='indisponivel'){
+      const atendido=await _buscarCabosNoServidor(coord,meu);
+      if(atendido)return;
+    }
+    await _buscarCabosLocal(coord,meu);
+  }catch(err){
+    if(meu===_caboBuscaSeq){
+      DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; ${_esc(err.message||'Falha na busca de cabos.')}</div>`;
+    }
+  }finally{
+    if(meu===_caboBuscaSeq){DOM.btnBuscarCabo.disabled=false;DOM.btnBuscarCabo.textContent='Buscar'}
+  }
+}
+
+/* ── CAMINHO NOVO: servidor, duas fases ───────────────────────────────
+   Devolve true se a busca foi atendida (deu certo ou deu erro de dado),
+   e false quando o servidor não tem a ação publicada — aí quem responde
+   é o modo local. */
+async function _buscarCabosNoServidor(coord,meu){
+  _caboEtapa('Fase 1 · localizando cabos perto da coordenada...');
+  let f1;
+  try{
+    f1=await _caboJsonp({acao:'cabosProximos',fase:1,lat:coord.lat,lng:coord.lng,raio:CABO_SRV_RAIO});
+  }catch(e){
+    AppState.caboSrv='indisponivel';
+    return false;                        // timeout/rede: tenta o modo local
+  }
+  if(meu!==_caboBuscaSeq)return true;    // já tem busca mais nova rodando
+
+  if(!f1||f1.ok!==true){
+    /* ação ainda não publicada, ou índice não gerado: modo local assume */
+    AppState.caboSrv='indisponivel';
+    AppState.caboSrvMotivo=(f1&&f1.erro)||'ação cabosProximos não respondeu';
+    return false;
+  }
+  AppState.caboSrv='ok';
+
+  /* nada nos 400m: amplia UMA vez, só para conseguir mostrar referência */
+  let ampliado=false;
+  if(!(f1.candidatos||[]).length){
+    _caboEtapa(`Nada em ${CABO_SRV_RAIO}m · ampliando para ${CABO_SRV_RAIO_AMPLO}m...`);
+    try{
+      const f1b=await _caboJsonp({acao:'cabosProximos',fase:1,lat:coord.lat,lng:coord.lng,raio:CABO_SRV_RAIO_AMPLO});
+      if(meu!==_caboBuscaSeq)return true;
+      if(f1b&&f1b.ok===true&&(f1b.candidatos||[]).length){f1=f1b;ampliado=true}
+    }catch(e){/* mantém o resultado vazio da primeira tentativa */}
   }
 
-  const dm=AppState.cacheRedes['METRO'];
-  if(!Array.isArray(dm)){
-    DOM.resultadoCabos.innerHTML=`<div class="info-msg">Banco de cabos ainda carregando.</div>`;
-    return;
+  const cands=f1.candidatos||[];
+  if(!cands.length){
+    DOM.resultadoCabos.innerHTML=
+      `<div class="cabo-resumo">${f1.avaliados||0} cabos no índice &middot; nenhum a menos de ${Math.round(f1.raio||CABO_SRV_RAIO)}m &middot; ${f1.ms||0}ms</div>`+
+      `<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo mapeado perto deste ponto. Confirme a coordenada com o técnico ou verifique o trecho no OZMap.</div>`;
+    return true;
   }
 
-  const cv=new Map();
-  let semGeometria=0,ignoradosNivel=0;
+  /* FASE 1 na tela: o que bateu com a coordenada, já ordenado. A distância
+     mostrada é o piso (distância até o retângulo do cabo) — a exata chega
+     na fase 2. Estes cartões usam classe própria e NÃO entram na O.S. */
+  DOM.resultadoCabos.innerHTML=
+    `<div class="cabo-resumo">Fase 1 &middot; ${f1.avaliados||0} cabos no índice &middot; ${cands.length} por perto &middot; ${f1.ms||0}ms</div>`+
+    cands.slice(0,8).map(c=>`<div class="cabo-card-pre">
+  <div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${_esc(c.nome)}</span></div>
+  <div class="cabo-dist">a partir de ${Number(c.aprox||0).toFixed(0)}m</div>
+  <div class="cabo-nota">carregando tipo, nível e comprimento...</div>
+</div>`).join('');
 
-  dm.forEach(row=>{
-    const nome=String(row.ozmap||row.cto||'').trim();
-    if(!nome)return;
-    const nivel=String(row.nivel||'').trim().toUpperCase();
-    if(CABO_NIVEIS_IGNORADOS.some(n=>nivel.includes(n))){ignoradosNivel++;return}
-    const pts=extrairCoordsCabo(String(row.localizacao||row.lat||''));
-    if(!pts.length){semGeometria++;return}
-    const a=analisarCaboProximo(coord,pts);
-    if(!a)return;
+  const linhas=cands.slice(0,25).map(c=>c.linha).join(',');
+  let f2;
+  try{
+    f2=await _caboJsonp({acao:'cabosProximos',fase:2,lat:coord.lat,lng:coord.lng,linhas});
+  }catch(e){
+    if(meu===_caboBuscaSeq){
+      DOM.resultadoCabos.insertAdjacentHTML('afterbegin',
+        `<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Os cabos acima estão por perto, mas os dados completos não chegaram (${_esc(e.message)}). Clique em Buscar de novo — nada aqui entra na O.S. sem os dados.</div>`);
+    }
+    return true;
+  }
+  if(meu!==_caboBuscaSeq)return true;
 
-    const item={
-      nome,...a,
-      vertices:pts.length,
-      tipo:String(row.tipo||'').trim(),
-      nivel:String(row.nivel||'').trim(),
-      comp:String(row.comprimento||'').trim()
-    };
-    /* geometria incompleta desce no ranking sem distorcer a distância medida */
-    item.ordem=item.distEfetiva+(item.foraDaExtensao?5:0)+(item.pontual?8:0);
+  if(!f2||f2.ok!==true||!(f2.itens||[]).length){
+    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; ${_esc((f2&&f2.erro)||'Não foi possível carregar os dados dos cabos.')}</div>`;
+    return true;
+  }
 
-    /* um mesmo cabo pode ter vários trechos na planilha: fica o mais próximo */
-    const ex=cv.get(nome);
-    if(!ex||item.distEfetiva<ex.distEfetiva)cv.set(nome,item);
+  const todos=f2.itens.map(_normalizarCaboServidor).sort((a,b)=>a.ordem-b.ordem);
+  _renderResultadoCabos(todos,{
+    origem:'servidor',
+    avaliados:f1.avaliados||0,
+    semGeometria:f1.semGeometria||0,
+    truncado:!!f1.truncado,
+    ampliado:ampliado,
+    raio:f1.raio,
+    ms:(f1.ms||0)+(f2.ms||0)
   });
+  return true;
+}
 
-  const todos=[...cv.values()].sort((a,b)=>a.ordem-b.ordem);
+/* item do servidor → mesmo formato que o modo local produz, para os dois
+   caminhos usarem exatamente a mesma renderização e as mesmas regras */
+function _normalizarCaboServidor(c){
+  const item={
+    nome:c.nome,
+    dist:Number(c.dist),distEfetiva:Number(c.distEfetiva),
+    tolCurva:Number(c.tolCurva||0),vaoMaior:Number(c.vaoMaior||0),
+    pontual:!!c.pontual,foraDaExtensao:!!c.foraDaExtensao,
+    ponto:c.ponto,vertices:Number(c.vertices||0),
+    tipo:c.tipo||'',nivel:c.nivel||'',comp:c.comprimento||''
+  };
+  item.ordem=item.distEfetiva+(item.foraDaExtensao?5:0)+(item.pontual?8:0);
+  return item;
+}
+
+/* ── RENDERIZAÇÃO ÚNICA (servidor e local) ────────────────────────────
+   Mesmas regras de sempre: raio adaptativo, cartões de referência quando
+   nada cai dentro do alcance e os avisos de confiança. */
+function _renderResultadoCabos(todos,meta){
+  meta=meta||{};
+  const detalhes=[];
+  if(meta.avaliados!=null)detalhes.push(`${meta.avaliados} cabos elegíveis no índice`);
+  detalhes.push(`${todos.length} medidos`);
+  if(meta.semGeometria)detalhes.push(`${meta.semGeometria} sem geometria`);
+  if(meta.ignoradosNivel)detalhes.push(`${meta.ignoradosNivel} fora por nível`);
+  if(meta.truncado)detalhes.push('lista de candidatos truncada');
+  if(meta.ampliado)detalhes.push(`raio ampliado para ${Math.round(meta.raio||CABO_SRV_RAIO_AMPLO)}m`);
+  if(meta.ms!=null)detalhes.push(`${meta.ms}ms`);
+  const notaLocal=meta.origem==='local'
+    ? `<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Busca rodando no <strong>modo local</strong> (banco completo baixado para o navegador). Para ficar rápido, publique a versão nova do Apps Script e rode <code>atualizarCacheConsolidadoCabos</code> uma vez.${meta.motivo?`<br><span style="opacity:.75">Servidor respondeu: ${_esc(meta.motivo)}</span>`:''}</div>`
+    : '';
 
   if(!todos.length){
-    /* sem esta ressalva a mensagem culpava a geometria mesmo quando o motivo
-       real era o filtro de nível (drop/projeto/cancelado) */
-    const motivos=[];
-    if(semGeometria)motivos.push(`${semGeometria} linhas sem coordenada utilizável`);
-    if(ignoradosNivel)motivos.push(`${ignoradosNivel} ignoradas por nível (${CABO_NIVEIS_IGNORADOS.join(', ')})`);
-    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo elegível nas abas CABOS-* carregadas${motivos.length?` (${motivos.join(' · ')})`:''}.</div>`;
+    DOM.resultadoCabos.innerHTML=notaLocal+`<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo elegível${detalhes.length?` (${detalhes.join(' · ')})`:''}.</div>`;
     return;
   }
 
@@ -5113,10 +5309,10 @@ function buscarCabosProximos(){
   const selecionados=todos.filter(c=>c.distEfetiva<=limite);
   selecionados.forEach(c=>{c.confianca=_confiancaCabo(c)});
 
-  const resumo=`<div class="cabo-resumo">${todos.length} cabos avaliados &middot; mais próximo a ${dmin.toFixed(1)}m &middot; raio aplicado ${limite.toFixed(0)}m${semGeometria?` &middot; ${semGeometria} sem geometria`:''}${ignoradosNivel?` &middot; ${ignoradosNivel} fora por nível`:''}</div>`;
+  const resumo=`<div class="cabo-resumo">${meta.origem==='servidor'?'Servidor':'Local'} &middot; mais próximo a ${dmin.toFixed(1)}m &middot; raio aplicado ${limite.toFixed(0)}m &middot; ${detalhes.join(' · ')}</div>`;
 
   if(!selecionados.length){
-    DOM.resultadoCabos.innerHTML=resumo+
+    DOM.resultadoCabos.innerHTML=resumo+notaLocal+
       `<div class="info-msg" style="color:var(--red);margin:8px 0">&#9888; Nenhum cabo a menos de ${CABO_RAIO_MAX}m deste ponto. Confirme a coordenada com o técnico ou verifique se o trecho está mapeado no OZMap. Os cabos abaixo são apenas referência e não entram na Ordem de Serviço.</div>`+
       todos.slice(0,3).map(_cardCaboRefHTML).join('');
     return;
@@ -5129,10 +5325,129 @@ function buscarCabosProximos(){
     aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Nenhum cabo em alta confiança. Desmarque o que não fizer sentido antes de gerar a OS.</div>`;
   }
 
-  DOM.resultadoCabos.innerHTML=resumo+aviso+
-    selecionados.map(c=>_cardCaboHTML(c)).join('');
+  DOM.resultadoCabos.innerHTML=resumo+notaLocal+aviso+selecionados.map(_cardCaboHTML).join('');
 }
-/* ═══ fim BUSCA DE CABOS v2 ═══ */
+
+/* ── MODO LOCAL (fallback) ────────────────────────────────────────────
+   Só é usado quando o servidor não tem a ação publicada. Continua
+   precisando do download completo, mas agora indexa a geometria UMA vez
+   (bounding box por linha) e a cada busca parseia apenas os candidatos —
+   antes, todo clique em "Buscar" reparseava a planilha inteira. */
+function _indiceLocalPronto(){
+  return Array.isArray(AppState.caboIndexLocal)&&AppState.caboIndexLocal.length>=0
+    &&AppState.caboIndexBase===AppState.cacheRedes['METRO'];
+}
+async function _construirIndiceLocal(){
+  const dm=AppState.cacheRedes['METRO'];
+  if(!Array.isArray(dm))return null;
+  if(_indiceLocalPronto())return AppState.caboIndexLocal;
+
+  const idx=[];
+  let semGeometria=0,ignoradosNivel=0;
+  for(let i=0;i<dm.length;i+=CABO_LOCAL_CHUNK){
+    const fim=Math.min(i+CABO_LOCAL_CHUNK,dm.length);
+    for(let k=i;k<fim;k++){
+      const row=dm[k];
+      const nome=String(row.ozmap||row.cto||'').trim();
+      if(!nome)continue;
+      const nivel=String(row.nivel||'').trim();
+      if(CABO_NIVEIS_IGNORADOS.some(n=>nivel.toUpperCase().includes(n))){ignoradosNivel++;continue}
+      const loc=String(row.localizacao||row.lat||'');
+      const pts=extrairCoordsCabo(loc);
+      if(!pts.length){semGeometria++;continue}
+      let minLat=pts[0].lat,maxLat=pts[0].lat,minLng=pts[0].lng,maxLng=pts[0].lng;
+      for(let v=1;v<pts.length;v++){
+        const p=pts[v];
+        if(p.lat<minLat)minLat=p.lat;if(p.lat>maxLat)maxLat=p.lat;
+        if(p.lng<minLng)minLng=p.lng;if(p.lng>maxLng)maxLng=p.lng;
+      }
+      /* guarda a STRING, não os pontos: mesma memória do dado bruto, e o
+         parse fica para os poucos candidatos de cada busca */
+      idx.push({nome,loc,minLat,maxLat,minLng,maxLng,
+                tipo:String(row.tipo||'').trim(),nivel,
+                comp:String(row.comprimento||'').trim()});
+    }
+    /* devolve o controle ao navegador entre fatias: a tela não congela */
+    if(fim<dm.length){
+      _caboEtapa(`Indexando cabos no navegador... ${Math.round(fim/dm.length*100)}%`);
+      await new Promise(r=>setTimeout(r,0));
+    }
+  }
+  AppState.caboIndexLocal=idx;
+  AppState.caboIndexBase=dm;
+  AppState.caboIndexMeta={semGeometria,ignoradosNivel};
+  return idx;
+}
+
+async function _buscarCabosLocal(coord,meu){
+  if(!Array.isArray(AppState.cacheRedes['METRO'])){
+    _caboEtapa('Servidor sem a busca por proximidade — baixando o banco de cabos (só desta vez)...');
+    const ok=await _garantirCabosLocais();
+    if(meu!==_caboBuscaSeq)return;
+    if(!ok){
+      DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Não foi possível carregar os cabos${AppState.caboSrvMotivo?` (servidor: ${_esc(AppState.caboSrvMotivo)})`:''}. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>`;
+      return;
+    }
+  }
+  const idx=await _construirIndiceLocal();
+  if(meu!==_caboBuscaSeq)return;
+  if(!idx){DOM.resultadoCabos.innerHTML=`<div class="info-msg">Banco de cabos indisponível.</div>`;return}
+
+  const t0=Date.now();
+  /* pré-filtro por bounding box: converte o raio em graus e descarta em
+     comparação numérica, sem tocar na geometria. Se nada cair no raio
+     normal, amplia UMA vez — mesma razão do caminho do servidor. */
+  const _filtrar=raio=>{
+    const dLat=raio/111320;
+    const dLng=raio/(111320*(Math.cos(coord.lat*Math.PI/180)||1));
+    const perto=[];
+    for(let i=0;i<idx.length;i++){
+      const c=idx[i];
+      if(coord.lat<c.minLat-dLat||coord.lat>c.maxLat+dLat)continue;
+      if(coord.lng<c.minLng-dLng||coord.lng>c.maxLng+dLng)continue;
+      const cLat=Math.max(c.minLat,Math.min(coord.lat,c.maxLat));
+      const cLng=Math.max(c.minLng,Math.min(coord.lng,c.maxLng));
+      perto.push({c,aprox:haversine(coord.lat,coord.lng,cLat,cLng),
+                  diag:haversine(c.minLat,c.minLng,c.maxLat,c.maxLng)});
+    }
+    /* mesmo critério do servidor: quando o ponto cai DENTRO do retângulo de
+       vários cabos, o piso empata em 0 — aí vale mais o retângulo menor,
+       porque cabo que atravessa o bairro tem retângulo grande e diz pouco */
+    perto.sort((a,b)=>a.aprox-b.aprox||a.diag-b.diag);
+    return perto;
+  };
+  let perto=_filtrar(CABO_SRV_RAIO),ampliado=false;
+  if(!perto.length){perto=_filtrar(CABO_SRV_RAIO_AMPLO);ampliado=perto.length>0}
+  const alvos=perto.slice(0,CABO_LOCAL_MAX_EXATOS);
+
+  const cv=new Map();
+  alvos.forEach(({c})=>{
+    const pts=extrairCoordsCabo(c.loc);
+    if(!pts.length)return;
+    const a=analisarCaboProximo(coord,pts);
+    if(!a)return;
+    const item={nome:c.nome,...a,vertices:pts.length,tipo:c.tipo,nivel:c.nivel,comp:c.comp};
+    item.ordem=item.distEfetiva+(item.foraDaExtensao?5:0)+(item.pontual?8:0);
+    const ex=cv.get(c.nome);
+    if(!ex||item.distEfetiva<ex.distEfetiva)cv.set(c.nome,item);
+  });
+
+  const meta=AppState.caboIndexMeta||{};
+  _renderResultadoCabos([...cv.values()].sort((a,b)=>a.ordem-b.ordem),{
+    origem:'local',
+    /* deixa visível POR QUE está no modo lento — senão a busca no servidor
+       fica desativada em silêncio e ninguém lembra de publicar/gerar o índice */
+    motivo:AppState.caboSrvMotivo||'',
+    avaliados:idx.length,
+    semGeometria:meta.semGeometria||0,
+    ignoradosNivel:meta.ignoradosNivel||0,
+    truncado:perto.length>alvos.length,
+    ampliado:ampliado,
+    raio:CABO_SRV_RAIO_AMPLO,
+    ms:Date.now()-t0
+  });
+}
+/* ═══ fim CONSULTA DE CABOS v3 ═══ */
 
 /* normaliza o nome da empresa removendo espaços/traços/underscores/pontos,
    para casar variações como "IMAIS", "I_MAIS", "I-MAIS", "I MAIS" */
@@ -5724,7 +6039,7 @@ async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Ge
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}atualizarTodosEstadosAllTec();showToast('✓ Limpo.')}
-function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.multiSelectAllowed=true;renderStatusBar();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
+function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.ctosStatus='idle';_caboBuscaSeq++;AppState.multiSelectAllowed=true;renderStatusBar();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
 </script>
 </body>
 </html>
