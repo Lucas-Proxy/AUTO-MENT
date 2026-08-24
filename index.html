@@ -644,6 +644,12 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .nota-btn-arquivar{margin-left:auto}
 .nota-btn:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
 .sla-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;box-shadow:var(--shadow2);display:flex;flex-direction:column;position:relative;transition:border-color .3s,box-shadow .3s,opacity .4s,transform .4s;animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both}
+/* card já na tela, ainda não confirmado pelo servidor */
+.sla-card.pendente{opacity:.72}
+.sla-card.pendente::after{content:'salvando';position:absolute;top:6px;right:8px;
+  font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--text3);background:var(--bg3);
+  border:1px solid var(--border);border-radius:10px;padding:1px 6px;z-index:2}
 .sla-card-faixa{height:4px;width:100%;background:var(--teal)}
 .sla-card-corpo{padding:12px 13px 13px;display:flex;flex-direction:column;gap:9px;flex:1}
 .sla-card-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -2611,19 +2617,205 @@ function _slaOperadorAtual(){
   const op=AppState.operadores.find(o=>getOperadorKey(o)===chave);
   return op?(op.setor?`${op.nome} - ${op.setor}`:op.nome):'';
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SINCRONIZAÇÃO — por que o painel demorava e o que mudou
+   ═══════════════════════════════════════════════════════════════════════
+   Antes, lançar qualquer coisa levava de 5 a 10s para aparecer na tela,
+   por dois motivos somados:
+
+     1) DUAS VIAGENS ao Apps Script por ação: uma para gravar, outra para
+        buscar a lista de novo. Cada viagem paga início de execução mais
+        abertura da planilha — 2 a 5s cada.
+     2) POLLING FIXO de 45s, que era o atraso para os OUTROS operadores.
+
+   Agora:
+     · a tela é atualizada ANTES do servidor confirmar (render otimista),
+       então para quem lançou o tempo é ~0ms;
+     · a resposta da gravação já traz a lista atualizada — uma viagem só;
+     · o polling deixou de varrer planilha: pergunta só "mudou?" lendo três
+       propriedades de script (`acao=rev`, barato), e busca a lista
+       completa apenas quando o número muda;
+     · a cadência é adaptativa e PARA quando a aba está em segundo plano,
+       voltando com atualização imediata — é isso que faz "clicar e os
+       dados estarem lá".
+     · abas do mesmo navegador se avisam por BroadcastChannel, sem custo
+       de servidor.
+
+   Ajuste de cadência: os quatro números abaixo. Dimensionados para 1 a 3
+   operadores simultâneos; com muito mais gente, suba SYNC_ATIVO_MS.
+═══════════════════════════════════════════════════════════════════════ */
+const SYNC_ATIVO_MS   = 3000;    // painel aberto e operador mexendo
+const SYNC_PARADO_MS  = 20000;   // painel aberto, sem interação recente
+const SYNC_FECHADO_MS = 60000;   // painel fechado (só mantém o badge do topo)
+const SYNC_INATIVO_MS = 90000;   // considera "parado" depois disso sem interação
+
+const Sync = {
+  rev:{sla:0,notas:0,tim:0},
+  timer:null,
+  ultimaInteracao:Date.now(),
+  emVoo:false,
+  canal:null,
+  /* Marca uma revisão como já conhecida SEM disparar recarga. Usado quando
+     a própria resposta da gravação já trouxe a lista: sem isto, o próximo
+     rev veria número novo e buscaria a lista de novo — a segunda viagem
+     que estamos justamente eliminando. */
+  aceitar(rev){
+    if(!rev)return;
+    ['sla','notas','tim'].forEach(k=>{if(rev[k])Sync.rev[k]=Number(rev[k])||0});
+  },
+  intervalo(){
+    if(document.hidden)return 0;                      // 0 = não agenda nada
+    const algumAberto=AppState.sla.aberto||AppState.tcSla.aberto||AppState.notas.aberto;
+    if(!algumAberto)return SYNC_FECHADO_MS;
+    return (Date.now()-Sync.ultimaInteracao<SYNC_INATIVO_MS)?SYNC_ATIVO_MS:SYNC_PARADO_MS;
+  },
+  reprogramar(){
+    clearTimeout(Sync.timer);
+    const ms=Sync.intervalo();
+    if(!ms)return;                                    // aba em segundo plano: pausa
+    Sync.timer=setTimeout(()=>{Sync.checar().finally(()=>Sync.reprogramar())},ms);
+  },
+  /* Pergunta ao servidor se algo mudou. Não abre planilha nenhuma. */
+  async checar(forcar){
+    if(Sync.emVoo)return;
+    if(document.hidden&&!forcar)return;
+    Sync.emVoo=true;
+    try{
+      /* Diz ao servidor o que já temos e quais áreas interessam. Quando
+         algo mudou, a lista volta NESTA MESMA resposta — sem isso seriam
+         duas viagens (perguntar e depois buscar) e o outro operador
+         esperaria o dobro. SLA e notas entram sempre porque alimentam os
+         contadores do topo; a lista da TIM, mais pesada, só com a aba
+         aberta. */
+      const quero=['sla','notas'];
+      if(AppState.tcSla.aberto)quero.push('tim');
+      const r=await jsonp({acao:'rev',quero:quero.join(','),
+        sla:Sync.rev.sla,notas:Sync.rev.notas,tim:Sync.rev.tim},15000);
+      if(!r||r.ok!==true)return;
+      const listas=r.listas||{};
+      const tarefas=[];
+      if(Number(r.sla||0)>Sync.rev.sla){
+        Sync.rev.sla=Number(r.sla);
+        if(Array.isArray(listas.sla))_aplicarItensSla(listas.sla);
+        else tarefas.push(carregarSla(true));
+      }
+      if(Number(r.notas||0)>Sync.rev.notas){
+        Sync.rev.notas=Number(r.notas);
+        if(Array.isArray(listas.notas))_aplicarItensNotas(listas.notas);
+        else tarefas.push(carregarNotas(true));
+      }
+      if(Number(r.tim||0)>Sync.rev.tim){
+        Sync.rev.tim=Number(r.tim);
+        if(Array.isArray(listas.tim))_aplicarItensTcSla(listas.tim);
+        else if(AppState.tcSla.aberto)tarefas.push(carregarTcSla(true));
+      }
+      if(tarefas.length)await Promise.all(tarefas);
+    }catch(e){/* rede instável: a próxima passada tenta de novo */}
+    finally{Sync.emVoo=false}
+  },
+  /* Atualiza AGORA — usado ao abrir um painel, ao voltar para a aba e
+     depois de uma gravação de outra aba do mesmo navegador. */
+  agora(){Sync.ultimaInteracao=Date.now();Sync.checar(true).finally(()=>Sync.reprogramar())},
+  /* Avisa as outras abas deste navegador na hora. Manda a LISTA junto:
+     quem já tem os dados não precisa fazer as outras abas buscarem de
+     novo, então a atualização entre abas sai sem nenhuma viagem. */
+  avisar(area,itens,rev){
+    try{
+      if(Sync.canal)Sync.canal.postMessage({area,itens:itens||null,rev:rev||null,t:Date.now()});
+    }catch(e){}
+  },
+  iniciar(){
+    try{
+      Sync.canal=new BroadcastChannel('ment-sync');
+      Sync.canal.onmessage=ev=>{
+        const d=(ev&&ev.data)||{};
+        if(d.rev)Sync.aceitar(d.rev);
+        /* lista veio na mensagem: aplica direto, zero viagem */
+        if(Array.isArray(d.itens)){
+          if(d.area==='sla')_aplicarItensSla(d.itens);
+          else if(d.area==='notas')_aplicarItensNotas(d.itens);
+          else if(d.area==='tim')_aplicarItensTcSla(d.itens);
+          return;
+        }
+        if(d.area==='sla')carregarSla(true);
+        else if(d.area==='notas')carregarNotas(true);
+        else if(d.area==='tim'&&AppState.tcSla.aberto)carregarTcSla(true);
+      };
+    }catch(e){/* navegador sem BroadcastChannel: segue só com o polling */}
+    /* interação do operador reacelera a cadência */
+    ['click','keydown','pointerdown'].forEach(ev=>
+      document.addEventListener(ev,()=>{Sync.ultimaInteracao=Date.now()},{passive:true}));
+    /* voltar para a aba atualiza na hora */
+    document.addEventListener('visibilitychange',()=>{
+      if(!document.hidden)Sync.agora();
+      else clearTimeout(Sync.timer);
+    });
+    window.addEventListener('focus',()=>{if(!document.hidden)Sync.ultimaInteracao=Date.now()});
+    window.addEventListener('online',()=>Sync.agora());
+    Sync.reprogramar();
+  }
+};
+
+/* Conclui uma ação: usa a lista que a própria resposta trouxe (uma viagem
+   só) ou, se ela não vier, cai no caminho antigo de buscar a lista. */
+function _concluir(r,area,recarregar,idConfirmado){
+  if(r&&r.rev)Sync.aceitar(r.rev);
+  /* a ação confirmou: este item deixa de ser pendente antes de a lista
+     nova ser aplicada, senão ele seria reinserido como pendente eterno */
+  if(idConfirmado){
+    const p=AppState.sla.itens.find(i=>i.id===idConfirmado);
+    if(p)delete p._pendente;
+  }
+  if(r&&Array.isArray(r.itens)){
+    if(area==='sla')_aplicarItensSla(r.itens);
+    else if(area==='notas')_aplicarItensNotas(r.itens);
+    else if(area==='tim')_aplicarItensTcSla(r.itens);
+  }else if(typeof recarregar==='function'){
+    recarregar(true);
+  }
+  Sync.avisar(area,(r&&Array.isArray(r.itens))?r.itens:null,r&&r.rev);
+}
+
 function registrarSla(d){
   const operador=_slaOperadorAtual();
   const rede=_slaCap(d.rede,40),tipo=_slaCap(d.tipo,140),alvo=_slaCap(d.alvo,240);
   const empresa=_slaCap(d.empresa,60),tecnicos=_slaCap(d.tecnicos,200);
   const resumo=_slaCap(`[${rede}] ${tipo}${alvo?' · '+alvo:''}${empresa?' · '+empresa:''}`,500);
   const id='OS'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,6).toUpperCase();
+  const aberturaMs=Date.now();
+
+  /* ── RENDER OTIMISTA ──
+     O card entra na lista agora, marcado como pendente. Antes o operador
+     esperava a ida (gravar) e a volta (buscar a lista) para ver o
+     acionamento aparecer — 5 a 10s olhando para uma tela que não mudou. */
+  const provisorio={id,resumo,rede,tipo,alvo,empresa,tecnicos,operador,
+    aberturaMs,inicioMs:0,encerramentoMs:0,slaHoras:SLA_HORAS_PADRAO,
+    normalizacaoMs:0,_pendente:true};
+  AppState.sla.itens=[provisorio].concat(AppState.sla.itens);
+  if(AppState.sla.aberto)renderSla();
+  atualizarBadgeSla();
+  const desfazer=()=>{
+    AppState.sla.itens=AppState.sla.itens.filter(i=>i.id!==id);
+    if(AppState.sla.aberto)renderSla();
+    atualizarBadgeSla();
+  };
+
   jsonp({acao:'abrirSla',id,resumo,rede,tipo,alvo,empresa,tecnicos,operador,
-         aberturaMs:Date.now(),slaHoras:SLA_HORAS_PADRAO},25000)
+         aberturaMs,slaHoras:SLA_HORAS_PADRAO},25000)
     .then(r=>{
-      if(r&&r.ok){showToast('⏱ Acionamento entrou no painel de SLA.');atualizarBadgeSla()}
-      else showToast('OS gerada, mas falhou ao registrar no SLA: '+((r&&r.erro)||'erro'),'error',5000);
+      if(r&&r.ok){
+        showToast('⏱ Acionamento entrou no painel de SLA.');
+        _concluir(r,'sla',carregarSla,id);
+      }else{
+        desfazer();
+        showToast('OS gerada, mas falhou ao registrar no SLA: '+((r&&r.erro)||'erro'),'error',5000);
+      }
     })
-    .catch(e=>showToast('OS gerada, mas não entrou no painel de SLA ('+e.message+').','error',5000));
+    .catch(e=>{
+      desfazer();
+      showToast('OS gerada, mas não entrou no painel de SLA ('+e.message+').','error',5000);
+    });
 }
 
 /* ── carregar / renderizar ── */
@@ -2634,8 +2826,27 @@ function carregarSla(silencioso, retentativas=1){
   }
   return jsonp({acao:'listarSla'},20000).then(r=>{
     if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
+    if(r.rev)Sync.aceitar(r.rev);
+    _aplicarItensSla(r.itens);
+    return AppState.sla.itens;
+  }).catch(e=>{
+    if(retentativas>0){
+      return carregarSla(silencioso, retentativas - 1);
+    }
+    AppState.sla.status='erro';AppState.sla.erro=e.message||String(e);
+    if(AppState.sla.aberto)renderSla();
+    return null;
+  });
+}
+
+/* Normaliza e desenha uma lista de acionamentos. Existe separado do
+   carregamento porque a resposta de uma GRAVAÇÃO já traz a lista pronta:
+   assim a tela é atualizada sem a segunda viagem ao Apps Script. */
+function _aplicarItensSla(brutos){
+  const pendentesAntes=AppState.sla.itens.filter(i=>i._pendente);
+  {
     const agoraMs=Date.now();
-    AppState.sla.itens=(r.itens||[]).map(x=>({
+    AppState.sla.itens=(brutos||[]).map(x=>({
       ...x,
       aberturaMs:Number(x.aberturaMs)||0,
       inicioMs:Number(x.inicioMs)||0,
@@ -2653,19 +2864,23 @@ function carregarSla(silencioso, retentativas=1){
     .filter(x=>!x.encerramentoMs
                 || (agoraMs-x.encerramentoMs)<=SLA_SUMIR_APOS_ENCERRAR_MS
                 || AppState.sla.nodes.has(x.id));
+    /* ── PENDENTE SOBREVIVE À LISTA ──
+       Um card desenhado antes da confirmação não pode ser apagado só
+       porque a lista que chegou ainda não o contém: a gravação pode ter
+       acabado de acontecer, ou esta lista pode ser de uma resposta em voo
+       de antes. Ele fica, marcado como pendente, até a gravação confirmar
+       ou falhar — quem tira o card do ar é a própria ação, não o polling. */
+    const chegaram={};
+    AppState.sla.itens.forEach(i=>{chegaram[i.id]=true});
+    (pendentesAntes||[]).forEach(p=>{
+      if(!chegaram[p.id])AppState.sla.itens=[p].concat(AppState.sla.itens);
+    });
     AppState.sla.status='ok';AppState.sla.erro='';
     AppState.sla.ultimaAtualizacao=Date.now();
     if(AppState.sla.aberto)renderSla();
     atualizarBadgeSla();
     return AppState.sla.itens;
-  }).catch(e=>{
-    if(retentativas>0){
-      return carregarSla(silencioso, retentativas - 1);
-    }
-    AppState.sla.status='erro';AppState.sla.erro=e.message||String(e);
-    if(AppState.sla.aberto)renderSla();
-    return null;
-  });
+  }
 }
 
 /* o mesmo número em dois lugares: no botão SLA da tela principal (painel
@@ -2742,14 +2957,23 @@ function renderSla(){
   const idsNovos=st.itens.map(i=>i.id).sort().join('|');
   const idsAtuais=Array.from(st.nodes.keys()).sort().join('|');
   if(st.nodes.size&&idsNovos===idsAtuais){
-    st.itens.forEach(item=>{const n=st.nodes.get(item.id);if(n)n.item=item});
+    st.itens.forEach(item=>{
+      const n=st.nodes.get(item.id);
+      if(!n)return;
+      n.item=item;
+      /* o caminho barato compara só IDs. Sem sincronizar a marca de
+         pendente aqui, o card confirmado continuava exibindo "salvando"
+         para sempre, porque o ID não mudou e o rebuild não acontece. */
+      n.card.classList.toggle('pendente',!!item._pendente);
+    });
     tickSla();return;
   }
 
   grid.innerHTML='';st.nodes.clear();
   _slaOrdenar(st.itens).forEach(item=>{
     const card=document.createElement('article');
-    card.className='sla-card';
+    /* pendente = card desenhado antes da confirmação do servidor */
+    card.className='sla-card'+(item._pendente?' pendente':'');
     card.dataset.id=item.id;
     card.innerHTML=_slaCardHTML(item);
     grid.appendChild(card);
@@ -2998,8 +3222,7 @@ function _ativarAbaNotas(){
 }
 function _reprogramarPollNotas(){
   clearInterval(AppState.notas.timerPoll);
-  const intervalo=AppState.notas.aberto?NOTAS_POLL_ABERTO_MS:NOTAS_POLL_FUNDO_MS;
-  AppState.notas.timerPoll=setInterval(()=>carregarNotas(),intervalo);
+  Sync.agora();
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -3033,13 +3256,18 @@ function carregarNotas(){
   st.status='loading';
   return jsonp({acao:'listarNotas'},20000).then(r=>{
     st.status='idle';
-    if(r&&r.ok){st.itens=r.itens||[];st.erro='';st.ultimaAtualizacao=Date.now()}
-    else st.erro=(r&&r.erro)||'Não foi possível carregar as notas.';
-    renderNotas();atualizarBadgeNotas();
+    if(r&&r.rev)Sync.aceitar(r.rev);
+    if(r&&r.ok)_aplicarItensNotas(r.itens);
+    else{st.erro=(r&&r.erro)||'Não foi possível carregar as notas.';renderNotas();atualizarBadgeNotas()}
   }).catch(e=>{
     st.status='idle';st.erro='Falha ao carregar ('+e.message+').';
     renderNotas();
   });
+}
+function _aplicarItensNotas(brutos){
+  const st=AppState.notas;
+  st.itens=brutos||[];st.erro='';st.ultimaAtualizacao=Date.now();
+  renderNotas();atualizarBadgeNotas();
 }
 
 function atualizarBadgeNotas(){_pintaBadgeSla('abaNotasBadge',AppState.notas.itens.length)}
@@ -3185,7 +3413,8 @@ function salvarNotaModal(){
         showToast(r.nova?'✓ Nota criada.':'✓ Nota atualizada.');
         fecharModalNota();
         AppState.notas.assinatura='';
-        carregarNotas();
+        /* a própria resposta já traz a lista: sem segunda viagem */
+        _concluir(r,'notas',carregarNotas);
       }else mostrar('Não foi possível salvar: '+((r&&r.erro)||'erro'));
     })
     .catch(e=>{btn.disabled=false;btn.textContent='SALVAR';mostrar('Falha ao salvar ('+e.message+').')});
@@ -3212,7 +3441,7 @@ function arquivarNotaCard(btn){
   const quem=(localStorage.getItem('noc-operador')||'').split('|||')[0]||'';
   jsonp({acao:'arquivarNota',id:btn.dataset.id,autor:quem},20000)
     .then(r=>{
-      if(r&&r.ok){showToast('✓ Nota arquivada.');AppState.notas.assinatura='';carregarNotas()}
+      if(r&&r.ok){showToast('✓ Nota arquivada.');AppState.notas.assinatura='';_concluir(r,'notas',carregarNotas)}
       else{voltar();showToast('Não foi possível arquivar: '+((r&&r.erro)||'erro'),'error',4000)}
     })
     .catch(e=>{voltar();showToast('Falha ao arquivar ('+e.message+').','error',4000)});
@@ -3261,10 +3490,12 @@ function atualizarAbaSlaAtiva(){
 }
 /* com o painel aberto busca com mais frequência; fechado, só o suficiente
    para manter o contador de estourados do botão do topo em dia */
+/* O polling fixo de 45s (que varria a planilha inteira a cada volta) deu
+   lugar ao Sync: ele pergunta só "mudou?" e busca a lista quando muda.
+   Abrir o painel atualiza na hora — é o "clicar e estar disponível". */
 function _reprogramarPollSla(){
   clearInterval(AppState.sla.timerPoll);
-  const intervalo=AppState.sla.aberto?SLA_POLL_ABERTO_MS:SLA_POLL_FUNDO_MS;
-  AppState.sla.timerPoll=setInterval(()=>carregarSla(true),intervalo);
+  Sync.agora();
 }
 
 function bindEventsSla(){
@@ -3353,8 +3584,20 @@ function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
   const acao=varrerGmail?'listarTcSla':'listarTcSlaCache';
   return jsonp({acao:acao},varrerGmail?90000:20000).then(r=>{
     if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
+    if(r.rev)Sync.aceitar(r.rev);
+    _aplicarItensTcSla(r.itens);
+    return AppState.tcSla.itens;
+  }).catch(e=>{
+    if(retentativas>0) return carregarTcSla(silencioso, retentativas - 1, varrerGmail);
+    AppState.tcSla.status='erro';AppState.tcSla.erro=e.message||String(e);
+    if(AppState.tcSla.aberto)renderTcSla();
+    return null;
+  });
+}
+function _aplicarItensTcSla(brutos){
+  {
     const agoraMs=Date.now();
-    AppState.tcSla.itens=_tcConsolidar((r.itens||[]).map(x=>({
+    AppState.tcSla.itens=_tcConsolidar((brutos||[]).map(x=>({
       ...x,
       aberturaMs:Number(x.aberturaMs)||0,
       encerramentoMs:Number(x.encerramentoMs)||0,
@@ -3368,12 +3611,7 @@ function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
     if(AppState.tcSla.aberto)renderTcSla();
     atualizarBadgeTcSla();
     return AppState.tcSla.itens;
-  }).catch(e=>{
-    if(retentativas>0) return carregarTcSla(silencioso, retentativas - 1, varrerGmail);
-    AppState.tcSla.status='erro';AppState.tcSla.erro=e.message||String(e);
-    if(AppState.tcSla.aberto)renderTcSla();
-    return null;
-  });
+  }
 }
 
 /* ── regras de acompanhamento (espelham as do Apps Script) ──
@@ -4065,6 +4303,7 @@ function registrarEscalonamentoTim(id,btn){
       if(it)it.escalonadoMs=r.escalonadoMs||Date.now();
       showToast('Escalonamento registrado. O chamado agora só aguarda a normalização.');
       AppState.tcSla.assinatura='';renderTcSla();
+      _concluir(r,'tim',null);
     }else{
       if(btn){btn.disabled=false;btn.textContent='Registrar escalonamento'}
       showToast('Não foi possível registrar: '+((r&&r.erro)||'erro'),'error',5000);
@@ -4086,8 +4325,7 @@ function alternarPainelTcSla(){
 
 function _reprogramarPollTcSla(){
   clearInterval(AppState.tcSla.timerPoll);
-  const intervalo=AppState.tcSla.aberto?SLA_POLL_ABERTO_MS:SLA_POLL_FUNDO_MS;
-  AppState.tcSla.timerPoll=setInterval(()=>carregarTcSla(true),intervalo);
+  Sync.agora();
 }
 
 let _relatorioTimData = null; // guarda os dados já calculados do último relatório, para exportar em PDF/TXT sem depender do HTML renderizado
@@ -4523,7 +4761,7 @@ function manterGasAcordado() {
   setInterval(ping, 10 * 60 * 1000);
 }
 
-document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC()});
+document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC();Sync.iniciar()});
 
 function bindEvents(){
   DOM.rede.addEventListener('change',aoMudarRede);
