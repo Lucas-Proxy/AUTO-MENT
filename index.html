@@ -323,6 +323,15 @@ body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.
 .copy-modal-text{font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--text);white-space:pre-wrap;line-height:1.8;background:var(--bg3);padding:18px;overflow-y:auto;flex:1;border:1px solid var(--border);margin:16px 22px 0;border-radius:8px;word-break:break-word}
 .copy-modal-operator{padding:14px 22px;border-bottom:1px solid var(--border)}
 .copy-modal-operator label{font-size:.65rem;color:var(--text2);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;font-weight:600;display:block}
+.copy-modal-hub{padding:14px 22px;border-bottom:1px solid var(--border)}
+.copy-modal-hub label.hub-rot{font-size:.65rem;color:var(--text2);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;font-weight:600;display:block}
+.hub-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hub-item label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;margin:0;text-align:center;min-height:48px}
+.hub-item label:hover{border-color:var(--blue2);background:var(--blue-l)}
+.hub-item input:checked+label{background:var(--blue-l);border-color:var(--blue2);box-shadow:0 0 0 2px var(--blue-b)}
+.hub-nome{font-size:.76rem;font-weight:700;letter-spacing:.3px;color:var(--text2);text-transform:uppercase}
+.hub-item input:checked+label .hub-nome{color:var(--blue)}
+.hub-host{font-size:.6rem;color:var(--text3);letter-spacing:.2px}
 .copy-modal-footer{display:flex;gap:10px;padding:18px 22px;background:var(--bg3)}
 .btn-seguir{background:linear-gradient(135deg,var(--teal) 0%,#0c8069 100%)!important;color:#fff!important;border:none!important;box-shadow:0 2px 10px rgba(14,158,126,.35)!important;flex:2;font-size:.88rem!important;font-weight:700!important;letter-spacing:.4px!important;border-radius:8px!important}
 .btn-seguir:hover{transform:translateY(-1px)!important;box-shadow:0 4px 18px rgba(14,158,126,.45)!important}
@@ -976,6 +985,17 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 <div class="copy-modal-operator">
 <label for="operadorSelect">Operador (Opcional)</label>
 <select id="operadorSelect"><option value="">&#8212; Nenhum operador &#8212;</option></select>
+</div>
+<!-- REDE METRO: a Metro atravessa os tres nucleos, entao o Hubsoft de
+     destino nao da para deduzir da rede — quem abre a O.S. escolhe aqui.
+     Fica oculto nas outras redes. -->
+<div class="copy-modal-hub hidden" id="boxHubMetro">
+<label class="hub-rot">Abrir a O.S. em qual Hubsoft?</label>
+<div class="hub-grid">
+<div class="hub-item"><input type="radio" name="hubMetro" id="hubMetroWire" value="WIRE" checked style="display:none"><label for="hubMetroWire"><span class="hub-nome">Click IP</span><span class="hub-host">clickip</span></label></div>
+<div class="hub-item"><input type="radio" name="hubMetro" id="hubMetroFiber" value="FIBER" style="display:none"><label for="hubMetroFiber"><span class="hub-nome">Fiber Network</span><span class="hub-host">fibernetwork</span></label></div>
+<div class="hub-item"><input type="radio" name="hubMetro" id="hubMetroIntlink" value="INTLINK" style="display:none"><label for="hubMetroIntlink"><span class="hub-nome">Intlink</span><span class="hub-host">intlink</span></label></div>
+</div>
 </div>
 <div class="copy-modal-footer">
 <button class="btn btn-seguir" id="btnSeguir">&#9654; Enviar &amp; Abrir Hubsoft</button>
@@ -1674,7 +1694,7 @@ function atualizarDadosForcado(){
   AppState.baseDados=[];AppState.ctosStatus='idle';
   showToast('↻ Cache limpo. Recarregando dados...');
   carregarOperadores();
-  carregarTecnicos();
+  carregarTecnicos(true);
   const redeAtual=DOM.rede.value;
   if(redeAtual==='METRO')fetchCaboMetro();
   else if(redeAtual&&redeAtual!=='BACKBONE')carregarCTOs(redeAtual);
@@ -1690,6 +1710,115 @@ function atualizarDadosForcado(){
    de CTOs foi alterado, pois splitListaValores só é usada para os técnicos. */
 function splitListaValores(v){return String(v||'').split(/[\n;,\s]+/).map(x=>x.trim()).filter(Boolean)}
 function atualizarCatalogoPrefixos(){AppState.prefixCatalog=[...new Set(AppState.tecnicos.flatMap(t=>t.prefixos||[]))].filter(Boolean).sort((a,b)=>b.length-a.length||a.localeCompare(b,'pt-BR',{sensitivity:'base'}))}
+
+/* ══════════════════════════════════════════════════════════════════
+   CASAMENTO CTO -> TECNICO  (coluna D da aba TECNICOS)
+   ══════════════════════════════════════════════════════════════════
+   Aba TECNICOS: A = NOME | B = NUMERO | C = EMPRESA EXECUTANTE
+                 D = PREFIXO das CTOs que o tecnico atende
+
+   A coluna D guarda PREFIXO, nao codigo completo: "RD" atende RD1, RD13,
+   RD24...; "RD13" atende somente RD13.
+
+   POR QUE TECNICO NOVO NAO APARECIA (bug corrigido aqui):
+   a versao anterior montava um catalogo GLOBAL com os prefixos de TODOS
+   os tecnicos, ordenado do mais longo para o mais curto, elegia UM UNICO
+   prefixo por CTO (getPrefixFromCTO) e depois exigia igualdade EXATA
+   contra a coluna D de cada tecnico. Consequencia: se dois tecnicos
+   declarassem codigos de comprimentos diferentes para a mesma familia
+   (ex: "RD" e "RD1"), a CTO CTO-RD13-002 elegia sempre "RD1" e o tecnico
+   de "RD" desaparecia da lista — a CTO aparecia normalmente na busca,
+   mas o tecnico recem-cadastrado, nao. Qualquer prefixo novo mais curto
+   (ou mais longo) que o dos colegas ficava invisivel.
+
+   Agora cada tecnico e testado contra a CTO com o SEU PROPRIO prefixo,
+   e todos os prefixos da celula D valem — nao so o primeiro. */
+
+/* palavras de estrutura no nome da CTO que nunca sao projeto.
+   OBS: aqui NAO entram siglas de estado (AM, PA, TO, RR...) — elas sao
+   prefixo de projeto valido e sao ignoradas apenas em _prefixoDaCTO,
+   que escolhe o segmento principal. */
+const CTO_PALAVRAS_ESTRUTURA=/^(CTO|CTOS|BOX|CEO|CEL|CEP|DIO|DIV|NAP|NAB|OLT|POP|RACK|SPLITTER|WIRE|FIBER|INTLINK|METRO|BACKBONE)$/;
+
+/* todos os segmentos do nome da CTO que podem ser codigo de projeto */
+function segmentosProjetoCTO(nomeCTO){
+  const alvos=[];
+  const push=v=>{if(v&&alvos.indexOf(v)===-1)alvos.push(v)};
+  push(_prefixoDaCTO(nomeCTO));
+  normGpon(nomeCTO).split(/[^A-Z0-9]+/).forEach(p=>{
+    if(p&&/[A-Z]/.test(p)&&!CTO_PALAVRAS_ESTRUTURA.test(p))push(p);
+  });
+  return alvos;
+}
+
+/* o prefixo da coluna D atende esta CTO?
+   Regra: algum segmento de projeto da CTO COMECA COM o prefixo declarado.
+   "RD"   -> RD1, RD13, RD24...
+   "RD13" -> so RD13  (NAO atende RD1: sentido unico de proposito, senao
+             um tecnico de RD13 apareceria em toda CTO da familia RD1)
+   A coluna D tambem tolera o nome completo colado por engano
+   ("CTO-RD13-002"): o codigo de projeto e isolado dos dois lados antes
+   de comparar. Se o nome da CTO na planilha vier truncado em relacao ao
+   cadastro, use o prefixo mais curto na coluna D (ex: "AUT" em vez de
+   "AUT04") — e rode diagnosticarTecnicos('NOME-DA-CTO') para conferir. */
+function prefixoAtendeCTO(prefixo,nomeCTO){
+  const codigos=segmentosProjetoCTO(prefixo).filter(p=>p.length>=2);
+  if(!codigos.length)return false;
+  return segmentosProjetoCTO(nomeCTO).some(seg=>codigos.some(p=>seg.startsWith(p)));
+}
+
+/* mesma regra para um codigo de projeto ja isolado (fluxo GPON) */
+function prefixoAtendeProjeto(prefixo,projeto){
+  return prefixoAtendeCTO(prefixo,projeto);
+}
+
+/* o tecnico atende ao menos uma das CTOs selecionadas? */
+function tecnicoAtendeCTOs(t,nomesCTO){
+  const pref=(t&&t.prefixos)||[];
+  if(!pref.length||!nomesCTO.length)return false;
+  return nomesCTO.some(n=>pref.some(p=>prefixoAtendeCTO(p,n)));
+}
+
+/* ── EMPRESA EXECUTANTE (coluna C) ──────────────────────────────
+   comparacao normalizada: "CONNECT", "Connect", "CONNECT " e
+   "CONNECT-TELECOM" nao podem virar empresas diferentes na lista.
+   E o que amarra NOME (col A) -> EMPRESA (col C) e faz o tecnico novo
+   aparecer nos acionamentos de Rede Metro e de Backbone. */
+function mesmaEmpresa(a,b){const na=_normEmpresa(a),nb=_normEmpresa(b);return !!na&&na===nb}
+function tecnicosDaEmpresa(lista,empresa){return (lista||[]).filter(t=>mesmaEmpresa(t.empresa,empresa))}
+
+/* ── DIAGNOSTICO (rodar no console do navegador) ────────────────
+   diagnosticarTecnicos('CTO-RD13-002')  -> mostra, tecnico por tecnico,
+   quem atende essa CTO, quem foi barrado pelo prefixo e quem foi barrado
+   pela rede/empresa. Serve para conferir cadastro novo na aba TECNICOS
+   sem precisar caçar no codigo. */
+function diagnosticarTecnicos(nomeCTO,rede){
+  const r=rede||DOM.rede.value||'(nenhuma)';
+  const segs=segmentosProjetoCTO(nomeCTO);
+  const filtroRede=filtroEmpresaPorRede(rede||DOM.rede.value);
+  const empFallback=_normEmpresa(empresaFallbackPorPrefixo(_prefixoDaCTO(nomeCTO))||'');
+  const linhas=AppState.tecnicos.map(t=>{
+    const prefOk=tecnicoAtendeCTOs(t,[nomeCTO]);
+    const fbOk=!!empFallback&&_normEmpresa(t.empresa)===empFallback;
+    const redeOk=!filtroRede||filtroRede(t.empresa);
+    return {
+      NOME:t.nome, EMPRESA:t.empresa||'(vazia)',
+      'COLUNA D':(t.prefixos||[]).join(' ')||'(vazia)',
+      'PREFIXO OK':prefOk?'SIM':'nao',
+      'REGRA FALLBACK':fbOk?'SIM':'-',
+      'REDE OK':redeOk?'SIM':'nao',
+      'APARECE':(prefOk||fbOk)&&redeOk?'SIM':'nao'
+    };
+  });
+  console.log('CTO: %s | rede: %s | segmentos de projeto: %s',nomeCTO,r,segs.join(', ')||'(nenhum)');
+  console.table(linhas);
+  const semEmp=AppState.tecnicos.filter(t=>!_normEmpresa(t.empresa)).map(t=>t.nome);
+  if(semEmp.length)console.warn('Tecnicos SEM empresa na coluna C (nunca aparecem em nenhum acionamento): '+semEmp.join(', '));
+  const disp=linhas.filter(l=>l.APARECE==='SIM');
+  console.log('Disponiveis para esta CTO: '+(disp.length?disp.map(l=>l.NOME+' ['+l.EMPRESA+']').join(' | '):'NENHUM'));
+  return disp.length;
+}
+window.diagnosticarTecnicos=diagnosticarTecnicos;
 const $=id=>document.getElementById(id);
 // Esc fecha só o modal aberto no topo (copy-modal), sem fechar o painel de SLA
 // atrás dele — registrado antes dos outros listeners de Escape para ter prioridade.
@@ -2283,14 +2412,15 @@ function getTecnicosGponElegiveis(){
 
   const proj=AppState.gponLista.length>0?AppState.gponLista[0].projeto:AppState.gponProjetoAtual;
   if(proj){
-    const pNorm=normGpon(proj);
-    tecs=tecs.filter(t=>t.prefixos&&t.prefixos.some(p=>pNorm.includes(normGpon(p))||normGpon(p).includes(pNorm)));
+    /* mesma regra de prefixo usada nas CTOs (prefixoAtendeProjeto), no lugar
+       do "includes" solto que casava trecho no meio do código do projeto */
+    tecs=tecs.filter(t=>(t.prefixos||[]).some(p=>prefixoAtendeProjeto(p,proj)));
   }
   return tecs;
 }
-function renderGponEmpresas(){const el=DOM.gponEmpresa,atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}let tecs=getTecnicosGponElegiveis();const empresas=[...new Set(tecs.map(t=>t.empresa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));if(!empresas.length){el.innerHTML='<option value="" disabled selected>Nenhuma empresa para este projeto</option>';return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});if(empresas.includes(atual)){el.value=atual;return}const proj=AppState.gponLista.length>0?AppState.gponLista[0].projeto:AppState.gponProjetoAtual;if(proj){const pNorm=normGpon(proj);const empMatch=tecs.find(t=>t.prefixos&&t.prefixos.some(p=>normGpon(p)===pNorm));if(empMatch&&empresas.includes(empMatch.empresa)){el.value=empMatch.empresa;atualizarTecnicosGponSemRenderEmpresas();return}}if(empresas.length===1)el.value=empresas[0]}
-function atualizarTecnicosGponSemRenderEmpresas(){const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
-function atualizarTecnicosGpon(){renderGponEmpresas();const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=getTecnicosGponElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
+function renderGponEmpresas(){const el=DOM.gponEmpresa,atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}let tecs=getTecnicosGponElegiveis();const empresas=empresasDistintas(tecs);if(!empresas.length){el.innerHTML='<option value="" disabled selected>Nenhuma empresa para este projeto</option>';return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});const reSelG=empresas.find(e=>mesmaEmpresa(e,atual));if(reSelG){el.value=reSelG;return}const proj=AppState.gponLista.length>0?AppState.gponLista[0].projeto:AppState.gponProjetoAtual;if(proj){const empMatch=tecs.find(t=>(t.prefixos||[]).some(p=>prefixoAtendeProjeto(p,proj)));const optMatch=empMatch&&empresas.find(e=>mesmaEmpresa(e,empMatch.empresa));if(optMatch){el.value=optMatch;atualizarTecnicosGponSemRenderEmpresas();return}}if(empresas.length===1)el.value=empresas[0]}
+function atualizarTecnicosGponSemRenderEmpresas(){const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=tecnicosDaEmpresa(getTecnicosGponElegiveis(),emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
+function atualizarTecnicosGpon(){renderGponEmpresas();const ftg=$('filtroTecGpon');if(ftg)ftg.value='';const emp=DOM.gponEmpresa.value;if(!emp){DOM.gponListaTecs.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}const lista=tecnicosDaEmpresa(getTecnicosGponElegiveis(),emp);if(!lista.length){DOM.gponListaTecs.innerHTML='<div class="info-msg">Nenhum técnico para este projeto/empresa.</div>';return}DOM.gponListaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckGpon" id="tg${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tg${i}">${t.nome}</label></div>`).join('')}
 
 /* ════════════════════════════════════════════════════════
    PAINEL DE SLA
@@ -4398,11 +4528,12 @@ function bindEvents(){
   DOM.btnLimparTudo2.addEventListener('click',limparTudo);
   DOM.listaCTOs.addEventListener('change',e=>{if(e.target.name==='ctoCheck')handleCTOToggle(e.target)});
   DOM.gridPortas.addEventListener('change',atualizarResumo);
+  document.querySelectorAll('input[name="hubMetro"]').forEach(r=>r.addEventListener('change',atualizarRotuloBtnSeguir));
   $('btnFecharModal').addEventListener('click',fecharModal);
   $('btnEditarOS').addEventListener('click',fecharModal);
   $('operadorSelect').addEventListener('change',async e=>{try{localStorage.setItem('noc-operador',e.target.value)}catch(err){}atualizarTextoModal();try{await navigator.clipboard.writeText(construirMensagemComOperador())}catch(err){}});
   $('copyModal').addEventListener('click',e=>{if(e.target===$('copyModal'))fecharModal()});
-  $('btnSeguir').addEventListener('click',async()=>{const rede=AppState.modoIdent?DOM.gponRede.value:DOM.rede.value,msg=construirMensagemComOperador();let hubUrl=null;if(rede==='WIRE')hubUrl='https://clickip.hubsoft.com.br/rede/rede/pop';else if(rede==='FIBER')hubUrl='https://fibernetwork.hubsoft.com.br/rede/rede/pop';else if(rede==='INTLINK')hubUrl='https://intlink.hubsoft.com.br/rede/rede/pop';try{await navigator.clipboard.writeText(msg)}catch(err){}fecharModal();const w=hubUrl?window.open(hubUrl,'_blank'):null;if(!w&&hubUrl)showToast('Popup bloqueado!','error',5000);else if(hubUrl)showToast('✓ Hubsoft aberto!')});
+  $('btnSeguir').addEventListener('click',async()=>{const msg=construirMensagemComOperador();const hubUrl=hubsoftUrlParaOS();try{await navigator.clipboard.writeText(msg)}catch(err){}fecharModal();const w=hubUrl?window.open(hubUrl,'_blank'):null;if(!w&&hubUrl)showToast('Popup bloqueado!','error',5000);else if(hubUrl)showToast('✓ Hubsoft aberto!')});
   $('filtroTecCabo').addEventListener('input',filtrarTecsCabo);
   $('filtroTec').addEventListener('input',filtrarTecs);
   $('filtroTecGpon').addEventListener('input',filtrarTecGpon);
@@ -4554,21 +4685,31 @@ function _aplicarTecnicos(lista){
   renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);
   renderTecnicos();renderTecnosCabo();renderGponEmpresas();
 }
-function carregarTecnicos(){
+/* forcar=true: ignora o cache do navegador E manda forcar=1 para o Apps
+   Script, que sem isso devolve a copia do CacheService (15 min) — era por
+   isso que o botao "Atualizar" nao trazia o tecnico acabado de cadastrar
+   na aba TECNICOS: limpava so o cache local e recebia a planilha antiga. */
+function carregarTecnicos(forcar){
   if(AppState.tecnicosStatus==='loading')return;
-  const cache=cacheGet('TECNICOS');
+  const cache=forcar?null:cacheGet('TECNICOS');
   if(cache){_aplicarTecnicos(cache);return}
   AppState.tecnicosStatus='loading';AppState.tecnicos=[];
   let respondeu=false;
   const _tecErro=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos. <a href="#" onclick="AppState.tecnicosStatus=\'idle\';carregarTecnicos();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderGponEmpresas()};
   const timer=setTimeout(()=>{if(!respondeu){respondeu=true;_tecErro()}},20000);
   const s=document.createElement('script');
-  s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec`;
+  s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec${forcar?'&forcar=1':''}`;
   s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);_tecErro()}};
   document.body.appendChild(s);
   window.cbTec=d=>{
     if(respondeu)return;respondeu=true;clearTimeout(timer);
-    const lista=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=splitListaValores(x.col4||x.prefixos||'').map(normGpon);return{nome,numero,empresa,prefixos}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+    /* aba TECNICOS: A=NOME  B=NUMERO  C=EMPRESA EXECUTANTE  D=PREFIXO DAS CTOs
+       (E, se preenchida, entra como observacao e nao afeta o casamento) */
+    const lista=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=[...new Set(splitListaValores(x.col4||x.prefixos||'').map(normGpon).filter(p=>p.length>=2))],obs=(x.col5||'').trim();return{nome,numero,empresa,prefixos,obs}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+    const semEmpresa=lista.filter(t=>!_normEmpresa(t.empresa)).map(t=>t.nome);
+    if(semEmpresa.length)console.warn('[TECNICOS] sem EMPRESA EXECUTANTE na coluna C — nao aparecem em nenhum acionamento: '+semEmpresa.join(', '));
+    const semPrefixo=lista.filter(t=>_normEmpresa(t.empresa)&&!t.prefixos.length).map(t=>t.nome);
+    if(semPrefixo.length)console.warn('[TECNICOS] sem PREFIXO na coluna D — nao aparecem por CTO (so em Metro/Backbone, que nao filtram por prefixo): '+semPrefixo.join(', '));
     cacheSet('TECNICOS',lista);
     _aplicarTecnicos(lista);
   }
@@ -4997,13 +5138,38 @@ function buscarCabosProximos(){
    para casar variações como "IMAIS", "I_MAIS", "I-MAIS", "I MAIS" */
 function _normEmpresa(e){return String(e||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
 
+/* MAPA EMPRESA -> REDES QUE ELA ATENDE
+   ─────────────────────────────────────────────────────────────
+   A versao anterior era uma whitelist fechada por rede (FIBER so aceitava
+   nome com "CONNECT", INTLINK so "EXTRA", WIRE so "CONNECT"/"IMAIS"). Toda
+   empresa executante NOVA caia fora antes mesmo de olhar o prefixo da CTO,
+   e o tecnico dela nunca aparecia — sem nenhuma mensagem de erro.
+
+   Agora a regra e invertida: bloqueia apenas a empresa que esta
+   EXPLICITAMENTE mapeada para outra(s) rede(s). Empresa ainda nao mapeada
+   (terceirizada nova, parceiro pontual) aparece em qualquer rede, e quem
+   decide se ela atende aquela CTO passa a ser a coluna D (prefixo).
+   Para travar uma empresa nova em redes especificas, basta acrescentar
+   uma linha aqui. */
+const EMPRESAS_POR_REDE=[
+  {empresa:'CONNECT',redes:['FIBER','WIRE']},
+  {empresa:'EXTRA',  redes:['INTLINK']},
+  {empresa:'IMAIS',  redes:['WIRE']}
+];
+function regraDaEmpresa(empresa){
+  const n=_normEmpresa(empresa);
+  if(!n)return null;
+  return EMPRESAS_POR_REDE.find(r=>n.includes(r.empresa))||null;
+}
 /* define, para cada rede, quais empresas podem atender.
-   retorna null quando a rede não restringe por empresa (ex: METRO). */
+   retorna null quando a rede nao restringe por empresa (METRO, BACKBONE). */
 function filtroEmpresaPorRede(rede){
-  if(rede==='FIBER')   return e=>_normEmpresa(e).includes('CONNECT');
-  if(rede==='INTLINK') return e=>_normEmpresa(e).includes('EXTRA');
-  if(rede==='WIRE')    return e=>{const n=_normEmpresa(e);return n.includes('CONNECT')||n.includes('IMAIS')};
-  return null;
+  if(!rede||rede==='METRO'||rede==='BACKBONE')return null;
+  return e=>{
+    const regra=regraDaEmpresa(e);
+    if(!regra)return true;                       // empresa nova: passa
+    return regra.redes.indexOf(rede)!==-1;       // empresa mapeada: so na rede dela
+  };
 }
 
 /* REGRAS DE FALLBACK EXPLÍCITO — mapeiam um padrão de PROJETO direto para
@@ -5034,22 +5200,21 @@ function getTecnicosElegiveis(){
 
   const ctosSel=getSelectedCTOs();
   if(ctosSel.length>0){
-    const ps=[...new Set(ctosSel.map(c=>getPrefixFromCTO(c.cto)).filter(Boolean))];
-    /* fallback explícito: além do casamento normal por catálogo de
-       prefixos, qualquer CTO cujo projeto bata com uma REGRA_FALLBACK
-       garante que a empresa da regra apareça, independente do que o
-       catálogo de técnicos disser */
+    /* cada técnico é testado com o SEU próprio prefixo da coluna D contra o
+       nome das CTOs marcadas. Não existe mais catálogo global elegendo um
+       prefixo único por CTO — era isso que sumia com técnico recém-cadastrado
+       cujo prefixo tivesse comprimento diferente do dos colegas. */
+    const nomesCTO=ctosSel.map(c=>c.cto).filter(Boolean);
+    /* fallback explícito: qualquer CTO cujo projeto bata com uma
+       REGRA_FALLBACK garante que a empresa da regra apareça, independente
+       do que a coluna D dos técnicos disser */
     const empresasFallback=[...new Set(
       ctosSel.map(c=>empresaFallbackPorPrefixo(_prefixoDaCTO(c.cto))).filter(Boolean)
-    )];
-    if(ps.length>0||empresasFallback.length>0){
-      tecs=tecs.filter(t=>
-        (t.prefixos&&t.prefixos.some(p=>ps.includes(p)))||
-        empresasFallback.includes(t.empresa)
-      );
-    }else{
-      tecs=[];
-    }
+    )].map(_normEmpresa);
+    tecs=tecs.filter(t=>
+      tecnicoAtendeCTOs(t,nomesCTO)||
+      empresasFallback.indexOf(_normEmpresa(t.empresa))!==-1
+    );
   }else if(
     (DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')||
     DOM.tipo.value==='REDE DE ACESSO - HIGIENIZACAO DE CTO'
@@ -5060,8 +5225,16 @@ function getTecnicosElegiveis(){
   }
   return tecs;
 }
-function renderEmpresas(selectEl){const el=selectEl||DOM.empresa;if(!el)return;const atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}if(AppState.tecnicosStatus==='error'){el.innerHTML='<option value="" disabled selected>Erro ao carregar</option>';return}let tecs=(el.id==='empresaMetro'||el.id==='empresaBackbone')?AppState.tecnicos:getTecnicosElegiveis();const empresas=[...new Set(tecs.map(t=>t.empresa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));if(!empresas.length){const precisaCTO=el.id==='empresa'&&getSelectedCTOs().length===0&&((DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')||DOM.tipo.value==='REDE DE ACESSO - HIGIENIZACAO DE CTO');el.innerHTML=`<option value="" disabled selected>${precisaCTO?'Selecione a CTO primeiro':'Nenhuma empresa disponível'}</option>`;return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});if(empresas.includes(atual))el.value=atual;else if(empresas.length===1&&el.id==='empresa')el.value=empresas[0]}
-function renderTecnosCabo(){renderEmpresas(DOM.empresaMetro);const ftc=$('filtroTecCabo');if(ftc)ftc.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Carregando...</div>';return}const emp=DOM.empresaMetro.value;if(!emp){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}let lista=AppState.tecnicos.filter(t=>t.empresa===emp);if(!lista.length){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Nenhum técnico.</div>';return}DOM.listaTecsCabo.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join('')}
+/* lista de empresas sem duplicar por diferença de caixa/espaço/hífen:
+   "CONNECT", "Connect" e "CONNECT " viravam três opções no select e
+   quebravam o casamento com o técnico (que era feito por igualdade exata). */
+function empresasDistintas(tecs){
+  const vistos=new Set(),saida=[];
+  (tecs||[]).forEach(t=>{const n=_normEmpresa(t.empresa);if(!n||vistos.has(n))return;vistos.add(n);saida.push(String(t.empresa).trim())});
+  return saida.sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
+}
+function renderEmpresas(selectEl){const el=selectEl||DOM.empresa;if(!el)return;const atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}if(AppState.tecnicosStatus==='error'){el.innerHTML='<option value="" disabled selected>Erro ao carregar</option>';return}let tecs=(el.id==='empresaMetro'||el.id==='empresaBackbone')?AppState.tecnicos:getTecnicosElegiveis();const empresas=empresasDistintas(tecs);if(!empresas.length){const precisaCTO=el.id==='empresa'&&getSelectedCTOs().length===0&&((DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')||DOM.tipo.value==='REDE DE ACESSO - HIGIENIZACAO DE CTO');el.innerHTML=`<option value="" disabled selected>${precisaCTO?'Selecione a CTO primeiro':'Nenhuma empresa disponível'}</option>`;return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});const reSel=empresas.find(e=>mesmaEmpresa(e,atual));if(reSel)el.value=reSel;else if(empresas.length===1&&(el.id==='empresa'||el.id==='empresaMetro'||el.id==='empresaBackbone'))el.value=empresas[0]}
+function renderTecnosCabo(){renderEmpresas(DOM.empresaMetro);const ftc=$('filtroTecCabo');if(ftc)ftc.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Carregando...</div>';return}const emp=DOM.empresaMetro.value;if(!emp){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}let lista=tecnicosDaEmpresa(AppState.tecnicos,emp);if(!lista.length){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Nenhum técnico com esta empresa na coluna C da aba TECNICOS.</div>';return}DOM.listaTecsCabo.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join('')}
 /* isola primeiro o segmento real do projeto (mesma lógica usada em CTO → Família,
    que ignora "CTO" e demais palavras reservadas) e só então compara com o
    catálogo de prefixos dos técnicos. Isso evita falso-positivo quando um código
@@ -5110,7 +5283,7 @@ function handleAcionamentoChange(){
 function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');AppState.multiSelectAllowed=true;if(d==='PORTA CTO ATENUADA'){DOM.boxPortas.classList.remove('hidden');AppState.multiSelectAllowed=false}else if(d==='RAMAL GPON ATENUADO'){DOM.boxFamilia.classList.remove('hidden');DOM.previewRamal.classList.remove('hidden');DOM.boxBuscaCTO.classList.add('hidden');atualizarPreviewRamal()}atualizarResumo();renderTecnicos()}
 function handleCTOToggle(cb){const d=DOM.detalheAtenuacao.value;if(DOM.tipo.value!=='REDE DE ACESSO - ATENUACAO'){atualizarResumo();renderTecnicos();return}if(d==='PORTA CTO ATENUADA'&&cb.checked)DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});else if(d==='RAMAL GPON ATENUADO'&&cb.checked){cb.checked=false;return}atualizarResumo();renderTecnicos()}
 function renderListaCTOs(lista){if(!lista||!lista.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}DOM.listaCTOs.innerHTML=lista.sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true})).map((item,i)=>`<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join('')}
-function renderTecnicos(){renderEmpresas(DOM.empresa);const ft=$('filtroTec');if(ft)ft.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecs.innerHTML='<div class="info-msg">Carregando técnicos...</div>';return}const emp=DOM.empresa.value;if(!emp){DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';return}const lista=getTecnicosElegiveis().filter(t=>t.empresa===emp);if(!lista.length){DOM.listaTecs.innerHTML='<div class="info-msg">Nenhum técnico disponível.</div>';return}DOM.listaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('')}
+function renderTecnicos(){renderEmpresas(DOM.empresa);const ft=$('filtroTec');if(ft)ft.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecs.innerHTML='<div class="info-msg">Carregando técnicos...</div>';return}const emp=DOM.empresa.value;if(!emp){DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';return}const lista=tecnicosDaEmpresa(getTecnicosElegiveis(),emp);if(!lista.length){DOM.listaTecs.innerHTML='<div class="info-msg">Nenhum técnico disponível para esta empresa + CTO. Confira a coluna D (prefixo) na aba TECNICOS ou rode <code>diagnosticarTecnicos(\'NOME-DA-CTO\')</code> no console.</div>';return}DOM.listaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('')}
 function atualizarPreviewRamal(){
   if(DOM.detalheAtenuacao.value!=='RAMAL GPON ATENUADO')return;
   const frag=DOM.inputFamilia.value;
@@ -5143,7 +5316,46 @@ window.removerCTO=id=>{const el=$(id);if(el)el.checked=false;atualizarResumo();r
 function filtrarCTOs(){const v=normBusca(DOM.filtro.value);DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it=>{it.style.display=normBusca(it.textContent).includes(v)?'':'none'})}
 function desmarcarTudo(n){document.querySelectorAll(`input[name="${n}"]:checked`).forEach(c=>c.checked=false)}
 function desmarcarTudoPortas(){DOM.gridPortas.querySelectorAll('input:checked').forEach(c=>c.checked=false)}
-function exibirModal(c){AppState.conteudoCopiado=c;$('copyModal').classList.add('active');atualizarTextoModal()}
+/* ══════════════════════════════════════════════════════════════════
+   HUBSOFT — qual instancia abrir ao concluir a O.S.
+   ══════════════════════════════════════════════════════════════════ */
+const HUBSOFT_URLS={
+  WIRE:   'https://clickip.hubsoft.com.br/rede/rede/pop',
+  FIBER:  'https://fibernetwork.hubsoft.com.br/rede/rede/pop',
+  INTLINK:'https://intlink.hubsoft.com.br/rede/rede/pop'
+};
+/* rede que originou a O.S. exibida no modal (o fluxo GPON usa outro select) */
+function redeAtualOS(){return AppState.modoIdent?DOM.gponRede.value:DOM.rede.value}
+function hubsoftUrlParaOS(){
+  const rede=redeAtualOS();
+  /* BACKBONE sempre abre no Click IP */
+  if(rede==='BACKBONE')return HUBSOFT_URLS.WIRE;
+  /* REDE METRO: usa a instancia escolhida nas 3 mini caixas do modal */
+  if(rede==='METRO'){
+    const sel=document.querySelector('input[name="hubMetro"]:checked');
+    return HUBSOFT_URLS[sel?sel.value:'WIRE']||HUBSOFT_URLS.WIRE;
+  }
+  return HUBSOFT_URLS[rede]||null;
+}
+/* rotulo do botao: na Metro mostra qual Hubsoft vai abrir */
+function atualizarRotuloBtnSeguir(){
+  const btn=$('btnSeguir');if(!btn)return;
+  const rede=redeAtualOS();
+  let nome='';
+  if(rede==='METRO'){
+    const sel=document.querySelector('input[name="hubMetro"]:checked');
+    nome=({WIRE:'Click IP',FIBER:'Fiber Network',INTLINK:'Intlink'})[sel?sel.value:'WIRE']||'';
+  }else if(rede==='BACKBONE'){nome='Click IP'}
+  btn.innerHTML='&#9654; Enviar &amp; Abrir Hubsoft'+(nome?' '+nome:'');
+}
+function exibirModal(c){
+  AppState.conteudoCopiado=c;
+  const box=$('boxHubMetro');
+  if(box)box.classList.toggle('hidden',redeAtualOS()!=='METRO');
+  atualizarRotuloBtnSeguir();
+  $('copyModal').classList.add('active');
+  atualizarTextoModal();
+}
 function fecharModal(){$('copyModal').classList.remove('active')}
 function carregarOperadores(){
   const cache=cacheGet('OPERADOR');
@@ -5427,8 +5639,8 @@ function renderTecnicosBackbone(){
   if(AppState.tecnicosStatus==='loading'){DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Carregando...</div>';return}
   const emp=DOM.empresaBackbone.value;
   if(!emp){DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}
-  const lista=AppState.tecnicos.filter(t=>t.empresa===emp);
-  if(!lista.length){DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Nenhum técnico.</div>';return}
+  const lista=tecnicosDaEmpresa(AppState.tecnicos,emp);
+  if(!lista.length){DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Nenhum técnico com esta empresa na coluna C da aba TECNICOS.</div>';return}
   DOM.listaTecsBackbone.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckBackbone" id="tbb${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tbb${i}">${t.nome}</label></div>`).join('');
 }
 function filtrarTecBackbone(){const v=normGpon($('filtroTecBackbone').value);DOM.listaTecsBackbone.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'});atualizarEstadoAllTec('listaTecsBackbone')}
