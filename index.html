@@ -282,10 +282,11 @@ body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.
 .cabo-badge.b-BAIXA{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.3)}
 .cabo-nota{font-family:'Share Tech Mono',monospace;font-size:.58rem;line-height:1.5;color:var(--text3);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)}
 .cabo-card-ref{background:var(--bg3);border:1px dashed var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:6px;opacity:.72}
-/* cartão da FASE 1: já mostra quem está por perto enquanto os dados vêm.
-   Classe própria de propósito — gerarOSMetro só lê .cabo-card, então um
-   cabo sem dados completos nunca entra na Ordem de Serviço. */
-.cabo-card-pre{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--blue2);border-radius:8px;padding:10px 12px;margin-bottom:6px;animation:slideIn .15s ease-out}
+/* prévia da FASE 1: quem está por perto, uma linha por cabo, enquanto os
+   dados completos chegam. Classe própria de propósito — gerarOSMetro só lê
+   .cabo-card, então cabo sem dados nunca entra na Ordem de Serviço. */
+.cabo-pre-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--blue2);border-radius:7px;padding:8px 11px;margin-bottom:4px;font-size:.8rem;font-weight:600;color:var(--text2);animation:slideIn .15s ease-out}
+.cabo-pre-dist{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--text3);white-space:nowrap}
 .cabo-etapa{display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text2);padding:10px 2px}
 .cabo-etapa-spin{width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:caboSpin .7s linear infinite;flex:0 0 auto}
 @keyframes caboSpin{to{transform:rotate(360deg)}}
@@ -1147,7 +1148,7 @@ IDENTIFICA&#199;&#195;O
 <div id="boxCtoLookup" style="display:none">
 <div class="gpon-card">
 <div class="gpon-card-title">&#128205; Consulta CTO &rarr; Fam&#237;lia</div>
-<div class="info-msg" style="margin-bottom:12px">&#9432; Digite o nome ou parte da CTO para identificar OLT, modelo e fam&#237;lia. As redes devem ter sido acessadas ao menos uma vez.</div>
+<div class="info-msg" style="margin-bottom:12px">&#9432; Digite o nome ou parte da CTO.</div>
 <div class="cable-search-box">
 <div class="cto-input-wrap">
 <input type="text" id="ctoLookupInput" placeholder="Ex: CTO-PAR12-001, AUT04-002..." autocomplete="off">
@@ -1334,7 +1335,7 @@ IDENTIFICA&#199;&#195;O
 <div id="boxFamilia" class="form-group hidden">
 <label for="inputFamilia">Prefixo ou Ramal Afetado</label>
 <input type="text" id="inputFamilia" placeholder="Ex: PAR12, 12-1, AUT04...">
-<div class="info-msg" style="margin-top:6px">O sistema agrupar&#225; todas as CTOs com este texto.</div>
+
 </div>
 <div id="boxBuscaCTO" class="form-group">
 <label for="filtro">Buscar e Selecionar CTO</label>
@@ -4864,11 +4865,9 @@ function _retryCaboMetro(){
 
 function renderStatusBar(){
   const s=AppState.cacheRedes['METRO'];
-  if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando (pode levar até ${Math.round(TIMEOUT_CABO_METRO_MS/1000)}s — são várias abas)...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;
-  else if(s==='ERRO')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Falha ao carregar cabos. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
-  else if(s==='TIMEOUT')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--amber)">&#9888; O carregamento demorou mais que ${Math.round(TIMEOUT_CABO_METRO_MS/1000)}s e foi cancelado (pode ser lentidão do servidor ao ler muitas abas). <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
-  else if(Array.isArray(s))DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--teal)">&#10003; ${s.length} cabos carregados no navegador (modo local).</div>`;
-  else if(DOM.rede.value==='METRO')DOM.statusBar.innerHTML=`<div class="info-msg">Cole a coordenada e clique em Buscar — a procura roda no servidor, sem pré-carga.</div>`;
+  if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando cabos...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;
+  else if(s==='ERRO'||s==='TIMEOUT')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--amber)">&#9888; Falha ao carregar cabos. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
+  /* nada a anunciar quando está tudo certo: a caixa de busca já se explica */
   else DOM.statusBar.innerHTML='';
 }
 function haversine(a,b,c,d){const R=6371000,e=(c-a)*Math.PI/180,f=(d-b)*Math.PI/180,g=Math.sin(e/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(f/2)**2;return R*2*Math.atan2(Math.sqrt(g),Math.sqrt(1-g))}
@@ -4946,6 +4945,57 @@ function parseCoordenada(s){
     if(_coordPlausivel(lat,lng))return{lat,lng};
   }
   return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COORDENADA DA CTO — normaliza o que vem da planilha
+   ═══════════════════════════════════════════════════════════════════════
+   O link do acionamento era montado colando as células cruas:
+   `maps?q=${info.lat},${info.lng}`. Funciona enquanto a planilha guarda
+   o decimal com PONTO. Quando a célula vem com VÍRGULA decimal (formato
+   pt-BR, que é o que o Sheets grava se a coluna estiver como texto ou se
+   os dados forem reimportados), "-3,09869" e "-60,01261" viram
+
+     maps?q=-3,09869,-60,01261
+
+   ou seja, QUATRO números separados por vírgula — o Maps não consegue ler
+   e responde que o local não existe. O mesmo acontece se as duas
+   coordenadas caírem numa única célula, ou se lat e lng estiverem em
+   colunas trocadas.
+
+   Aqui as três situações são tratadas antes de montar o link. Na área de
+   operação |lat| é sempre menor que |lng| e as faixas não se sobrepõem
+   (lat entre -34 e 6, lng entre -74 e -34), então a ordem pode ser
+   corrigida com segurança e um número que não é coordenada é recusado —
+   melhor sair "Sem coordenadas" do que um link que abre no lugar errado. */
+function coordDaCTO(info){
+  if(!info)return null;
+  /* um número por célula, tolerando vírgula decimal e lixo em volta */
+  const umNumero=v=>{
+    const m=String(v==null?'':v).trim().replace(',','.').match(/-?\d+(?:\.\d+)?/);
+    return m?parseFloat(m[0]):NaN;
+  };
+  const aceitar=(a,b)=>{
+    if(!Number.isFinite(a)||!Number.isFinite(b))return null;
+    const lat=Math.abs(a)<Math.abs(b)?a:b;
+    const lng=Math.abs(a)<Math.abs(b)?b:a;
+    return _coordPlausivel(lat,lng)?{lat,lng}:null;
+  };
+  /* 1) o caso normal: lat e lng em colunas separadas */
+  let r=aceitar(umNumero(info.lat),umNumero(info.lng));
+  if(r)return r;
+  /* 2) as duas coordenadas na mesma célula */
+  for(const campo of [info.lat,info.lng,info.localizacao,info.col2,info.col3]){
+    const txt=String(campo==null?'':campo).replace(/,(\d)/g,'.$1');
+    const nums=[...txt.matchAll(/-?\d+\.\d+/g)].map(m=>parseFloat(m[0]));
+    if(nums.length>=2){r=aceitar(nums[0],nums[1]);if(r)return r}
+  }
+  return null;
+}
+/* link do Maps de uma CTO, ou null quando a coordenada não é confiável */
+function linkMapsCTO(info){
+  const c=coordDaCTO(info);
+  return c?`https://www.google.com/maps?q=${c.lat},${c.lng}`:null;
 }
 
 /* Extrai os pares de coordenadas da célula "Localização", em qualquer
@@ -5055,9 +5105,9 @@ function _pontoCaboHTML(c){
 function _cardCaboHTML(c){
   const rotulo={ALTA:'ALTA CONFIANÇA',MEDIA:'CONFIRMAR EM CAMPO',BAIXA:'BAIXA CONFIANÇA'}[c.confianca];
   const notas=[];
-  if(c.tolCurva>=1)notas.push(`vão de ${Math.round(c.vaoMaior)}m sem vértice — ${c.tolCurva.toFixed(1)}m de tolerância de curva aplicados`);
-  if(c.foraDaExtensao&&!c.pontual)notas.push('ponto além da extremidade do cabo');
-  if(c.pontual)notas.push('cabo com apenas 1 ponto mapeado — geometria incompleta');
+  if(c.tolCurva>=1)notas.push(`vão de ${Math.round(c.vaoMaior)}m sem vértice`);
+  if(c.foraDaExtensao&&!c.pontual)notas.push('ponto além da ponta do cabo');
+  if(c.pontual)notas.push('só 1 ponto mapeado');
   return `<div class="cabo-card conf-${c.confianca}">
   <div class="cabo-card-head">
     <label class="cabo-check-wrap"><input type="checkbox" class="cabo-check" checked><span>Incluir na OS</span></label>
@@ -5156,8 +5206,8 @@ function _caboEtapa(txt){
 }
 function _caboErroCoord(entrada){
   DOM.resultadoCabos.innerHTML=/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)/i.test(entrada)
-    ? `<div class="info-msg" style="color:var(--amber)">&#9888; Link encurtado do Google Maps não pode ser lido aqui. Abra o link, toque no pino e cole a coordenada — ex: -3.123522, -58.158557</div>`
-    : `<div class="info-msg" style="color:var(--red)">Coordenada não reconhecida. Cole no formato -3.123522, -58.158557 ou um link do Maps com @lat,lng.</div>`;
+    ? `<div class="info-msg" style="color:var(--amber)">&#9888; Link encurtado não abre aqui. Toque no pino e cole a coordenada.</div>`
+    : `<div class="info-msg" style="color:var(--red)">&#9888; Coordenada inválida. Ex: -3.123522, -58.158557</div>`;
 }
 
 async function buscarCabosProximos(){
@@ -5175,8 +5225,9 @@ async function buscarCabosProximos(){
     }
     await _buscarCabosLocal(coord,meu);
   }catch(err){
+    console.error('[CABOS]',err);
     if(meu===_caboBuscaSeq){
-      DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; ${_esc(err.message||'Falha na busca de cabos.')}</div>`;
+      DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Falha na busca. Tente novamente.</div>`;
     }
   }finally{
     if(meu===_caboBuscaSeq){DOM.btnBuscarCabo.disabled=false;DOM.btnBuscarCabo.textContent='Buscar'}
@@ -5188,7 +5239,7 @@ async function buscarCabosProximos(){
    e false quando o servidor não tem a ação publicada — aí quem responde
    é o modo local. */
 async function _buscarCabosNoServidor(coord,meu){
-  _caboEtapa('Fase 1 · localizando cabos perto da coordenada...');
+  _caboEtapa('Buscando cabos...');
   let f1;
   try{
     f1=await _caboJsonp({acao:'cabosProximos',fase:1,lat:coord.lat,lng:coord.lng,raio:CABO_SRV_RAIO});
@@ -5209,7 +5260,7 @@ async function _buscarCabosNoServidor(coord,meu){
   /* nada nos 400m: amplia UMA vez, só para conseguir mostrar referência */
   let ampliado=false;
   if(!(f1.candidatos||[]).length){
-    _caboEtapa(`Nada em ${CABO_SRV_RAIO}m · ampliando para ${CABO_SRV_RAIO_AMPLO}m...`);
+    _caboEtapa('Ampliando a busca...');
     try{
       const f1b=await _caboJsonp({acao:'cabosProximos',fase:1,lat:coord.lat,lng:coord.lng,raio:CABO_SRV_RAIO_AMPLO});
       if(meu!==_caboBuscaSeq)return true;
@@ -5220,8 +5271,7 @@ async function _buscarCabosNoServidor(coord,meu){
   const cands=f1.candidatos||[];
   if(!cands.length){
     DOM.resultadoCabos.innerHTML=
-      `<div class="cabo-resumo">${f1.avaliados||0} cabos no índice &middot; nenhum a menos de ${Math.round(f1.raio||CABO_SRV_RAIO)}m &middot; ${f1.ms||0}ms</div>`+
-      `<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo mapeado perto deste ponto. Confirme a coordenada com o técnico ou verifique o trecho no OZMap.</div>`;
+      `<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo mapeado perto deste ponto. Confira a coordenada.</div>`;
     return true;
   }
 
@@ -5229,12 +5279,7 @@ async function _buscarCabosNoServidor(coord,meu){
      mostrada é o piso (distância até o retângulo do cabo) — a exata chega
      na fase 2. Estes cartões usam classe própria e NÃO entram na O.S. */
   DOM.resultadoCabos.innerHTML=
-    `<div class="cabo-resumo">Fase 1 &middot; ${f1.avaliados||0} cabos no índice &middot; ${cands.length} por perto &middot; ${f1.ms||0}ms</div>`+
-    cands.slice(0,8).map(c=>`<div class="cabo-card-pre">
-  <div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${_esc(c.nome)}</span></div>
-  <div class="cabo-dist">a partir de ${Number(c.aprox||0).toFixed(0)}m</div>
-  <div class="cabo-nota">carregando tipo, nível e comprimento...</div>
-</div>`).join('');
+    cands.slice(0,6).map(c=>`<div class="cabo-pre-linha"><span>${_esc(c.nome)}</span><span class="cabo-pre-dist">~${Number(c.aprox||0).toFixed(0)}m</span></div>`).join('');
 
   const linhas=cands.slice(0,25).map(c=>c.linha).join(',');
   let f2;
@@ -5243,14 +5288,15 @@ async function _buscarCabosNoServidor(coord,meu){
   }catch(e){
     if(meu===_caboBuscaSeq){
       DOM.resultadoCabos.insertAdjacentHTML('afterbegin',
-        `<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Os cabos acima estão por perto, mas os dados completos não chegaram (${_esc(e.message)}). Clique em Buscar de novo — nada aqui entra na O.S. sem os dados.</div>`);
+        `<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Dados incompletos. Clique em Buscar novamente.</div>`);
     }
     return true;
   }
   if(meu!==_caboBuscaSeq)return true;
 
   if(!f2||f2.ok!==true||!(f2.itens||[]).length){
-    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; ${_esc((f2&&f2.erro)||'Não foi possível carregar os dados dos cabos.')}</div>`;
+    console.warn('[CABOS] fase 2:',(f2&&f2.erro)||'sem itens');
+    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Não foi possível carregar os dados dos cabos.</div>`;
     return true;
   }
 
@@ -5287,20 +5333,18 @@ function _normalizarCaboServidor(c){
    nada cai dentro do alcance e os avisos de confiança. */
 function _renderResultadoCabos(todos,meta){
   meta=meta||{};
-  const detalhes=[];
-  if(meta.avaliados!=null)detalhes.push(`${meta.avaliados} cabos elegíveis no índice`);
-  detalhes.push(`${todos.length} medidos`);
-  if(meta.semGeometria)detalhes.push(`${meta.semGeometria} sem geometria`);
-  if(meta.ignoradosNivel)detalhes.push(`${meta.ignoradosNivel} fora por nível`);
-  if(meta.truncado)detalhes.push('lista de candidatos truncada');
-  if(meta.ampliado)detalhes.push(`raio ampliado para ${Math.round(meta.raio||CABO_SRV_RAIO_AMPLO)}m`);
-  if(meta.ms!=null)detalhes.push(`${meta.ms}ms`);
-  const notaLocal=meta.origem==='local'
-    ? `<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Busca rodando no <strong>modo local</strong> (banco completo baixado para o navegador). Para ficar rápido, publique a versão nova do Apps Script e rode <code>atualizarCacheConsolidadoCabos</code> uma vez.${meta.motivo?`<br><span style="opacity:.75">Servidor respondeu: ${_esc(meta.motivo)}</span>`:''}</div>`
-    : '';
+  /* Contadores e estado de infraestrutura vão para o console (F12). Na tela
+     fica só o que o operador usa para decidir: distância e confiança. */
+  if(meta.origem==='local'){
+    console.info('[CABOS] modo local'+(meta.motivo?' — servidor: '+meta.motivo:'')+
+      '. Para usar a busca no servidor: publicar a versão nova do Apps Script e rodar atualizarCacheConsolidadoCabos.');
+  }
+  console.info('[CABOS] origem=%s elegiveis=%s medidos=%s semGeometria=%s foraPorNivel=%s ampliado=%s truncado=%s %sms',
+    meta.origem,meta.avaliados,todos.length,meta.semGeometria||0,meta.ignoradosNivel||0,
+    !!meta.ampliado,!!meta.truncado,meta.ms);
 
   if(!todos.length){
-    DOM.resultadoCabos.innerHTML=notaLocal+`<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo elegível${detalhes.length?` (${detalhes.join(' · ')})`:''}.</div>`;
+    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo encontrado neste ponto.</div>`;
     return;
   }
 
@@ -5309,23 +5353,23 @@ function _renderResultadoCabos(todos,meta){
   const selecionados=todos.filter(c=>c.distEfetiva<=limite);
   selecionados.forEach(c=>{c.confianca=_confiancaCabo(c)});
 
-  const resumo=`<div class="cabo-resumo">${meta.origem==='servidor'?'Servidor':'Local'} &middot; mais próximo a ${dmin.toFixed(1)}m &middot; raio aplicado ${limite.toFixed(0)}m &middot; ${detalhes.join(' · ')}</div>`;
+  const resumo=`<div class="cabo-resumo">Mais próximo a ${dmin.toFixed(1)}m &middot; raio ${limite.toFixed(0)}m</div>`;
 
   if(!selecionados.length){
-    DOM.resultadoCabos.innerHTML=resumo+notaLocal+
-      `<div class="info-msg" style="color:var(--red);margin:8px 0">&#9888; Nenhum cabo a menos de ${CABO_RAIO_MAX}m deste ponto. Confirme a coordenada com o técnico ou verifique se o trecho está mapeado no OZMap. Os cabos abaixo são apenas referência e não entram na Ordem de Serviço.</div>`+
+    DOM.resultadoCabos.innerHTML=resumo+
+      `<div class="info-msg" style="color:var(--red);margin:8px 0">&#9888; Nada a menos de ${CABO_RAIO_MAX}m. Os cabos abaixo são só referência e não entram na OS.</div>`+
       todos.slice(0,3).map(_cardCaboRefHTML).join('');
     return;
   }
 
   let aviso='';
   if(dmin>CABO_RAIO_BASE+CABO_ERRO_GPS){
-    aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; O cabo mais próximo está a ${dmin.toFixed(1)}m — acima da margem esperada para um ponto fixado. Pode ser imprecisão na localização enviada ou trecho ainda não mapeado. Confirme antes de acionar.</div>`;
+    aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Cabo mais próximo a ${dmin.toFixed(1)}m — confirme antes de acionar.</div>`;
   }else if(selecionados.every(c=>c.confianca!=='ALTA')){
-    aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Nenhum cabo em alta confiança. Desmarque o que não fizer sentido antes de gerar a OS.</div>`;
+    aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Nenhum cabo em alta confiança — confira antes de gerar a OS.</div>`;
   }
 
-  DOM.resultadoCabos.innerHTML=resumo+notaLocal+aviso+selecionados.map(_cardCaboHTML).join('');
+  DOM.resultadoCabos.innerHTML=resumo+aviso+selecionados.map(_cardCaboHTML).join('');
 }
 
 /* ── MODO LOCAL (fallback) ────────────────────────────────────────────
@@ -5369,7 +5413,7 @@ async function _construirIndiceLocal(){
     }
     /* devolve o controle ao navegador entre fatias: a tela não congela */
     if(fim<dm.length){
-      _caboEtapa(`Indexando cabos no navegador... ${Math.round(fim/dm.length*100)}%`);
+      _caboEtapa(`Preparando... ${Math.round(fim/dm.length*100)}%`);
       await new Promise(r=>setTimeout(r,0));
     }
   }
@@ -5381,11 +5425,11 @@ async function _construirIndiceLocal(){
 
 async function _buscarCabosLocal(coord,meu){
   if(!Array.isArray(AppState.cacheRedes['METRO'])){
-    _caboEtapa('Servidor sem a busca por proximidade — baixando o banco de cabos (só desta vez)...');
+    _caboEtapa('Carregando cabos...');
     const ok=await _garantirCabosLocais();
     if(meu!==_caboBuscaSeq)return;
     if(!ok){
-      DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Não foi possível carregar os cabos${AppState.caboSrvMotivo?` (servidor: ${_esc(AppState.caboSrvMotivo)})`:''}. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>`;
+      DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Não foi possível carregar os cabos. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>`;
       return;
     }
   }
@@ -5549,7 +5593,7 @@ function empresasDistintas(tecs){
   return saida.sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
 }
 function renderEmpresas(selectEl){const el=selectEl||DOM.empresa;if(!el)return;const atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}if(AppState.tecnicosStatus==='error'){el.innerHTML='<option value="" disabled selected>Erro ao carregar</option>';return}let tecs=(el.id==='empresaMetro'||el.id==='empresaBackbone')?AppState.tecnicos:getTecnicosElegiveis();const empresas=empresasDistintas(tecs);if(!empresas.length){const precisaCTO=el.id==='empresa'&&getSelectedCTOs().length===0&&((DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')||DOM.tipo.value==='REDE DE ACESSO - HIGIENIZACAO DE CTO');el.innerHTML=`<option value="" disabled selected>${precisaCTO?'Selecione a CTO primeiro':'Nenhuma empresa disponível'}</option>`;return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});const reSel=empresas.find(e=>mesmaEmpresa(e,atual));if(reSel)el.value=reSel;else if(empresas.length===1&&(el.id==='empresa'||el.id==='empresaMetro'||el.id==='empresaBackbone'))el.value=empresas[0]}
-function renderTecnosCabo(){renderEmpresas(DOM.empresaMetro);const ftc=$('filtroTecCabo');if(ftc)ftc.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Carregando...</div>';return}const emp=DOM.empresaMetro.value;if(!emp){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}let lista=tecnicosDaEmpresa(AppState.tecnicos,emp);if(!lista.length){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Nenhum técnico com esta empresa na coluna C da aba TECNICOS.</div>';return}DOM.listaTecsCabo.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join('')}
+function renderTecnosCabo(){renderEmpresas(DOM.empresaMetro);const ftc=$('filtroTecCabo');if(ftc)ftc.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Carregando...</div>';return}const emp=DOM.empresaMetro.value;if(!emp){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}let lista=tecnicosDaEmpresa(AppState.tecnicos,emp);if(!lista.length){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Nenhum técnico.</div>';return}DOM.listaTecsCabo.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join('')}
 /* isola primeiro o segmento real do projeto (mesma lógica usada em CTO → Família,
    que ignora "CTO" e demais palavras reservadas) e só então compara com o
    catálogo de prefixos dos técnicos. Isso evita falso-positivo quando um código
@@ -5598,7 +5642,7 @@ function handleAcionamentoChange(){
 function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');AppState.multiSelectAllowed=true;if(d==='PORTA CTO ATENUADA'){DOM.boxPortas.classList.remove('hidden');AppState.multiSelectAllowed=false}else if(d==='RAMAL GPON ATENUADO'){DOM.boxFamilia.classList.remove('hidden');DOM.previewRamal.classList.remove('hidden');DOM.boxBuscaCTO.classList.add('hidden');atualizarPreviewRamal()}atualizarResumo();renderTecnicos()}
 function handleCTOToggle(cb){const d=DOM.detalheAtenuacao.value;if(DOM.tipo.value!=='REDE DE ACESSO - ATENUACAO'){atualizarResumo();renderTecnicos();return}if(d==='PORTA CTO ATENUADA'&&cb.checked)DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});else if(d==='RAMAL GPON ATENUADO'&&cb.checked){cb.checked=false;return}atualizarResumo();renderTecnicos()}
 function renderListaCTOs(lista){if(!lista||!lista.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}DOM.listaCTOs.innerHTML=lista.sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true})).map((item,i)=>`<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join('')}
-function renderTecnicos(){renderEmpresas(DOM.empresa);const ft=$('filtroTec');if(ft)ft.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecs.innerHTML='<div class="info-msg">Carregando técnicos...</div>';return}const emp=DOM.empresa.value;if(!emp){DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';return}const lista=tecnicosDaEmpresa(getTecnicosElegiveis(),emp);if(!lista.length){DOM.listaTecs.innerHTML='<div class="info-msg">Nenhum técnico disponível para esta empresa + CTO. Confira a coluna D (prefixo) na aba TECNICOS ou rode <code>diagnosticarTecnicos(\'NOME-DA-CTO\')</code> no console.</div>';return}DOM.listaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('')}
+function renderTecnicos(){renderEmpresas(DOM.empresa);const ft=$('filtroTec');if(ft)ft.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecs.innerHTML='<div class="info-msg">Carregando técnicos...</div>';return}const emp=DOM.empresa.value;if(!emp){DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';return}const lista=tecnicosDaEmpresa(getTecnicosElegiveis(),emp);if(!lista.length){DOM.listaTecs.innerHTML='<div class="info-msg">Nenhum técnico disponível.</div>';return}DOM.listaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('')}
 function atualizarPreviewRamal(){
   if(DOM.detalheAtenuacao.value!=='RAMAL GPON ATENUADO')return;
   const frag=DOM.inputFamilia.value;
@@ -5937,7 +5981,7 @@ function salvarSlaManual() {
     });
 }
 
-async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;ctos.forEach(info=>{const link=(info.lat&&info.lng)?`https://www.google.com/maps?q=${info.lat},${info.lng}`:'Sem coordenadas';corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link}\n\n`});const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · ${ctos.length} CTOs: ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas ${portas}`:_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>`@${t.value} (${t.dataset.nome})`).join(', ');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n🔧 TEC: ${tecsStr}\n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;const semCoord=[];ctos.forEach(info=>{const link=linkMapsCTO(info);if(!link)semCoord.push(info.cto);corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link||'Sem coordenadas'}\n\n`});if(semCoord.length){console.warn('[CTO] coordenada inválida na planilha: '+semCoord.join(', '));showToast('Sem coordenada válida: '+semCoord.slice(0,3).join(', ')+(semCoord.length>3?` +${semCoord.length-3}`:''),'error',5000)}const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · ${ctos.length} CTOs: ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas ${portas}`:_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 /* gerarOSMetro: agora só entram na OS os cabos com a caixa "Incluir na OS"
    marcada. Os cartões de referência (.cabo-card-ref) nunca entram, porque
@@ -5955,7 +5999,7 @@ function renderTecnicosBackbone(){
   const emp=DOM.empresaBackbone.value;
   if(!emp){DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}
   const lista=tecnicosDaEmpresa(AppState.tecnicos,emp);
-  if(!lista.length){DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Nenhum técnico com esta empresa na coluna C da aba TECNICOS.</div>';return}
+  if(!lista.length){DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Nenhum técnico.</div>';return}
   DOM.listaTecsBackbone.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckBackbone" id="tbb${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tbb${i}">${t.nome}</label></div>`).join('');
 }
 function filtrarTecBackbone(){const v=normGpon($('filtroTecBackbone').value);DOM.listaTecsBackbone.querySelectorAll('.stack-item').forEach(it=>{it.style.display=normGpon(it.textContent).includes(v)?'':'none'});atualizarEstadoAllTec('listaTecsBackbone')}
