@@ -1703,6 +1703,7 @@ function atualizarDadosForcado(){
   /* o índice de cabos vem dos dados que acabaram de ser descartados */
   AppState.caboIndexLocal=null;AppState.caboIndexBase=null;AppState.caboIndexMeta=null;
   AppState.caboSrv='desconhecido';AppState.caboSrvMotivo='';
+  Object.keys(_refCoordCache).forEach(k=>delete _refCoordCache[k]);
   showToast('↻ Cache limpo. Recarregando dados...');
   carregarOperadores();
   carregarTecnicos(true);
@@ -4974,23 +4975,95 @@ function parseCoordenada(s){
    agora vira link do mesmo jeito, com aviso no console — um pino que o
    técnico consegue conferir vale mais que campo vazio. Só sai
    "Sem coordenadas" quando não existe par de números nenhum. */
-function coordDaCTO(info){
+/* Caixa da operação: 8 estados do Norte, com folga. Só serve para ESCOLHER
+   entre leituras possíveis de uma célula ambígua — nunca para recusar. */
+const COORD_CAIXA={latMin:-14,latMax:6,lngMin:-75,lngMax:-43};
+
+/* Separa os números de uma célula. O `(?:[.,]\d+)*` mantém colado um valor
+   agrupado por milhar (-30.207.462.980) numa corrida só, e ainda quebra em
+   duas quando a célula guarda o par inteiro ("-3,09869 -60,01261"). */
+function _corridasCoord(v){
+  const txt=String(v==null?'':v)
+    .replace(/[−–—˗]/g,'-')
+    .replace(/[   ]/g,' ');
+  return [...txt.matchAll(/-?\d+(?:[.,]\d+)*/g)].map(m=>m[0]);
+}
+
+/* Uma corrida numérica tem SEPARADOR DE MILHAR quando traz 2 ou mais
+   separadores. Com um só, é decimal — e é o caminho que já funciona. */
+function _agrupadaPorMilhar(run){
+  return ((String(run).replace(/^-/,'').match(/[.,]/g)||[]).length)>=2;
+}
+
+/* ── FORMATO AGRUPADO POR MILHAR ─────────────────────────────────────
+   Um projeto veio com as coordenadas assim:
+     -30.207.462.980.831.300      -6.001.828.841.865.060
+   É o que acontece quando o texto "-3.0207462980831300" entra numa
+   planilha em pt-BR: o ponto é lido como separador de MILHAR, o valor
+   vira inteiro e a máscara reagrupa os dígitos de três em três.
+
+   O dado não foi perdido — os DÍGITOS estão todos lá, na ordem certa.
+   Só a posição do ponto decimal se foi. Para reconstruir basta tirar os
+   separadores e testar o ponto depois de 1 e de 2 casas inteiras, que é
+   tudo que a região admite (|lat| até 13, |lng| entre 43 e 75), e ficar
+   com a combinação lat+lng que cai na caixa da operação.
+   No exemplo acima só uma passa: -3,02074629808313 / -60,0182884186506
+   (Manaus, zona norte) — as outras três caem no oceano ou no Sul.
+
+   Célula com UM separador só continua sendo lida como decimal, então o
+   formato que já funciona não passa por aqui. */
+function _valoresCoord(run,tentarAgrupado){
+  const neg=/^-/.test(run);
+  const corpo=String(run).replace(/^-/,'');
+  const sinal=neg?-1:1;
+  const out=[];
+  const push=n=>{if(Number.isFinite(n)&&out.indexOf(n)===-1)out.push(n)};
+  if(!_agrupadaPorMilhar(run)){
+    push(sinal*parseFloat(corpo.replace(',','.')));   // decimal
+    if(!tentarAgrupado)return out;
+  }
+  const dig=corpo.replace(/[.,]/g,'');
+  if(!dig)return out;
+  for(const k of [1,2]){
+    if(dig.length<=k)push(sinal*Number(dig));
+    else push(sinal*parseFloat(dig.slice(0,k)+'.'+dig.slice(k)));
+  }
+  return out;
+}
+
+/* ── DESEMPATE POR VIZINHANÇA ────────────────────────────────────────
+   Reconstruir o ponto decimal é único na maioria dos casos, mas não em
+   todos: "-10.184.444" pode ser 1,0184444 ou 10,184444 e as duas caem na
+   região — a string não distingue. Quem distingue são as CTOs vizinhas:
+   as caixas de um projeto ficam a quilômetros umas das outras, não a
+   mil. Então a leitura escolhida é a mais próxima da mediana das CTOs da
+   mesma rede que foram lidas sem ambiguidade nenhuma.
+
+   A referência usa SÓ leitura direta e sem empate, então nunca chama de
+   volta o desempate — não há recursão. É calculada uma vez por rede. */
+const _refCoordCache={};
+function _referenciaCoordRede(){
+  const rede=DOM.rede&&DOM.rede.value;
+  const base=rede?AppState.cacheRedes[rede]:null;
+  if(!Array.isArray(base)||!base.length)return null;
+  if(_refCoordCache[rede]!==undefined)return _refCoordCache[rede];
+  const lats=[],lngs=[];
+  for(const x of base){
+    const c=coordDaCTO(x,true);          // true = só leitura sem ambiguidade
+    if(c&&c.naCaixa&&!c.ambiguo){lats.push(c.lat);lngs.push(c.lng)}
+    if(lats.length>=400)break;           // amostra basta para a mediana
+  }
+  const mediana=v=>{if(!v.length)return null;const o=v.slice().sort((a,b)=>a-b);return o[Math.floor(o.length/2)]};
+  const ref=(lats.length>=3)?{lat:mediana(lats),lng:mediana(lngs),n:lats.length}:null;
+  _refCoordCache[rede]=ref;
+  return ref;
+}
+
+function coordDaCTO(info,semDesempate){
   if(!info)return null;
-  /* todos os números de uma célula, tolerando o que aparece na prática:
-     vírgula decimal, sinal de menos unicode (− – —) que exportação às vezes
-     coloca no lugar do hífen, espaço não separável, grau e texto em volta */
-  const numeros=v=>{
-    const txt=String(v==null?'':v)
-      .replace(/[−–—˗]/g,'-')
-      .replace(/[   ]/g,' ')
-      .replace(/(\d),(?=\d)/g,'$1.');
-    return [...txt.matchAll(/-?\d+(?:\.\d+)?/g)]
-      .map(m=>parseFloat(m[0])).filter(n=>Number.isFinite(n));
-  };
+
   /* grau-minuto-segundo, quando a planilha guarda 3°05'55.3"S em vez de
-     decimal. Sem isto os três números (3, 5, 55.3) seriam lidos como se
-     fossem coordenadas soltas e o pino cairia longe, sem ninguém notar.
-     Em pt-BR o hemisfério pode vir como O (Oeste) ou L (Leste). */
+     decimal. Tem prioridade: os números soltos de uma célula DMS mentem. */
   const grausMinSeg=v=>{
     const txt=String(v==null?'':v).trim()
       .replace(/[−–—˗]/g,'-').replace(/(\d),(?=\d)/g,'$1.');
@@ -5005,47 +5078,99 @@ function coordDaCTO(info){
     if(g<0||h==='S'||h==='W'||h==='O')dec=-dec;
     return dec;
   };
-  /* DMS tem prioridade: se a célula é DMS, os números soltos dela mentem */
-  const celula=v=>{const d=grausMinSeg(v);return Number.isFinite(d)?[d]:numeros(v)};
-  const a=celula(info.lat),b=celula(info.lng);
-  let par=null;
-  if(a.length&&b.length)  par=[a[0],b[0]];   // coluna B e coluna C — o caso normal
-  else if(a.length>=2)    par=[a[0],a[1]];   // as duas coordenadas na coluna B
-  else if(b.length>=2)    par=[b[0],b[1]];   // as duas na coluna C
+  const dmsLat=grausMinSeg(info.lat),dmsLng=grausMinSeg(info.lng);
+
+  /* corridas numéricas de cada célula, na ordem: B e C (o caso normal),
+     as duas coordenadas numa célula só, ou o campo de localização */
+  const A=_corridasCoord(info.lat),B=_corridasCoord(info.lng);
+  let ra=null,rb=null;
+  if(A.length&&B.length){ra=A[0];rb=B[0]}
+  else if(A.length>=2){ra=A[0];rb=A[1]}
+  else if(B.length>=2){ra=B[0];rb=B[1]}
   else{
-    for(const campo of [info.localizacao,info.col2,info.col3]){
-      const n=numeros(campo);
-      if(n.length>=2){par=[n[0],n[1]];break}
+    for(const c of [info.localizacao,info.col2,info.col3]){
+      const r=_corridasCoord(c);
+      if(r.length>=2){ra=r[0];rb=r[1];break}
     }
   }
-  if(!par)return null;
-  const [x,y]=par;
-  if(x===0&&y===0)return null;
-  if(Math.abs(x)>180||Math.abs(y)>180)return null;
-  let lat=Math.abs(x)<Math.abs(y)?x:y;
-  let lng=Math.abs(x)<Math.abs(y)?y:x;
-  if(Math.abs(lat)>90)return null;
 
-  /* ── SINAL PERDIDO NA PLANILHA ──────────────────────────────────────
-     Em toda a área de atuação a longitude é OESTE, ou seja, negativa.
-     Longitude POSITIVA na faixa de 34 a 74 graus não existe na operação
-     (cai no Oceano Índico) — só pode ser o sinal de menos que a planilha
-     perdeu. E planilha não perde o sinal de uma coluna só: se a longitude
-     veio sem sinal, a latitude veio sem sinal também, então as duas são
-     corrigidas juntas.
+  /* avalia um par: ordena lat/lng por magnitude e recupera sinal perdido */
+  const avaliar=(x,y)=>{
+    if(!Number.isFinite(x)||!Number.isFinite(y))return null;
+    if(x===0&&y===0)return null;
+    if(Math.abs(x)>180||Math.abs(y)>180)return null;
+    let lat=Math.abs(x)<Math.abs(y)?x:y;
+    let lng=Math.abs(x)<Math.abs(y)?y:x;
+    if(Math.abs(lat)>90)return null;
+    /* Em toda a área de atuação a longitude é OESTE, portanto negativa.
+       Longitude POSITIVA entre 34 e 74 não existe na operação (cai no
+       Índico) — é sinal de menos que a planilha perdeu, e planilha não
+       perde o sinal de uma coluna só. Longitude já negativa é respeitada
+       como está, e é isso que preserva Roraima, onde a latitude é
+       legitimamente positiva. */
+    let sinalRecuperado=false;
+    if(lng>0&&lng>=34&&lng<=74){lng=-lng;if(lat>0)lat=-lat;sinalRecuperado=true}
+    const naCaixa=lat>=COORD_CAIXA.latMin&&lat<=COORD_CAIXA.latMax&&
+                  lng>=COORD_CAIXA.lngMin&&lng<=COORD_CAIXA.lngMax;
+    return {lat,lng,sinalRecuperado,naCaixa,confiavel:_coordPlausivel(lat,lng)};
+  };
 
-     Longitude já negativa é respeitada exatamente como está. É isso que
-     preserva as CTOs de Roraima, onde a latitude é legitimamente POSITIVA
-     (Boa Vista fica ao norte do equador): lá a longitude vem negativa, não
-     há inversão, e a latitude positiva passa intacta. */
-  let sinalRecuperado=false;
-  if(lng>0&&lng>=34&&lng<=74){
-    lng=-lng;
-    if(lat>0)lat=-lat;
-    sinalRecuperado=true;
-  }
-  /* `confiavel` só informa se o par caiu na faixa esperada — não veta */
-  return {lat,lng,confiavel:_coordPlausivel(lat,lng),sinalRecuperado};
+  const montar=tentarAgrupado=>{
+    const saida=[];
+    if(Number.isFinite(dmsLat)&&Number.isFinite(dmsLng)){
+      const c=avaliar(dmsLat,dmsLng);
+      if(c)saida.push(c);
+      return saida;
+    }
+    if(ra==null||rb==null)return saida;
+    for(const a of _valoresCoord(ra,tentarAgrupado))
+      for(const b of _valoresCoord(rb,tentarAgrupado)){
+        const c=avaliar(a,b);
+        if(c)saida.push(c);
+      }
+    return saida;
+  };
+
+  /* a célula veio agrupada por milhar? (usado só para avisar) */
+  const agrupado=(ra!=null&&_agrupadaPorMilhar(ra))||(rb!=null&&_agrupadaPorMilhar(rb));
+
+  /* escolhe entre as leituras que caem na região. Uma só: resolvido.
+     Mais de uma: a string é ambígua e quem decide é a vizinhança. */
+  const escolher=lista=>{
+    const naCaixa=lista.filter(c=>c.naCaixa);
+    if(!naCaixa.length)return null;
+    if(naCaixa.length===1){naCaixa[0].ambiguo=false;return naCaixa[0]}
+    if(semDesempate)return null;          // chamada vinda da referência
+    const ref=_referenciaCoordRede();
+    let esc;
+    if(ref){
+      esc=naCaixa.reduce((m,c)=>{
+        const d=Math.abs(c.lat-ref.lat)+Math.abs(c.lng-ref.lng);
+        return (!m||d<m._d)?Object.assign(c,{_d:d}):m;
+      },null);
+    }else{
+      esc=naCaixa[0];                     // sem referência: primeira leitura
+    }
+    esc.ambiguo=true;
+    esc.semReferencia=!ref;
+    delete esc._d;
+    return esc;
+  };
+
+  /* 1ª passada: leitura direta — é a que atende o formato que já funciona */
+  const bomDireto=escolher(montar(false));
+  if(bomDireto){bomDireto.reconstruido=agrupado;return bomDireto}
+
+  /* 2ª passada: nada caiu na região, tenta reposicionar o ponto decimal */
+  const recons=montar(true);
+  const bomRecon=escolher(recons);
+  if(bomRecon){bomRecon.reconstruido=true;return bomRecon}
+
+  /* nada na região: devolve a leitura direta de qualquer forma, para o
+     link nunca desaparecer — quem avisa é linkMapsCTO */
+  const fallback=montar(false)[0]||recons[0]||null;
+  if(fallback)fallback.reconstruido=agrupado;
+  return fallback;
 }
 /* ── LINK DO MAPS ────────────────────────────────────────────────────
    Formato oficial de Maps URLs (developers.google.com/maps/documentation/urls):
@@ -5089,16 +5214,19 @@ function verCoordenadas(rede,limite){
       LINK:c?'ok':'FALHA',
       FAIXA:c?(c.confiavel?'ok':'FORA DA REGIAO'):'-',
       SINAL:c&&c.sinalRecuperado?'RECUPERADO':'-',
+      MILHAR:c&&c.reconstruido?'RECONSTRUIDO':'-',
+      AMBIGUO:c&&c.ambiguo?(c.semReferencia?'SEM REFERENCIA':'sim'):'-',
       'lat lida':c?c.lat:'-','lng lida':c?c.lng:'-'
     };
   });
   const falhas=linhas.filter(l=>l.LINK==='FALHA');
   const fora=linhas.filter(l=>l.FAIXA==='FORA DA REGIAO');
   const semSinal=linhas.filter(l=>l.SINAL==='RECUPERADO');
+  const milhar=linhas.filter(l=>l.MILHAR==='RECONSTRUIDO');
   const virgula=base.filter(x=>/,/.test(String(x.lat))||/,/.test(String(x.lng))).length;
   const texto=base.filter(x=>typeof x.lat==='string').length;
-  console.log('Rede %s · %s CTOs · %s com vírgula decimal · %s como texto · %s sem link · %s fora da região · %s sem sinal negativo',
-              r,base.length,virgula,texto,falhas.length,fora.length,semSinal.length);
+  console.log('Rede %s · %s CTOs · %s com vírgula decimal · %s como texto · %s sem link · %s fora da região · %s sem sinal negativo · %s com ponto de milhar',
+              r,base.length,virgula,texto,falhas.length,fora.length,semSinal.length,milhar.length);
   console.table(linhas.slice(0,limite||25));
   if(falhas.length){
     console.warn('CTOs sem coordenada utilizável: '+falhas.slice(0,40).map(l=>l.CTO).join(', '));
@@ -5122,7 +5250,11 @@ window.verCoordenadas=verCoordenadas;
 function linkMapsCTO(info){
   const c=coordDaCTO(info);
   if(!c)return null;
-  if(c.sinalRecuperado){
+  if(c.reconstruido){
+    console.warn('[CTO] %s: planilha com ponto de milhar — reconstruído para lat %s, lng %s%s. Corrija a coluna na origem.',
+      info&&info.cto,c.lat,c.lng,
+      c.ambiguo?(c.semReferencia?' (leitura AMBÍGUA e sem CTO de referência na rede — confira este ponto)':' (leitura ambígua, resolvida pela vizinhança)'):'');
+  }else if(c.sinalRecuperado){
     console.warn('[CTO] %s: planilha sem o sinal negativo — corrigido para lat %s, lng %s. Vale arrumar na origem.',
       info&&info.cto,c.lat,c.lng);
   }else if(!c.confiavel){
