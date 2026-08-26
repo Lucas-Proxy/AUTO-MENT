@@ -2965,7 +2965,8 @@ function carregarSla(silencioso, retentativas=1){
 /* Normaliza e desenha uma lista de acionamentos. Existe separado do
    carregamento porque a resposta de uma GRAVAÇÃO já traz a lista pronta:
    assim a tela é atualizada sem a segunda viagem ao Apps Script. */
-const APLICAR_JANELA_LOCAL_MS=3*60*1000;   // por quanto tempo o encerramento local vence
+const APLICAR_JANELA_LOCAL_MS=3*60*1000;   // janela em que respostas antigas ainda podem chegar
+const APLICAR_TETO_LOCAL_MS=60*60*1000;    // teto absoluto da marca local
 const PENDENTE_PRAZO_MS=40000;             // card otimista sem confirmação desiste depois disso
 
 /* Descarta uma lista mais velha que a última aplicada. `versaoMs` é o
@@ -2980,22 +2981,46 @@ function _listaVelha(st,versaoMs){
 /* Encerramentos feitos aqui que o servidor ainda não devolveu */
 function _marcarEncerradoLocal(st,id,encerramentoMs,encerradoPor){
   if(!id)return;
+  /* O servidor RENOMEIA o chamado quando o AU chega: TH-<thread> vira
+     AU-<protocolo>. Uma marca presa só ao ID deixava de valer no instante
+     da troca, e o card que o operador acabou de encerrar voltava com
+     outro nome. Guardar protocolo e threads amarra a marca ao CHAMADO,
+     não ao rótulo dele. */
+  const item=(st.itens||[]).find(i=>i.id===id);
   st.encerradosLocais.set(id,{encerramentoMs:Number(encerramentoMs)||Date.now(),
-                              encerradoPor:encerradoPor||'',ts:Date.now()});
+                              encerradoPor:encerradoPor||'',ts:Date.now(),
+                              protocolo:(item&&item.protocolo)||'',
+                              threads:((item&&item.threads)||[]).slice()});
+}
+/* a marca vale para este item? por ID, por protocolo ou por thread */
+function _casaEncerradoLocal(loc,id,x){
+  if(id===x.id)return true;
+  if(loc.protocolo&&x.protocolo&&loc.protocolo===x.protocolo)return true;
+  const a=loc.threads||[],b=x.threads||[];
+  for(let i=0;i<a.length;i++)if(a[i]&&b.indexOf(a[i])!==-1)return true;
+  return false;
 }
 function _aplicarEncerradosLocais(st,itens){
   const agora=Date.now();
-  st.encerradosLocais.forEach((v,id)=>{if(agora-v.ts>APLICAR_JANELA_LOCAL_MS)st.encerradosLocais.delete(id)});
-  if(!st.encerradosLocais.size)return itens;
-  return itens.map(x=>{
-    const loc=st.encerradosLocais.get(x.id);
-    if(!loc)return x;
-    /* Se o item já vem encerrado, a marca não muda nada — e ela NÃO é
-       apagada aqui de propósito: outras respostas em voo, disparadas antes
-       do encerramento, ainda podem chegar com o card vivo. A marca só sai
-       pelo prazo (APLICAR_JANELA_LOCAL_MS), quando não há mais resposta
-       antiga possível a caminho. */
-    if(x.encerramentoMs)return x;
+  const lista=itens||[];
+  /* A marca sai quando o SERVIDOR CONFIRMA — o item volta encerrado ou
+     some da lista —, não quando o relógio passa dos 3 min. Descartá-la
+     pelo tempo era a última rede que faltava: bastava o backend ainda
+     devolver o card vivo para ele reaparecer na cara de quem acabou de
+     normalizar. Os 3 min continuam existindo como carência (resposta
+     disparada ANTES do clique ainda pode estar em voo) e 1 h é o teto,
+     para a marca não viver para sempre. */
+  st.encerradosLocais.forEach((v,id)=>{
+    if(agora-v.ts>APLICAR_TETO_LOCAL_MS){st.encerradosLocais.delete(id);return}
+    if(agora-v.ts<=APLICAR_JANELA_LOCAL_MS)return;
+    const vivo=lista.some(x=>_casaEncerradoLocal(v,id,x)&&!x.encerramentoMs);
+    if(!vivo)st.encerradosLocais.delete(id);
+  });
+  if(!st.encerradosLocais.size)return lista;
+  return lista.map(x=>{
+    let loc=null;
+    st.encerradosLocais.forEach((v,id)=>{if(!loc&&_casaEncerradoLocal(v,id,x))loc=v});
+    if(!loc||x.encerramentoMs)return x;
     return {...x,encerramentoMs:loc.encerramentoMs,
             encerradoPor:x.encerradoPor||loc.encerradoPor};
   });
