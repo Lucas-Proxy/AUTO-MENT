@@ -224,14 +224,14 @@ body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.
 .pill-item label,.stack-item label,.port-item label{display:flex;align-items:center;justify-content:center;padding:7px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text2);transition:all .2s;margin:0;font-family:'Inter',sans-serif;letter-spacing:.3px;text-transform:uppercase}
 .pill-item label:hover,.stack-item label:hover,.port-item label:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
 .pill-item input:checked+label,.stack-item input:checked+label,.port-item input:checked+label{background:var(--blue-l);border-color:var(--blue2);color:var(--blue);font-weight:700;box-shadow:0 0 0 2px var(--blue-b)}
-/* selo da rede detectada pela CTO (modo REDE DE ACESSO) */
-.cto-rede-selo{display:inline-block;margin-left:7px;padding:1px 6px;border-radius:5px;font-size:.6rem;font-weight:800;letter-spacing:.6px;line-height:1.5;border:1px solid currentColor;opacity:.9}
-.cto-rede-selo.rede-FIBER{color:var(--teal);background:var(--teal-l)}
-.cto-rede-selo.rede-INTLINK{color:var(--amber);background:var(--amber-l)}
-.cto-rede-selo.rede-WIRE{color:var(--blue);background:var(--blue-l)}
+/* selo da rede detectada pela CTO (modo REDE DE ACESSO)
+   Neutro de proposito: e informacao de apoio, nao um destaque. Herda a
+   cor do proprio pill e fica esmaecido, entao nao briga com o nome da
+   CTO nem pinta a lista de tres cores diferentes. */
+.cto-rede-selo{display:inline-block;margin-left:7px;padding:0;border:0;background:none;font-size:.58rem;font-weight:600;letter-spacing:.5px;line-height:1;color:inherit;opacity:.4}
+.pill-item input:checked+label .cto-rede-selo{opacity:.5}
 /* rodape do picker: quantas caixas estao a mostra e quantas faltam */
-.cto-nota{flex:0 0 100%;margin-top:4px;padding-top:6px;border-top:1px dashed var(--border);color:var(--text3);font-size:.7rem;font-family:'Share Tech Mono',monospace;letter-spacing:.3px}
-.cto-nota b{color:var(--text2);font-weight:700}
+.cto-nota{flex:0 0 100%;margin-top:2px;text-align:right;color:var(--text3);font-size:.62rem;font-family:'Share Tech Mono',monospace;letter-spacing:.3px;opacity:.7}
 /* ═══ PASSOS RECOLHÍVEIS DO ACIONAMENTO ═══
    Cada caixa preenchida encolhe para uma linha com o que foi escolhido e
    uma seta para reabrir — o operador enxerga o passo em que está sem
@@ -1381,7 +1381,7 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div id="boxBuscaCTO" class="form-group">
 <label for="filtro">Buscar e Selecionar CTO</label>
-<input type="text" id="filtro" placeholder="Digite o prefixo (ex: RPE1, CD1-1-2)...">
+<input type="text" id="filtro" placeholder="Buscar CTO...">
 <div id="listaCTOs" class="cto-picker"><div class="info-msg">Selecione a rede e o tipo de acionamento.</div></div>
 </div>
 <div class="form-group" id="grupoEmpresa">
@@ -7288,8 +7288,10 @@ function desenharListaCTOs(){
   if(!itens.length){
     html=`<div class="info-msg">Nenhuma CTO com &ldquo;${(DOM.filtro.value||'').trim()}&rdquo;.</div>`;
   }else if(candidatas.length>mostradas.length){
-    const faltam=candidatas.length-mostradas.length;
-    html+=`<div class="cto-nota">Mostrando <b>${mostradas.length}</b> de <b>${candidatas.length}</b>${q?'':' caixas'} &middot; ${q?'refine o prefixo':'digite o prefixo'} para chegar nas outras <b>${faltam}</b>.</div>`;
+    /* so a contagem: avisa que a lista esta cortada sem virar um texto
+       de instrucao dentro do picker */
+    const fmt=n=>n.toLocaleString('pt-BR');
+    html+=`<div class="cto-nota">${fmt(mostradas.length)} de ${fmt(candidatas.length)}</div>`;
   }
   DOM.listaCTOs.innerHTML=html;
 }
