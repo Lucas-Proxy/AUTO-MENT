@@ -1973,10 +1973,37 @@ function atualizarDadosForcado(){
   Object.keys(_refCoordCache).forEach(k=>delete _refCoordCache[k]);
   showToast('↻ Cache limpo. Recarregando dados...');
   iniciarDados(true);
+  _reindexarCabos();
   const redeAtual=DOM.rede.value;
   if(redeAtual&&redeAtual!=='METRO'&&redeAtual!=='BACKBONE')carregarCTOs(redeAtual);
   if(AppState.modoIdent==='cto')garantirRedesCarregadas();
 }
+/* O botão Atualizar também manda refazer o índice de cabos. O servidor
+   AGENDA a reconstrução em vez de fazê-la na hora: ela leva minutos, e o
+   Apps Script atende uma requisição por vez por usuário — feita aqui
+   dentro, ela travaria o painel de SLA deste mesmo operador enquanto
+   rodasse. Por isso a resposta volta na hora e o índice fica pronto
+   pouco depois. */
+function _reindexarCabos(){
+  return jsonp({acao:'cabosReindexar'},25000).then(r=>{
+    if(!r||r.ok!==true){
+      /* Apps Script ainda não republicado: não é motivo para alarme, o
+         índice continua sendo mantido pelo gatilho de 30 min */
+      console.warn('[CABOS] reindexação sob demanda indisponível:',(r&&r.erro)||'sem resposta');
+      return;
+    }
+    if(r.pulou){showToast('Índice de cabos já estava em dia.');return}
+    if(r.agendado){
+      showToast(r.primeiraVez
+        ? 'Gerando o índice de cabos pela primeira vez — pode levar alguns minutos.'
+        : 'Índice de cabos sendo refeito em segundo plano.','ok',6000);
+      return;
+    }
+    /* agendado=false: o gatilho não pôde ser criado (cota, permissão) */
+    showToast('Não foi possível agendar a reconstrução do índice de cabos.','error',6000);
+  }).catch(e=>console.warn('[CABOS] reindexação:',e.message));
+}
+
 /* separa por quebra de linha, ponto-e-vírgula, vírgula OU ESPAÇO — a coluna
    "Caixa de Atuação" (col4) guarda os códigos separados por espaço (ex:
    "SE MO MZ JP NC JT CD TRA V3 V2 RD AD TO"), e sem incluir \s aqui a
