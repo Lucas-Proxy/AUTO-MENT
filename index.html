@@ -229,6 +229,24 @@ body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.
 .cto-rede-selo.rede-FIBER{color:var(--teal);background:var(--teal-l)}
 .cto-rede-selo.rede-INTLINK{color:var(--amber);background:var(--amber-l)}
 .cto-rede-selo.rede-WIRE{color:var(--blue);background:var(--blue-l)}
+/* rodape do picker: quantas caixas estao a mostra e quantas faltam */
+.cto-nota{flex:0 0 100%;margin-top:4px;padding-top:6px;border-top:1px dashed var(--border);color:var(--text3);font-size:.7rem;font-family:'Share Tech Mono',monospace;letter-spacing:.3px}
+.cto-nota b{color:var(--text2);font-weight:700}
+/* ═══ PASSOS RECOLHÍVEIS DO ACIONAMENTO ═══
+   Cada caixa preenchida encolhe para uma linha com o que foi escolhido e
+   uma seta para reabrir — o operador enxerga o passo em que está sem
+   perder de vista o que já respondeu. */
+.passo-cab{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:0;margin:0 0 6px;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;color:var(--text2)}
+.passo-cab:hover .passo-cab-tit{color:var(--blue)}
+.passo-cab-tit{font-size:.72rem;font-weight:600;letter-spacing:.4px;text-transform:uppercase;flex-shrink:0}
+.passo-cab-res{flex:1;min-width:0;font-size:.74rem;font-weight:700;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none;letter-spacing:.2px;text-align:right}
+.passo-cab-seta{flex-shrink:0;font-size:.55rem;color:var(--text3);transition:transform .2s}
+.passo-recolhido .passo-cab-seta{transform:rotate(-90deg)}
+.passo-recolhido .passo-corpo{display:none}
+.passo-recolhido{margin-bottom:8px}
+.passo-recolhido .passo-cab{margin-bottom:0;padding:7px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:8px}
+.passo-recolhido .passo-cab:hover{border-color:var(--blue2);background:var(--blue-l)}
+.passo-corpo>label{display:none}
 .button-group{display:flex;gap:10px;margin-top:30px}
 .btn{flex:1;padding:12px 20px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-main{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);color:#fff;box-shadow:0 2px 10px rgba(26,111,219,.4)}
@@ -1231,7 +1249,7 @@ IDENTIFICA&#199;&#195;O
 </div>
 
 <div id="boxNormal">
-<div class="form-group">
+<div class="form-group" id="grupoRede">
 <label for="rede">Rede de Atua&#231;&#227;o</label>
 <select id="rede">
 <option value="" disabled selected>Selecione uma rede...</option>
@@ -1340,7 +1358,7 @@ IDENTIFICA&#199;&#195;O
 </div>
 
 <div id="boxRede">
-<div class="form-group">
+<div class="form-group" id="grupoTipo">
 <label for="tipo">Tipo de Acionamento</label>
 <select id="tipo"><option value="" disabled selected>Carregando...</option></select>
 </div>
@@ -1363,14 +1381,14 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div id="boxBuscaCTO" class="form-group">
 <label for="filtro">Buscar e Selecionar CTO</label>
-<input type="text" id="filtro" placeholder="Digite para filtrar...">
+<input type="text" id="filtro" placeholder="Digite o prefixo (ex: RPE1, CD1-1-2)...">
 <div id="listaCTOs" class="cto-picker"><div class="info-msg">Selecione a rede e o tipo de acionamento.</div></div>
 </div>
-<div class="form-group">
+<div class="form-group" id="grupoEmpresa">
 <label for="empresa">Empresa Executante</label>
 <select id="empresa"><option value="" disabled selected>Selecione...</option></select>
 </div>
-<div class="form-group">
+<div class="form-group" id="grupoTecnicos">
 <label>T&#233;cnicos Dispon&#237;veis</label>
 <div class="tec-toolbar">
 <div class="tec-search-wrap">
@@ -1705,7 +1723,7 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
-const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],slaManualTrechos:[],ctosStatus:'idle',
+const AppState={baseDados:[],ctosBase:[],ctosSel:[],passoAtivo:null,cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],slaManualTrechos:[],ctosStatus:'idle',
 /* Consulta de Cabos v4: TODO o resultado da busca vive aqui, e é daqui
    que a Ordem de Serviço é montada. Na v3 a OS era remontada raspando o
    texto dos cartões na tela — bastava mudar um rótulo para ela sair
@@ -5766,7 +5784,111 @@ function manterGasAcordado() {
    duas requisições em fila, e o Apps Script atende uma por vez. Agora
    TECNICOS, OPERADOR e OLTs vêm juntos — depois de o cache em disco já
    ter pintado a tela. */
-document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();iniciarDados(false);Sync.iniciar()});
+document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();prepararPassosAcion();iniciarDados(false);Sync.iniciar()});
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   PASSOS RECOLHÍVEIS DO PAINEL DE ACIONAMENTO
+   ───────────────────────────────────────────────────────────────────
+   O formulário é uma sequência: rede → tipo → especificação → CTO →
+   empresa → técnicos. Com todas as caixas abertas ao mesmo tempo (a
+   lista de preventivas e o picker de CTO são altos), o operador perde a
+   caixa em que está de vista. Aqui cada passo JÁ RESPONDIDO encolhe para
+   uma linha com a resposta e uma seta; clicar na seta reabre.
+   O recolhimento acontece quando o operador ANDA para um passo seguinte
+   — nunca no meio de uma escolha múltipla (CTOs, técnicos).
+   ═══════════════════════════════════════════════════════════════════ */
+const PASSOS_ACION=[
+  {id:'grupoRede',           titulo:'Rede de Atuação',            resumo:()=>_rotuloSelect(DOM.rede)},
+  {id:'grupoTipo',           titulo:'Tipo de Acionamento',        resumo:()=>_rotuloSelect(DOM.tipo)},
+  {id:'boxDetalhePreventiva',titulo:'Especificação da Preventiva',resumo:()=>getSelectedPreventiva()||''},
+  {id:'boxDetalheAtenuacao', titulo:'Especificação da Atenuação', resumo:()=>_rotuloSelect(DOM.detalheAtenuacao)},
+  {id:'boxFamilia',          titulo:'Prefixo ou Ramal Afetado',   resumo:()=>DOM.inputFamilia.value.trim()},
+  {id:'boxBuscaCTO',         titulo:'Buscar e Selecionar CTO',    resumo:()=>{
+      const sel=AppState.ctosSel||[];
+      if(!sel.length)return '';
+      return sel.length===1?sel[0].cto:(sel.length+' CTOs · '+sel[0].cto+'…');
+  }},
+  {id:'grupoEmpresa',        titulo:'Empresa Executante',         resumo:()=>DOM.empresa.value||''},
+  {id:'grupoTecnicos',       titulo:'Técnicos Disponíveis',       resumo:()=>{
+      const n=DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked').length;
+      return n?(n+' técnico'+(n>1?'s':'')):'';
+  }}
+];
+function _rotuloSelect(el){
+  if(!el||!el.value)return '';
+  const o=el.options[el.selectedIndex];
+  return o?o.textContent.trim():el.value;
+}
+/* monta o cabeçalho clicável uma única vez por caixa */
+function prepararPassosAcion(){
+  PASSOS_ACION.forEach((pa,idx)=>{
+    const el=$(pa.id);
+    if(!el||el.dataset.passo)return;
+    el.dataset.passo=String(idx);
+    const corpo=document.createElement('div');
+    corpo.className='passo-corpo';
+    while(el.firstChild)corpo.appendChild(el.firstChild);
+    const cab=document.createElement('button');
+    cab.type='button';
+    cab.className='passo-cab';
+    cab.setAttribute('aria-expanded','true');
+    cab.innerHTML='<span class="passo-cab-tit"></span><span class="passo-cab-res"></span><span class="passo-cab-seta">&#9660;</span>';
+    cab.querySelector('.passo-cab-tit').textContent=pa.titulo;
+    cab.addEventListener('click',e=>{e.preventDefault();alternarPassoAcion(el)});
+    el.appendChild(cab);
+    el.appendChild(corpo);
+  });
+  sincronizarPassosAcion();
+}
+function _passoDoAlvo(alvo){
+  const el=alvo&&alvo.closest?alvo.closest('[data-passo]'):null;
+  return el&&el.dataset.passo!==undefined?el:null;
+}
+/* clique na seta: abre o que estava recolhido, recolhe o que estava aberto */
+function alternarPassoAcion(el){
+  const vaiAbrir=el.classList.contains('passo-recolhido');
+  el.dataset.aberto=vaiAbrir?'1':'0';
+  if(vaiAbrir)AppState.passoAtivo=Number(el.dataset.passo);
+  sincronizarPassosAcion();
+}
+/* mexer DENTRO de uma caixa torna ela a caixa da vez: as anteriores já
+   respondidas se recolhem, e as manuais voltam ao comportamento normal */
+function marcarPassoAtivo(alvo){
+  const el=_passoDoAlvo(alvo);
+  if(!el)return;
+  PASSOS_ACION.forEach(pa=>{const e=$(pa.id);if(e)delete e.dataset.aberto});
+  AppState.passoAtivo=Number(el.dataset.passo);
+  sincronizarPassosAcion();
+}
+let _syncPassosTimer=null;
+function _agendarSyncPassos(){
+  /* atualizarResumo() e chamado no MEIO da cadeia (antes de renderTecnicos
+     escolher a empresa, por exemplo) — esperar o fim do tique garante que
+     o resumo de cada passo mostre o estado final */
+  clearTimeout(_syncPassosTimer);
+  _syncPassosTimer=setTimeout(sincronizarPassosAcion,0);
+}
+function sincronizarPassosAcion(){
+  const ativo=(AppState.passoAtivo==null)?-1:AppState.passoAtivo;
+  PASSOS_ACION.forEach((pa,idx)=>{
+    const el=$(pa.id);
+    if(!el||!el.dataset.passo)return;
+    const cab=el.querySelector(':scope > .passo-cab');
+    if(!cab)return;
+    let res='';
+    try{res=String(pa.resumo()||'')}catch(e){res=''}
+    cab.querySelector('.passo-cab-res').textContent=res;
+    const forcado=el.dataset.aberto;
+    let recolher;
+    if(forcado==='1')recolher=false;
+    else if(forcado==='0')recolher=!!res;
+    else recolher=!!res&&idx<ativo;
+    el.classList.toggle('passo-recolhido',recolher);
+    cab.setAttribute('aria-expanded',String(!recolher));
+    cab.title=recolher?'Reabrir '+pa.titulo:'Recolher '+pa.titulo;
+  });
+}
 
 function bindEvents(){
   DOM.rede.addEventListener('change',aoMudarRede);
@@ -5787,6 +5909,14 @@ function bindEvents(){
   DOM.btnLimparTudo.addEventListener('click',limparTudo);
   DOM.btnLimparTudo2.addEventListener('click',limparTudo);
   DOM.listaCTOs.addEventListener('change',e=>{if(e.target.name==='ctoCheck')handleCTOToggle(e.target)});
+  /* passos recolhíveis: qualquer toque dentro de uma caixa a torna a da vez */
+  const _painel=$('boxNormal');
+  if(_painel){
+    _painel.addEventListener('focusin',e=>{if(!e.target.closest('.passo-cab'))marcarPassoAtivo(e.target)});
+    _painel.addEventListener('click',e=>{if(!e.target.closest('.passo-cab'))marcarPassoAtivo(e.target)});
+    _painel.addEventListener('change',()=>sincronizarPassosAcion());
+    _painel.addEventListener('input',()=>sincronizarPassosAcion());
+  }
   DOM.gridPortas.addEventListener('change',atualizarResumo);
   document.querySelectorAll('input[name="hubMetro"]').forEach(r=>r.addEventListener('change',atualizarRotuloBtnSeguir));
   $('btnFecharModal').addEventListener('click',fecharModal);
@@ -7063,10 +7193,13 @@ function buscarCTOsPorFragmento(f){
   const regex=new RegExp('(^|-)'+_escapeRegex(fn));
   return AppState.baseDados.filter(c=>regex.test(normFragmentoComHifen(c.cto)));
 }
-function getSelectedCTOs(){if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim());return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb=>{const r=cb.dataset.rede||'';return AppState.baseDados.find(b=>b.cto===cb.value&&(!r||(b._rede||'')===r))||AppState.baseDados.find(b=>b.cto===cb.value)}).filter(Boolean)}
+function getSelectedCTOs(){if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim());return (AppState.ctosSel||[]).slice()}
+/* a selecao foi zerada por fora: redesenha o picker para tirar as pills
+   fixadas no topo que nao estao mais marcadas */
+function _repintarPickerCTO(){if((AppState.ctosBase||[]).length)desenharListaCTOs()}
 function handleAcionamentoChange(){
   const t=DOM.tipo.value;
-  desmarcarTudo('ctoCheck');desmarcarTudoPortas();
+  desmarcarTudo('ctoCheck');desmarcarTudoPortas();_repintarPickerCTO();
   const filhosAtenuacao=getTipoAC('NORMAL','REDE DE ACESSO - ATENUACAO');
   const isAtenuacao=t==='REDE DE ACESSO - ATENUACAO'||filhosAtenuacao.some(f=>f.pai===t&&t.includes('ATENUACAO'));
   const isPreventiva=t==='PREVENTIVA';
@@ -7081,32 +7214,84 @@ function handleAcionamentoChange(){
   atualizarVisibilidadeBuscaCTO();
   atualizarResumo();renderTecnicos();
 }
-function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');AppState.multiSelectAllowed=true;if(d==='PORTA CTO ATENUADA'){DOM.boxPortas.classList.remove('hidden');AppState.multiSelectAllowed=false}else if(d==='RAMAL GPON ATENUADO'){DOM.boxFamilia.classList.remove('hidden');DOM.previewRamal.classList.remove('hidden');DOM.boxBuscaCTO.classList.add('hidden');atualizarPreviewRamal()}atualizarVisibilidadeBuscaCTO();atualizarResumo();renderTecnicos()}
+function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();_repintarPickerCTO();DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');AppState.multiSelectAllowed=true;if(d==='PORTA CTO ATENUADA'){DOM.boxPortas.classList.remove('hidden');AppState.multiSelectAllowed=false}else if(d==='RAMAL GPON ATENUADO'){DOM.boxFamilia.classList.remove('hidden');DOM.previewRamal.classList.remove('hidden');DOM.boxBuscaCTO.classList.add('hidden');atualizarPreviewRamal()}atualizarVisibilidadeBuscaCTO();atualizarResumo();renderTecnicos()}
 function handleCTOToggle(cb){
+  const rede=cb.dataset.rede||'';
+  const chave=_ctoKey(rede,cb.value);
+  const d=DOM.detalheAtenuacao.value;
+  if(!cb.checked){
+    AppState.ctosSel=(AppState.ctosSel||[]).filter(c=>_ctoKey(c._rede,c.cto)!==chave);
+    atualizarResumo();renderTecnicos();return;
+  }
   /* uma O.S. = uma rede. Marcar CTO de outra rede junto e recusado aqui:
      o script, a empresa executante e o Hubsoft de destino saem todos da
      rede da CTO, e misturar deixaria os tres errados. */
-  if(cb.checked&&modoRedeAcesso()){
-    const minha=cb.dataset.rede||'';
-    const conflito=Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked'))
-      .find(c=>c!==cb&&(c.dataset.rede||'')!==minha);
+  if(modoRedeAcesso()){
+    const conflito=(AppState.ctosSel||[]).find(c=>(c._rede||'')!==rede);
     if(conflito){
       cb.checked=false;
-      showToast('Esta O.S. já tem CTO da rede '+rotuloRede(conflito.dataset.rede)+'. Não é possível misturar redes — gere uma O.S. por rede.','error',5000);
+      showToast('Esta O.S. já tem CTO da rede '+rotuloRede(conflito._rede)+'. Não é possível misturar redes — gere uma O.S. por rede.','error',5000);
       return;
     }
   }
-  const d=DOM.detalheAtenuacao.value;if(DOM.tipo.value!=='REDE DE ACESSO - ATENUACAO'){atualizarResumo();renderTecnicos();return}if(d==='PORTA CTO ATENUADA'&&cb.checked)DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});else if(d==='RAMAL GPON ATENUADO'&&cb.checked){cb.checked=false;return}atualizarResumo();renderTecnicos()}
+  if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'){
+    if(d==='RAMAL GPON ATENUADO'){cb.checked=false;return}
+    if(d==='PORTA CTO ATENUADA'){
+      /* porta especifica: uma unica CTO */
+      AppState.ctosSel=[];
+      DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});
+    }
+  }
+  const item=(AppState.baseDados||[]).find(b=>b.cto===cb.value&&(!rede||(b._rede||'')===rede))
+           ||(AppState.baseDados||[]).find(b=>b.cto===cb.value)
+           ||{cto:cb.value,_rede:rede};
+  if(!(AppState.ctosSel||[]).some(c=>_ctoKey(c._rede,c.cto)===chave))AppState.ctosSel.push(item);
+  atualizarResumo();renderTecnicos();
+}
+/* ═══ PICKER DE CTO EM LOTES ══════════════════════════════════════════
+   Juntar FIBER + INTLINK + WIRE numa lista so significa milhares de
+   caixas: despejar tudo de uma vez trava o navegador e nao ajuda ninguem
+   a achar nada. Entao o picker mostra um punhado e vai revelando o resto
+   conforme o prefixo e digitado. O que ja esta marcado fica SEMPRE no
+   topo da lista, mesmo que saia do filtro — selecao nao pode sumir de
+   vista so porque o operador foi buscar a proxima caixa. */
+const CTO_LISTA_MAX=40;      /* caixas visiveis por vez */
+function _ctoKey(rede,cto){return (rede||'')+'\u0001'+cto}
+function _ctoBusca(c){return c._busca||(c._busca=normBusca(c.cto+' '+(c._rede||'')))}
 function renderListaCTOs(lista){
-  if(!lista||!lista.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}
-  /* no modo REDE DE ACESSO as tres redes convivem na mesma lista, entao
-     cada pill leva o selo da rede a que a caixa pertence */
+  AppState.ctosBase=lista||[];
+  desenharListaCTOs();
+}
+function desenharListaCTOs(){
+  const base=AppState.ctosBase||[];
+  const sel=AppState.ctosSel||[];
+  if(!base.length&&!sel.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}
   const comSelo=modoRedeAcesso();
-  DOM.listaCTOs.innerHTML=lista.slice().sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true})).map((item,i)=>{
+  const q=normBusca(DOM.filtro?DOM.filtro.value:'');
+  const marcadas=new Set(sel.map(c=>_ctoKey(c._rede,c.cto)));
+  const candidatas=[];
+  for(const c of base){
+    if(marcadas.has(_ctoKey(c._rede,c.cto)))continue;
+    if(q&&!_ctoBusca(c).includes(q))continue;
+    candidatas.push(c);
+  }
+  candidatas.sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true}));
+  const mostradas=candidatas.slice(0,CTO_LISTA_MAX);
+  const itens=sel.concat(mostradas);
+  const pill=(item,i)=>{
     const r=item._rede||'';
     const selo=(comSelo&&r)?`<span class="cto-rede-selo rede-${r}">${rotuloRede(r)}</span>`:'';
-    return `<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" data-rede="${r}" style="display:none"><label for="c${i}">${item.cto}${selo}</label></div>`;
-  }).join('');
+    const marcada=marcadas.has(_ctoKey(r,item.cto))?' checked':'';
+    return `<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" data-rede="${r}"${marcada} style="display:none"><label for="c${i}">${item.cto}${selo}</label></div>`;
+  };
+  let html=itens.map(pill).join('');
+  if(!itens.length){
+    html=`<div class="info-msg">Nenhuma CTO com &ldquo;${(DOM.filtro.value||'').trim()}&rdquo;.</div>`;
+  }else if(candidatas.length>mostradas.length){
+    const faltam=candidatas.length-mostradas.length;
+    html+=`<div class="cto-nota">Mostrando <b>${mostradas.length}</b> de <b>${candidatas.length}</b>${q?'':' caixas'} &middot; ${q?'refine o prefixo':'digite o prefixo'} para chegar nas outras <b>${faltam}</b>.</div>`;
+  }
+  DOM.listaCTOs.innerHTML=html;
 }
 function renderTecnicos(){renderEmpresas(DOM.empresa);const ft=$('filtroTec');if(ft)ft.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecs.innerHTML='<div class="info-msg">Carregando técnicos...</div>';return}const emp=DOM.empresa.value;if(!emp){DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';return}const lista=tecnicosDaEmpresa(getTecnicosElegiveis(),emp);if(!lista.length){DOM.listaTecs.innerHTML='<div class="info-msg">Nenhum técnico disponível.</div>';return}DOM.listaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('')}
 function atualizarPreviewRamal(){
@@ -7148,10 +7333,22 @@ function atualizarPreviewRamal(){
   }
   atualizarResumo();renderTecnicos();
 }
-function atualizarResumo(){const sel=Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked'));let html=sel.map(c=>`<div class="tag"><span>${c.value}</span><button class="btn-remove" onclick="removerCTO('${c.id}')">&#10005;</button></div>`).join('');const tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value;if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='RAMAL GPON ATENUADO'){const f=DOM.inputFamilia.value.trim();if(f){const enc=buscarCTOsPorFragmento(f);html+=`<div class="tag warning"><span>${f} (${enc.length} CTOs)</span></div>`}}if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(ps.length)html+=`<div class="tag"><span>Portas: ${ps.join(', ')}</span></div>`}DOM.resumoCTOs.innerHTML=html||'<div class="info-msg">Nenhuma seleção.</div>'}
-window.removerCTO=id=>{const el=$(id);if(el)el.checked=false;atualizarResumo();renderTecnicos()};
-function filtrarCTOs(){const v=normBusca(DOM.filtro.value);DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it=>{const cb=it.querySelector('input');const alvo=cb?(cb.value+' '+(cb.dataset.rede||'')):it.textContent;it.style.display=normBusca(alvo).includes(v)?'':'none'})}
-function desmarcarTudo(n){document.querySelectorAll(`input[name="${n}"]:checked`).forEach(c=>c.checked=false)}
+function atualizarResumo(){const sel=(AppState.ctosSel||[]);let html=sel.map(c=>`<div class="tag"><span>${c.cto}</span><button class="btn-remove" onclick="removerCTO('${String(c.cto).replace(/'/g,"\\'")}','${c._rede||''}')">&#10005;</button></div>`).join('');const tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value;if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='RAMAL GPON ATENUADO'){const f=DOM.inputFamilia.value.trim();if(f){const enc=buscarCTOsPorFragmento(f);html+=`<div class="tag warning"><span>${f} (${enc.length} CTOs)</span></div>`}}if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(ps.length)html+=`<div class="tag"><span>Portas: ${ps.join(', ')}</span></div>`}DOM.resumoCTOs.innerHTML=html||'<div class="info-msg">Nenhuma seleção.</div>';_agendarSyncPassos()}
+window.removerCTO=(cto,rede)=>{
+  const chave=_ctoKey(rede||'',cto);
+  AppState.ctosSel=(AppState.ctosSel||[]).filter(c=>_ctoKey(c._rede,c.cto)!==chave);
+  const el=Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]')).find(c=>c.value===cto&&(c.dataset.rede||'')===(rede||''));
+  if(el)el.checked=false;
+  atualizarResumo();renderTecnicos();
+};
+let _ctoFiltroTimer=null;
+function filtrarCTOs(){
+  /* respiro curto: em base grande, redesenhar a cada tecla picotaria a
+     digitacao — 110ms e imperceptivel e corta quase todo o trabalho */
+  clearTimeout(_ctoFiltroTimer);
+  _ctoFiltroTimer=setTimeout(desenharListaCTOs,110);
+}
+function desmarcarTudo(n){if(n==='ctoCheck')AppState.ctosSel=[];document.querySelectorAll(`input[name="${n}"]:checked`).forEach(c=>c.checked=false)}
 function desmarcarTudoPortas(){DOM.gridPortas.querySelectorAll('input:checked').forEach(c=>c.checked=false)}
 /* ══════════════════════════════════════════════════════════════════
    HUBSOFT — qual instancia abrir ao concluir a O.S.
@@ -7563,7 +7760,7 @@ async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Ge
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}atualizarTodosEstadosAllTec();showToast('✓ Limpo.')}
-function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.add('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione a rede e o tipo de acionamento.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.cabos.seq++;AppState.cabos.status='idle';AppState.cabos.itens=[];AppState.cabos.referencia=[];AppState.cabos.incluir={};AppState.cabos.meta=null;renderCabos();AppState.multiSelectAllowed=true;renderStatusBar();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
+function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.add('hidden');AppState.ctosBase=[];AppState.ctosSel=[];DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione a rede e o tipo de acionamento.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.cabos.seq++;AppState.cabos.status='idle';AppState.cabos.itens=[];AppState.cabos.referencia=[];AppState.cabos.incluir={};AppState.cabos.meta=null;renderCabos();AppState.multiSelectAllowed=true;renderStatusBar();AppState.passoAtivo=null;PASSOS_ACION.forEach(pa=>{const e=$(pa.id);if(e)delete e.dataset.aberto});sincronizarPassosAcion();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
 </script>
 </body>
 </html>
