@@ -285,7 +285,7 @@ body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.
 /* prévia da FASE 1: quem está por perto, uma linha por cabo, enquanto os
    dados completos chegam. Classe própria de propósito — gerarOSMetro só lê
    .cabo-card, então cabo sem dados nunca entra na Ordem de Serviço. */
-.cabo-pre-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--blue2);border-radius:7px;padding:8px 11px;margin-bottom:4px;font-size:.8rem;font-weight:600;color:var(--text2);animation:slideIn .15s ease-out}
+.cabo-pre-linha{/* sem uso desde a v4 (a prévia da fase 1 morreu com as duas fases); mantido só para não quebrar estilo herdado */display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--blue2);border-radius:7px;padding:8px 11px;margin-bottom:4px;font-size:.8rem;font-weight:600;color:var(--text2);animation:slideIn .15s ease-out}
 .cabo-pre-dist{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--text3);white-space:nowrap}
 .cabo-etapa{display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text2);padding:10px 2px}
 .cabo-etapa-spin{width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:caboSpin .7s linear infinite;flex:0 0 auto}
@@ -1662,7 +1662,15 @@ const TIPO_AC_FIXO=[
 {contexto:'GPON',valor:'PORTA CTO ATENUADA',label:'PORTA DE CTO ATENUADA',pai:'REDE DE ACESSO - ATENUACAO',ordem:2},
 {contexto:'GPON',valor:'RAMAL GPON ATENUADO',label:'RAMAL GPON ATENUADO',pai:'REDE DE ACESSO - ATENUACAO',ordem:3}
 ];
-const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],slaManualTrechos:[],ctosStatus:'idle',/* Consulta de Cabos v3: caboSrv guarda se a busca por proximidade no servidor esta publicada ('desconhecido' | 'ok' | 'indisponivel'); caboIndexLocal e o indice de bounding box do modo local */caboSrv:'desconhecido',caboSrvMotivo:'',caboIndexLocal:null,caboIndexBase:null,caboIndexMeta:null};
+const AppState={baseDados:[],cacheRedes:{},multiSelectAllowed:true,operadores:[],tecnicos:[],tecnicosStatus:'idle',prefixCatalog:[],conteudoCopiado:'',modoIdent:null,oltDB:[],oltDBStatus:'idle',gponProjetoAtual:null,gponLista:[],tipoAC:[],tipoACStatus:'idle',backboneTrechos:[],slaManualTrechos:[],ctosStatus:'idle',
+/* Consulta de Cabos v4: TODO o resultado da busca vive aqui, e é daqui
+   que a Ordem de Serviço é montada. Na v3 a OS era remontada raspando o
+   texto dos cartões na tela — bastava mudar um rótulo para ela sair
+   torta, e o valor arredondado do cartão ia arredondado para o campo.
+   `incluir` guarda o que o operador marcou/desmarcou, para o redesenho
+   não perder a escolha dele. */
+cabos:{seq:0,status:'idle',erro:'',entrada:'',coord:null,itens:[],referencia:[],
+       meta:null,dmin:0,limite:0,incluir:{}}};
 
 /* ═══════════════════════════════════════════
    CACHE LOCAL (localStorage) — acelera as consultas
@@ -1682,51 +1690,291 @@ const CACHE_TTL_MS={
   OPERADOR:2*60*60*1000,        // 2h
   REDE_FIBER:60*60*1000,        // 1h — CTOs da rede FIBER
   REDE_INTLINK:60*60*1000,      // 1h — CTOs da rede INTLINK
-  REDE_WIRE:60*60*1000,         // 1h — CTOs da rede WIRE
-  REDE_METRO_CABOS:2*60*60*1000 // 2h — é a busca mais pesada (pode levar até 30s sem cache)
+  REDE_WIRE:60*60*1000          // 1h — CTOs da rede WIRE
+  /* REDE_METRO_CABOS saiu: a planilha de cabos não é mais baixada. Era
+     ela que estourava o localStorage e, uma vez cheio, derrubava o cache
+     de TODAS as outras tabelas junto. */
 };
+/* ═══════════════════════════════════════════════════════════════════════
+   CARREGAMENTO DE DADOS — v4
+   ═══════════════════════════════════════════════════════════════════════
+   POR QUE A TELA DEMORAVA TANTO PARA FICAR UTILIZÁVEL
+
+   Cada tabela era um <script> JSONP próprio: TECNICOS, OPERADOR, OLTs, a
+   rede escolhida, os cabos. Parece paralelo, e não é — o Apps Script
+   executa UMA requisição por vez para o mesmo usuário. As cinco entravam
+   em FILA, e cada uma pagava sozinha a partida da execução mais a
+   abertura da planilha: 2 a 5 s por peça. O pedido dos cabos, o maior de
+   todos, ia junto e ainda segurava a fila inteira até estourar.
+
+   Duas mudanças resolvem isso:
+
+   1) UMA CHAMADA. `acao=dados` devolve todas as tabelas de uma vez, do
+      cache do servidor, com uma REVISÃO por tabela. Na segunda visita o
+      navegador manda as revisões que já tem e recebe uma resposta de
+      poucos bytes dizendo "nada mudou".
+
+   2) CACHE QUE CABE. O cache local era localStorage, que tem cerca de
+      5 MB e falha em SILÊNCIO quando enche. Era o que acontecia com os
+      cabos, e uma vez cheio nenhuma outra tabela conseguia mais gravar —
+      então TODA abertura de página rebaixava tudo de novo. Agora o cache
+      é IndexedDB (centenas de MB), espelhado em memória para as leituras
+      continuarem síncronas, com localStorage só de reserva.
+
+   Se o Apps Script ainda não tiver sido republicado com `acao=dados`, a
+   primeira tentativa falha, o app marca o endpoint como indisponível e
+   volta sozinho ao caminho antigo (`?aba=`), uma tabela por vez.
+═══════════════════════════════════════════════════════════════════════ */
+const Dados={
+  endpoint:'desconhecido',      // 'desconhecido' | 'ok' | 'indisponivel'
+  revs:{},
+  emVoo:null,
+  motivo:''
+};
+
+/* ── cache: memória + IndexedDB, com localStorage de reserva ────────── */
+const IDB_NOME='ment-cache',IDB_LOJA='kv';
+const _cacheMem=new Map();
+let _idb=null,_idbFalhou=false;
+
+function _idbAbrir(){
+  if(_idb)return Promise.resolve(_idb);
+  if(_idbFalhou||!window.indexedDB)return Promise.resolve(null);
+  return new Promise(resolve=>{
+    let req;
+    try{req=indexedDB.open(IDB_NOME,1)}catch(e){_idbFalhou=true;return resolve(null)}
+    req.onupgradeneeded=()=>{try{req.result.createObjectStore(IDB_LOJA)}catch(e){}};
+    req.onsuccess=()=>{_idb=req.result;resolve(_idb)};
+    req.onerror=()=>{_idbFalhou=true;resolve(null)};
+    /* navegador em modo privado às vezes nem responde: não trava a tela */
+    setTimeout(()=>resolve(_idb||null),1500);
+  });
+}
+function _idbGravar(chave,obj){
+  _idbAbrir().then(db=>{
+    if(!db)return;
+    try{
+      const tx=db.transaction(IDB_LOJA,'readwrite');
+      tx.objectStore(IDB_LOJA).put(obj,chave);
+    }catch(e){}
+  });
+}
+/* Traz o cache do disco para a memória ANTES de a tela pedir qualquer
+   coisa. É isto que faz a segunda visita abrir com os dados já na mão. */
+async function cacheHidratar(){
+  const db=await _idbAbrir();
+  if(db){
+    try{
+      await new Promise(resolve=>{
+        const tx=db.transaction(IDB_LOJA,'readonly');
+        const loja=tx.objectStore(IDB_LOJA);
+        const req=loja.openCursor();
+        req.onsuccess=()=>{
+          const c=req.result;
+          if(!c){resolve();return}
+          _cacheMem.set(String(c.key),c.value);
+          c.continue();
+        };
+        req.onerror=()=>resolve();
+        setTimeout(resolve,2500);
+      });
+    }catch(e){}
+  }
+  /* reserva: o que ficou no localStorage de versões anteriores ainda vale */
+  try{
+    Object.keys(localStorage).filter(k=>k.startsWith(CACHE_PREFIXO)).forEach(k=>{
+      const chave=k.slice(CACHE_PREFIXO.length);
+      if(_cacheMem.has(chave))return;
+      try{const o=JSON.parse(localStorage.getItem(k));if(o&&typeof o.t==='number')_cacheMem.set(chave,o)}catch(e){}
+    });
+  }catch(e){}
+  /* as revisões NÃO expiram por tempo: elas são a prova de que o dado
+     guardado ainda é o mesmo que está na planilha. Expirá-las junto com o
+     TTL faria o navegador rebaixar tudo de meia em meia hora sem motivo. */
+  Dados.revs=(cacheGetPersistente('REVS')||{});
+}
+
 function cacheSet(chave,dados){
+  const obj={t:Date.now(),d:dados};
+  _cacheMem.set(chave,obj);
+  _idbGravar(chave,obj);
+  /* espelho no localStorage só para o que é pequeno — o que não couber
+     simplesmente não é espelhado, e o IndexedDB continua guardando */
   try{
-    localStorage.setItem(CACHE_PREFIXO+chave,JSON.stringify({t:Date.now(),d:dados}));
-  }catch(e){/* localStorage cheio ou bloqueado — segue sem cache */}
-}
-function cacheGet(chave){
-  try{
-    const raw=localStorage.getItem(CACHE_PREFIXO+chave);
-    if(!raw)return null;
-    const obj=JSON.parse(raw);
-    if(!obj||typeof obj.t!=='number'||obj.d===undefined)return null;
-    const ttl=CACHE_TTL_MS[chave]||30*60*1000;
-    if(Date.now()-obj.t>ttl)return null; // expirado
-    return obj.d;
-  }catch(e){return null}
-}
-function cacheLimparTudo(){
-  try{
-    Object.keys(localStorage).filter(k=>k.startsWith(CACHE_PREFIXO)).forEach(k=>localStorage.removeItem(k));
+    const raw=JSON.stringify(obj);
+    if(raw.length<400000)localStorage.setItem(CACHE_PREFIXO+chave,raw);
   }catch(e){}
 }
+function cacheGet(chave){
+  const o=_cacheMem.get(chave);
+  if(!o||typeof o.t!=='number'||o.d===undefined)return null;
+  const ttl=CACHE_TTL_MS[chave]||30*60*1000;
+  if(Date.now()-o.t>ttl)return null;
+  return o.d;
+}
+/* Igual ao cacheGet, mas SEM olhar o TTL. Para as tabelas servidas pelo
+   endpoint único quem manda é a REVISÃO, não o relógio: o servidor sabe
+   se mudou, e um TTL vencido em cima de um dado que continua correto só
+   provoca download inútil. O TTL segue valendo no modo antigo. */
+function cacheGetPersistente(chave){
+  const o=_cacheMem.get(chave);
+  return (o&&o.d!==undefined)?o.d:null;
+}
+function cacheLimparTudo(){
+  _cacheMem.clear();
+  try{Object.keys(localStorage).filter(k=>k.startsWith(CACHE_PREFIXO)).forEach(k=>localStorage.removeItem(k))}catch(e){}
+  _idbAbrir().then(db=>{
+    if(!db)return;
+    try{db.transaction(IDB_LOJA,'readwrite').objectStore(IDB_LOJA).clear()}catch(e){}
+  });
+}
+
+/* ── a chamada única ──────────────────────────────────────────────────
+   Devolve { TAB: {cols,linhas} } só com as tabelas que MUDARAM. Tabela em
+   dia não viaja; quem a quiser pega do cache local. */
+const DADOS_CHAVE_CACHE={TECNICOS:'TECNICOS',OPERADOR:'OPERADOR',OLTS:'OLTs',
+  FIBER:'REDE_FIBER',INTLINK:'REDE_INTLINK',WIRE:'REDE_WIRE'};
+
+async function _dadosPedir(tabelas,forcar){
+  if(Dados.endpoint==='indisponivel')return null;
+  const quero=tabelas.join(',');
+  /* Só manda a revisão de tabela que este navegador AINDA TEM guardada.
+     Sem essa checagem, um cache apagado com a revisão sobrevivente faria
+     o servidor responder "está em dia" para dado que não existe mais
+     aqui — e a tela ficaria vazia sem nenhum erro. */
+  const revs=forcar?'':tabelas.filter(t=>Dados.revs[t]&&_cacheMem.has(DADOS_CHAVE_CACHE[t]||t))
+    .map(t=>t+':'+Dados.revs[t]).join(',');
+  let r;
+  try{
+    r=await jsonp({acao:'dados',quero,revs,forcar:forcar?'1':''},30000);
+  }catch(e){
+    Dados.endpoint='indisponivel';Dados.motivo=e&&e.message||'sem resposta';
+    return null;
+  }
+  if(!r||r.ok!==true){
+    Dados.endpoint='indisponivel';
+    Dados.motivo=(r&&r.erro)||'ação "dados" não publicada';
+    console.warn('[DADOS] endpoint único indisponível (%s) — voltando ao modo antigo, uma aba por vez. Publique a versão nova do Apps Script.',Dados.motivo);
+    return null;
+  }
+  Dados.endpoint='ok';
+  Object.keys(r.revs||{}).forEach(t=>{Dados.revs[t]=r.revs[t]});
+  cacheSet('REVS',Dados.revs);
+  return r.tabelas||{};
+}
+
+/* ── conversores: linha-array → o objeto que cada tela já espera ───── */
+function _dadosTecnicos(linhas){
+  return (linhas||[]).map(l=>({
+    nome:(l[0]||'').trim(),numero:(l[1]||'').trim(),empresa:(l[2]||'').trim(),
+    prefixos:[...new Set(splitListaValores(l[3]||'').map(normGpon).filter(p=>p.length>=2))],
+    obs:(l[4]||'').trim()
+  })).filter(t=>t.nome||t.numero)
+     .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+}
+function _dadosOperadores(linhas){
+  return (linhas||[]).map(l=>({nome:(l[0]||'').trim(),setor:(l[1]||'').trim()}))
+    .filter(o=>o.nome)
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+}
+function _dadosOlts(linhas){
+  return (linhas||[]).map(l=>({nome:String(l[0]||'').trim(),modelo:String(l[1]||'').trim().toUpperCase()}))
+    .filter(o=>o.nome);
+}
+function _dadosCtos(linhas,rede){
+  return (linhas||[]).map(l=>({
+    cto:l[0]||'',lat:l[1]||'',lng:l[2]||'',
+    col1:l[0]||'',col2:l[1]||'',col3:l[2]||'',col4:l[3]||'',col5:l[4]||'',
+    _rede:rede
+  }));
+}
+
+/* ── avisos de planilha malpreenchida (vinham do carregador antigo) ── */
+function _dadosConferirTecnicos(lista){
+  const semEmpresa=lista.filter(t=>!_normEmpresa(t.empresa)).map(t=>t.nome);
+  if(semEmpresa.length)console.warn('[TECNICOS] sem EMPRESA EXECUTANTE na coluna C — não aparecem em nenhum acionamento: '+semEmpresa.join(', '));
+  const semPrefixo=lista.filter(t=>_normEmpresa(t.empresa)&&!t.prefixos.length).map(t=>t.nome);
+  if(semPrefixo.length)console.warn('[TECNICOS] sem PREFIXO na coluna D — não aparecem por CTO (só em Metro/Backbone, que não filtram por prefixo): '+semPrefixo.join(', '));
+}
+
+/* ── partida da tela: TUDO que a primeira dobra precisa, de uma vez ── */
+async function iniciarDados(forcar){
+  /* trava de reentrada: em alguns navegadores o DOMContentLoaded chega
+     junto com um render que já pede dados, e sem isto a partida da tela
+     saía com duas requisições idênticas */
+  /* o botão Atualizar tem de furar a trava: ele existe justamente para
+     buscar de novo à força */
+  if(Dados.emVoo&&!forcar)return Dados.emVoo;
+  Dados.emVoo=_iniciarDados(forcar).finally(()=>{Dados.emVoo=null});
+  return Dados.emVoo;
+}
+async function _iniciarDados(forcar){
+  await cacheHidratar();
+
+  const doCache={
+    TECNICOS:forcar?null:cacheGetPersistente('TECNICOS'),
+    OPERADOR:forcar?null:cacheGetPersistente('OPERADOR'),
+    OLTS:forcar?null:cacheGetPersistente('OLTs')
+  };
+  /* pinta com o que já está no disco antes de falar com o servidor */
+  if(doCache.TECNICOS)_aplicarTecnicos(doCache.TECNICOS);
+  if(doCache.OPERADOR){AppState.operadores=doCache.OPERADOR;renderOperadores()}
+  if(doCache.OLTS){AppState.oltDB=doCache.OLTS;AppState.oltDBStatus='ready'}
+
+  const faltando=[];
+  if(!doCache.TECNICOS){AppState.tecnicosStatus='loading';faltando.push('TECNICOS')}
+  if(!doCache.OPERADOR)faltando.push('OPERADOR');
+  if(!doCache.OLTS){AppState.oltDBStatus='loading';faltando.push('OLTS')}
+  /* mesmo com tudo em cache vale confirmar revisão: é uma resposta de
+     poucos bytes e é o que faz o técnico cadastrado agora aparecer */
+  const pedir=faltando.length?faltando:['TECNICOS','OPERADOR','OLTS'];
+
+  const tabs=await _dadosPedir(pedir,forcar);
+  if(tabs===null){
+    /* endpoint indisponível: caminho antigo, uma aba por vez */
+    if(!doCache.TECNICOS)_carregarTecnicosLegado(forcar);
+    if(!doCache.OPERADOR)_carregarOperadoresLegado();
+    if(!doCache.OLTS)_carregarOltsLegado();
+    return;
+  }
+  if(tabs.TECNICOS){
+    const lista=_dadosTecnicos(tabs.TECNICOS.linhas);
+    _dadosConferirTecnicos(lista);cacheSet('TECNICOS',lista);_aplicarTecnicos(lista);
+  }else if(!doCache.TECNICOS&&AppState.tecnicosStatus==='loading'){
+    _aplicarTecnicos(cacheGetPersistente('TECNICOS')||[]);
+  }
+  if(tabs.OPERADOR){
+    const lista=_dadosOperadores(tabs.OPERADOR.linhas);
+    cacheSet('OPERADOR',lista);AppState.operadores=lista;renderOperadores();
+  }
+  if(tabs.OLTS){
+    const lista=_dadosOlts(tabs.OLTS.linhas);
+    cacheSet('OLTs',lista);AppState.oltDB=lista;AppState.oltDBStatus='ready';
+  }else if(AppState.oltDBStatus==='loading'){
+    AppState.oltDBStatus=AppState.oltDB.length?'ready':'error';
+  }
+}
+
 /* botão "Atualizar" da barra superior: ignora o cache local e busca tudo de
    novo no servidor — útil logo depois de cadastrar um técnico, CTO ou OLT
    novo na planilha, sem precisar esperar o TTL expirar sozinho. */
 function atualizarDadosForcado(){
   cacheLimparTudo();
+  Dados.revs={};
   AppState.cacheRedes={};
   AppState.oltDB=[];AppState.oltDBStatus='idle';
   AppState.tecnicos=[];AppState.tecnicosStatus='idle';
   AppState.operadores=[];
   AppState.baseDados=[];AppState.ctosStatus='idle';
-  /* o índice de cabos vem dos dados que acabaram de ser descartados */
-  AppState.caboIndexLocal=null;AppState.caboIndexBase=null;AppState.caboIndexMeta=null;
-  AppState.caboSrv='desconhecido';AppState.caboSrvMotivo='';
+  /* o resultado de cabos na tela veio do índice do servidor: some junto */
+  AppState.cabos.seq++;AppState.cabos.status='idle';AppState.cabos.itens=[];
+  AppState.cabos.referencia=[];AppState.cabos.incluir={};
+  if(typeof renderCabos==='function')renderCabos();
   Object.keys(_refCoordCache).forEach(k=>delete _refCoordCache[k]);
   showToast('↻ Cache limpo. Recarregando dados...');
-  carregarOperadores();
-  carregarTecnicos(true);
+  iniciarDados(true);
   const redeAtual=DOM.rede.value;
-  if(redeAtual==='METRO')fetchCaboMetro();
-  else if(redeAtual&&redeAtual!=='BACKBONE')carregarCTOs(redeAtual);
-  if(AppState.modoIdent==='gpon')carregarOLTs();
+  if(redeAtual&&redeAtual!=='METRO'&&redeAtual!=='BACKBONE')carregarCTOs(redeAtual);
   if(AppState.modoIdent==='cto')garantirRedesCarregadas();
 }
 /* separa por quebra de linha, ponto-e-vírgula, vírgula OU ESPAÇO — a coluna
@@ -2139,28 +2387,6 @@ function setIdentMode(mode){
   if(mode==='cto')garantirRedesCarregadas();
 }
 
-function garantirRedesCarregadas(){
-  ['FIBER','INTLINK','WIRE'].forEach(r=>{
-    if(AppState.cacheRedes[r])return; // já em memória
-    const cache=cacheGet('REDE_'+r);
-    if(cache){AppState.cacheRedes[r]=cache;return} // hidratado do cache local
-    const cb=`cbIdentRede_${r}`;
-    let respondeu=false;
-    const timer=setTimeout(()=>{if(!respondeu){respondeu=true;delete window[cb]}},20000);
-    const s=document.createElement('script');
-    s.src=`${GAS_URL}?aba=${r}&callback=${cb}`;
-    s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);delete window[cb]}};
-    document.body.appendChild(s);
-    window[cb]=d=>{
-      if(respondeu)return;respondeu=true;clearTimeout(timer);
-      const n=d.map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x,_rede:r}));
-      AppState.cacheRedes[r]=n;
-      cacheSet('REDE_'+r,n);
-    };
-  });
-  if(AppState.oltDBStatus==='idle')carregarOLTs();
-}
-
 /* aguarda oltDB estar pronto; tenta a cada 300ms por até 15s */
 function _aguardarOLTs(){
   return new Promise((resolve,reject)=>{
@@ -2403,27 +2629,6 @@ function normGpon(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u03
    do hífen como separador estrutural. */
 function normBusca(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
 
-function carregarOLTs(){
-  if(AppState.oltDBStatus!=='idle')return;
-  const cache=cacheGet('OLTs');
-  if(cache){AppState.oltDB=cache;AppState.oltDBStatus='ready';return}
-  AppState.oltDBStatus='loading';
-  let respondeu=false;
-  const timer=setTimeout(()=>{
-    if(!respondeu){respondeu=true;AppState.oltDBStatus='error'}
-  },20000);
-  const s=document.createElement('script');
-  s.src=`${GAS_URL}?aba=OLTs&callback=cbOLTs`;
-  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);AppState.oltDBStatus='error'}};
-  document.body.appendChild(s);
-  window.cbOLTs=d=>{
-    if(respondeu)return;respondeu=true;clearTimeout(timer);
-    const lista=(d||[]).map(x=>({nome:String(x.col1||x.nome||'').trim(),modelo:String(x.col2||x.modelo||'').trim().toUpperCase()})).filter(o=>o.nome);
-    AppState.oltDB=lista;AppState.oltDBStatus='ready';
-    cacheSet('OLTs',lista);
-  }
-}
-
 function renderGponLista(){const wrap=$('gponListaWrap'),tags=$('gponListaTags');if(!AppState.gponLista.length){wrap.classList.remove('visible');return}wrap.classList.add('visible');tags.innerHTML=AppState.gponLista.map((g,i)=>`<div class="gpon-tag"><span>${g.familia} <span style="opacity:.55;font-size:.65rem">${g.gpon} · ${g.olt.split('-').slice(0,4).join('-')}...</span></span><button class="btn-remove" onclick="removerGpon(${i})">&#10005;</button></div>`).join('')}
 window.removerGpon=function(i){AppState.gponLista.splice(i,1);renderGponLista();atualizarTecnicosGpon()};
 function adicionarGpon(){const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim();if(!olt||!modelo||!gponStr||!AppState.gponProjetoAtual)return;const res=gponParaProjeto(olt,modelo,gponStr);if(res.erro){showToast(res.erro,'error');return}const familia=gponFormatarFamilia(res.projeto,gponStr);if(AppState.gponLista.some(g=>g.gpon===gponStr&&g.olt===olt)){showToast('GPON já adicionada.','error');return}AppState.gponLista.push({olt,modelo,gpon:gponStr,projeto:res.projeto,familia});renderGponLista();$('gponInputPorta').value='';$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;atualizarTecnicosGpon();showToast('✓ GPON adicionada.')}
@@ -2563,7 +2768,12 @@ let _jsonpSeq=0;
    Gravação nunca é deduplicada e entra na FRENTE da fila: é nela que o
    operador está esperando. */
 const JSONP_MAX_SIMULTANEO=2;
-const JSONP_LEITURAS=['listarSla','listarNotas','listarTcSlaCache','listarTcSla','rev','ping'];
+/* `dados` entra aqui para ganhar a deduplicação: dois caminhos pedindo as
+   MESMAS tabelas ao mesmo tempo (a partida da tela e um render que chama
+   um carregador) viram uma requisição só. `cabosBuscar` fica de fora de
+   propósito — é a única em que o operador está parado esperando, e por
+   isso vai na frente da fila. */
+const JSONP_LEITURAS=['listarSla','listarNotas','listarTcSlaCache','listarTcSla','rev','ping','dados'];
 let _jsonpAtivos=0;
 const _jsonpFila=[];
 const _jsonpEmVoo=new Map();
@@ -5254,7 +5464,11 @@ function manterGasAcordado() {
   setInterval(ping, 10 * 60 * 1000);
 }
 
-document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarOperadores();carregarTecnicos();carregarTipoAC();Sync.iniciar()});
+/* iniciarDados() substitui carregarOperadores()+carregarTecnicos(): eram
+   duas requisições em fila, e o Apps Script atende uma por vez. Agora
+   TECNICOS, OPERADOR e OLTs vêm juntos — depois de o cache em disco já
+   ter pintado a tela. */
+document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarTipoAC();iniciarDados(false);Sync.iniciar()});
 
 function bindEvents(){
   DOM.rede.addEventListener('change',aoMudarRede);
@@ -5265,6 +5479,11 @@ function bindEvents(){
   DOM.inputFamilia.addEventListener('input',atualizarPreviewRamal);
   DOM.filtro.addEventListener('input',filtrarCTOs);
   DOM.btnBuscarCabo.addEventListener('click',buscarCabosProximos);
+  DOM.inputCoordenada.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();buscarCabosProximos()}});
+  /* a marcação vive no estado, não no DOM: redesenhar não perde a escolha */
+  DOM.resultadoCabos.addEventListener('change',e=>{
+    if(e.target.classList.contains('cabo-check'))_caboAlternarInclusao(e.target.dataset.nome,e.target.checked);
+  });
   DOM.btnGerarOS.addEventListener('click',gerarOS);
   DOM.btnGerarOSMetro.addEventListener('click',gerarOSMetro);
   DOM.btnLimparTudo.addEventListener('click',limparTudo);
@@ -5428,212 +5647,44 @@ function _aplicarTecnicos(lista){
   renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);
   renderTecnicos();renderTecnosCabo();renderGponEmpresas();
 }
-/* forcar=true: ignora o cache do navegador E manda forcar=1 para o Apps
-   Script, que sem isso devolve a copia do CacheService (15 min) — era por
-   isso que o botao "Atualizar" nao trazia o tecnico acabado de cadastrar
-   na aba TECNICOS: limpava so o cache local e recebia a planilha antiga. */
-function carregarTecnicos(forcar){
-  if(AppState.tecnicosStatus==='loading')return;
-  const cache=forcar?null:cacheGet('TECNICOS');
-  if(cache){_aplicarTecnicos(cache);return}
-  AppState.tecnicosStatus='loading';AppState.tecnicos=[];
-  let respondeu=false;
-  const _tecErro=()=>{AppState.tecnicosStatus='error';DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos. <a href="#" onclick="AppState.tecnicosStatus=\'idle\';carregarTecnicos();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderGponEmpresas()};
-  const timer=setTimeout(()=>{if(!respondeu){respondeu=true;_tecErro()}},20000);
-  const s=document.createElement('script');
-  s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec${forcar?'&forcar=1':''}`;
-  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);_tecErro()}};
-  document.body.appendChild(s);
-  window.cbTec=d=>{
-    if(respondeu)return;respondeu=true;clearTimeout(timer);
-    /* aba TECNICOS: A=NOME  B=NUMERO  C=EMPRESA EXECUTANTE  D=PREFIXO DAS CTOs
-       (E, se preenchida, entra como observacao e nao afeta o casamento) */
-    const lista=(d||[]).map(x=>{const nome=(x.col1||x.nome||'').trim(),numero=(x.col2||x.numero||'').trim(),empresa=(x.col3||x.empresa||'').trim(),prefixos=[...new Set(splitListaValores(x.col4||x.prefixos||'').map(normGpon).filter(p=>p.length>=2))],obs=(x.col5||'').trim();return{nome,numero,empresa,prefixos,obs}}).filter(t=>t.nome||t.numero).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
-    const semEmpresa=lista.filter(t=>!_normEmpresa(t.empresa)).map(t=>t.nome);
-    if(semEmpresa.length)console.warn('[TECNICOS] sem EMPRESA EXECUTANTE na coluna C — nao aparecem em nenhum acionamento: '+semEmpresa.join(', '));
-    const semPrefixo=lista.filter(t=>_normEmpresa(t.empresa)&&!t.prefixos.length).map(t=>t.nome);
-    if(semPrefixo.length)console.warn('[TECNICOS] sem PREFIXO na coluna D — nao aparecem por CTO (so em Metro/Backbone, que nao filtram por prefixo): '+semPrefixo.join(', '));
-    cacheSet('TECNICOS',lista);
-    _aplicarTecnicos(lista);
-  }
-}
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
-function aoMudarRede(){const r=DOM.rede.value,isMetro=r==='METRO',isBackbone=r==='BACKBONE';DOM.wrapper.classList.toggle('metro-mode',isMetro||isBackbone);DOM.sidebar.classList.toggle('visible',isMetro||isBackbone);DOM.sidebar.style.display=(isMetro||isBackbone)?'none':'';DOM.boxMetro.classList.toggle('hidden',!isMetro);DOM.boxBackboneRede.classList.toggle('hidden',!isBackbone);DOM.boxRede.classList.toggle('hidden',isMetro||isBackbone);if(isMetro){/* v3: nada de pre-carga — a busca por proximidade roda no servidor e so precisa da coordenada. O download completo virou fallback, acionado sob demanda por _buscarCabosLocal. */renderStatusBar()}else if(isBackbone){renderTecnicosBackbone()}else{carregarCTOs(r)}atualizarResumo()}
-/* ctosStatus rastreia se a lista de CTOs da rede atual já chegou do servidor.
-   Sem isso, o app não conseguia distinguir "essa CTO não existe" de "os
-   dados ainda estão a caminho" — e o preview do Ramal GPON mostrava
-   "Nenhuma CTO encontrada" mesmo quando a busca só tinha rodado cedo
-   demais, sem nunca se corrigir quando os dados finalmente chegavam. */
-function carregarCTOs(rede){
-  DOM.listaCTOs.innerHTML='<div class="loading-text">Carregando...</div>';
-  desmarcarTudo('ctoCheck');
-  atualizarResumo();
-  if(!AppState.cacheRedes[rede]){
-    const cache=cacheGet('REDE_'+rede);
-    if(cache)AppState.cacheRedes[rede]=cache;
-  }
-  if(AppState.cacheRedes[rede]){
-    AppState.baseDados=AppState.cacheRedes[rede];
-    AppState.ctosStatus='ready';
-    renderListaCTOs(AppState.baseDados);
-    renderTecnicos();
-    atualizarPreviewRamal();
-    return;
-  }
-  AppState.ctosStatus='loading';
-  AppState.baseDados=[];
-  atualizarPreviewRamal(); // mostra "carregando" imediatamente, se estiver no modo ramal
-  let respondeu=false;
-  const _ctoErro=()=>{
-    AppState.ctosStatus='error';
-    DOM.listaCTOs.innerHTML='<div class="info-msg">Erro ao carregar CTOs. <a href="#" onclick="carregarCTOs(\''+rede+'\');return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>';
-    atualizarPreviewRamal();
-  };
-  const timer=setTimeout(()=>{if(!respondeu){respondeu=true;_ctoErro()}},20000);
-  const cb=`cbRede_${rede}`,s=document.createElement('script');
-  s.src=`${GAS_URL}?aba=${rede}&callback=${cb}`;
-  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);_ctoErro()}};
-  document.body.appendChild(s);
-  window[cb]=d=>{
-    if(respondeu)return;respondeu=true;clearTimeout(timer);
-    const n=(d||[]).map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x}));
-    AppState.cacheRedes[rede]=n;
-    AppState.baseDados=n;
-    AppState.ctosStatus='ready';
-    renderListaCTOs(n);
-    renderTecnicos();
-    /* re-executa a busca por fragmento agora que os dados chegaram — antes,
-       se o usuário já tivesse digitado o prefixo durante o carregamento, a
-       tela ficava travada em "Nenhuma CTO encontrada" para sempre */
-    atualizarPreviewRamal();
-    cacheSet('REDE_'+rede,n);
-  }
-}
-
+function aoMudarRede(){const r=DOM.rede.value,isMetro=r==='METRO',isBackbone=r==='BACKBONE';DOM.wrapper.classList.toggle('metro-mode',isMetro||isBackbone);DOM.sidebar.classList.toggle('visible',isMetro||isBackbone);DOM.sidebar.style.display=(isMetro||isBackbone)?'none':'';DOM.boxMetro.classList.toggle('hidden',!isMetro);DOM.boxBackboneRede.classList.toggle('hidden',!isBackbone);DOM.boxRede.classList.toggle('hidden',isMetro||isBackbone);if(isMetro){/* v4: nada a pré-carregar. A busca roda no servidor e só precisa da coordenada — entrar na aba Metro é instantâneo. */renderCabos();renderStatusBar()}else if(isBackbone){renderTecnicosBackbone()}else{carregarCTOs(r)}atualizarResumo()}
 /* ════════════════════════════════════════
-   REDE METRO — cabos vêm de MÚLTIPLAS abas com prefixo "CABOS-"
-   (ex: CABOS-INT-AZS, CABOS-WIRE-...). O próprio Apps Script já agrega
-   tudo: quando `aba` não é informado (ou é "TODOS_CABOS"), o backend
-   percorre todas as abas que começam com "CABOS-" e concatena os dados
-   (ver buscarTodosOsCabos() no doGet()). Por isso uma única chamada já
-   basta — não é necessário descobrir/listar as abas no front-end.
+   REDE METRO — o download completo dos cabos ACABOU
+   ════════════════════════════════════════
+   Aqui moravam fetchCaboMetro, _garantirCabosLocais e _retryCaboMetro: o
+   pedido `aba=TODOS_CABOS`, que trazia a planilha de cabos inteira — com
+   a polilinha de cada trecho — para dentro do navegador. Era o pedido
+   mais pesado do app, batia no timeout de 30 s, não cabia no
+   localStorage e, como o Apps Script atende uma requisição por vez,
+   ainda segurava tudo o que estivesse atrás dele na fila. Foi ele que a
+   operação sentia como "o carregamento sempre falha".
 
-   Como são MUITAS abas, essa agregação no backend pode demorar bastante
-   (cada aba é lida por completo, uma a uma, numa única execução). Por
-   isso existe um TIMEOUT abaixo: se a resposta não chegar em tempo, a
-   tela para de esperar e mostra um erro claro com opção de tentar de
-   novo, em vez de ficar "Carregando..." pra sempre sem explicação. */
-const TIMEOUT_CABO_METRO_MS=30000; // ajustar se a agregação de muitas abas legitimamente demorar mais que isso
+   A Rede Metro não pré-carrega mais nada: a busca por coordenada roda no
+   servidor (ver CONSULTA DE CABOS v4) e devolve alguns KB. Entrar na aba
+   Metro passou a ser instantâneo porque não há nada para carregar.
 
-/* Envolve fetchCaboMetro numa promessa: o modo local precisa ESPERAR o
-   download terminar antes de indexar, e antes disso não havia como saber
-   quando os dados chegaram (o callback JSONP só mexia no AppState). */
-function _garantirCabosLocais(){
-  const atual=AppState.cacheRedes['METRO'];
-  if(Array.isArray(atual))return Promise.resolve(true);
-  if(atual==='ERRO'||atual==='TIMEOUT')AppState.cacheRedes['METRO']=null;
-  return new Promise(resolve=>{
-    fetchCaboMetro();
-    const t0=Date.now();
-    const ver=()=>{
-      const e=AppState.cacheRedes['METRO'];
-      if(Array.isArray(e))return resolve(true);
-      if(e==='ERRO'||e==='TIMEOUT')return resolve(false);
-      if(Date.now()-t0>TIMEOUT_CABO_METRO_MS+3000)return resolve(false);
-      setTimeout(ver,250);
-    };
-    ver();
-  });
-}
-
-function fetchCaboMetro(){
-  if(AppState.cacheRedes['METRO'])return;
-  const cache=cacheGet('REDE_METRO_CABOS');
-  if(cache){
-    AppState.cacheRedes['METRO']=cache;
-    renderStatusBar();
-    return;
-  }
-  AppState.cacheRedes['METRO']='LOADING';
-  renderStatusBar();
-  let respondeu=false;
-  const timer=setTimeout(()=>{
-    if(!respondeu){
-      respondeu=true;
-      AppState.cacheRedes['METRO']='TIMEOUT';
-      renderStatusBar();
-    }
-  },TIMEOUT_CABO_METRO_MS);
-  const s=document.createElement('script');
-  s.src=`${GAS_URL}?aba=TODOS_CABOS&callback=cbMetro`; // valor explícito por clareza; omitir o parâmetro tem o mesmo efeito no backend atual
-  s.onerror=()=>{
-    if(!respondeu){
-      respondeu=true;
-      clearTimeout(timer);
-      AppState.cacheRedes['METRO']='ERRO';
-      renderStatusBar();
-    }
-  };
-  document.body.appendChild(s);
-  window.cbMetro=d=>{
-    if(respondeu)return; // resposta tardia chegando depois do timeout já ter disparado — ignora
-    respondeu=true;
-    clearTimeout(timer);
-    const n=(d||[]).map(x=>({...x,ozmap:x.col1||x.ozmap,localizacao:x.col2||x.localizacao,tipo:x.col3,nivel:x.col4||x.nivel,comprimento:x.col5||x.comprimento}));
-    AppState.cacheRedes['METRO']=n;
-    AppState.caboIndexLocal=null;AppState.caboIndexBase=null; // dados novos: reindexa
-    renderStatusBar();
-    cacheSet('REDE_METRO_CABOS',n);
-  }
-}
-/* Permite tentar de novo depois de um erro/timeout, sem precisar recarregar
-   a página inteira (antes, uma vez travado em ERRO/TIMEOUT, não tinha como
-   sair desse estado por dentro do app). */
-function _retryCaboMetro(){
-  AppState.cacheRedes['METRO']=null;
-  fetchCaboMetro();
-}
-/* ═══ fim REDE METRO ═══ */
-
+   A barra de status sobrou só para avisar de índice velho — que é a
+   explicação mais provável para um cabo recém-lançado no OZMap ainda não
+   aparecer na busca. */
+const CABO_INDICE_VELHO_H=24;
 function renderStatusBar(){
-  const s=AppState.cacheRedes['METRO'];
-  if(s==='LOADING')DOM.statusBar.innerHTML=`<div class="progress-wrap"><div class="progress-label">Carregando cabos...</div><div class="progress-track"><div class="progress-fill" style="width:50%"></div></div></div>`;
-  else if(s==='ERRO'||s==='TIMEOUT')DOM.statusBar.innerHTML=`<div class="info-msg" style="color:var(--amber)">&#9888; Falha ao carregar cabos. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline;cursor:pointer">Tentar novamente</a></div>`;
-  /* nada a anunciar quando está tudo certo: a caixa de busca já se explica */
-  else DOM.statusBar.innerHTML='';
+  if(!DOM.statusBar)return;
+  const meta=AppState.cabos&&AppState.cabos.meta;
+  if(!meta||!meta.indiceEm){DOM.statusBar.innerHTML='';return}
+  const h=(Date.now()-new Date(meta.indiceEm).getTime())/3600000;
+  DOM.statusBar.innerHTML = h>CABO_INDICE_VELHO_H
+    ? `<div class="info-msg" style="color:var(--amber)">&#9888; Índice de cabos com ${Math.floor(h/24)} dia(s). Cabo lançado depois disso ainda não aparece — rode <b>reconstruirIndiceCabos()</b> no Apps Script.</div>`
+    : '';
 }
+
 function haversine(a,b,c,d){const R=6371000,e=(c-a)*Math.PI/180,f=(d-b)*Math.PI/180,g=Math.sin(e/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(f/2)**2;return R*2*Math.atan2(Math.sqrt(g),Math.sqrt(1-g))}
 
-/* ═══════════════════════════════════════════════════════════════════════
-   BUSCA DE CABOS POR PROXIMIDADE — v2
-
-   O raio fixo de 30m errava dos dois lados: em rua densa trazia cabo de
-   outra rota, e com o ponto do técnico deslocado não trazia nada. Esta
-   versão troca o raio fixo por três mecanismos:
-
-   1. TOLERÂNCIA DE CURVA — entre dois vértices o traçado real pode fazer
-      curva que não está mapeada. Cada segmento ganha folga proporcional ao
-      seu comprimento, máxima no meio do vão e zero junto aos vértices.
-   2. RAIO ADAPTATIVO — o limite parte do cabo mais próximo, então cabos
-      muito atrás dele são cortados e, quando o ponto claramente saiu do
-      lugar, o grupo daquele trecho ainda entra (marcado como incerto).
-   3. VALIDAÇÃO DE COORDENADA — número que não é coordenada (comprimento,
-      código, célula truncada) deixa de virar vértice fantasma.
-
-   AJUSTE FINO — mexer só nestes números.
-═══════════════════════════════════════════════════════════════════════ */
-const CABO_RAIO_BASE=25;      // m · raio mínimo sempre considerado
-const CABO_ERRO_GPS=15;       // m · imprecisão típica do ponto fixado pelo técnico
-const CABO_RAIO_MAX=90;       // m · teto absoluto; além disso nada é sugerido
-const CABO_GAP_RELATIVO=15;   // m · quanto um cabo pode estar atrás do mais próximo
-const CABO_SAG_FATOR=0.06;    // 6% do vão vira tolerância de curva
-const CABO_SAG_MAX=12;        // m · teto da tolerância de curva por segmento
-/* DROP é rede de assinante residencial: não entra em acionamento de METRO.
-   Como todo drop nasce na CTO, um pino fixado na caixa fazia todos os drops
-   daquela CTO aparecerem a poucos centímetros e em ALTA CONFIANÇA, enterrando
-   o cabo de metro que realmente interessa. */
-const CABO_NIVEIS_IGNORADOS=['PROJETO','PROJETADO','CANCELADO','DESATIVADO','DROP'];
-/* faixa geográfica plausível para a operação (Brasil) */
+/* faixa geográfica plausível para a operação (Brasil). As demais
+   constantes de proximidade (raio, tolerância de curva, níveis
+   ignorados) saíram daqui: quem decide o que é "perto" passou a ser o
+   Apps Script, para não existirem duas cópias da mesma regra livres para
+   discordar uma da outra. */
 const GEO_LIMITES={latMin:-34,latMax:6,lngMin:-74,lngMax:-34};
 
 function _coordPlausivel(lat,lng){
@@ -6002,97 +6053,176 @@ function linkMapsCTO(info){
    número que não é coordenada é descartado em vez de virar vértice falso.
    Vértices repetidos são removidos (zeravam segmentos). Se a maioria dos
    pares for inválida, a linha inteira é descartada. */
-function extrairCoordsCabo(str){
-  str=String(str||'').trim();
-  if(!str||str==='undefined')return[];
-  const numeros=[...str.matchAll(/-?\d+[.,]\d+/g)]
-    .map(m=>parseFloat(m[0].replace(',','.')))
-    .filter(n=>!isNaN(n));
-  const pts=[];
-  let descartados=0;
-  for(let i=0;i+1<numeros.length;i+=2){
-    const n1=numeros[i],n2=numeros[i+1];
-    const lat=Math.abs(n1)<Math.abs(n2)?n1:n2;
-    const lng=Math.abs(n1)<Math.abs(n2)?n2:n1;
-    if(!_coordPlausivel(lat,lng)){descartados++;continue}
-    const ult=pts[pts.length-1];
-    if(!ult||ult.lat!==lat||ult.lng!==lng)pts.push({lat,lng});
+/* extrairCoordsCabo, _distSegDetalhe, distToSegment e analisarCaboProximo
+   viviam aqui. Eram a matemática do modo local — projeção no segmento,
+   tolerância de curva, leitura da polilinha crua. Sem modo local não há
+   geometria de cabo no navegador, e essa conta passou a ser feita uma vez
+   só, no servidor, sobre uma geometria já normalizada. */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONSULTA DE CABOS — v4  (reescrita completa)
+   ═══════════════════════════════════════════════════════════════════════
+   O QUE SAIU DAQUI, E POR QUÊ
+
+   • O MODO LOCAL INTEIRO. A v3 tinha dois caminhos: servidor e, se ele
+     falhasse, o navegador baixava `aba=TODOS_CABOS` — a planilha de cabos
+     completa, com a polilinha de cada trecho — e fazia a conta aqui.
+     Esse caminho era o que estava rodando na prática, e ele SEMPRE
+     falhava: vários MB por JSONP contra um limite de 30 s, e o resultado
+     que sobrevivia não cabia no localStorage (5 MB), então o cache não
+     colava e TODA entrada na Rede Metro baixava tudo de novo. Não existe
+     mais: geometria de cabo não trafega para o navegador.
+
+   • AS DUAS FASES. Eram duas requisições, e o Apps Script atende uma por
+     vez por usuário — a segunda esperava a primeira terminar. Agora é uma
+     chamada só, e a ampliação do raio (quando nada aparece perto) também
+     acontece do lado de lá, na mesma execução.
+
+   • A SEGUNDA CÓPIA DAS REGRAS. Raio adaptativo, tolerância de curva e
+     confiança existiam aqui E no servidor, com liberdade de discordar.
+     Agora quem decide é o servidor; esta tela desenha o que recebeu.
+
+   • A LEITURA DO DOM PARA MONTAR A OS. gerarOSMetro raspava o texto dos
+     cartões para remontar os dados. Bastava mudar um rótulo para a OS
+     sair torta, e o que o cartão arredondava ia arredondado para o campo.
+     Agora a OS é montada a partir do ESTADO da busca.
+
+   META DE TEMPO: CABO_META_MS. A tela mostra quanto a busca levou e
+   destaca quando passa da meta — o servidor guarda o histórico, visível
+   em cabosStatus().
+═══════════════════════════════════════════════════════════════════════ */
+const CABO_META_MS=1500;            // espelha CABO_META_MS do Apps Script
+const CABO_RAIO_MAX=90;             // espelha CABO_RAIO_MAX — só para texto
+const CABO_BUSCA_TIMEOUT_MS=30000;
+const CABO_ROTULO_CONF={ALTA:'ALTA CONFIANÇA',MEDIA:'CONFIRMAR EM CAMPO',BAIXA:'BAIXA CONFIANÇA'};
+
+function _caboFmt(n,casas){const v=Number(n);return isFinite(v)?v.toFixed(casas===undefined?1:casas):'-'}
+
+/* ── consulta ─────────────────────────────────────────────────────────
+   Uma chamada. `seq` descarta a resposta de uma busca que o operador já
+   substituiu por outra — sem isso, a resposta lenta da coordenada antiga
+   chega depois e sobrescreve o resultado da nova. */
+async function buscarCabosProximos(){
+  const entrada=DOM.inputCoordenada.value.trim();
+  const coord=parseCoordenada(entrada);
+  const st=AppState.cabos;
+  if(!coord){
+    st.status='coordInvalida';st.entrada=entrada;renderCabos();return;
   }
-  if(descartados>pts.length)return[];
-  return pts;
-}
+  const meu=++st.seq;
+  st.status='buscando';st.erro='';st.entrada=entrada;st.coord=coord;
+  st.itens=[];st.referencia=[];st.meta=null;st.incluir={};
+  DOM.btnBuscarCabo.disabled=true;DOM.btnBuscarCabo.textContent='Buscando...';
+  renderCabos();
 
-/* distância ponto→segmento, devolvendo também onde caiu a projeção (t) e o
-   comprimento do vão — os dois entram no cálculo de tolerância de curva.
-   A escala de longitude é corrigida pelo cosseno da latitude local. */
-function _distSegDetalhe(u,p1,p2){
-  const latRef=(p1.lat+p2.lat)/2;
-  const k=Math.cos(latRef*Math.PI/180)||1;
-  const dx=(p2.lng-p1.lng)*k,dy=p2.lat-p1.lat;
-  const len2=dx*dx+dy*dy;
-  if(len2===0)return{dist:haversine(u.lat,u.lng,p1.lat,p1.lng),t:0,comp:0,proj:{lat:p1.lat,lng:p1.lng}};
-  const ux=(u.lng-p1.lng)*k,uy=u.lat-p1.lat;
-  let t=(ux*dx+uy*dy)/len2;
-  t=Math.max(0,Math.min(1,t));
-  const projLat=p1.lat+t*dy,projLng=p1.lng+t*(dx/k);
-  return{
-    dist:haversine(u.lat,u.lng,projLat,projLng),
-    t,
-    comp:haversine(p1.lat,p1.lng,p2.lat,p2.lng),
-    /* ponto do próprio cabo mais próximo do pino — é ele que vai para o card,
-       para cada cabo ter uma localização verificável no OZMap */
-    proj:{lat:projLat,lng:projLng}
-  };
-}
-/* mantida para compatibilidade */
-function distToSegment(u,p1,p2){return _distSegDetalhe(u,p1,p2).dist}
+  let r=null,falha='';
+  try{
+    r=await jsonp({acao:'cabosBuscar',lat:coord.lat,lng:coord.lng},CABO_BUSCA_TIMEOUT_MS);
+  }catch(e){ falha=e&&e.message?e.message:String(e); }
 
-/* Analisa a polilinha inteira aplicando a tolerância de curva.
-   distEfetiva = distância medida − tolerância. É ela que decide a entrada
-   na lista; a distância medida continua sendo a exibida. */
-function analisarCaboProximo(u,pts){
-  if(!pts.length)return null;
-  if(pts.length===1){
-    const d=haversine(u.lat,u.lng,pts[0].lat,pts[0].lng);
-    return{dist:d,distEfetiva:d,tolCurva:0,vaoMaior:0,pontual:true,foraDaExtensao:true,
-           ponto:{lat:pts[0].lat,lng:pts[0].lng}};
+  if(meu!==st.seq)return;            // já tem busca mais nova na tela
+  DOM.btnBuscarCabo.disabled=false;DOM.btnBuscarCabo.textContent='Buscar';
+
+  if(falha){ st.status='erro';st.erro=falha;renderCabos();return; }
+  if(!r||r.ok!==true){
+    /* Índice não gerado ou ação não publicada: dizer QUAL é o conserto.
+       A v3 caía no modo local em silêncio e ninguém lembrava de publicar. */
+    st.status=(r&&r.semIndice)?'semIndice':'erro';
+    st.erro=(r&&r.erro)||'o servidor não respondeu a busca de cabos';
+    renderCabos();return;
   }
-  let melhor=null,vaoMaior=0;
-  for(let i=0;i<pts.length-1;i++){
-    const r=_distSegDetalhe(u,pts[i],pts[i+1]);
-    if(r.comp>vaoMaior)vaoMaior=r.comp;
-    const centralidade=4*r.t*(1-r.t);           // 1 no meio do vão, 0 nas pontas
-    const tol=Math.min(CABO_SAG_MAX,CABO_SAG_FATOR*r.comp*centralidade);
-    const efetiva=Math.max(0,r.dist-tol);
-    if(!melhor||efetiva<melhor.distEfetiva){
-      melhor={
-        dist:r.dist,distEfetiva:efetiva,tolCurva:tol,vaoMaior:0,pontual:false,
-        ponto:r.proj,
-        /* projeção travada na primeira ou última ponta = o ponto está além do
-           fim do cabo, não ao lado dele */
-        foraDaExtensao:(i===0&&r.t<=0.001)||(i===pts.length-2&&r.t>=0.999)
-      };
-    }
+
+  st.status='ok';
+  st.itens=r.itens||[];
+  st.referencia=r.referencia||[];
+  st.dmin=Number(r.dmin)||0;
+  st.limite=Number(r.limite)||0;
+  st.meta=r.meta||{};
+  /* todo cabo dentro do alcance entra na OS por padrão; desmarcar é do
+     operador */
+  st.itens.forEach(c=>{st.incluir[c.nome]=true});
+  console.info('[CABOS] %sms · trechos=%s candidatos=%s medidos=%s blocos=%s índice=%s (%s)',
+    st.meta.ms,st.meta.trechos,st.meta.avaliados,st.meta.medidos,st.meta.blocos,
+    st.meta.indice,st.meta.indiceEm);
+  renderCabos();
+}
+
+/* ── desenho ──────────────────────────────────────────────────────── */
+function renderCabos(){
+  const st=AppState.cabos,el=DOM.resultadoCabos;
+  if(!el)return;
+
+  if(st.status==='idle'){el.innerHTML='';return}
+
+  if(st.status==='buscando'){
+    el.innerHTML=`<div class="cabo-etapa"><span class="cabo-etapa-spin"></span>Procurando cabos nesta coordenada...</div>`;
+    return;
   }
-  melhor.vaoMaior=vaoMaior;
-  return melhor;
+  if(st.status==='coordInvalida'){
+    el.innerHTML=/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)/i.test(st.entrada)
+      ? `<div class="info-msg" style="color:var(--amber)">&#9888; Link encurtado não abre aqui. Toque no pino no Maps e cole a coordenada.</div>`
+      : `<div class="info-msg" style="color:var(--red)">&#9888; Coordenada inválida. Ex: -3.123522, -58.158557</div>`;
+    return;
+  }
+  if(st.status==='semIndice'){
+    el.innerHTML=`<div class="info-msg" style="color:var(--amber)">&#9888; O índice de cabos ainda não foi gerado.<br>
+      No Apps Script: rode <b>reconstruirIndiceCabos()</b>, depois <b>configurarGatilhoCabos()</b>, e publique uma nova versão.</div>`;
+    return;
+  }
+  if(st.status==='erro'){
+    el.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Falha na busca: ${_esc(st.erro)}.
+      <a href="#" onclick="buscarCabosProximos();return false;" style="color:var(--blue);text-decoration:underline">Tentar de novo</a></div>`;
+    return;
+  }
+
+  const meta=st.meta||{};
+  if(!st.itens.length&&!st.referencia.length){
+    el.innerHTML=_caboRodapeHTML(meta)+
+      `<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo mapeado perto deste ponto${meta.ampliado?' — nem ampliando para '+meta.raio+'m':''}. Confira a coordenada.</div>`;
+    return;
+  }
+
+  if(!st.itens.length){
+    el.innerHTML=_caboRodapeHTML(meta)+
+      `<div class="info-msg" style="color:var(--red);margin:8px 0">&#9888; Nada a menos de ${CABO_RAIO_MAX}m. Os cabos abaixo são só referência e <b>não entram na OS</b>.</div>`+
+      st.referencia.map(_cardCaboRefHTML).join('');
+    return;
+  }
+
+  const resumo=`<div class="cabo-resumo">Mais próximo a ${_caboFmt(st.dmin)}m &middot; raio ${_caboFmt(st.limite,0)}m</div>`;
+  let aviso='';
+  if(st.itens.every(c=>c.confianca!=='ALTA')){
+    aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Nenhum cabo em alta confiança — confira antes de gerar a OS.</div>`;
+  }
+  el.innerHTML=resumo+aviso+st.itens.map(_cardCaboHTML).join('')+_caboRodapeHTML(meta);
 }
 
-function _confiancaCabo(c){
-  if(c.distEfetiva<=CABO_RAIO_BASE*0.6&&!c.foraDaExtensao&&!c.pontual)return'ALTA';
-  if(c.distEfetiva<=CABO_RAIO_BASE+CABO_ERRO_GPS)return'MEDIA';
-  return'BAIXA';
+/* Rodapé técnico: quanto levou, contra a meta, e quando o índice foi
+   montado. Existe porque "está lento" sem número não se resolve — e
+   porque índice velho é a explicação mais provável para um cabo novo do
+   OZMap não aparecer. */
+function _caboRodapeHTML(meta){
+  if(!meta||!meta.ms&&meta.ms!==0)return'';
+  const dentro=meta.ms<=(meta.metaMs||CABO_META_MS);
+  const cor=dentro?'var(--text3)':'var(--amber)';
+  const idade=meta.indiceEm?_caboIdadeIndice(meta.indiceEm):'';
+  return `<div class="cabo-resumo" style="color:${cor};margin-top:8px;margin-bottom:0">
+    ${meta.ms}ms${dentro?'':' · acima da meta de '+(meta.metaMs||CABO_META_MS)+'ms'}
+    ${meta.trechos?' &middot; '+meta.trechos.toLocaleString('pt-BR')+' trechos':''}
+    ${idade?' &middot; índice de '+idade:''}
+  </div>`;
+}
+function _caboIdadeIndice(iso){
+  const d=new Date(iso);
+  if(isNaN(d.getTime()))return'';
+  const h=Math.round((Date.now()-d.getTime())/3600000);
+  const dt=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+
+           ' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  return h>=24?dt+' (há '+Math.floor(h/24)+'d)':dt;
 }
 
-/* limite = min( RAIO_MAX , max( RAIO_BASE , maisProximo + GAP_RELATIVO ) ) */
-function _limiteBuscaCabo(distMinima){
-  return Math.min(CABO_RAIO_MAX,Math.max(CABO_RAIO_BASE,distMinima+CABO_GAP_RELATIVO));
-}
-
-/* Antes o card repetia a coordenada digitada em todas as linhas — ficava
-   idêntica em todos os cabos e parecia valor default. Agora mostra o ponto
-   do próprio cabo mais próximo do pino, que é conferível no OZMap. O pino
-   informado continua indo para a OS, em gerarOSMetro. */
+/* O cartão mostra o ponto DO CABO mais perto do pino, não o pino: é ele
+   que se confere no OZMap. O pino informado vai para a OS uma vez só. */
 function _pontoCaboHTML(c){
   if(!c.ponto||!Number.isFinite(c.ponto.lat)||!Number.isFinite(c.ponto.lng))return'-';
   const lat=c.ponto.lat.toFixed(6),lng=c.ponto.lng.toFixed(6);
@@ -6100,395 +6230,312 @@ function _pontoCaboHTML(c){
 }
 
 function _cardCaboHTML(c){
-  const rotulo={ALTA:'ALTA CONFIANÇA',MEDIA:'CONFIRMAR EM CAMPO',BAIXA:'BAIXA CONFIANÇA'}[c.confianca];
+  const marcado=AppState.cabos.incluir[c.nome]!==false;
   const notas=[];
-  if(c.tolCurva>=1)notas.push(`vão de ${Math.round(c.vaoMaior)}m sem vértice`);
-  if(c.foraDaExtensao&&!c.pontual)notas.push('ponto além da ponta do cabo');
-  if(c.pontual)notas.push('só 1 ponto mapeado');
+  if(c.motivo)notas.push(c.motivo);
+  if(c.tolCurva>=1&&(!c.motivo||c.motivo.indexOf('vão')===-1))notas.push(`vão de ${Math.round(c.vaoMaior)}m sem vértice`);
   return `<div class="cabo-card conf-${c.confianca}">
   <div class="cabo-card-head">
-    <label class="cabo-check-wrap"><input type="checkbox" class="cabo-check" checked><span>Incluir na OS</span></label>
-    <span class="cabo-badge b-${c.confianca}">${rotulo}</span>
+    <label class="cabo-check-wrap"><input type="checkbox" class="cabo-check" data-nome="${_esc(c.nome)}"${marcado?' checked':''}><span>Incluir na OS</span></label>
+    <span class="cabo-badge b-${c.confianca}">${CABO_ROTULO_CONF[c.confianca]||c.confianca}</span>
   </div>
-  <div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${c.nome||'-'}</span></div>
+  <div class="cabo-card-row"><span class="cabo-label">Cabo</span><span class="cabo-value">${_esc(c.nome||'-')}</span></div>
   <div class="cabo-card-row"><span class="cabo-label">Ponto no cabo</span><span class="cabo-value">${_pontoCaboHTML(c)}</span></div>
-  <div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${c.tipo||'-'}</span></div>
-  <div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div>
-  <div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${c.comp||'-'}</span></div>
-  <div class="cabo-dist">${c.dist.toFixed(1)}m</div>
-  ${notas.length?`<div class="cabo-nota">${notas.join(' · ')}</div>`:''}
+  <div class="cabo-card-row"><span class="cabo-label">Tipo</span><span class="cabo-value">${_esc(c.tipo||'-')}</span></div>
+  <div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${_esc(c.nivel||'-')}</span></div>
+  <div class="cabo-card-row"><span class="cabo-label">Comprimento</span><span class="cabo-value">${_esc(c.comprimento||'-')}</span></div>
+  <div class="cabo-dist">${_caboFmt(c.dist)}m</div>
+  ${notas.length?`<div class="cabo-nota">${_esc(notas.join(' · '))}</div>`:''}
 </div>`;
 }
 
-/* cartão de referência: classe diferente de propósito. gerarOSMetro só lê
-   .cabo-card, então isto NUNCA entra na Ordem de Serviço. */
 function _cardCaboRefHTML(c){
   return `<div class="cabo-card-ref">
-  <div class="cabo-card-row"><span class="cabo-label">Cabo (fora do alcance)</span><span class="cabo-value">${c.nome||'-'}</span></div>
+  <div class="cabo-card-row"><span class="cabo-label">Cabo (fora do alcance)</span><span class="cabo-value">${_esc(c.nome||'-')}</span></div>
   <div class="cabo-card-row"><span class="cabo-label">Ponto no cabo</span><span class="cabo-value">${_pontoCaboHTML(c)}</span></div>
-  <div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${c.nivel||'-'}</span></div>
-  <div class="cabo-dist" style="color:var(--text3)">${c.dist.toFixed(1)}m</div>
+  <div class="cabo-card-row"><span class="cabo-label">Nível</span><span class="cabo-value">${_esc(c.nivel||'-')}</span></div>
+  <div class="cabo-dist" style="color:var(--text3)">${_caboFmt(c.dist)}m</div>
 </div>`;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CONSULTA DE CABOS — v3: a busca acontece no SERVIDOR, em duas fases
-   ═══════════════════════════════════════════════════════════════════════
-   POR QUE MUDOU
-   A v2 baixava, ao entrar na Rede Metro, TODAS as linhas de TODAS as abas
-   CABOS-* — inclusive a coluna "Localização", que guarda a polilinha
-   inteira de cada cabo, vértice por vértice. Três consequências:
-     · a espera de dezenas de segundos (e o timeout de 30s) ao escolher
-       "Rede Metro", antes mesmo de digitar qualquer coordenada;
-     · o payload não cabia no localStorage, então cacheSet falhava calado
-       e o download inteiro se repetia a cada entrada na Metro;
-     · cada clique em "Buscar" reparseava a geometria de todos os cabos
-       no navegador, travando a interface.
+/* Marcar/desmarcar vive no ESTADO, não no DOM: o redesenho não perde o
+   que o operador escolheu, e a OS não precisa reler a tela. */
+function _caboAlternarInclusao(nome,marcado){
+  if(!nome)return;
+  AppState.cabos.incluir[nome]=!!marcado;
+}
+function _cabosSelecionados(){
+  const st=AppState.cabos;
+  return (st.itens||[]).filter(c=>st.incluir[c.nome]!==false);
+}
 
-   COMO FICOU
-     FASE 1  o servidor varre o índice de bounding box (números, sem
-             parsear texto) e devolve QUEM está por perto: nome + a
-             distância mínima possível. A lista aparece na tela na hora.
-     FASE 2  só para os mais próximos o servidor lê a geometria e calcula
-             a distância exata, o tipo, o nível, o comprimento e o ponto
-             do cabo mais perto do pino.
-   O navegador não recebe geometria nenhuma — são alguns KB por busca.
+/* ── PADRÃO DE OS DA REDE METRO ───────────────────────────────────────
+   Mudanças em relação ao texto antigo, todas por um motivo concreto:
 
-   COMPATIBILIDADE
-   Se o Apps Script ainda não foi republicado com a ação `cabosProximos`,
-   a primeira tentativa falha, o app marca o servidor como indisponível e
-   cai no MODO LOCAL (o comportamento antigo, baixando tudo). O modo local
-   também ficou mais rápido: a geometria passa a ser indexada uma única vez
-   por bounding box e só os candidatos são parseados a cada busca.
-═══════════════════════════════════════════════════════════════════════ */
-const CABO_SRV_TIMEOUT_MS=25000;
-const CABO_SRV_RAIO=400;        // m · varredura normal (a tela ainda aplica CABO_RAIO_MAX)
-/* Se nada aparecer nos 400m, a busca é repetida UMA vez com este raio. Não é
-   para sugerir cabo distante: é para os cartões de referência ("fora do
-   alcance") continuarem aparecendo, que é o que denuncia coordenada errada
-   ou trecho ainda não mapeado no OZMap. Sem isso, um ponto com o cabo mais
-   próximo a 600m só mostraria "nenhum cabo por perto", sem pista nenhuma. */
-const CABO_SRV_RAIO_AMPLO=2000;
-const CABO_LOCAL_CHUNK=400;     // linhas por fatia ao indexar no navegador, para não travar a tela
-/* Quantos candidatos ganham cálculo exato no modo local. Pode ser generoso:
-   aqui não existe round-trip, medir 400 geometrias custa poucos ms. */
-const CABO_LOCAL_MAX_EXATOS=400;
-
-let _caboJsonpSeq=0;
-/* JSONP com Promise, timeout e limpeza do callback global. Sem isso, uma
-   resposta atrasada de uma busca antiga sobrescrevia o resultado da nova. */
-function _caboJsonp(params,timeoutMs){
-  return new Promise((resolve,reject)=>{
-    const cb='cbCabo'+(++_caboJsonpSeq);
-    let s=null,pronto=false;
-    const limpar=()=>{
-      try{delete window[cb]}catch(e){window[cb]=undefined}
-      if(s&&s.parentNode)s.parentNode.removeChild(s);
-    };
-    const timer=setTimeout(()=>{
-      if(pronto)return;pronto=true;limpar();reject(new Error('timeout'));
-    },timeoutMs||CABO_SRV_TIMEOUT_MS);
-    window[cb]=d=>{if(pronto)return;pronto=true;clearTimeout(timer);limpar();resolve(d)};
-    s=document.createElement('script');
-    const qs=Object.keys(params).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
-    s.src=`${GAS_URL}?${qs}&callback=${cb}`;
-    s.onerror=()=>{if(pronto)return;pronto=true;clearTimeout(timer);limpar();reject(new Error('rede'))};
-    document.body.appendChild(s);
+   • A LOCALIZAÇÃO APARECE UMA VEZ. Antes o mesmo link do pino era
+     repetido embaixo de CADA cabo; com quatro cabos, quatro vezes o mesmo
+     endereço, e o técnico lia como se fossem quatro lugares.
+   • CADA CABO LEVA O PONTO DELE. É a coordenada conferível no OZMap, com
+     a distância até o pino ao lado — o que a equipe usa para achar a
+     caixa/poste certo.
+   • A CONFIANÇA VAI JUNTO. "CONFIRMAR EM CAMPO" impresso na OS evita o
+     deslocamento feito com certeza que o painel nunca teve.
+   • MONTADO DO ESTADO, não do HTML dos cartões. */
+function _osMetroTexto(d){
+  let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n`+
+            `⚠️ Problema: ${d.problema}\n\n`+
+            `🏢 Empresa: ${d.empresa}\n\n`+
+            `📃 OS interna: \n\n`+
+            `📌 Localização: ${d.locLink}\n\n`;
+  d.cabos.forEach((c,i)=>{
+    corpo+=`⚡ Cabo: ${c.nome||'-'}\n`;
+    if(c.ponto&&Number.isFinite(c.ponto.lat)){
+      corpo+=`🌎 Ponto no cabo: ${linkMaps(c.ponto.lat,c.ponto.lng)} (${_caboFmt(c.dist)}m)\n`;
+    }
+    if(c.tipo)corpo+=`⚙️ Tipo: ${c.tipo}\n`;
+    if(c.nivel)corpo+=`🌐 Nível: ${c.nivel}\n`;
+    if(c.comprimento)corpo+=`📋 Comprimento: ${c.comprimento}\n`;
+    corpo+=`🎯 ${CABO_ROTULO_CONF[c.confianca]||c.confianca}${c.motivo?' — '+c.motivo:''}\n`;
+    if(i<d.cabos.length-1)corpo+=`\n`;
   });
+  corpo+=`\n🔧 TEC:\n${d.tecsLista}`;
+  return corpo;
 }
 
-let _caboBuscaSeq=0;
-function _caboEtapa(txt){
-  DOM.resultadoCabos.innerHTML=`<div class="cabo-etapa"><span class="cabo-etapa-spin"></span>${_esc(txt)}</div>`;
-}
-function _caboErroCoord(entrada){
-  DOM.resultadoCabos.innerHTML=/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)/i.test(entrada)
-    ? `<div class="info-msg" style="color:var(--amber)">&#9888; Link encurtado não abre aqui. Toque no pino e cole a coordenada.</div>`
-    : `<div class="info-msg" style="color:var(--red)">&#9888; Coordenada inválida. Ex: -3.123522, -58.158557</div>`;
-}
-
-async function buscarCabosProximos(){
-  const entrada=DOM.inputCoordenada.value.trim();
-  const coord=parseCoordenada(entrada);
-  if(!coord){_caboErroCoord(entrada);return}
-
-  const meu=++_caboBuscaSeq;
-  DOM.btnBuscarCabo.disabled=true;
-  DOM.btnBuscarCabo.textContent='Buscando...';
+async function gerarOSMetro(){
+  const btn=DOM.btnGerarOSMetro;
   try{
-    if(AppState.caboSrv!=='indisponivel'){
-      const atendido=await _buscarCabosNoServidor(coord,meu);
-      if(atendido)return;
-    }
-    await _buscarCabosLocal(coord,meu);
-  }catch(err){
-    console.error('[CABOS]',err);
-    if(meu===_caboBuscaSeq){
-      DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Falha na busca. Tente novamente.</div>`;
-    }
-  }finally{
-    if(meu===_caboBuscaSeq){DOM.btnBuscarCabo.disabled=false;DOM.btnBuscarCabo.textContent='Buscar'}
-  }
-}
+    btn.innerHTML='Gerando...';btn.disabled=true;
+    const empresa=DOM.empresaMetro.value,problema=$('problemaMetro').value;
+    const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));
+    const cabos=_cabosSelecionados();
+    if(!empresa)throw new Error('Selecione a empresa.');
+    if(!problema)throw new Error('Selecione o tipo de problema.');
+    if(!tecs.length)throw new Error('Selecione ao menos um técnico.');
+    if(!cabos.length)throw new Error('Nenhum cabo marcado. Busque os cabos e marque ao menos um.');
 
-/* ── CAMINHO NOVO: servidor, duas fases ───────────────────────────────
-   Devolve true se a busca foi atendida (deu certo ou deu erro de dado),
-   e false quando o servidor não tem a ação publicada — aí quem responde
-   é o modo local. */
-async function _buscarCabosNoServidor(coord,meu){
-  _caboEtapa('Buscando cabos...');
-  let f1;
-  try{
-    f1=await _caboJsonp({acao:'cabosProximos',fase:1,lat:coord.lat,lng:coord.lng,raio:CABO_SRV_RAIO});
-  }catch(e){
-    AppState.caboSrv='indisponivel';
-    return false;                        // timeout/rede: tenta o modo local
-  }
-  if(meu!==_caboBuscaSeq)return true;    // já tem busca mais nova rodando
+    const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');
+    const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');
+    const coordRaw=DOM.inputCoordenada.value.trim();
+    const cp=AppState.cabos.coord||parseCoordenada(coordRaw);
+    const locLink=cp?linkMaps(cp.lat,cp.lng):coordRaw;
 
-  if(!f1||f1.ok!==true){
-    /* ação ainda não publicada, ou índice não gerado: modo local assume */
-    AppState.caboSrv='indisponivel';
-    AppState.caboSrvMotivo=(f1&&f1.erro)||'ação cabosProximos não respondeu';
-    return false;
-  }
-  AppState.caboSrv='ok';
-
-  /* nada nos 400m: amplia UMA vez, só para conseguir mostrar referência */
-  let ampliado=false;
-  if(!(f1.candidatos||[]).length){
-    _caboEtapa('Ampliando a busca...');
+    const corpo=_osMetroTexto({problema,empresa,tecsLista,locLink,cabos});
+    const msgFinal=construirMensagemComOperador(corpo);
     try{
-      const f1b=await _caboJsonp({acao:'cabosProximos',fase:1,lat:coord.lat,lng:coord.lng,raio:CABO_SRV_RAIO_AMPLO});
-      if(meu!==_caboBuscaSeq)return true;
-      if(f1b&&f1b.ok===true&&(f1b.candidatos||[]).length){f1=f1b;ampliado=true}
-    }catch(e){/* mantém o resultado vazio da primeira tentativa */}
+      await navigator.clipboard.writeText(msgFinal);
+      showToast('✓ OS copiada!');dispararConfete();
+    }catch(e){ showToast('Não foi possível copiar.','error',4000) }
+
+    registrarSla({
+      rede:'METRO',tipo:problema,
+      alvo:`${_slaListaCap(cabos.map(c=>c.nome),170)}${coordRaw?' · '+coordRaw:''}`,
+      empresa:empresa,tecnicos:tecsStr
+    });
+    exibirModal(corpo);
+  }catch(err){
+    showToast(err.message,'error',4000);
+  }finally{
+    btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false;
   }
+}
+/* ═══ fim CONSULTA DE CABOS v4 ═══ */
 
-  const cands=f1.candidatos||[];
-  if(!cands.length){
-    DOM.resultadoCabos.innerHTML=
-      `<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo mapeado perto deste ponto. Confira a coordenada.</div>`;
-    return true;
-  }
-
-  /* FASE 1 na tela: o que bateu com a coordenada, já ordenado. A distância
-     mostrada é o piso (distância até o retângulo do cabo) — a exata chega
-     na fase 2. Estes cartões usam classe própria e NÃO entram na O.S. */
-  DOM.resultadoCabos.innerHTML=
-    cands.slice(0,6).map(c=>`<div class="cabo-pre-linha"><span>${_esc(c.nome)}</span><span class="cabo-pre-dist">~${Number(c.aprox||0).toFixed(0)}m</span></div>`).join('');
-
-  const linhas=cands.slice(0,25).map(c=>c.linha).join(',');
-  let f2;
-  try{
-    f2=await _caboJsonp({acao:'cabosProximos',fase:2,lat:coord.lat,lng:coord.lng,linhas});
-  }catch(e){
-    if(meu===_caboBuscaSeq){
-      DOM.resultadoCabos.insertAdjacentHTML('afterbegin',
-        `<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Dados incompletos. Clique em Buscar novamente.</div>`);
+/* ── carregadores por tabela ──────────────────────────────────────────
+   Todos seguem a mesma forma: cache local primeiro (a tela pinta na
+   hora), endpoint único depois (confirma a revisão) e, se ele não estiver
+   publicado, o caminho antigo de uma aba por requisição. */
+function carregarTecnicos(forcar){
+  if(AppState.tecnicosStatus==='loading')return;
+  const cache=forcar?null:cacheGetPersistente('TECNICOS');
+  if(cache&&!forcar){_aplicarTecnicos(cache);return}
+  AppState.tecnicosStatus='loading';AppState.tecnicos=[];
+  _dadosPedir(['TECNICOS'],forcar).then(tabs=>{
+    if(tabs===null){_carregarTecnicosLegado(forcar);return}
+    if(tabs.TECNICOS){
+      const l=_dadosTecnicos(tabs.TECNICOS.linhas);
+      _dadosConferirTecnicos(l);cacheSet('TECNICOS',l);_aplicarTecnicos(l);
+    }else{
+      _aplicarTecnicos(cacheGetPersistente('TECNICOS')||[]);
     }
-    return true;
-  }
-  if(meu!==_caboBuscaSeq)return true;
-
-  if(!f2||f2.ok!==true||!(f2.itens||[]).length){
-    console.warn('[CABOS] fase 2:',(f2&&f2.erro)||'sem itens');
-    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Não foi possível carregar os dados dos cabos.</div>`;
-    return true;
-  }
-
-  const todos=f2.itens.map(_normalizarCaboServidor).sort((a,b)=>a.ordem-b.ordem);
-  _renderResultadoCabos(todos,{
-    origem:'servidor',
-    avaliados:f1.avaliados||0,
-    semGeometria:f1.semGeometria||0,
-    truncado:!!f1.truncado,
-    ampliado:ampliado,
-    raio:f1.raio,
-    ms:(f1.ms||0)+(f2.ms||0)
-  });
-  return true;
+  }).catch(()=>_carregarTecnicosLegado(forcar));
 }
 
-/* item do servidor → mesmo formato que o modo local produz, para os dois
-   caminhos usarem exatamente a mesma renderização e as mesmas regras */
-function _normalizarCaboServidor(c){
-  const item={
-    nome:c.nome,
-    dist:Number(c.dist),distEfetiva:Number(c.distEfetiva),
-    tolCurva:Number(c.tolCurva||0),vaoMaior:Number(c.vaoMaior||0),
-    pontual:!!c.pontual,foraDaExtensao:!!c.foraDaExtensao,
-    ponto:c.ponto,vertices:Number(c.vertices||0),
-    tipo:c.tipo||'',nivel:c.nivel||'',comp:c.comprimento||''
+function carregarOperadores(){
+  const cache=cacheGetPersistente('OPERADOR');
+  if(cache){AppState.operadores=cache;renderOperadores()}
+  _dadosPedir(['OPERADOR'],false).then(tabs=>{
+    if(tabs===null){if(!cache)_carregarOperadoresLegado();return}
+    if(tabs.OPERADOR){
+      const l=_dadosOperadores(tabs.OPERADOR.linhas);
+      cacheSet('OPERADOR',l);AppState.operadores=l;renderOperadores();
+    }
+  }).catch(()=>{if(!cache)_carregarOperadoresLegado()});
+}
+
+function carregarOLTs(){
+  if(AppState.oltDBStatus==='loading')return;
+  const cache=cacheGetPersistente('OLTs');
+  if(cache){AppState.oltDB=cache;AppState.oltDBStatus='ready';return}
+  AppState.oltDBStatus='loading';
+  _dadosPedir(['OLTS'],false).then(tabs=>{
+    if(tabs===null){AppState.oltDBStatus='idle';_carregarOltsLegado();return}
+    if(tabs.OLTS){
+      const l=_dadosOlts(tabs.OLTS.linhas);
+      cacheSet('OLTs',l);AppState.oltDB=l;AppState.oltDBStatus='ready';
+    }else{
+      AppState.oltDB=cacheGetPersistente('OLTs')||[];
+      AppState.oltDBStatus=AppState.oltDB.length?'ready':'error';
+    }
+  }).catch(()=>{AppState.oltDBStatus='idle';_carregarOltsLegado()});
+}
+
+/* ctosStatus distingue "essa CTO não existe" de "os dados ainda estão a
+   caminho" — sem isso o preview do Ramal GPON afirmava "Nenhuma CTO
+   encontrada" só por ter rodado cedo demais. */
+function carregarCTOs(rede){
+  DOM.listaCTOs.innerHTML='<div class="loading-text">Carregando...</div>';
+  desmarcarTudo('ctoCheck');
+  atualizarResumo();
+  if(!AppState.cacheRedes[rede]){
+    const c=cacheGetPersistente('REDE_'+rede);
+    if(c)AppState.cacheRedes[rede]=c;
+  }
+  const aplicar=n=>{
+    AppState.cacheRedes[rede]=n;
+    AppState.baseDados=n;
+    AppState.ctosStatus='ready';
+    renderListaCTOs(n);
+    renderTecnicos();
+    /* refaz a busca por fragmento agora que os dados chegaram: sem isto,
+       quem digitou o prefixo durante o carregamento ficava preso em
+       "Nenhuma CTO encontrada" para sempre */
+    atualizarPreviewRamal();
   };
-  item.ordem=item.distEfetiva+(item.foraDaExtensao?5:0)+(item.pontual?8:0);
-  return item;
+  if(AppState.cacheRedes[rede]){aplicar(AppState.cacheRedes[rede]);return}
+
+  AppState.ctosStatus='loading';
+  AppState.baseDados=[];
+  atualizarPreviewRamal();
+  _dadosPedir([rede],false).then(tabs=>{
+    if(tabs===null){_carregarCTOsLegado(rede);return}
+    const t=tabs[rede];
+    const n=t?_dadosCtos(t.linhas,rede):(cacheGetPersistente('REDE_'+rede)||[]);
+    if(t)cacheSet('REDE_'+rede,n);
+    aplicar(n);
+  }).catch(()=>_carregarCTOsLegado(rede));
 }
 
-/* ── RENDERIZAÇÃO ÚNICA (servidor e local) ────────────────────────────
-   Mesmas regras de sempre: raio adaptativo, cartões de referência quando
-   nada cai dentro do alcance e os avisos de confiança. */
-function _renderResultadoCabos(todos,meta){
-  meta=meta||{};
-  /* Contadores e estado de infraestrutura vão para o console (F12). Na tela
-     fica só o que o operador usa para decidir: distância e confiança. */
-  if(meta.origem==='local'){
-    console.info('[CABOS] modo local'+(meta.motivo?' — servidor: '+meta.motivo:'')+
-      '. Para usar a busca no servidor: publicar a versão nova do Apps Script e rodar atualizarCacheConsolidadoCabos.');
-  }
-  console.info('[CABOS] origem=%s elegiveis=%s medidos=%s semGeometria=%s foraPorNivel=%s ampliado=%s truncado=%s %sms',
-    meta.origem,meta.avaliados,todos.length,meta.semGeometria||0,meta.ignoradosNivel||0,
-    !!meta.ampliado,!!meta.truncado,meta.ms);
-
-  if(!todos.length){
-    DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Nenhum cabo encontrado neste ponto.</div>`;
-    return;
-  }
-
-  const dmin=Math.min(...todos.map(c=>c.distEfetiva));
-  const limite=_limiteBuscaCabo(dmin);
-  const selecionados=todos.filter(c=>c.distEfetiva<=limite);
-  selecionados.forEach(c=>{c.confianca=_confiancaCabo(c)});
-
-  const resumo=`<div class="cabo-resumo">Mais próximo a ${dmin.toFixed(1)}m &middot; raio ${limite.toFixed(0)}m</div>`;
-
-  if(!selecionados.length){
-    DOM.resultadoCabos.innerHTML=resumo+
-      `<div class="info-msg" style="color:var(--red);margin:8px 0">&#9888; Nada a menos de ${CABO_RAIO_MAX}m. Os cabos abaixo são só referência e não entram na OS.</div>`+
-      todos.slice(0,3).map(_cardCaboRefHTML).join('');
-    return;
-  }
-
-  let aviso='';
-  if(dmin>CABO_RAIO_BASE+CABO_ERRO_GPS){
-    aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Cabo mais próximo a ${dmin.toFixed(1)}m — confirme antes de acionar.</div>`;
-  }else if(selecionados.every(c=>c.confianca!=='ALTA')){
-    aviso=`<div class="info-msg" style="color:var(--amber);margin-bottom:8px">&#9888; Nenhum cabo em alta confiança — confira antes de gerar a OS.</div>`;
-  }
-
-  DOM.resultadoCabos.innerHTML=resumo+aviso+selecionados.map(_cardCaboHTML).join('');
+/* As três redes de uma vez — eram três <script> em fila, cada um pagando
+   a partida da execução do Apps Script. */
+function garantirRedesCarregadas(){
+  const faltam=['FIBER','INTLINK','WIRE'].filter(r=>{
+    if(AppState.cacheRedes[r])return false;
+    const c=cacheGetPersistente('REDE_'+r);
+    if(c){AppState.cacheRedes[r]=c;return false}
+    return true;
+  });
+  if(AppState.oltDBStatus==='idle')carregarOLTs();
+  if(!faltam.length)return;
+  _dadosPedir(faltam,false).then(tabs=>{
+    if(tabs===null){_garantirRedesLegado(faltam);return}
+    faltam.forEach(r=>{
+      const t=tabs[r];
+      if(!t)return;
+      const n=_dadosCtos(t.linhas,r);
+      AppState.cacheRedes[r]=n;
+      cacheSet('REDE_'+r,n);
+    });
+  }).catch(()=>_garantirRedesLegado(faltam));
 }
 
-/* ── MODO LOCAL (fallback) ────────────────────────────────────────────
-   Só é usado quando o servidor não tem a ação publicada. Continua
-   precisando do download completo, mas agora indexa a geometria UMA vez
-   (bounding box por linha) e a cada busca parseia apenas os candidatos —
-   antes, todo clique em "Buscar" reparseava a planilha inteira. */
-function _indiceLocalPronto(){
-  return Array.isArray(AppState.caboIndexLocal)&&AppState.caboIndexLocal.length>=0
-    &&AppState.caboIndexBase===AppState.cacheRedes['METRO'];
-}
-async function _construirIndiceLocal(){
-  const dm=AppState.cacheRedes['METRO'];
-  if(!Array.isArray(dm))return null;
-  if(_indiceLocalPronto())return AppState.caboIndexLocal;
-
-  const idx=[];
-  let semGeometria=0,ignoradosNivel=0;
-  for(let i=0;i<dm.length;i+=CABO_LOCAL_CHUNK){
-    const fim=Math.min(i+CABO_LOCAL_CHUNK,dm.length);
-    for(let k=i;k<fim;k++){
-      const row=dm[k];
-      const nome=String(row.ozmap||row.cto||'').trim();
-      if(!nome)continue;
-      const nivel=String(row.nivel||'').trim();
-      if(CABO_NIVEIS_IGNORADOS.some(n=>nivel.toUpperCase().includes(n))){ignoradosNivel++;continue}
-      const loc=String(row.localizacao||row.lat||'');
-      const pts=extrairCoordsCabo(loc);
-      if(!pts.length){semGeometria++;continue}
-      let minLat=pts[0].lat,maxLat=pts[0].lat,minLng=pts[0].lng,maxLng=pts[0].lng;
-      for(let v=1;v<pts.length;v++){
-        const p=pts[v];
-        if(p.lat<minLat)minLat=p.lat;if(p.lat>maxLat)maxLat=p.lat;
-        if(p.lng<minLng)minLng=p.lng;if(p.lng>maxLng)maxLng=p.lng;
-      }
-      /* guarda a STRING, não os pontos: mesma memória do dado bruto, e o
-         parse fica para os poucos candidatos de cada busca */
-      idx.push({nome,loc,minLat,maxLat,minLng,maxLng,
-                tipo:String(row.tipo||'').trim(),nivel,
-                comp:String(row.comprimento||'').trim()});
-    }
-    /* devolve o controle ao navegador entre fatias: a tela não congela */
-    if(fim<dm.length){
-      _caboEtapa(`Preparando... ${Math.round(fim/dm.length*100)}%`);
-      await new Promise(r=>setTimeout(r,0));
-    }
-  }
-  AppState.caboIndexLocal=idx;
-  AppState.caboIndexBase=dm;
-  AppState.caboIndexMeta={semGeometria,ignoradosNivel};
-  return idx;
-}
-
-async function _buscarCabosLocal(coord,meu){
-  if(!Array.isArray(AppState.cacheRedes['METRO'])){
-    _caboEtapa('Carregando cabos...');
-    const ok=await _garantirCabosLocais();
-    if(meu!==_caboBuscaSeq)return;
-    if(!ok){
-      DOM.resultadoCabos.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Não foi possível carregar os cabos. <a href="#" onclick="_retryCaboMetro();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>`;
-      return;
-    }
-  }
-  const idx=await _construirIndiceLocal();
-  if(meu!==_caboBuscaSeq)return;
-  if(!idx){DOM.resultadoCabos.innerHTML=`<div class="info-msg">Banco de cabos indisponível.</div>`;return}
-
-  const t0=Date.now();
-  /* pré-filtro por bounding box: converte o raio em graus e descarta em
-     comparação numérica, sem tocar na geometria. Se nada cair no raio
-     normal, amplia UMA vez — mesma razão do caminho do servidor. */
-  const _filtrar=raio=>{
-    const dLat=raio/111320;
-    const dLng=raio/(111320*(Math.cos(coord.lat*Math.PI/180)||1));
-    const perto=[];
-    for(let i=0;i<idx.length;i++){
-      const c=idx[i];
-      if(coord.lat<c.minLat-dLat||coord.lat>c.maxLat+dLat)continue;
-      if(coord.lng<c.minLng-dLng||coord.lng>c.maxLng+dLng)continue;
-      const cLat=Math.max(c.minLat,Math.min(coord.lat,c.maxLat));
-      const cLng=Math.max(c.minLng,Math.min(coord.lng,c.maxLng));
-      perto.push({c,aprox:haversine(coord.lat,coord.lng,cLat,cLng),
-                  diag:haversine(c.minLat,c.minLng,c.maxLat,c.maxLng)});
-    }
-    /* mesmo critério do servidor: quando o ponto cai DENTRO do retângulo de
-       vários cabos, o piso empata em 0 — aí vale mais o retângulo menor,
-       porque cabo que atravessa o bairro tem retângulo grande e diz pouco */
-    perto.sort((a,b)=>a.aprox-b.aprox||a.diag-b.diag);
-    return perto;
+/* ═══ caminho antigo (uma aba por requisição) ═════════════════════════
+   Só entra em cena enquanto o Apps Script não for republicado com a ação
+   `dados`. Fica aqui inteiro, e não meio apagado, porque é ele que segura
+   a operação no intervalo entre colar o código e publicar a versão. */
+function _carregarTecnicosLegado(forcar){
+  const _tecErro=()=>{
+    AppState.tecnicosStatus='error';
+    DOM.listaTecs.innerHTML='<div class="info-msg">Erro ao carregar técnicos. <a href="#" onclick="AppState.tecnicosStatus=\'idle\';carregarTecnicos();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>';
+    renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);renderGponEmpresas();
   };
-  let perto=_filtrar(CABO_SRV_RAIO),ampliado=false;
-  if(!perto.length){perto=_filtrar(CABO_SRV_RAIO_AMPLO);ampliado=perto.length>0}
-  const alvos=perto.slice(0,CABO_LOCAL_MAX_EXATOS);
-
-  const cv=new Map();
-  alvos.forEach(({c})=>{
-    const pts=extrairCoordsCabo(c.loc);
-    if(!pts.length)return;
-    const a=analisarCaboProximo(coord,pts);
-    if(!a)return;
-    const item={nome:c.nome,...a,vertices:pts.length,tipo:c.tipo,nivel:c.nivel,comp:c.comp};
-    item.ordem=item.distEfetiva+(item.foraDaExtensao?5:0)+(item.pontual?8:0);
-    const ex=cv.get(c.nome);
-    if(!ex||item.distEfetiva<ex.distEfetiva)cv.set(c.nome,item);
-  });
-
-  const meta=AppState.caboIndexMeta||{};
-  _renderResultadoCabos([...cv.values()].sort((a,b)=>a.ordem-b.ordem),{
-    origem:'local',
-    /* deixa visível POR QUE está no modo lento — senão a busca no servidor
-       fica desativada em silêncio e ninguém lembra de publicar/gerar o índice */
-    motivo:AppState.caboSrvMotivo||'',
-    avaliados:idx.length,
-    semGeometria:meta.semGeometria||0,
-    ignoradosNivel:meta.ignoradosNivel||0,
-    truncado:perto.length>alvos.length,
-    ampliado:ampliado,
-    raio:CABO_SRV_RAIO_AMPLO,
-    ms:Date.now()-t0
+  AppState.tecnicosStatus='loading';
+  let respondeu=false;
+  const timer=setTimeout(()=>{if(!respondeu){respondeu=true;_tecErro()}},20000);
+  const s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=TECNICOS&callback=cbTec${forcar?'&forcar=1':''}`;
+  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);_tecErro()}};
+  document.body.appendChild(s);
+  window.cbTec=d=>{
+    if(respondeu)return;respondeu=true;clearTimeout(timer);
+    const lista=_dadosTecnicos((d||[]).map(x=>[x.col1||x.nome,x.col2||x.numero,x.col3||x.empresa,x.col4||'',x.col5||'']));
+    _dadosConferirTecnicos(lista);
+    cacheSet('TECNICOS',lista);
+    _aplicarTecnicos(lista);
+  };
+}
+function _carregarOperadoresLegado(){
+  const s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=OPERADOR&callback=cbOp`;
+  s.onerror=()=>console.warn('Erro operadores');
+  document.body.appendChild(s);
+  window.cbOp=d=>{
+    const l=_dadosOperadores((d||[]).map(x=>[x.col1||'',x.col2||'']));
+    AppState.operadores=l;renderOperadores();cacheSet('OPERADOR',l);
+  };
+}
+function _carregarOltsLegado(){
+  if(AppState.oltDBStatus==='loading')return;
+  AppState.oltDBStatus='loading';
+  let respondeu=false;
+  const timer=setTimeout(()=>{if(!respondeu){respondeu=true;AppState.oltDBStatus='error'}},20000);
+  const s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=OLTs&callback=cbOLTs`;
+  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);AppState.oltDBStatus='error'}};
+  document.body.appendChild(s);
+  window.cbOLTs=d=>{
+    if(respondeu)return;respondeu=true;clearTimeout(timer);
+    const l=_dadosOlts((d||[]).map(x=>[x.col1||x.nome,x.col2||x.modelo]));
+    AppState.oltDB=l;AppState.oltDBStatus='ready';cacheSet('OLTs',l);
+  };
+}
+function _carregarCTOsLegado(rede){
+  const _ctoErro=()=>{
+    AppState.ctosStatus='error';
+    DOM.listaCTOs.innerHTML='<div class="info-msg">Erro ao carregar CTOs. <a href="#" onclick="carregarCTOs(\''+rede+'\');return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>';
+    atualizarPreviewRamal();
+  };
+  AppState.ctosStatus='loading';
+  let respondeu=false;
+  const timer=setTimeout(()=>{if(!respondeu){respondeu=true;_ctoErro()}},20000);
+  const cb=`cbRede_${rede}`,s=document.createElement('script');
+  s.src=`${GAS_URL}?aba=${rede}&callback=${cb}`;
+  s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);_ctoErro()}};
+  document.body.appendChild(s);
+  window[cb]=d=>{
+    if(respondeu)return;respondeu=true;clearTimeout(timer);
+    const n=(d||[]).map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x,_rede:rede}));
+    AppState.cacheRedes[rede]=n;AppState.baseDados=n;AppState.ctosStatus='ready';
+    renderListaCTOs(n);renderTecnicos();atualizarPreviewRamal();
+    cacheSet('REDE_'+rede,n);
+  };
+}
+function _garantirRedesLegado(redes){
+  redes.forEach(r=>{
+    const cb=`cbIdentRede_${r}`;
+    let respondeu=false;
+    const timer=setTimeout(()=>{if(!respondeu){respondeu=true;delete window[cb]}},20000);
+    const s=document.createElement('script');
+    s.src=`${GAS_URL}?aba=${r}&callback=${cb}`;
+    s.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);delete window[cb]}};
+    document.body.appendChild(s);
+    window[cb]=d=>{
+      if(respondeu)return;respondeu=true;clearTimeout(timer);
+      const n=(d||[]).map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x,_rede:r}));
+      AppState.cacheRedes[r]=n;cacheSet('REDE_'+r,n);
+    };
   });
 }
-/* ═══ fim CONSULTA DE CABOS v3 ═══ */
 
 /* normaliza o nome da empresa removendo espaços/traços/underscores/pontos,
    para casar variações como "IMAIS", "I_MAIS", "I-MAIS", "I MAIS" */
@@ -6713,19 +6760,6 @@ function exibirModal(c){
   atualizarTextoModal();
 }
 function fecharModal(){$('copyModal').classList.remove('active')}
-function carregarOperadores(){
-  const cache=cacheGet('OPERADOR');
-  if(cache){AppState.operadores=cache;renderOperadores();return}
-  const s=document.createElement('script');
-  s.src=`${GAS_URL}?aba=OPERADOR&callback=cbOp`;
-  s.onerror=()=>console.warn('Erro operadores');
-  document.body.appendChild(s);
-  window.cbOp=d=>{
-    AppState.operadores=d.map(x=>({nome:(x.col1||'').trim(),setor:(x.col2||'').trim()})).filter(o=>o.nome).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
-    renderOperadores();
-    cacheSet('OPERADOR',AppState.operadores);
-  }
-}
 function getOperadorKey(op){return`${op.nome}|||${op.setor||''}`}
 function renderOperadores(){
   const sel=$('operadorSelect');
@@ -6980,10 +7014,9 @@ function salvarSlaManual() {
 
 async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;const semCoord=[];ctos.forEach(info=>{const link=linkMapsCTO(info);if(!link)semCoord.push(info.cto);corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link||'Sem coordenadas'}\n\n`});if(semCoord.length){console.warn('[CTO] coordenada inválida na planilha: '+semCoord.join(', '));showToast('Sem coordenada válida: '+semCoord.slice(0,3).join(', ')+(semCoord.length>3?` +${semCoord.length-3}`:''),'error',5000)}corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · ${ctos.length} CTOs: ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas ${portas}`:_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
-/* gerarOSMetro: agora só entram na OS os cabos com a caixa "Incluir na OS"
-   marcada. Os cartões de referência (.cabo-card-ref) nunca entram, porque
-   esta consulta lê apenas .cabo-card. */
-async function gerarOSMetro(){const btn=DOM.btnGerarOSMetro;try{btn.innerHTML='Gerando...';btn.disabled=true;const emp=DOM.empresaMetro.value,problema=$('problemaMetro').value;const tecs=Array.from(DOM.listaTecsCabo.querySelectorAll('input[name="tCheckCabo"]:checked'));const cards=Array.from(DOM.resultadoCabos.querySelectorAll('.cabo-card')).filter(c=>{const chk=c.querySelector('.cabo-check');return !chk||chk.checked});if(!emp)throw new Error('Selecione a empresa.');if(!problema)throw new Error('Selecione o tipo de problema.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(!cards.length)throw new Error('Nenhum cabo marcado. Busque os cabos e marque ao menos um.');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');const coordRaw=DOM.inputCoordenada.value.trim(),cp=parseCoordenada(coordRaw);const locLink=cp?linkMaps(cp.lat,cp.lng):coordRaw;let corpo=`🚧 Acionamento para reparo na rede - REDE: METRO\n\n⚠️ Problema: ${problema}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;cards.forEach((card,idx)=>{const rows={};card.querySelectorAll('.cabo-card-row').forEach(row=>{const l=(row.querySelector('.cabo-label')?.textContent||'').trim().toLowerCase(),v=(row.querySelector('.cabo-value')?.textContent||'').trim();if(l&&v)rows[l]=v});const dist=(card.querySelector('.cabo-dist')?.textContent||'').trim();corpo+=`⚡ Cabo: ${rows['cabo']||'-'}\n📌 Localização: ${locLink}\n`;if(rows['tipo'])corpo+=`⚙️ Tipo: ${rows['tipo']}\n`;if(rows['nível'])corpo+=`🌐 Nível: ${rows['nível']}\n`;if(rows['comprimento'])corpo+=`📋 Comprimento: ${rows['comprimento']}\n`;if(dist)corpo+=`📐 ${dist}\n`;if(idx<cards.length-1)corpo+=`\n`});corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}registrarSla({rede:'METRO',tipo:problema,alvo:`${_slaListaCap(cards.map(c=>((c.querySelector('.cabo-value')||{}).textContent||'').trim()),170)}${coordRaw?' · '+coordRaw:''}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+/* gerarOSMetro vive agora no módulo CONSULTA DE CABOS v4, montado a
+   partir do ESTADO da busca. A versão que ficava aqui remontava a OS
+   raspando o texto dos cartões da tela. */
 
 /* ════════════════════════════════════════
    BACKBONE — painel próprio (rede independente, sem restrição de empresa,
@@ -7080,7 +7113,7 @@ async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Ge
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}atualizarTodosEstadosAllTec();showToast('✓ Limpo.')}
-function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';DOM.resultadoCabos.innerHTML='';AppState.baseDados=[];AppState.ctosStatus='idle';_caboBuscaSeq++;AppState.multiSelectAllowed=true;renderStatusBar();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
+function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.cabos.seq++;AppState.cabos.status='idle';AppState.cabos.itens=[];AppState.cabos.referencia=[];AppState.cabos.incluir={};AppState.cabos.meta=null;renderCabos();AppState.multiSelectAllowed=true;renderStatusBar();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
 </script>
 </body>
 </html>
