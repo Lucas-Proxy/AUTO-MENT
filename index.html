@@ -224,6 +224,11 @@ body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.
 .pill-item label,.stack-item label,.port-item label{display:flex;align-items:center;justify-content:center;padding:7px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--text2);transition:all .2s;margin:0;font-family:'Inter',sans-serif;letter-spacing:.3px;text-transform:uppercase}
 .pill-item label:hover,.stack-item label:hover,.port-item label:hover{border-color:var(--blue2);color:var(--blue);background:var(--blue-l)}
 .pill-item input:checked+label,.stack-item input:checked+label,.port-item input:checked+label{background:var(--blue-l);border-color:var(--blue2);color:var(--blue);font-weight:700;box-shadow:0 0 0 2px var(--blue-b)}
+/* selo da rede detectada pela CTO (modo REDE DE ACESSO) */
+.cto-rede-selo{display:inline-block;margin-left:7px;padding:1px 6px;border-radius:5px;font-size:.6rem;font-weight:800;letter-spacing:.6px;line-height:1.5;border:1px solid currentColor;opacity:.9}
+.cto-rede-selo.rede-FIBER{color:var(--teal);background:var(--teal-l)}
+.cto-rede-selo.rede-INTLINK{color:var(--amber);background:var(--amber-l)}
+.cto-rede-selo.rede-WIRE{color:var(--blue);background:var(--blue-l)}
 .button-group{display:flex;gap:10px;margin-top:30px}
 .btn{flex:1;padding:12px 20px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-main{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);color:#fff;box-shadow:0 2px 10px rgba(26,111,219,.4)}
@@ -345,6 +350,10 @@ body.acoes-voltando .theme-toggle{animation:acoesVolta .26s cubic-bezier(.22,1,.
 .btn-seguir:hover{transform:translateY(-1px)!important;box-shadow:0 4px 18px rgba(14,158,126,.45)!important}
 .btn-editar{background:var(--bg2)!important;border:1px solid var(--border)!important;color:var(--text2)!important;flex:1;font-size:.85rem!important;border-radius:8px!important}
 .btn-editar:hover{border-color:var(--border2)!important;color:var(--text)!important;background:var(--bg4)!important}
+.conexao-chip{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);color:var(--text2);font-family:'Inter',sans-serif;font-size:.74rem;font-weight:500;padding:7px 14px;border-radius:8px;z-index:1900;opacity:0;transition:opacity .3s ease,transform .3s ease;pointer-events:none;max-width:min(92vw,620px);text-align:center;line-height:1.45;box-shadow:var(--shadow)}
+.conexao-chip.visivel{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.conexao-chip.erro{border-left-color:var(--red);color:var(--text)}
+.conexao-chip a{color:var(--blue);font-weight:600}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--teal);color:var(--text);font-family:'Inter',sans-serif;font-size:.8rem;font-weight:500;padding:10px 18px;border-radius:8px;z-index:2000;opacity:0;transition:opacity .3s ease,transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.error{border-left-color:var(--red);color:var(--red)}
@@ -998,6 +1007,7 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 </div>
 
 <div id="toast" class="toast"></div>
+<div id="conexaoChip" class="conexao-chip"></div>
 
 <div id="copyModal" class="copy-modal">
 <div class="copy-modal-content">
@@ -1225,9 +1235,7 @@ IDENTIFICA&#199;&#195;O
 <label for="rede">Rede de Atua&#231;&#227;o</label>
 <select id="rede">
 <option value="" disabled selected>Selecione uma rede...</option>
-<option value="FIBER">Fiber Network</option>
-<option value="INTLINK">Intlink</option>
-<option value="WIRE">Wire</option>
+<option value="ACESSO">Rede de Acesso</option>
 <option value="METRO">Rede Metro</option>
 <option value="BACKBONE">Backbone</option>
 </select>
@@ -1356,7 +1364,7 @@ IDENTIFICA&#199;&#195;O
 <div id="boxBuscaCTO" class="form-group">
 <label for="filtro">Buscar e Selecionar CTO</label>
 <input type="text" id="filtro" placeholder="Digite para filtrar...">
-<div id="listaCTOs" class="cto-picker"><div class="info-msg">Selecione uma rede primeiro.</div></div>
+<div id="listaCTOs" class="cto-picker"><div class="info-msg">Selecione a rede e o tipo de acionamento.</div></div>
 </div>
 <div class="form-group">
 <label for="empresa">Empresa Executante</label>
@@ -1636,6 +1644,41 @@ IDENTIFICA&#199;&#195;O
 
 <script>
 const GAS_URL='https://script.google.com/a/macros/clickip.com.br/s/AKfycbyDuRIIlq07rOsFy_ufrIWhI7qKGordXz1ZzG0JLjBo9UzfXZ0RUbFI5WD4-Hknriz-2g/exec';
+/* ═══════════════════════════════════════════════════════════════════
+   REDE DE ACESSO — a rede deixou de ser escolhida pelo operador
+   ───────────────────────────────────────────────────────────────────
+   O operador nao precisa mais saber que RPE1-1-1 e WIRE ou que CD1-1-1
+   e FIBER. Ele escolhe "Rede de Acesso", informa o TIPO DE ACIONAMENTO e
+   busca a CTO numa lista unica com FIBER + INTLINK + WIRE juntas. A rede
+   sai do proprio registro da CTO (campo _rede) e e ela que define o
+   filtro de empresa/tecnico, o texto do script e o Hubsoft aberto no fim.
+   ═══════════════════════════════════════════════════════════════════ */
+const REDE_ACESSO='ACESSO';
+const REDES_ACESSO=['FIBER','INTLINK','WIRE'];
+const ROTULO_REDE={FIBER:'FIBER',INTLINK:'INTLINK',WIRE:'WIRE',METRO:'METRO',BACKBONE:'BACKBONE'};
+function rotuloRede(r){return ROTULO_REDE[r]||r||'-'}
+function modoRedeAcesso(){return DOM.rede&&DOM.rede.value===REDE_ACESSO}
+/* todas as CTOs das tres redes de acesso, cada uma carimbada com a sua */
+function _ctosDasRedesAcesso(){
+  const out=[];
+  REDES_ACESSO.forEach(r=>{
+    const arr=AppState.cacheRedes[r];
+    if(Array.isArray(arr))arr.forEach(x=>out.push(x._rede===r?x:Object.assign({},x,{_rede:r})));
+  });
+  return out;
+}
+/* redes distintas das CTOs marcadas agora */
+function redesDasCTOsSelecionadas(){
+  return [...new Set(getSelectedCTOs().map(c=>c._rede).filter(Boolean))];
+}
+/* rede que vale para o acionamento em curso: no modo REDE DE ACESSO ela
+   vem da CTO; nos demais modos e a propria escolha do select */
+function redeEfetiva(){
+  const v=DOM.rede?DOM.rede.value:'';
+  if(v!==REDE_ACESSO)return v;
+  const r=redesDasCTOsSelecionadas();
+  return r.length===1?r[0]:'';
+}
 const TIPO_AC_FIXO=[
 {contexto:'NORMAL',valor:'REDE DE ACESSO - ATENUACAO',label:'ATENUAÇÃO',pai:'',ordem:1},
 {contexto:'NORMAL',valor:'REDE DE ACESSO - CTO DOWN',label:'CTO DOWN',pai:'',ordem:2},
@@ -1848,13 +1891,26 @@ async function _dadosPedir(tabelas,forcar){
   try{
     r=await jsonp({acao:'dados',quero,revs,forcar:forcar?'1':''},30000);
   }catch(e){
-    Dados.endpoint='indisponivel';Dados.motivo=e&&e.message||'sem resposta';
+    /* NÃO desliga o caminho rápido por causa de um tropeço.
+       Antes, qualquer timeout marcava o endpoint como indisponível PARA
+       SEMPRE — e a aba aberta o resto do dia ficava presa no modo antigo,
+       uma requisição por aba, sem nenhum motivo além de uma oscilação de
+       trinta segundos. Só a resposta do servidor dizendo que não conhece
+       a ação desliga; falha de rede fica como "desconhecido" e a próxima
+       tentativa usa o caminho rápido de novo. */
+    Dados.motivo=(e&&e.message)||'sem resposta';
     return null;
   }
   if(!r||r.ok!==true){
-    Dados.endpoint='indisponivel';
-    Dados.motivo=(r&&r.erro)||'ação "dados" não publicada';
-    console.warn('[DADOS] endpoint único indisponível (%s) — voltando ao modo antigo, uma aba por vez. Publique a versão nova do Apps Script.',Dados.motivo);
+    const erro=String((r&&r.erro)||'');
+    const naoPublicada=/desconhecid/i.test(erro)||!erro;
+    if(naoPublicada){
+      Dados.endpoint='indisponivel';
+      Dados.motivo=erro||'ação "dados" não publicada';
+      console.warn('[DADOS] endpoint único indisponível (%s) — voltando ao modo antigo, uma aba por vez. Publique a versão nova do Apps Script.',Dados.motivo);
+    }else{
+      Dados.motivo=erro;
+    }
     return null;
   }
   Dados.endpoint='ok';
@@ -1975,7 +2031,8 @@ function atualizarDadosForcado(){
   iniciarDados(true);
   _reindexarCabos();
   const redeAtual=DOM.rede.value;
-  if(redeAtual&&redeAtual!=='METRO'&&redeAtual!=='BACKBONE')carregarCTOs(redeAtual);
+  if(redeAtual===REDE_ACESSO)carregarCTOsAcesso();
+  else if(redeAtual&&redeAtual!=='METRO'&&redeAtual!=='BACKBONE')carregarCTOs(redeAtual);
   if(AppState.modoIdent==='cto')garantirRedesCarregadas();
 }
 /* O botão Atualizar também manda refazer o índice de cabos. O servidor
@@ -2096,9 +2153,9 @@ function tecnicosDaEmpresa(lista,empresa){return (lista||[]).filter(t=>mesmaEmpr
    pela rede/empresa. Serve para conferir cadastro novo na aba TECNICOS
    sem precisar caçar no codigo. */
 function diagnosticarTecnicos(nomeCTO,rede){
-  const r=rede||DOM.rede.value||'(nenhuma)';
+  const r=rede||redeEfetiva()||DOM.rede.value||'(nenhuma)';
   const segs=segmentosProjetoCTO(nomeCTO);
-  const filtroRede=filtroEmpresaPorRede(rede||DOM.rede.value);
+  const filtroRede=filtroEmpresaPorRede(rede||redeEfetiva());
   const empFallback=_normEmpresa(empresaFallbackPorPrefixo(_prefixoDaCTO(nomeCTO))||'');
   const linhas=AppState.tecnicos.map(t=>{
     const prefOk=tecnicoAtendeCTOs(t,[nomeCTO]);
@@ -2779,6 +2836,118 @@ function _slaAlvoCard(item){
 
 /* chamada JSONP genérica, com timeout e limpeza do callback */
 let _jsonpSeq=0;
+/* ═══════════════════════════════════════════════════════════════════════
+   CONEXÃO — v4
+   ═══════════════════════════════════════════════════════════════════════
+   O QUE FAZIA O PAINEL "PARECER DESCONECTADO" DEPOIS DE HORAS ABERTO
+
+   1) NÃO EXISTIA RETENTATIVA DE VERDADE. Cada carregamento tentava duas
+      vezes SEGUIDAS, sem esperar entre uma e outra. Contra um Apps Script
+      que acabou de acordar, as duas tentativas caem juntas — e o painel
+      concluía "falhou" por causa de um atraso de dois segundos.
+
+   2) NÃO EXISTIA BACKOFF. Com o painel aberto e o operador mexendo, a
+      sondagem ia a cada 3 s. Servidor lento, e essas chamadas se
+      EMPILHAVAM na fila (o Apps Script atende uma por vez por usuário),
+      cada uma esperando o próprio timeout. É a definição de piorar a
+      situação batendo mais forte na porta.
+
+   3) SESSÃO DO GOOGLE EXPIRANDO. O painel é servido de outro endereço e
+      conversa com o Apps Script por JSONP. Depois de algumas horas o
+      cookie do Google vence: a URL passa a devolver a PÁGINA DE LOGIN em
+      vez dos dados. O <script> carrega, o navegador tenta executar HTML,
+      nada acontece — e o painel só via "tempo esgotado", repetido para
+      sempre. Isto é o "de vez em quando fica tudo vermelho": não é queda
+      de rede, é sessão vencida, e a correção é reabrir o login, coisa que
+      a tela nunca disse.
+
+   4) UMA FALHA APAGAVA A TELA. Erro numa volta de fundo virava painel
+      vermelho, mesmo com os dados carregados e válidos em memória.
+
+   COMO FICOU
+
+   Toda chamada passa por aqui: tenta de novo com espera crescente,
+   classifica o tipo da falha, e a tela só fica vermelha quando o servidor
+   está realmente fora — nunca por um tropeço isolado. Enquanto houver
+   dado bom em memória, ele CONTINUA na tela; o que muda é uma tarja
+   discreta dizendo que a atualização está atrasada.
+═══════════════════════════════════════════════════════════════════════ */
+const CONEXAO_TENT_LEITURA = 3;
+const CONEXAO_TENT_ESCRITA = 2;
+const CONEXAO_ESPERAS      = [800, 2500, 6000];   // ms entre tentativas
+const CONEXAO_AVISO_MS     = 45000;               // sem sucesso: tarja âmbar
+const CONEXAO_QUEDA_MS     = 150000;              // sem sucesso: tarja vermelha
+const CONEXAO_FATOR_MAX    = 8;                   // teto do backoff da sondagem
+
+function _conErro(tipo, msg) { const e = new Error(msg); e.tipo = tipo; return e; }
+
+const Conexao = {
+  falhas: 0,
+  ultimoSucesso: Date.now(),
+  ultimaFalha: 0,
+  motivo: '',
+  tipo: '',
+  _estadoAnterior: 'ok',
+
+  ok() {
+    const voltou = this.falhas > 0;
+    this.falhas = 0; this.ultimoSucesso = Date.now(); this.motivo = ''; this.tipo = '';
+    if (voltou) showToast('✓ Conexão restabelecida.');
+    this.render();
+  },
+
+  falhou(tipo, msg) {
+    this.falhas++; this.ultimaFalha = Date.now();
+    this.tipo = tipo || 'rede'; this.motivo = msg || '';
+    this.render();
+  },
+
+  /* Multiplicador da cadência de sondagem. Servidor tropeçando é motivo
+     para bater MENOS na porta, não mais: 1×, 2×, 4×, 8×. Volta a 1 no
+     primeiro sucesso. */
+  fator() {
+    if (!this.falhas) return 1;
+    return Math.min(CONEXAO_FATOR_MAX, Math.pow(2, Math.min(3, this.falhas)));
+  },
+
+  estado() {
+    if (this.tipo === 'sessao') return 'sessao';
+    if (!this.falhas) return 'ok';
+    const parado = Date.now() - this.ultimoSucesso;
+    if (parado > CONEXAO_QUEDA_MS) return 'caido';
+    if (parado > CONEXAO_AVISO_MS) return 'instavel';
+    return 'ok';                       // tropeço isolado: a tela nem fica sabendo
+  },
+
+  render() {
+    const el = $('conexaoChip');
+    if (!el) return;
+    const e = this.estado();
+    if (e !== this._estadoAnterior) this._estadoAnterior = e;
+    if (e === 'ok') { el.className = 'conexao-chip'; el.innerHTML = ''; return; }
+    if (e === 'sessao') {
+      el.className = 'conexao-chip visivel erro';
+      el.innerHTML = '&#9888; Sessão do Google expirada — ' +
+        '<a href="' + GAS_URL + '?acao=ping" target="_blank" rel="noopener">reabrir o acesso</a>' +
+        ' e voltar a esta aba.';
+      return;
+    }
+    const min = Math.round((Date.now() - this.ultimoSucesso) / 60000);
+    if (e === 'instavel') {
+      el.className = 'conexao-chip visivel';
+      el.innerHTML = '&#8635; Reconectando… última atualização há ' +
+        (min < 1 ? 'menos de 1 min' : min + ' min');
+      return;
+    }
+    el.className = 'conexao-chip visivel erro';
+    el.innerHTML = '&#9888; Sem resposta do servidor há ' + (min || 1) + ' min — ' +
+      'continuo tentando. Os dados na tela são de ' +
+      _slaFmtHora(this.ultimoSucesso).split(' ')[1] + '.';
+  }
+};
+/* a tarja envelhece sozinha: sem isto ela congelaria em "há 1 min" */
+setInterval(() => { if (Conexao.falhas) Conexao.render(); }, 15000);
+
 /* ═══ FILA DE REQUISIÇÕES ════════════════════════════════════════════
    O Apps Script atende as chamadas de um mesmo usuário praticamente em
    série. Com a checagem a cada 3s somada às listas e às gravações, as
@@ -2814,16 +2983,55 @@ function _jsonpDrenar(){
   }
 }
 
+function _jsonpEnfileirar(params,timeoutMs,ehLeitura){
+  return new Promise((resolve,reject)=>{
+    const t={params,timeoutMs,resolve,reject};
+    if(ehLeitura)_jsonpFila.push(t);else _jsonpFila.unshift(t);
+    _jsonpDrenar();
+  });
+}
+
+/* Tentar de novo, ESPERANDO entre as tentativas. A versão anterior
+   tentava duas vezes coladas — contra um Apps Script que acabou de
+   acordar, as duas caíam juntas e o painel concluía "falhou" por causa de
+   dois segundos de atraso. A espera cresce (0,8s · 2,5s · 6s) e leva um
+   tempero aleatório para que vários operadores que caíram juntos não
+   voltem todos no mesmo instante.
+
+   Escrita também tem retentativa, mas só uma: as ações de gravação do
+   backend são idempotentes por ID (abrirSla confere o ID antes de
+   inserir, encerrar* não reescreve encerramento existente), então repetir
+   por timeout não duplica nada. Resposta com ok:false NÃO é repetida —
+   isso é o servidor dizendo não, e insistir não muda a resposta. */
+async function _jsonpComRetentativa(params,timeoutMs,ehLeitura){
+  const max=ehLeitura?CONEXAO_TENT_LEITURA:CONEXAO_TENT_ESCRITA;
+  let ultimo=null;
+  for(let tent=0;tent<max;tent++){
+    if(tent){
+      const base=CONEXAO_ESPERAS[Math.min(tent-1,CONEXAO_ESPERAS.length-1)];
+      await new Promise(r=>setTimeout(r,base+Math.random()*base*0.4));
+    }
+    try{
+      const r=await _jsonpEnfileirar(params,timeoutMs,ehLeitura);
+      Conexao.ok();
+      return r;
+    }catch(e){
+      ultimo=e;
+      /* sessão vencida não melhora com insistência: para na hora e a tela
+         diz o que fazer */
+      if(e&&e.tipo==='sessao'){Conexao.falhou('sessao',e.message);throw e}
+    }
+  }
+  Conexao.falhou((ultimo&&ultimo.tipo)||'rede',(ultimo&&ultimo.message)||'sem resposta');
+  throw ultimo||_conErro('rede','sem resposta');
+}
+
 function jsonp(params,timeoutMs=45000){
   const acao=String((params&&params.acao)||'');
   const ehLeitura=JSONP_LEITURAS.indexOf(acao)!==-1;
   const chave=ehLeitura?JSON.stringify(params):null;
   if(chave&&_jsonpEmVoo.has(chave))return _jsonpEmVoo.get(chave);
-  const p=new Promise((resolve,reject)=>{
-    const t={params,timeoutMs,resolve,reject};
-    if(ehLeitura)_jsonpFila.push(t);else _jsonpFila.unshift(t);
-    _jsonpDrenar();
-  });
+  const p=_jsonpComRetentativa(params,timeoutMs,ehLeitura);
   if(chave){
     _jsonpEmVoo.set(chave,p);
     const limpar=()=>{if(_jsonpEmVoo.get(chave)===p)_jsonpEmVoo.delete(chave)};
@@ -2841,9 +3049,25 @@ function _jsonpBruto(params,timeoutMs=45000){
     const s=document.createElement('script');
     let pronto=false;
     const limpar=()=>{clearTimeout(t);try{delete window[cb]}catch(e){window[cb]=undefined}if(s.parentNode)s.parentNode.removeChild(s)};
-    const t=setTimeout(()=>{if(!pronto){pronto=true;limpar();reject(new Error('Tempo esgotado'))}},timeoutMs);
+    const t=setTimeout(()=>{if(!pronto){pronto=true;limpar();reject(_conErro('tempo','tempo esgotado'))}},timeoutMs);
     window[cb]=d=>{if(pronto)return;pronto=true;limpar();resolve(d)};
-    s.onerror=()=>{if(!pronto){pronto=true;limpar();reject(new Error('Falha de conexão'))}};
+    s.onerror=()=>{if(!pronto){pronto=true;limpar();reject(_conErro('rede','falha de conexão'))}};
+    /* SESSÃO VENCIDA TEM CARA DE TIMEOUT, E NÃO É.
+       Quando o cookie do Google expira, a URL do Apps Script devolve a
+       PÁGINA DE LOGIN. O navegador baixa isso, tenta executar HTML como
+       JavaScript, não executa nada — e o `load` dispara mesmo assim, sem
+       que o nosso callback tenha rodado. Era esse o caso que o painel
+       exibia como "tempo esgotado" repetido para sempre: 45 s de espera
+       inútil por chamada, e nenhuma pista de que bastava refazer o login.
+       Script que CARREGOU e não chamou o callback é resposta que não é a
+       nossa — e isso se sabe na hora. */
+    s.onload=()=>{
+      setTimeout(()=>{
+        if(pronto)return;
+        pronto=true;limpar();
+        reject(_conErro('sessao','o servidor respondeu, mas não com os dados (login do Google vencido ou implantação sem acesso)'));
+      },0);
+    };
     s.src=`${GAS_URL}?${qs}&callback=${cb}`;
     document.body.appendChild(s);
   });
@@ -2984,10 +3208,18 @@ const Sync = {
   intervalo(){
     if(document.hidden)return 0;                      // 0 = não agenda nada
     const algumAberto=AppState.sla.aberto||AppState.tcSla.aberto||AppState.notas.aberto;
-    if(!algumAberto)return SYNC_FECHADO_MS;
     const ativo=Date.now()-Sync.ultimaInteracao<SYNC_INATIVO_MS;
-    if(Sync.revSuportado===false)return ativo?SYNC_DIRETO_ATIVO_MS:SYNC_DIRETO_PARADO_MS;
-    return ativo?SYNC_ATIVO_MS:SYNC_PARADO_MS;
+    let base;
+    if(!algumAberto)base=SYNC_FECHADO_MS;
+    else if(Sync.revSuportado===false)base=ativo?SYNC_DIRETO_ATIVO_MS:SYNC_DIRETO_PARADO_MS;
+    else base=ativo?SYNC_ATIVO_MS:SYNC_PARADO_MS;
+    /* SERVIDOR TROPEÇANDO PEDE MENOS BATIDA NA PORTA, NÃO MAIS.
+       A cadência de 3 s era boa com tudo funcionando e péssima quando
+       não: o Apps Script atende uma requisição por vez, então as
+       sondagens se empilhavam na fila enquanto cada uma esperava o
+       próprio timeout — e o painel afundava sozinho. Volta a 1× no
+       primeiro sucesso. */
+    return base*Conexao.fator();
   },
   /* MODO DIRETO — busca as listas sem perguntar antes. É o comportamento
      antigo, usado só quando o servidor não conhece `acao=rev`. */
@@ -3007,12 +3239,23 @@ const Sync = {
   async checar(forcar){
     /* Trava presa (resposta que nunca chegou) não pode calar o painel para
        sempre: passados 45s, a volta seguinte tenta de novo. */
+    /* Sondagem já em voo. A trava existe para não empilhar chamada, mas
+       ela não pode calar uma atualização FORÇADA: voltar para a aba,
+       reconectar a rede ou clicar em Atualizar são exatamente os momentos
+       em que o operador quer dado novo agora — e ficar preso atrás de uma
+       sondagem que vai morrer de timeout daqui a um minuto é o que fazia
+       o painel parecer travado. Forçado espera no máximo 3 s. */
     if(Sync.emVoo){
-      if(Date.now()-Sync.emVooDesde<45000)return;
+      const emVooHa=Date.now()-Sync.emVooDesde;
+      if(emVooHa < (forcar?3000:90000))return;
       Sync.emVoo=false;
     }
     if(document.hidden&&!forcar)return;
-    Sync.emVoo=true;Sync.emVooDesde=Date.now();
+    /* Com o login vencido, TODA chamada volta igual. Insistir de 3 em 3 s
+       não reconecta e ainda esconde a mensagem que resolve; uma sonda por
+       minuto basta para perceber quando o operador refez o login. */
+    if(Conexao.estado()==='sessao'&&!forcar&&Date.now()-Conexao.ultimaFalha<60000)return;
+    Sync.emVoo=true;Sync.emVooDesde=Date.now();Sync.ultimoCiclo=Date.now();
     try{
       if(Sync.revSuportado===false){await Sync.direto();return}
       /* Diz ao servidor o que já temos e quais áreas interessam. Quando
@@ -3065,7 +3308,15 @@ const Sync = {
   },
   /* Atualiza AGORA — usado ao abrir um painel, ao voltar para a aba e
      depois de uma gravação de outra aba do mesmo navegador. */
-  agora(){Sync.ultimaInteracao=Date.now();Sync.checar(true).finally(()=>Sync.reprogramar())},
+  /* Atualiza AGORA e afrouxa o backoff: voltar para a aba, a rede
+     reconectar ou o operador clicar é sinal de que vale tentar de novo do
+     zero, em vez de seguir esperando o intervalo esticado da última
+     falha. */
+  agora(){
+    Sync.ultimaInteracao=Date.now();
+    if(Conexao.falhas>1)Conexao.falhas=1;
+    Sync.checar(true).finally(()=>Sync.reprogramar());
+  },
   /* Avisa as outras abas deste navegador na hora. Manda a LISTA junto:
      quem já tem os dados não precisa fazer as outras abas buscarem de
      novo, então a atualização entre abas sai sem nenhuma viagem. */
@@ -3074,7 +3325,26 @@ const Sync = {
       if(Sync.canal)Sync.canal.postMessage({area,itens:itens||null,rev:rev||null,t:Date.now()});
     }catch(e){}
   },
+  /* CÃO DE GUARDA. A sondagem é uma corrente de setTimeout: cada volta
+     agenda a próxima. Basta UMA exceção fora do try — ou o navegador
+     descartar o timer de uma aba que passou horas em segundo plano — para
+     a corrente arrebentar, e aí o painel congela em silêncio, exibindo
+     dados velhos como se fossem atuais. Foi o que a operação sentiu como
+     "fica desatualizado sem avisar". Esta ronda de 1 min conserta a
+     corrente sozinha. */
+  vigiar(){
+    setInterval(()=>{
+      if(document.hidden)return;
+      const parado=Date.now()-Math.max(Sync.ultimoCiclo||0,Conexao.ultimoSucesso);
+      const teto=Math.max(3*60*1000,(Sync.intervalo()||SYNC_FECHADO_MS)*3);
+      if(parado>teto){
+        console.warn('[SYNC] corrente parada há %ss — reiniciando',Math.round(parado/1000));
+        Sync.agora();
+      }
+    },60000);
+  },
   iniciar(){
+    Sync.vigiar();
     try{
       Sync.canal=new BroadcastChannel('ment-sync');
       Sync.canal.onmessage=ev=>{
@@ -3168,7 +3438,7 @@ function registrarSla(d){
 }
 
 /* ── carregar / renderizar ── */
-function carregarSla(silencioso, retentativas=1){
+function carregarSla(silencioso){
   if(!silencioso&&AppState.sla.status!=='carregando'){
     AppState.sla.status='carregando';
     if(AppState.sla.aberto&&!AppState.sla.itens.length)renderSla();
@@ -3179,10 +3449,9 @@ function carregarSla(silencioso, retentativas=1){
     _aplicarItensSla(r.itens);
     return AppState.sla.itens;
   }).catch(e=>{
-    if(retentativas>0){
-      return carregarSla(silencioso, retentativas - 1);
-    }
-    /* Uma atualização que falha NÃO pode apagar o que já está na tela.
+    /* A retentativa com espera acontece dentro do jsonp (ver Conexão).
+       Aqui só resta decidir o que a TELA faz com a falha.
+       Uma atualização que falha NÃO pode apagar o que já está na tela.
        Antes, um timeout de 20s numa volta de fundo jogava o painel inteiro
        fora e mostrava a tela vermelha de erro, mesmo com os chamados
        carregados e válidos em memória — e normalizava sozinho na volta
@@ -3906,7 +4175,7 @@ function _ativarAbaEmails(){
   renderTcSla();
   /* mostra na hora o que já está na planilha e só então varre o Gmail,
      para a aba não abrir em branco esperando a busca */
-  carregarTcSla(true).then(()=>carregarTcSla(false,1,true));
+  carregarTcSla(true).then(()=>carregarTcSla(false,true));
   clearInterval(AppState.tcSla.timerTick);
   AppState.tcSla.timerTick=setInterval(tickTcSla,1000);
   _reprogramarPollTcSla();
@@ -3920,7 +4189,7 @@ function _pausarAbaEmails(){
 /* um único "Atualizar" no topo: recarrega a aba que está à frente */
 function atualizarAbaSlaAtiva(){
   if(AppState.slaAba==='emails'){
-    carregarTcSla(false,1,true);
+    carregarTcSla(false,true);
     showToast('↻ Varrendo o Gmail — pode levar alguns segundos...');
   }else{
     carregarSla();
@@ -4004,7 +4273,7 @@ function bindEventsSla(){
 /* ════════════════════════════════════════════════════════
    PAINEL E-MAIL’S SLA (TIM)
    ════════════════════════════════════════════════════════ */
-/* carregarTcSla(silencioso, retentativas, varrerGmail)
+/* carregarTcSla(silencioso, varrerGmail)
 
    varrerGmail = false  → lê só a aba TIM-CHAMADOS (resposta em ~1s).
    varrerGmail = true   → varredura completa do Gmail (dezenas de segundos).
@@ -4015,7 +4284,7 @@ function bindEventsSla(){
    causa principal do carregamento de quase um minuto. Agora o Gmail só é
    varrido sob comando (botão Atualizar) e pelo gatilho de tempo do lado
    do servidor, que mantém a aba TIM-CHAMADOS em dia. */
-function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
+function carregarTcSla(silencioso, varrerGmail=false){
   if(!silencioso&&AppState.tcSla.status!=='carregando'){
     AppState.tcSla.status='carregando';
     if(AppState.tcSla.aberto&&!AppState.tcSla.itens.length)renderTcSla();
@@ -4027,7 +4296,7 @@ function carregarTcSla(silencioso, retentativas=1, varrerGmail=false){
     _aplicarItensTcSla(r.itens);
     return AppState.tcSla.itens;
   }).catch(e=>{
-    if(retentativas>0) return carregarTcSla(silencioso, retentativas - 1, varrerGmail);
+    /* retentativa: ver Conexão. Aqui só o que a tela faz com a falha */
     AppState.tcSla.erro=e.message||String(e);
     if(AppState.tcSla.itens.length){
       AppState.tcSla.status='ok';AppState.tcSla.falhaMs=Date.now();
@@ -4616,7 +4885,9 @@ function renderTcSla(){
   const wrap=$('tcSlaFilas');if(!wrap)return;
   const st=AppState.tcSla;
 
-  if(st.status==='erro'){
+  /* &&!st.itens.length: com chamados na mão, falha de atualização não
+     apaga a tela — quem avisa é a tarja de conexão, lá embaixo */
+  if(st.status==='erro'&&!st.itens.length){
     wrap.innerHTML=`<div class="sla-aviso erro"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados do Gmail.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
     st.nodes.clear();st.assinatura='';renderResumoTcSla();return;
   }
@@ -5495,7 +5766,7 @@ function manterGasAcordado() {
    duas requisições em fila, e o Apps Script atende uma por vez. Agora
    TECNICOS, OPERADOR e OLTs vêm juntos — depois de o cache em disco já
    ter pintado a tela. */
-document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarTipoAC();iniciarDados(false);Sync.iniciar()});
+document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();iniciarDados(false);Sync.iniciar()});
 
 function bindEvents(){
   DOM.rede.addEventListener('change',aoMudarRede);
@@ -5675,7 +5946,13 @@ function _aplicarTecnicos(lista){
   renderTecnicos();renderTecnosCabo();renderGponEmpresas();
 }
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
-function aoMudarRede(){const r=DOM.rede.value,isMetro=r==='METRO',isBackbone=r==='BACKBONE';DOM.wrapper.classList.toggle('metro-mode',isMetro||isBackbone);DOM.sidebar.classList.toggle('visible',isMetro||isBackbone);DOM.sidebar.style.display=(isMetro||isBackbone)?'none':'';DOM.boxMetro.classList.toggle('hidden',!isMetro);DOM.boxBackboneRede.classList.toggle('hidden',!isBackbone);DOM.boxRede.classList.toggle('hidden',isMetro||isBackbone);if(isMetro){/* v4: nada a pré-carregar. A busca roda no servidor e só precisa da coordenada — entrar na aba Metro é instantâneo. */renderCabos();renderStatusBar()}else if(isBackbone){renderTecnicosBackbone()}else{carregarCTOs(r)}atualizarResumo()}
+function aoMudarRede(){const r=DOM.rede.value,isMetro=r==='METRO',isBackbone=r==='BACKBONE';DOM.wrapper.classList.toggle('metro-mode',isMetro||isBackbone);DOM.sidebar.classList.toggle('visible',isMetro||isBackbone);DOM.sidebar.style.display=(isMetro||isBackbone)?'none':'';DOM.boxMetro.classList.toggle('hidden',!isMetro);DOM.boxBackboneRede.classList.toggle('hidden',!isBackbone);DOM.boxRede.classList.toggle('hidden',isMetro||isBackbone);if(isMetro){/* v4: nada a pré-carregar. A busca roda no servidor e só precisa da coordenada — entrar na aba Metro é instantâneo. */renderCabos();renderStatusBar()}else if(isBackbone){renderTecnicosBackbone()}else if(r===REDE_ACESSO){carregarCTOsAcesso()}else{carregarCTOs(r)}atualizarVisibilidadeBuscaCTO();atualizarResumo()}
+/* A caixa de CTO so abre depois que o TIPO DE ACIONAMENTO foi informado —
+   é essa a ordem pedida: rede de acesso → tipo → CTO. */
+function atualizarVisibilidadeBuscaCTO(){
+  const ramal=DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO';
+  DOM.boxBuscaCTO.classList.toggle('hidden',ramal||!DOM.tipo.value);
+}
 /* ════════════════════════════════════════
    REDE METRO — o download completo dos cabos ACABOU
    ════════════════════════════════════════
@@ -5851,8 +6128,10 @@ function _valoresCoord(run,tentarAgrupado){
    A referência usa SÓ leitura direta e sem empate, então nunca chama de
    volta o desempate — não há recursão. É calculada uma vez por rede. */
 const _refCoordCache={};
-function _referenciaCoordRede(){
-  const rede=DOM.rede&&DOM.rede.value;
+function _referenciaCoordRede(redeHint){
+  /* no modo REDE DE ACESSO o select nao diz a rede — quem diz e a propria
+     CTO que esta sendo lida, por isso a dica chega por parametro */
+  const rede=redeHint||(DOM.rede&&DOM.rede.value);
   const base=rede?AppState.cacheRedes[rede]:null;
   if(!Array.isArray(base)||!base.length)return null;
   if(_refCoordCache[rede]!==undefined)return _refCoordCache[rede];
@@ -5950,7 +6229,7 @@ function coordDaCTO(info,semDesempate){
     if(!naCaixa.length)return null;
     if(naCaixa.length===1){naCaixa[0].ambiguo=false;return naCaixa[0]}
     if(semDesempate)return null;          // chamada vinda da referência
-    const ref=_referenciaCoordRede();
+    const ref=_referenciaCoordRede(info&&info._rede);
     let esc;
     if(ref){
       esc=naCaixa.reduce((m,c)=>{
@@ -6008,7 +6287,7 @@ function linkMaps(lat,lng){
    tipo do dado (número ou texto) e se dá para montar o link. Serve para
    descobrir se o problema está no dado ou no link, sem adivinhar. */
 function verCoordenadas(rede,limite){
-  const r=String(rede||DOM.rede.value||'').toUpperCase();
+  const r=String(rede||redeEfetiva()||DOM.rede.value||'').toUpperCase();
   const base=AppState.cacheRedes[r];
   if(!Array.isArray(base)){
     console.warn('Rede %s não carregada. Selecione a rede na tela e rode de novo.',r);
@@ -6197,6 +6476,13 @@ function renderCabos(){
     return;
   }
   if(st.status==='erro'){
+    /* falha de sessão tem conserto próprio, e não é "tentar de novo" */
+    if(Conexao.estado()==='sessao'){
+      el.innerHTML=`<div class="info-msg" style="color:var(--amber)">&#9888; O login do Google desta aba venceu.
+        <a href="${GAS_URL}?acao=ping" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:underline">Reabrir o acesso</a>,
+        voltar aqui e buscar de novo.</div>`;
+      return;
+    }
     el.innerHTML=`<div class="info-msg" style="color:var(--red)">&#9888; Falha na busca: ${_esc(st.erro)}.
       <a href="#" onclick="buscarCabosProximos();return false;" style="color:var(--blue);text-decoration:underline">Tentar de novo</a></div>`;
     return;
@@ -6466,6 +6752,76 @@ function carregarCTOs(rede){
   }).catch(()=>_carregarCTOsLegado(rede));
 }
 
+/* ── REDE DE ACESSO: carrega FIBER + INTLINK + WIRE e junta numa lista só ──
+   O picker de CTO passa a mostrar as tres redes de uma vez, cada pill com
+   o selo da rede a que a caixa pertence. */
+function carregarCTOsAcesso(){
+  DOM.listaCTOs.innerHTML='<div class="loading-text">Carregando CTOs das redes de acesso...</div>';
+  desmarcarTudo('ctoCheck');
+  atualizarResumo();
+  REDES_ACESSO.forEach(r=>{
+    if(!AppState.cacheRedes[r]){
+      const c=cacheGetPersistente('REDE_'+r);
+      if(c)AppState.cacheRedes[r]=c;
+    }
+  });
+  const aplicar=()=>{
+    AppState.baseDados=_ctosDasRedesAcesso();
+    AppState.ctosStatus='ready';
+    renderListaCTOs(AppState.baseDados);
+    renderTecnicos();
+    atualizarPreviewRamal();
+  };
+  const faltam=REDES_ACESSO.filter(r=>!Array.isArray(AppState.cacheRedes[r]));
+  if(!faltam.length){aplicar();return}
+
+  AppState.ctosStatus='loading';
+  AppState.baseDados=[];
+  atualizarPreviewRamal();
+  _dadosPedir(faltam,false).then(tabs=>{
+    if(tabs===null){_carregarCTOsAcessoLegado(faltam);return}
+    faltam.forEach(r=>{
+      const t=tabs[r];
+      const n=t?_dadosCtos(t.linhas,r):(cacheGetPersistente('REDE_'+r)||[]);
+      if(t)cacheSet('REDE_'+r,n);
+      AppState.cacheRedes[r]=n;
+    });
+    aplicar();
+  }).catch(()=>_carregarCTOsAcessoLegado(faltam));
+}
+/* mesmo caminho antigo de sempre (uma aba por requisicao), so que
+   esperando as tres respostas antes de pintar a lista unica */
+function _carregarCTOsAcessoLegado(redes){
+  AppState.ctosStatus='loading';
+  let restantes=redes.length;
+  const fim=()=>{
+    if(--restantes>0)return;
+    AppState.baseDados=_ctosDasRedesAcesso();
+    if(!AppState.baseDados.length){
+      AppState.ctosStatus='error';
+      DOM.listaCTOs.innerHTML='<div class="info-msg">Erro ao carregar CTOs. <a href="#" onclick="carregarCTOsAcesso();return false;" style="color:var(--blue);text-decoration:underline">Tentar novamente</a></div>';
+    }else{
+      AppState.ctosStatus='ready';
+      renderListaCTOs(AppState.baseDados);
+    }
+    renderTecnicos();atualizarPreviewRamal();
+  };
+  redes.forEach(r=>{
+    const cb='cbAcessoRede_'+r;
+    let respondeu=false;
+    const timer=setTimeout(()=>{if(!respondeu){respondeu=true;delete window[cb];fim()}},20000);
+    const sc=document.createElement('script');
+    sc.src=`${GAS_URL}?aba=${r}&callback=${cb}`;
+    sc.onerror=()=>{if(!respondeu){respondeu=true;clearTimeout(timer);delete window[cb];fim()}};
+    document.body.appendChild(sc);
+    window[cb]=d=>{
+      if(respondeu)return;respondeu=true;clearTimeout(timer);
+      const n=(d||[]).map(x=>({cto:x.col1||x.cto,lat:x.col2||x.lat,lng:x.col3||x.lng,...x,_rede:r}));
+      AppState.cacheRedes[r]=n;cacheSet('REDE_'+r,n);fim();
+    };
+  });
+}
+
 /* As três redes de uma vez — eram três <script> em fila, cada um pagando
    a partida da execução do Apps Script. */
 function garantirRedesCarregadas(){
@@ -6607,7 +6963,7 @@ function regraDaEmpresa(empresa){
 /* define, para cada rede, quais empresas podem atender.
    retorna null quando a rede nao restringe por empresa (METRO, BACKBONE). */
 function filtroEmpresaPorRede(rede){
-  if(!rede||rede==='METRO'||rede==='BACKBONE')return null;
+  if(!rede||rede===REDE_ACESSO||rede==='METRO'||rede==='BACKBONE')return null;
   return e=>{
     const regra=regraDaEmpresa(e);
     if(!regra)return true;                       // empresa nova: passa
@@ -6638,7 +6994,7 @@ function getTecnicosElegiveis(){
      assim que uma CTO era marcada, permitindo técnicos de empresas
      erradas aparecerem quando a Caixa de Atuação (coluna D) coincidia
      por acaso com o prefixo da CTO */
-  const filtroRede=filtroEmpresaPorRede(DOM.rede.value);
+  const filtroRede=filtroEmpresaPorRede(redeEfetiva());
   if(filtroRede)tecs=tecs.filter(t=>filtroRede(t.empresa));
 
   const ctosSel=getSelectedCTOs();
@@ -6659,6 +7015,7 @@ function getTecnicosElegiveis(){
       empresasFallback.indexOf(_normEmpresa(t.empresa))!==-1
     );
   }else if(
+    modoRedeAcesso()||
     (DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')||
     DOM.tipo.value==='REDE DE ACESSO - HIGIENIZACAO DE CTO'
   ){
@@ -6676,7 +7033,7 @@ function empresasDistintas(tecs){
   (tecs||[]).forEach(t=>{const n=_normEmpresa(t.empresa);if(!n||vistos.has(n))return;vistos.add(n);saida.push(String(t.empresa).trim())});
   return saida.sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
 }
-function renderEmpresas(selectEl){const el=selectEl||DOM.empresa;if(!el)return;const atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}if(AppState.tecnicosStatus==='error'){el.innerHTML='<option value="" disabled selected>Erro ao carregar</option>';return}let tecs=(el.id==='empresaMetro'||el.id==='empresaBackbone')?AppState.tecnicos:getTecnicosElegiveis();const empresas=empresasDistintas(tecs);if(!empresas.length){const precisaCTO=el.id==='empresa'&&getSelectedCTOs().length===0&&((DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')||DOM.tipo.value==='REDE DE ACESSO - HIGIENIZACAO DE CTO');el.innerHTML=`<option value="" disabled selected>${precisaCTO?'Selecione a CTO primeiro':'Nenhuma empresa disponível'}</option>`;return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});const reSel=empresas.find(e=>mesmaEmpresa(e,atual));if(reSel)el.value=reSel;else if(empresas.length===1&&(el.id==='empresa'||el.id==='empresaMetro'||el.id==='empresaBackbone'))el.value=empresas[0]}
+function renderEmpresas(selectEl){const el=selectEl||DOM.empresa;if(!el)return;const atual=el.value;if(AppState.tecnicosStatus==='loading'){el.innerHTML='<option value="" disabled selected>Carregando...</option>';return}if(AppState.tecnicosStatus==='error'){el.innerHTML='<option value="" disabled selected>Erro ao carregar</option>';return}let tecs=(el.id==='empresaMetro'||el.id==='empresaBackbone')?AppState.tecnicos:getTecnicosElegiveis();const empresas=empresasDistintas(tecs);if(!empresas.length){const precisaCTO=el.id==='empresa'&&getSelectedCTOs().length===0&&(modoRedeAcesso()||(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')||DOM.tipo.value==='REDE DE ACESSO - HIGIENIZACAO DE CTO');el.innerHTML=`<option value="" disabled selected>${precisaCTO?'Selecione a CTO primeiro':'Nenhuma empresa disponível'}</option>`;return}el.innerHTML='<option value="" disabled selected>Selecione...</option>';empresas.forEach(emp=>{el.insertAdjacentHTML('beforeend',`<option value="${emp}">${emp}</option>`)});const reSel=empresas.find(e=>mesmaEmpresa(e,atual));if(reSel)el.value=reSel;else if(empresas.length===1&&(el.id==='empresa'||el.id==='empresaMetro'||el.id==='empresaBackbone'))el.value=empresas[0]}
 function renderTecnosCabo(){renderEmpresas(DOM.empresaMetro);const ftc=$('filtroTecCabo');if(ftc)ftc.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Carregando...</div>';return}const emp=DOM.empresaMetro.value;if(!emp){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';return}let lista=tecnicosDaEmpresa(AppState.tecnicos,emp);if(!lista.length){DOM.listaTecsCabo.innerHTML='<div class="info-msg">Nenhum técnico.</div>';return}DOM.listaTecsCabo.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheckCabo" id="tc${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="tc${i}">${t.nome}</label></div>`).join('')}
 /* isola primeiro o segmento real do projeto (mesma lógica usada em CTO → Família,
    que ignora "CTO" e demais palavras reservadas) e só então compara com o
@@ -6706,7 +7063,7 @@ function buscarCTOsPorFragmento(f){
   const regex=new RegExp('(^|-)'+_escapeRegex(fn));
   return AppState.baseDados.filter(c=>regex.test(normFragmentoComHifen(c.cto)));
 }
-function getSelectedCTOs(){if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim());return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb=>AppState.baseDados.find(b=>b.cto===cb.value)).filter(Boolean)}
+function getSelectedCTOs(){if(DOM.tipo.value==='REDE DE ACESSO - ATENUACAO'&&DOM.detalheAtenuacao.value==='RAMAL GPON ATENUADO')return buscarCTOsPorFragmento(DOM.inputFamilia.value.trim());return Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked')).map(cb=>{const r=cb.dataset.rede||'';return AppState.baseDados.find(b=>b.cto===cb.value&&(!r||(b._rede||'')===r))||AppState.baseDados.find(b=>b.cto===cb.value)}).filter(Boolean)}
 function handleAcionamentoChange(){
   const t=DOM.tipo.value;
   desmarcarTudo('ctoCheck');desmarcarTudoPortas();
@@ -6721,11 +7078,36 @@ function handleAcionamentoChange(){
   DOM.boxBuscaCTO.classList.remove('hidden');
   DOM.boxPortas.classList.add('hidden');
   AppState.multiSelectAllowed=true;
+  atualizarVisibilidadeBuscaCTO();
   atualizarResumo();renderTecnicos();
 }
-function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');AppState.multiSelectAllowed=true;if(d==='PORTA CTO ATENUADA'){DOM.boxPortas.classList.remove('hidden');AppState.multiSelectAllowed=false}else if(d==='RAMAL GPON ATENUADO'){DOM.boxFamilia.classList.remove('hidden');DOM.previewRamal.classList.remove('hidden');DOM.boxBuscaCTO.classList.add('hidden');atualizarPreviewRamal()}atualizarResumo();renderTecnicos()}
-function handleCTOToggle(cb){const d=DOM.detalheAtenuacao.value;if(DOM.tipo.value!=='REDE DE ACESSO - ATENUACAO'){atualizarResumo();renderTecnicos();return}if(d==='PORTA CTO ATENUADA'&&cb.checked)DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});else if(d==='RAMAL GPON ATENUADO'&&cb.checked){cb.checked=false;return}atualizarResumo();renderTecnicos()}
-function renderListaCTOs(lista){if(!lista||!lista.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}DOM.listaCTOs.innerHTML=lista.sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true})).map((item,i)=>`<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" style="display:none"><label for="c${i}">${item.cto}</label></div>`).join('')}
+function handleDetalheAtenuacaoChange(){const d=DOM.detalheAtenuacao.value;desmarcarTudo('ctoCheck');desmarcarTudoPortas();DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');AppState.multiSelectAllowed=true;if(d==='PORTA CTO ATENUADA'){DOM.boxPortas.classList.remove('hidden');AppState.multiSelectAllowed=false}else if(d==='RAMAL GPON ATENUADO'){DOM.boxFamilia.classList.remove('hidden');DOM.previewRamal.classList.remove('hidden');DOM.boxBuscaCTO.classList.add('hidden');atualizarPreviewRamal()}atualizarVisibilidadeBuscaCTO();atualizarResumo();renderTecnicos()}
+function handleCTOToggle(cb){
+  /* uma O.S. = uma rede. Marcar CTO de outra rede junto e recusado aqui:
+     o script, a empresa executante e o Hubsoft de destino saem todos da
+     rede da CTO, e misturar deixaria os tres errados. */
+  if(cb.checked&&modoRedeAcesso()){
+    const minha=cb.dataset.rede||'';
+    const conflito=Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked'))
+      .find(c=>c!==cb&&(c.dataset.rede||'')!==minha);
+    if(conflito){
+      cb.checked=false;
+      showToast('Esta O.S. já tem CTO da rede '+rotuloRede(conflito.dataset.rede)+'. Não é possível misturar redes — gere uma O.S. por rede.','error',5000);
+      return;
+    }
+  }
+  const d=DOM.detalheAtenuacao.value;if(DOM.tipo.value!=='REDE DE ACESSO - ATENUACAO'){atualizarResumo();renderTecnicos();return}if(d==='PORTA CTO ATENUADA'&&cb.checked)DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]').forEach(c=>{if(c!==cb)c.checked=false});else if(d==='RAMAL GPON ATENUADO'&&cb.checked){cb.checked=false;return}atualizarResumo();renderTecnicos()}
+function renderListaCTOs(lista){
+  if(!lista||!lista.length){DOM.listaCTOs.innerHTML='<div class="info-msg">Nenhuma CTO encontrada.</div>';return}
+  /* no modo REDE DE ACESSO as tres redes convivem na mesma lista, entao
+     cada pill leva o selo da rede a que a caixa pertence */
+  const comSelo=modoRedeAcesso();
+  DOM.listaCTOs.innerHTML=lista.slice().sort((a,b)=>a.cto.localeCompare(b.cto,undefined,{numeric:true})).map((item,i)=>{
+    const r=item._rede||'';
+    const selo=(comSelo&&r)?`<span class="cto-rede-selo rede-${r}">${rotuloRede(r)}</span>`:'';
+    return `<div class="pill-item"><input type="checkbox" name="ctoCheck" id="c${i}" value="${item.cto}" data-rede="${r}" style="display:none"><label for="c${i}">${item.cto}${selo}</label></div>`;
+  }).join('');
+}
 function renderTecnicos(){renderEmpresas(DOM.empresa);const ft=$('filtroTec');if(ft)ft.value='';if(AppState.tecnicosStatus==='loading'){DOM.listaTecs.innerHTML='<div class="info-msg">Carregando técnicos...</div>';return}const emp=DOM.empresa.value;if(!emp){DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';return}const lista=tecnicosDaEmpresa(getTecnicosElegiveis(),emp);if(!lista.length){DOM.listaTecs.innerHTML='<div class="info-msg">Nenhum técnico disponível.</div>';return}DOM.listaTecs.innerHTML=lista.map((t,i)=>`<div class="stack-item"><input type="checkbox" name="tCheck" id="t${i}" value="${t.numero}" data-nome="${t.nome}" style="display:none"><label for="t${i}">${t.nome}</label></div>`).join('')}
 function atualizarPreviewRamal(){
   if(DOM.detalheAtenuacao.value!=='RAMAL GPON ATENUADO')return;
@@ -6751,12 +7133,24 @@ function atualizarPreviewRamal(){
   }
   const enc=buscarCTOsPorFragmento(frag);
   if(!enc.length)DOM.listaPreview.innerHTML=`<div class="preview-item">Nenhuma CTO encontrada com "${frag.trim()}"</div>`;
-  else DOM.listaPreview.innerHTML=enc.map(c=>`<div class="preview-item">${c.cto}</div>`).join('');
+  else{
+    const comSelo=modoRedeAcesso();
+    const redes=[...new Set(enc.map(c=>c._rede).filter(Boolean))];
+    let aviso='';
+    /* o mesmo prefixo aparecendo em duas redes e erro de digitacao ou de
+       cadastro — avisa aqui, antes de o operador montar a O.S. inteira */
+    if(comSelo&&redes.length>1)aviso=`<div class="preview-item" style="color:var(--red);font-weight:700">&#9888; Este prefixo existe em ${redes.map(rotuloRede).join(' e ')} &mdash; refine a busca, a O.S. tem de ser de uma rede só.</div>`;
+    DOM.listaPreview.innerHTML=aviso+enc.map(c=>{
+      const r=c._rede||'';
+      const selo=(comSelo&&r)?`<span class="cto-rede-selo rede-${r}">${rotuloRede(r)}</span>`:'';
+      return `<div class="preview-item">${c.cto}${selo}</div>`;
+    }).join('');
+  }
   atualizarResumo();renderTecnicos();
 }
 function atualizarResumo(){const sel=Array.from(DOM.listaCTOs.querySelectorAll('input[name="ctoCheck"]:checked'));let html=sel.map(c=>`<div class="tag"><span>${c.value}</span><button class="btn-remove" onclick="removerCTO('${c.id}')">&#10005;</button></div>`).join('');const tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value;if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='RAMAL GPON ATENUADO'){const f=DOM.inputFamilia.value.trim();if(f){const enc=buscarCTOsPorFragmento(f);html+=`<div class="tag warning"><span>${f} (${enc.length} CTOs)</span></div>`}}if(tipo==='REDE DE ACESSO - ATENUACAO'&&det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(ps.length)html+=`<div class="tag"><span>Portas: ${ps.join(', ')}</span></div>`}DOM.resumoCTOs.innerHTML=html||'<div class="info-msg">Nenhuma seleção.</div>'}
 window.removerCTO=id=>{const el=$(id);if(el)el.checked=false;atualizarResumo();renderTecnicos()};
-function filtrarCTOs(){const v=normBusca(DOM.filtro.value);DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it=>{it.style.display=normBusca(it.textContent).includes(v)?'':'none'})}
+function filtrarCTOs(){const v=normBusca(DOM.filtro.value);DOM.listaCTOs.querySelectorAll('.pill-item').forEach(it=>{const cb=it.querySelector('input');const alvo=cb?(cb.value+' '+(cb.dataset.rede||'')):it.textContent;it.style.display=normBusca(alvo).includes(v)?'':'none'})}
 function desmarcarTudo(n){document.querySelectorAll(`input[name="${n}"]:checked`).forEach(c=>c.checked=false)}
 function desmarcarTudoPortas(){DOM.gridPortas.querySelectorAll('input:checked').forEach(c=>c.checked=false)}
 /* ══════════════════════════════════════════════════════════════════
@@ -6768,7 +7162,11 @@ const HUBSOFT_URLS={
   INTLINK:'https://intlink.hubsoft.com.br/rede/rede/pop'
 };
 /* rede que originou a O.S. exibida no modal (o fluxo GPON usa outro select) */
-function redeAtualOS(){return AppState.modoIdent?DOM.gponRede.value:DOM.rede.value}
+function redeAtualOS(){
+  if(AppState.modoIdent)return DOM.gponRede.value;
+  /* no modo REDE DE ACESSO quem manda e a rede da CTO marcada */
+  return redeEfetiva()||DOM.rede.value;
+}
 function hubsoftUrlParaOS(){
   const rede=redeAtualOS();
   /* BACKBONE sempre abre no Click IP */
@@ -6789,6 +7187,7 @@ function atualizarRotuloBtnSeguir(){
     const sel=document.querySelector('input[name="hubMetro"]:checked');
     nome=({WIRE:'Click IP',FIBER:'Fiber Network',INTLINK:'Intlink'})[sel?sel.value:'WIRE']||'';
   }else if(rede==='BACKBONE'){nome='Click IP'}
+  else if(REDES_ACESSO.indexOf(rede)!==-1){nome=({WIRE:'Click IP',FIBER:'Fiber Network',INTLINK:'Intlink'})[rede]||''}
   btn.innerHTML='&#9654; Enviar &amp; Abrir Hubsoft'+(nome?' '+nome:'');
 }
 function exibirModal(c){
@@ -7052,7 +7451,18 @@ function salvarSlaManual() {
     });
 }
 
-async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const rede=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!rede)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;const semCoord=[];ctos.forEach(info=>{const link=linkMapsCTO(info);if(!link)semCoord.push(info.cto);corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link||'Sem coordenadas'}\n\n`});if(semCoord.length){console.warn('[CTO] coordenada inválida na planilha: '+semCoord.join(', '));showToast('Sem coordenada válida: '+semCoord.slice(0,3).join(', ')+(semCoord.length>3?` +${semCoord.length-3}`:''),'error',5000)}corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · ${ctos.length} CTOs: ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas ${portas}`:_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...';btn.disabled=true;const redeSel=DOM.rede.value,tipo=DOM.tipo.value,det=DOM.detalheAtenuacao.value,detPrev=getSelectedPreventiva();const tecs=Array.from(DOM.listaTecs.querySelectorAll('input[name="tCheck"]:checked'));const emp=DOM.empresa.value;if(!redeSel)throw new Error('Selecione a rede.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');let ctos=[],portas='',curDet='';if(tipo==='REDE DE ACESSO - ATENUACAO'){curDet=det;if(!det)throw new Error('Especifique o tipo de atenuação.');if(det==='PORTA CTO ATENUADA'){const ps=Array.from(DOM.gridPortas.querySelectorAll('input:checked')).map(p=>p.value);if(!ps.length)throw new Error('Selecione as portas afetadas.');portas=ps.join(', ');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione a CTO.');if(ctos.length>1)throw new Error('Selecione apenas uma CTO para porta específica.')}else if(det==='RAMAL GPON ATENUADO'){ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Nenhuma CTO encontrada.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}}else if(tipo==='PREVENTIVA'){curDet=detPrev;if(!detPrev)throw new Error('Especifique a preventiva.');ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}else{ctos=getSelectedCTOs();if(!ctos.length)throw new Error('Selecione ao menos uma CTO.')}/* ── a rede sai da CTO, nao do operador ──
+     No modo REDE DE ACESSO o proprio sistema diz de qual rede a caixa e
+     (RPE1-1-1 -> WIRE, CD1-1-1 -> FIBER, ...). Isso alimenta o texto do
+     script, o painel de SLA e o Hubsoft que abre no fim. */
+  let rede=redeSel;
+  if(redeSel===REDE_ACESSO){
+    const rr=[...new Set(ctos.map(c=>c._rede).filter(Boolean))];
+    if(rr.length>1)throw new Error('As CTOs selecionadas são de redes diferentes ('+rr.map(rotuloRede).join(', ')+'). Gere uma O.S. por rede.');
+    if(!rr.length)throw new Error('Não foi possível identificar a rede da CTO. Atualize os dados e selecione a CTO novamente.');
+    rede=rr[0];
+  }
+  const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;const semCoord=[];ctos.forEach(info=>{const link=linkMapsCTO(info);if(!link)semCoord.push(info.cto);corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link||'Sem coordenadas'}\n\n`});if(semCoord.length){console.warn('[CTO] coordenada inválida na planilha: '+semCoord.join(', '));showToast('Sem coordenada válida: '+semCoord.slice(0,3).join(', ')+(semCoord.length>3?` +${semCoord.length-3}`:''),'error',5000)}corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · ${ctos.length} CTOs: ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas ${portas}`:_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 /* gerarOSMetro vive agora no módulo CONSULTA DE CABOS v4, montado a
    partir do ESTADO da busca. A versão que ficava aqui remontava a OS
@@ -7153,7 +7563,7 @@ async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Ge
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}atualizarTodosEstadosAllTec();showToast('✓ Limpo.')}
-function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.remove('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione uma rede.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.cabos.seq++;AppState.cabos.status='idle';AppState.cabos.itens=[];AppState.cabos.referencia=[];AppState.cabos.incluir={};AppState.cabos.meta=null;renderCabos();AppState.multiSelectAllowed=true;renderStatusBar();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
+function limparTudo(){DOM.rede.value='';DOM.tipo.value='';DOM.detalheAtenuacao.value='';DOM.inputFamilia.value='';DOM.filtro.value='';DOM.inputCoordenada.value='';DOM.inputBackbonePontoA.value='';DOM.inputBackbonePontoB.value='';DOM.inputOtdrLocal.value='';DOM.inputOtdrCoord.value='';DOM.inputOtdrGrupoFibra.value='';DOM.inputOtdrFibra.value='';DOM.inputOtdrDio.value='';DOM.inputOtdrBandeja.value='';DOM.inputOtdrPorta.value='';DOM.otdrCeoExtra.classList.add('hidden');DOM.otdrPopExtra.classList.add('hidden');AppState.backboneTrechos=[];renderTrechoLista();desmarcarTudo('ctoCheck');desmarcarTudo('tCheck');desmarcarTudo('tCheckCabo');desmarcarTudo('tCheckBackbone');desmarcarTudo('prevCheck');desmarcarTudo('otdrTipo');desmarcarTudoPortas();DOM.boxMetro.classList.add('hidden');DOM.boxBackboneRede.classList.add('hidden');DOM.boxRede.classList.remove('hidden');DOM.wrapper.classList.remove('metro-mode');DOM.sidebar.classList.remove('visible');DOM.sidebar.style.display='';DOM.boxDetalheAtenuacao.classList.add('hidden');DOM.boxDetalhePreventiva.classList.add('hidden');DOM.boxPortas.classList.add('hidden');DOM.boxFamilia.classList.add('hidden');DOM.previewRamal.classList.add('hidden');DOM.boxBuscaCTO.classList.add('hidden');DOM.listaCTOs.innerHTML='<div class="info-msg">Selecione a rede e o tipo de acionamento.</div>';DOM.resumoCTOs.innerHTML='<div class="info-msg">Nenhuma seleção.</div>';DOM.listaPreview.innerHTML='';DOM.listaTecs.innerHTML='<div class="info-msg">Selecione empresa e CTOs.</div>';DOM.listaTecsCabo.innerHTML='<div class="info-msg">Selecione a empresa.</div>';DOM.listaTecsBackbone.innerHTML='<div class="info-msg">Selecione a empresa.</div>';const ftc=$('filtroTecCabo');if(ftc)ftc.value='';const ft=$('filtroTec');if(ft)ft.value='';const fp=$('filtroPreventiva');if(fp)fp.value='';const ftb=$('filtroTecBackbone');if(ftb)ftb.value='';renderEmpresas(DOM.empresa);renderEmpresas(DOM.empresaMetro);renderEmpresas(DOM.empresaBackbone);DOM.empresa.value='';DOM.empresaMetro.value='';DOM.empresaBackbone.value='';AppState.baseDados=[];AppState.ctosStatus='idle';AppState.cabos.seq++;AppState.cabos.status='idle';AppState.cabos.itens=[];AppState.cabos.referencia=[];AppState.cabos.incluir={};AppState.cabos.meta=null;renderCabos();AppState.multiSelectAllowed=true;renderStatusBar();atualizarTodosEstadosAllTec();showToast('✓ Formulário limpo.')}
 </script>
 </body>
 </html>
