@@ -922,6 +922,17 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
    cada chamado; entre ele e suas cobranças não há régua nenhuma, então o
    grupo se lê como uma unidade. Antes toda linha tinha a mesma borda e não
    dava para saber de quem era a cobrança. */
+.rel-abas{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.rel-aba{background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--text3);transition:color .2s,border-color .2s}
+.rel-aba:hover{color:var(--blue)}
+.rel-aba.ativa{color:var(--blue);border-bottom-color:var(--blue)}
+/* IR — abre a conversa no Gmail, em aba nova */
+.btn-ir{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);
+  background:var(--bg3);color:var(--blue);font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;
+  letter-spacing:.6px;text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s}
+.btn-ir:hover{background:var(--blue-l);border-color:var(--blue2)}
 .rel-tabela{width:100%;border-collapse:collapse;font-size:.85rem;text-align:left}
 .rel-tabela th{padding:8px;color:var(--text3);border-bottom:2px solid var(--border2);
   font-family:'Share Tech Mono',monospace;font-size:.68rem;letter-spacing:1px;text-transform:uppercase;font-weight:700}
@@ -1487,6 +1498,12 @@ IDENTIFICA&#199;&#195;O
 <button onclick="fecharModalRelatorioTim()">&#10005;</button>
 </div>
 <div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
+<div class="rel-abas" role="tablist">
+  <button class="rel-aba ativa" id="abaRelChamados" onclick="trocarAbaRelatorio('chamados')">Chamados</button>
+  <button class="rel-aba" id="abaRelEmails" onclick="trocarAbaRelatorio('emails')">E-mail&rsquo;s com o corporate</button>
+</div>
+
+<div id="relViewChamados">
 <div style="display:flex; gap:12px; margin-bottom:16px; align-items:flex-end;">
   <div class="form-group" style="margin-bottom:0">
     <label>Data Início</label>
@@ -1502,6 +1519,30 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div id="relatorioTimConteudo" style="background:var(--bg); border-radius:6px; padding:12px; min-height: 200px">
   <div class="info-msg">Selecione o período e clique em Gerar.</div>
+</div>
+</div>
+
+<div id="relViewEmails" style="display:none">
+<div style="display:flex; gap:12px; margin-bottom:10px; align-items:flex-end; flex-wrap:wrap">
+  <div class="form-group" style="margin-bottom:0">
+    <label>Data Início</label>
+    <input type="date" id="relEmailInicio">
+  </div>
+  <div class="form-group" style="margin-bottom:0">
+    <label>Data Fim</label>
+    <input type="date" id="relEmailFim">
+  </div>
+  <div class="form-group" style="margin-bottom:0; flex:1; min-width:240px">
+    <label>Assunto espec&iacute;fico <span style="text-transform:none;font-weight:400;color:var(--text3)">(opcional)</span></label>
+    <input type="text" id="relEmailAssunto" placeholder="Ex: indisponibilidade, janela programada, MNSAL..." autocomplete="off">
+  </div>
+  <button class="btn btn-main" style="padding:8px 16px; height:38px" onclick="gerarRelatorioEmails()">Buscar</button>
+  <button class="btn btn-outline" style="padding:8px 16px; height:38px; display:none" id="btnExportarEmailsTXT" onclick="exportarRelatorioEmailsTXT()">Exportar TXT</button>
+</div>
+<div class="info-msg" style="margin-bottom:12px">&#9432; L&ecirc; a caixa direto no Gmail: <b>toda</b> conversa trocada com as caixas da TIM no per&iacute;odo, tenha virado chamado ou n&atilde;o. O bot&atilde;o IR abre a conversa.</div>
+<div id="relEmailConteudo" style="background:var(--bg); border-radius:6px; padding:12px; min-height: 200px">
+  <div class="info-msg">Selecione o per&iacute;odo e clique em Buscar.</div>
+</div>
 </div>
 </div>
 </div>
@@ -5083,10 +5124,23 @@ function abrirModalRelatorioTim(){
   $('btnExportarPDF').style.display = 'none';
   $('btnExportarTXT').style.display = 'none';
   _relatorioTimData = null;
+  /* a aba de e-mails abre com o mesmo período e sempre do zero */
+  $('relEmailInicio').value = primeiroDia.toISOString().split('T')[0];
+  $('relEmailFim').value = hoje.toISOString().split('T')[0];
+  $('relEmailConteudo').innerHTML = '<div class="info-msg">Selecione o período e clique em Buscar.</div>';
+  $('btnExportarEmailsTXT').style.display = 'none';
+  _relEmailsData = null;
+  trocarAbaRelatorio('chamados');
   /* .copy-modal só abre com a classe "active" — este modal usava "visible",
      que o CSS ignora, então o Relatório nunca abria. Bug antigo, descoberto
      ao testar o clique depois que o botão mudou de lugar. */
   $('modalRelatorioTim').classList.add('active');
+  /* Enter no campo de assunto dispara a busca, como em toda busca da tela */
+  const _ass=$('relEmailAssunto');
+  if(_ass&&!_ass.dataset.ligado){
+    _ass.dataset.ligado='1';
+    _ass.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();gerarRelatorioEmails()}});
+  }
 }
 
 function fecharModalRelatorioTim(){
@@ -5239,6 +5293,184 @@ function _relAgruparChamados(linhas){
    se ainda não aconteceu. Nestas duas colunas é sempre a segunda coisa —
    ou a TIM não respondeu, ou o chamado não foi dado como normalizado. */
 const REL_AGUARDANDO='<span style="color:var(--amber)">Aguardando</span>';
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   RELATÓRIO · ABA "E-MAIL'S COM O CORPORATE"
+   ───────────────────────────────────────────────────────────────────
+   A aba Chamados lê a aba TIM-CHAMADOS, ou seja: só o que a varredura
+   conseguiu transformar em chamado. Esta aqui vai direto ao Gmail e
+   devolve TODA conversa trocada com as caixas da TIM no período — pedido
+   de posição, dúvida, assunto que a varredura não classificou —, com
+   protocolo (AU/EVE), hora da falha declarada, quando escrevemos, quando
+   a TIM respondeu e o botão IR, que abre a conversa no Gmail.
+   ═══════════════════════════════════════════════════════════════════ */
+let _relEmailsData=null;
+
+function trocarAbaRelatorio(qual){
+  const emails=qual==='emails';
+  $('relViewChamados').style.display=emails?'none':'';
+  $('relViewEmails').style.display=emails?'':'none';
+  $('abaRelChamados').classList.toggle('ativa',!emails);
+  $('abaRelEmails').classList.toggle('ativa',emails);
+}
+window.trocarAbaRelatorio=trocarAbaRelatorio;
+
+function gerarRelatorioEmails(){
+  const inicio=$('relEmailInicio').value;
+  const fim=$('relEmailFim').value;
+  const assunto=($('relEmailAssunto').value||'').trim();
+  const div=$('relEmailConteudo');
+  if(!inicio||!fim){
+    div.innerHTML='<div class="info-msg" style="color:var(--red)">Preencha as duas datas.</div>';
+    return;
+  }
+  div.innerHTML='<div class="info-msg">Lendo a caixa no Gmail — pode levar até um minuto...</div>';
+  $('btnExportarEmailsTXT').style.display='none';
+  _relEmailsData=null;
+
+  /* a leitura do Gmail é mais lenta que a da planilha: 90 s de folga */
+  jsonp({acao:'relatorioEmails',dataInicio:inicio,dataFim:fim,assunto:assunto},90000).then(r=>{
+    if(!r||!r.ok){
+      div.innerHTML=`<div class="info-msg" style="color:var(--red)">Erro ao ler os e-mails: ${_esc((r&&r.erro)||'falha')}</div>`;
+      return;
+    }
+    const itens=r.itens||[];
+    if(!itens.length){
+      div.innerHTML='<div class="info-msg">Nenhuma conversa com as caixas da TIM neste período'+(assunto?` com o assunto "${_esc(assunto)}"`:'')+'.</div>';
+      return;
+    }
+    const PRAZO_AU_MIN=(Number(r.prazoAuMs)||30*60*1000)/60000;
+
+    const linhas=itens.map(it=>{
+      const nosso=Number(it.nossoMs)||Number(it.primeiroMs)||0;
+      const tim=Number(it.timMs)||0;
+      /* só conta como resposta a mensagem da TIM que veio DEPOIS da nossa;
+         thread aberta pela TIM não tem tempo de resposta a cobrar */
+      const respMin=(tim&&nosso&&tim>=nosso)?(tim-nosso)/60000:null;
+      return {
+        assunto:String(it.assunto||'(sem assunto)'),
+        protocolo:String(it.protocolo||''),
+        evento:String(it.evento||''),
+        designacao:String(it.designacao||''),
+        falha:String(it.falha||''),
+        quem:String(it.quem||''),
+        link:String(it.link||''),
+        mensagens:Number(it.mensagens)||0,
+        nossoMs:nosso, timMs:tim,
+        respMin:respMin,
+        atrasado:respMin!==null&&respMin>PRAZO_AU_MIN,
+        semResposta:!tim
+      };
+    });
+
+    const semProt=linhas.filter(l=>!l.protocolo&&!l.evento);
+    const semResp=linhas.filter(l=>l.semResposta);
+    const atrasadas=linhas.filter(l=>l.atrasado);
+    const tempos=linhas.filter(l=>l.respMin!==null).map(l=>l.respMin).sort((a,b)=>a-b);
+    const mediana=v=>{if(!v.length)return null;const m=Math.floor(v.length/2);return v.length%2?v[m]:(v[m-1]+v[m])/2};
+    const metrica=(rot,val,alerta)=>`
+      <div style="flex:1 1 150px;padding:10px 12px;border-radius:8px;background:var(--bg3);
+                  border-left:3px solid ${alerta?'var(--red)':'var(--border)'}">
+        <div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.4px">${rot}</div>
+        <div style="font-size:1.15rem;font-weight:700;color:${alerta?'var(--red)':'var(--text)'}">${val}</div>
+      </div>`;
+    const placar=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      ${metrica('Conversas no período',linhas.length,false)}
+      ${metrica('Sem protocolo (AU/EVE)',semProt.length,semProt.length>0)}
+      ${metrica('Sem resposta da TIM',semResp.length,semResp.length>0)}
+      ${metrica(`1ª resposta fora dos ${Math.round(PRAZO_AU_MIN)} min`,atrasadas.length,atrasadas.length>0)}
+      ${metrica('Até a 1ª resposta · mediana',tempos.length?_relFmtDuracao(mediana(tempos)):'—',false)}
+    </div>`;
+
+    const aviso=(r.parcial||r.limiteAtingido)
+      ? `<div class="info-msg" style="color:var(--amber);margin-bottom:10px">&#9888; A leitura parou no teto de ${r.maxThreads||200} conversas${r.parcial?' / tempo de execução':''}. Estreite o período ou informe um assunto para ver o resto.</div>`
+      : '';
+
+    const corpo=linhas.map(l=>{
+      const celProt=(l.protocolo||l.evento)
+        ? `<div style="font-weight:700">${_esc(l.protocolo||'—')}</div>`+
+          (l.evento?`<div style="font-size:.72rem;color:var(--text3)">${_esc(l.evento)}</div>`:'')
+        : '<span style="color:var(--red);font-weight:700">SEM PROTOCOLO</span>';
+      const celResp=l.semResposta
+        ? '<span style="color:var(--red);font-weight:700">Sem resposta</span>'
+        : `<div style="font-weight:700;color:${l.atrasado?'var(--red)':'var(--teal)'}">${_esc(l.respMin===null?'—':_relFmtDuracao(l.respMin))}</div>`+
+          `<div style="font-size:.72rem;color:var(--text3)">${_esc(_relFmtData(l.timMs,true))}</div>`;
+      const ir=l.link
+        ? `<a class="btn-ir" href="${_esc(l.link)}" target="_blank" rel="noopener" title="Abrir esta conversa no Gmail">IR &#8599;</a>`
+        : '<span style="color:var(--text3)">—</span>';
+      return `<tr class="rel-chamado">
+        <td style="min-width:230px">${_esc(l.assunto)}
+          ${l.designacao?`<div style="font-size:.72rem;color:var(--text3)">${_esc(l.designacao)}</div>`:''}</td>
+        <td style="white-space:nowrap">${celProt}</td>
+        <td style="white-space:nowrap">${_esc(l.falha||'—')}</td>
+        <td style="white-space:nowrap">${_esc(_relFmtData(l.nossoMs,true))}
+          ${l.quem?`<div style="font-size:.72rem;color:var(--text3)">${_esc(l.quem)}</div>`:''}</td>
+        <td style="white-space:nowrap">${celResp}</td>
+        <td style="text-align:center">${l.mensagens}</td>
+        <td style="text-align:center">${ir}</td>
+      </tr>`;
+    }).join('');
+
+    div.innerHTML=placar+aviso+`
+      <div style="overflow-x:auto">
+        <table class="rel-tabela">
+          <thead><tr>
+            <th>Assunto</th>
+            <th style="white-space:nowrap">Protocolo</th>
+            <th style="white-space:nowrap">Falha em</th>
+            <th style="white-space:nowrap">Nosso envio</th>
+            <th style="white-space:nowrap">1&ordf; resposta TIM</th>
+            <th style="text-align:center">Msgs</th>
+            <th style="text-align:center">Abrir</th>
+          </tr></thead>
+          <tbody>${corpo}</tbody>
+        </table>
+      </div>`;
+
+    _relEmailsData={linhas,inicio,fim,assunto,
+      resumo:{total:linhas.length,semProt:semProt.length,semResp:semResp.length,
+              atrasadas:atrasadas.length,medianaResp:mediana(tempos)}};
+    $('btnExportarEmailsTXT').style.display='inline-block';
+  }).catch(e=>{
+    div.innerHTML=`<div class="info-msg" style="color:var(--red)">Falha de conexão: ${_esc(e.message)}</div>`;
+  });
+}
+window.gerarRelatorioEmails=gerarRelatorioEmails;
+
+function exportarRelatorioEmailsTXT(){
+  const d=_relEmailsData;
+  if(!d||!d.linhas.length){showToast('Gere o relatório primeiro.','error');return}
+  const l=[];
+  l.push('RELATORIO DE E-MAILS COM O CORPORATE (TIM)');
+  l.push('Periodo: '+d.inicio+' a '+d.fim+(d.assunto?('  |  Assunto: '+d.assunto):''));
+  l.push('Gerado em: '+_relCabecalhoRelatorio(d));
+  l.push('');
+  l.push('Conversas: '+d.resumo.total+'  |  Sem protocolo: '+d.resumo.semProt+
+         '  |  Sem resposta da TIM: '+d.resumo.semResp+'  |  1a resposta fora do prazo: '+d.resumo.atrasadas);
+  l.push('');
+  d.linhas.forEach((x,i)=>{
+    l.push((i+1)+') '+x.assunto);
+    l.push('   Protocolo: '+(x.protocolo||'SEM PROTOCOLO')+(x.evento?('  /  '+x.evento):''));
+    if(x.designacao)l.push('   Designacao: '+x.designacao);
+    l.push('   Falha em: '+(x.falha||'-'));
+    l.push('   Nosso envio: '+_relFmtData(x.nossoMs,true)+(x.quem?('  ('+x.quem+')'):''));
+    l.push('   1a resposta TIM: '+(x.semResposta?'SEM RESPOSTA':(_relFmtData(x.timMs,true)+'  ('+_relFmtDuracao(x.respMin)+')')));
+    l.push('   Mensagens: '+x.mensagens);
+    if(x.link)l.push('   Conversa: '+x.link);
+    l.push('');
+  });
+  try{
+    const blob=new Blob([l.join('\n')],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`emails_corporate_${d.inicio}_a_${d.fim}.txt`;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+    showToast('✓ TXT exportado.');
+  }catch(e){showToast('Não foi possível exportar: '+e.message,'error',4000)}
+}
+window.exportarRelatorioEmailsTXT=exportarRelatorioEmailsTXT;
 
 function gerarRelatorioTim(){
   const inicio = $('relatorioTimInicio').value;
