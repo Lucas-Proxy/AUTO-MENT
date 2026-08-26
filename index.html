@@ -6230,14 +6230,27 @@ function renderCabos(){
    OZMap não aparecer. */
 function _caboRodapeHTML(meta){
   if(!meta||!meta.ms&&meta.ms!==0)return'';
-  const dentro=meta.ms<=(meta.metaMs||CABO_META_MS);
+  /* Quem decide se cumpriu a meta é o SERVIDOR — ele já manda
+     `dentroDaMeta` pronto. A tela recalculava por conta e conseguia
+     discordar dele, exibindo "acima da meta de 1500ms" ao lado de um
+     tempo de 1071ms. Duas contas para a mesma pergunta é sempre uma
+     conta a mais. */
+  const alvo=Number(meta.metaMs)||CABO_META_MS;
+  const dentro=(meta.dentroDaMeta!==undefined)?!!meta.dentroDaMeta:(Number(meta.ms)<=alvo);
   const cor=dentro?'var(--text3)':'var(--amber)';
   const idade=meta.indiceEm?_caboIdadeIndice(meta.indiceEm):'';
+  /* CORTE SILENCIOSO NUNCA. Se a busca parou de medir antes de esgotar
+     os candidatos, a resposta "nada por perto" pode ser mentira — foi
+     exatamente assim que um cabo a 4 m sumiu da tela enquanto três a
+     mais de 100 m apareciam como referência. Se cortou, a tela diz. */
+  const corte=meta.truncado
+    ? `<div class="cabo-resumo" style="color:var(--amber);margin-top:6px;margin-bottom:0">&#9888; lista cortada: ${meta.medidos} de ${meta.avaliados} cabos foram medidos — pode haver cabo mais perto fora desta lista</div>`
+    : '';
   return `<div class="cabo-resumo" style="color:${cor};margin-top:8px;margin-bottom:0">
-    ${meta.ms}ms${dentro?'':' · acima da meta de '+(meta.metaMs||CABO_META_MS)+'ms'}
+    ${meta.ms}ms${dentro?'':' · acima da meta de '+alvo+'ms'}
     ${meta.trechos?' &middot; '+meta.trechos.toLocaleString('pt-BR')+' trechos':''}
     ${idade?' &middot; índice de '+idade:''}
-  </div>`;
+  </div>`+corte;
 }
 function _caboIdadeIndice(iso){
   const d=new Date(iso);
