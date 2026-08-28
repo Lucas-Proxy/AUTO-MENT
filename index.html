@@ -5467,12 +5467,33 @@ function _tcFiltrar(itens){
    que é pior do que ver um card a mais. */
 const TC_VINCULO_JANELA_MS = 7*24*3600000;
 
-/* tira o que é embrulho de e-mail e não faz parte do assunto */
+/* Tira o que é embrulho de e-mail e não faz parte do assunto.
+
+   O QUE ESTAVA ERRADO. O cabeçalho do Business Contact Center só era
+   removido na forma completa, "Atendimento Business Contact Center - TIM
+   S.A. - <assunto>". Mas o corporate também responde com
+   "Atendimento Business Contact Center -RE: <assunto>", SEM o "TIM S.A."
+   — e nessa forma nada era removido: o assunto-base saía
+   "ATENDIMENTO BUSINESS CONTACT CENTER -RE: DEGRADAÇÃO" em vez de
+   "DEGRADAÇÃO". Como _tcMesmaConversa compara assunto-base, a resposta da
+   TIM nunca casava com a nossa abertura, o AU não era herdado e o painel
+   mostrava dois cards do mesmo chamado — um "Aguardando AU" e outro "Em
+   tratativa" com o protocolo, ambos na designação MNSDIP450562.
+
+   COMO FICOU. Os prefixos se empilham em qualquer ordem ("RE: Atendimento
+   Business Contact Center -RES: ..."), então em vez de um passe fixo isto
+   descasca em laço: separadores soltos, depois um prefixo de resposta,
+   depois o cabeçalho da TIM — repetindo enquanto houver o que tirar. A
+   parte "- TIM S.A." virou opcional, que é a correção de fato. */
 function _tcAssuntoBase(s){
-  return String(s||'')
-    .replace(/atendimento\s+business\s+contact\s+center\s*[-–—]\s*tim\s*s\.?\s*a\.?\s*[-–—]?\s*/ig,'')
-    .replace(/^\s*(?:(?:re|res|resp|enc|fw|fwd|em|encaminhar)\s*:\s*)+/ig,'')
-    .replace(/[\s.·|]+$/,'')
+  let t=String(s||''),antes;
+  do{
+    antes=t;
+    t=t.replace(/^[\s\-–—:·|>]+/,'');
+    t=t.replace(/^(?:re|res|resp|enc|fw|fwd|em|encaminhar)\s*:\s*/i,'');
+    t=t.replace(/^atendimento\s+business\s+contact\s+center\b(?:\s*[-–—]?\s*tim\s*s\.?\s*a\.?)?/i,'');
+  }while(t!==antes&&t);
+  return t.replace(/[\s.·|]+$/,'')
     .replace(/\s+/g,' ')
     .trim().toUpperCase();
 }
