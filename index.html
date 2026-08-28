@@ -747,6 +747,114 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-card.estado-FINALIZADO .anel-frente{stroke:var(--text3)}
 .sla-card.estado-FINALIZADO .sla-tempo{color:var(--text3)}
 .sla-card.saindo{opacity:0;transform:scale(.94)}
+
+/* ══════════════════════════════════════════════════════════
+   SELEÇÃO MÚLTIPLA / ENCERRAMENTO EM LOTE
+   ══════════════════════════════════════════════════════════
+   Uma queda de backbone derruba oito clientes de uma vez, e o painel abria
+   oito cards. Encerrar tudo era abrir oito vezes o mesmo modal e redigitar
+   a MESMA data de normalização e a MESMA justificativa em cada um — o
+   caminho mais curto para o horário sair diferente entre cards do mesmo
+   evento.
+
+   O modo de seleção liga um checkbox em cada card e uma barra fixa com a
+   ação em lote. Fora do modo, o painel fica exatamente como era: o
+   checkbox nasce com display:none e só as duas classes no <body> o
+   revelam, uma por aba — a seleção da aba Acionamentos não vaza para a de
+   E-mail's e vice-versa.
+
+   O checkbox entra DENTRO de .sla-card-topo, na frente do selo da rede, em
+   vez de flutuar absoluto sobre o card. Absoluto exigiria abrir espaço com
+   padding no corpo só no modo seleção, e o card inteiro pularia de altura
+   ao ligar e desligar o modo. */
+.sla-card-check{display:none;flex:0 0 auto;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:6px;background:var(--bg3);
+  border:1px solid var(--border2);cursor:pointer;transition:background .18s,border-color .18s}
+body.sla-selecao-sla #slaGrid .sla-card-check,
+body.sla-selecao-tim #tcSlaFilas .sla-card-check{display:inline-flex}
+/* .sla-card-topo é space-between com dois filhos. Com o checkbox virando o
+   terceiro, o espaço seria repartido em três e abriria um vão entre o
+   checkbox e o selo da rede. No modo seleção o topo passa a alinhar à
+   esquerda e é a hora da falha que vai sozinha para a direita — o layout
+   que já se lia, com o checkbox encostado no selo. */
+body.sla-selecao-sla #slaGrid .sla-card-topo,
+body.sla-selecao-tim #tcSlaFilas .sla-card-topo{justify-content:flex-start}
+body.sla-selecao-sla #slaGrid .sla-card-topo>.sla-abertura,
+body.sla-selecao-tim #tcSlaFilas .sla-card-topo>.sla-abertura{margin-left:auto}
+/* card já encerrado não entra em lote: sem checkbox para não prometer o que
+   o backend vai recusar */
+body.sla-selecao-sla #slaGrid .sla-card.estado-FINALIZADO .sla-card-check,
+body.sla-selecao-tim #tcSlaFilas .sla-card.estado-FINALIZADO .sla-card-check{display:none}
+/* Caixa DESENHADA, não <input type="checkbox">. Com input nativo, o clique
+   no card e o clique na caixa são o mesmo evento e o navegador já alterna o
+   `checked` antes do nosso handler; cancelar o evento com preventDefault faz
+   ele DESFAZER a alternância depois que a nossa função rodou, e o desenho
+   ficava ao contrário do que estava selecionado de verdade. Aqui quem manda
+   é sempre o estado em SlaSel, refletido em aria-checked — e o papel ARIA
+   mantém o leitor de tela informado. */
+.sla-chk{width:13px;height:13px;border:1px solid var(--border2);border-radius:3px;
+  background:var(--bg2);position:relative;font-style:normal;flex:0 0 auto;transition:background .15s}
+.sla-card-check[aria-checked="true"] .sla-chk{background:var(--blue);border-color:var(--blue)}
+.sla-card-check[aria-checked="true"] .sla-chk::after{content:'\2713';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;
+  font-size:9px;font-weight:700;color:#fff;line-height:1}
+.sla-card-check:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
+body.sla-selecao-sla #slaGrid .sla-card,
+body.sla-selecao-tim #tcSlaFilas .sla-card{cursor:pointer}
+/* !important porque os estados (ATENCAO/ESTOURADO) também pintam borda e
+   sombra: a marca de "selecionado" tem de vencer sem apagar a cor do estado,
+   que continua na faixa e no anel */
+.sla-card.selecionado{border-color:var(--blue)!important;
+  box-shadow:var(--shadow2),0 0 0 2px var(--blue2)!important;animation:none}
+.sla-card.selecionado .sla-card-check{background:var(--blue-l);border-color:var(--blue)}
+
+/* botão que liga/desliga o modo — mora na linha de ações de cada aba */
+.btn-sel-modo{background:var(--bg2);border:1px solid var(--border);border-radius:9px;
+  padding:0 13px;height:30px;cursor:pointer;color:var(--text3);
+  font-family:'Share Tech Mono',monospace;font-size:0.6425rem;font-weight:700;
+  letter-spacing:1.6px;text-transform:uppercase;transition:all .18s;white-space:nowrap}
+.btn-sel-modo:hover{border-color:var(--blue2);color:var(--blue)}
+.btn-sel-modo.ativo{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
+.btn-sel-modo:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
+.sla-aba-acoes .btn-sel-modo{margin-left:auto}
+
+/* barra fixa: só aparece com o modo ligado, e só na aba que está ligada.
+   Fica acima do rodapé com padding-bottom de 90px nas seções, então não
+   cobre card nenhum. */
+.sla-lote-barra{display:none;position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  z-index:60;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;
+  box-shadow:var(--shadow2),0 8px 30px rgba(0,0,0,.28);padding:10px 14px;
+  align-items:center;gap:10px;flex-wrap:wrap;max-width:min(960px,94vw)}
+.sla-lote-barra.ativa{display:flex}
+.sla-lote-cont{font-family:'Share Tech Mono',monospace;font-size:0.7025rem;font-weight:700;
+  letter-spacing:1.5px;color:var(--text);text-transform:uppercase;padding-right:6px;
+  border-right:1px solid var(--border);margin-right:2px}
+.sla-lote-btn{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  padding:0 12px;height:32px;cursor:pointer;color:var(--text2);
+  font-family:'Share Tech Mono',monospace;font-size:0.6425rem;font-weight:700;
+  letter-spacing:1.4px;text-transform:uppercase;transition:all .18s;white-space:nowrap}
+.sla-lote-btn:hover{border-color:var(--blue2);color:var(--blue)}
+.sla-lote-btn:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
+.sla-lote-btn.principal{border-color:var(--red);color:var(--red);background:var(--red-l)}
+.sla-lote-btn.principal:hover{background:var(--red);color:#fff}
+.sla-lote-btn:disabled{opacity:.45;cursor:not-allowed;border-color:var(--border2);
+  color:var(--text3);background:var(--bg3)}
+.sla-lote-dica{font-family:'Share Tech Mono',monospace;font-size:0.5925rem;letter-spacing:1.1px;
+  color:var(--text3);text-transform:uppercase;width:100%;text-align:center;margin-top:-2px}
+
+/* resumo dentro do modal: quem vai ser encerrado, nominalmente. Encerrar em
+   lote é irreversível pela tela, então a lista dos alvos fica à vista antes
+   do clique — não só a contagem. */
+.lote-resumo{background:var(--bg);border:1px solid var(--border2);border-radius:9px;
+  padding:11px 13px;margin-bottom:14px}
+.lote-resumo-rot{font-family:'Share Tech Mono',monospace;font-size:0.6425rem;font-weight:700;
+  letter-spacing:1.3px;color:var(--amber);text-transform:uppercase;line-height:1.5}
+.lote-resumo-lista{list-style:none;margin:9px 0 0;padding:0;max-height:150px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:5px}
+.lote-resumo-lista li{font-size:0.7825rem;color:var(--text2);line-height:1.35;
+  padding-left:11px;position:relative;word-break:break-word}
+.lote-resumo-lista li::before{content:'\2022';position:absolute;left:0;color:var(--blue)}
+
 /* — estados vazio / carregando / erro — */
 .sla-aviso{max-width:1600px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:52px 24px;text-align:center;box-shadow:var(--shadow)}
 .sla-aviso-icone{font-size:2.2625rem;opacity:.35;margin-bottom:12px}
@@ -1463,6 +1571,7 @@ IDENTIFICA&#199;&#195;O
 <div class="sla-aba-acoes">
 <button class="btn-add-sla" id="btnOpenSlaManual" onclick="abrirModalSlaManual()" title="Adicionar O.S. manual ao painel">+</button>
 <span class="sla-aba-acoes-rot">Adicionar O.S. manual</span>
+<button class="btn-sel-modo" id="btnSelModoSla" aria-pressed="false" title="Selecionar v&aacute;rios chamados para encerrar de uma vez, com a mesma data/hora e a mesma justificativa">Selecionar</button>
 </div>
 <div class="sla-grid" id="slaGrid"></div>
 <div class="sla-rodape" id="slaRodape"></div>
@@ -1479,12 +1588,25 @@ IDENTIFICA&#199;&#195;O
 
 <section id="tcSlaView" role="tabpanel" aria-labelledby="abaEmails">
 <div class="tc-filtro-wrap">
-<input type="text" class="tc-filtro" id="tcSlaFiltro" placeholder="Filtro" autocomplete="off" title="Filtra por designa&ccedil;&atilde;o, AU, solicitante, assunto ou nome da fila">
+<button class="btn-sel-modo" id="btnSelModoTim" aria-pressed="false" title="Selecionar v&aacute;rios chamados para normalizar/encerrar de uma vez, com a mesma data/hora e a mesma justificativa">Selecionar</button>
 <span class="tc-filtro-info" id="tcSlaFiltroInfo"></span>
+<input type="text" class="tc-filtro" id="tcSlaFiltro" placeholder="Filtro" autocomplete="off" title="Filtra por designa&ccedil;&atilde;o, AU, solicitante, assunto ou nome da fila">
 </div>
 <div class="tc-filas" id="tcSlaFilas"></div>
 <div class="sla-rodape" id="tcSlaRodape"></div>
 </section>
+
+<!-- Barra de ações em lote — uma só, serve às duas abas: qual seleção ela
+     comanda vem da aba em primeiro plano (_loteChaveAtiva). Duas barras
+     fixas no mesmo canto se sobreporiam na troca de aba. -->
+<div class="sla-lote-barra" id="slaLoteBarra" role="region" aria-label="A&ccedil;&otilde;es em lote">
+<span class="sla-lote-cont" id="slaLoteCont">0 selecionados</span>
+<button class="sla-lote-btn" id="btnLoteTodos" title="Marcar ou desmarcar todos os chamados vis&iacute;veis">Todos</button>
+<button class="sla-lote-btn" id="btnLoteLimpar" title="Desmarcar tudo, sem sair do modo de sele&ccedil;&atilde;o">Limpar</button>
+<button class="sla-lote-btn principal" id="btnLoteEncerrar" disabled>Encerrar selecionados</button>
+<button class="sla-lote-btn" id="btnLoteSair" title="Sair do modo de sele&ccedil;&atilde;o (Esc)">Sair</button>
+<span class="sla-lote-dica">clique no card para marcar &middot; shift+clique marca o intervalo &middot; ctrl+a marca todos</span>
+</div>
 
 <div class="signature">
 <span class="signature-name">Lucas Paes</span>
@@ -1554,6 +1676,7 @@ IDENTIFICA&#199;&#195;O
 <button onclick="fecharModalEncerrarSla()">&#10005;</button>
 </div>
 <div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
+<div class="lote-resumo hidden" id="loteResumoEncerrar"></div>
 <div class="form-group" id="wrapDataNormalizacaoEncerrar">
 <label>DATA/HORA NORMALIZAÇÃO <span style="color:var(--red)">*</span></label>
 <input type="datetime-local" id="dataNormalizacaoEncerrarSla">
@@ -1565,6 +1688,8 @@ IDENTIFICA&#199;&#195;O
 <div id="erroEncerrarSla" style="display:none; color:var(--red); font-size:.78rem; margin-top:2px"></div>
 <input type="hidden" id="idEncerrarSla">
 <input type="hidden" id="redeEncerrarSla">
+<!-- vazio = encerramento de um card; 'sla'/'tim' = lote da aba correspondente -->
+<input type="hidden" id="loteEncerrarSla">
 </div>
 <div class="copy-modal-footer">
 <button class="btn btn-outline" style="min-width:120px" onclick="fecharModalEncerrarSla()">CANCELAR</button>
@@ -2826,10 +2951,16 @@ AppState.sla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
   listaMs:0,encerradosLocais:new Map(),
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,jaAvisado:{}};
 
+/* varredura* = estado da varredura automática do Gmail (ver o bloco
+   VARREDURA AUTOMÁTICA). varrendo é a trava de não-sobreposição: sem ela,
+   uma varredura de 40s com agenda de 15s empilharia três pedidos na fila
+   do Apps Script, que atende um por vez — o painel afundaria sozinho. */
 AppState.tcSla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
   listaMs:0,encerradosLocais:new Map(),
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,
-              filtro:'',filaFoco:'',assinatura:''};
+              filtro:'',filaFoco:'',assinatura:'',
+              varrendo:false,varreduraMs:0,varreduraDur:0,varreduraErro:'',
+              varreduraNovos:0,timerVarredura:null};
 /* Notas não têm cronômetro, então não existe timerTick aqui — só o poll.
    A assinatura evita redesenhar a lista quando nada mudou: sem ela, o
    redesenho a cada 60s apagaria o "Confirmar?" do botão de arquivar
@@ -3234,7 +3365,11 @@ function _slaOperadorAtual(){
    operadores simultâneos; com muito mais gente, suba SYNC_ATIVO_MS.
 ═══════════════════════════════════════════════════════════════════════ */
 const SYNC_ATIVO_MS   = 3000;    // painel aberto e operador mexendo
-const SYNC_PARADO_MS  = 20000;   // painel aberto, sem interação recente
+/* 15s e não 20s: é o teto que a operação pediu para a leitura de dados
+   ficar sozinha em dia, e a sondagem `rev` é barata o bastante (lê três
+   propriedades de script, não abre planilha) para sustentar essa cadência
+   mesmo com o operador parado. */
+const SYNC_PARADO_MS  = 15000;   // painel aberto, sem interação recente
 const SYNC_FECHADO_MS = 60000;   // painel fechado (só mantém o badge do topo)
 const SYNC_INATIVO_MS = 90000;   // considera "parado" depois disso sem interação
 
@@ -3651,12 +3786,297 @@ function atualizarBadgeSla(){
   _pintaBadgeSla('abaAcionamentosBadge',estourados);
 }
 
+/* ════════════════════════════════════════════════════════
+   SELEÇÃO MÚLTIPLA E ENCERRAMENTO EM LOTE
+   ════════════════════════════════════════════════════════
+   Uma queda de backbone abre vários acionamentos ao mesmo tempo, e todos
+   normalizam no MESMO minuto pelo MESMO motivo. Fechar um por um obrigava a
+   redigitar data/hora e justificativa em cada card — e é assim que o mesmo
+   evento acaba registrado com três horários diferentes na planilha.
+
+   O lote não é uma segunda via de gravação: é o mesmo `encerrarAdminSla`,
+   chamado uma vez por card, com data e justificativa idênticas. Nada muda
+   no backend, e um card que falhe não derruba os outros.
+
+   Vale nas duas abas de chamado (Acionamentos e E-mail's). Cada uma tem
+   seleção própria: o que está marcado numa não aparece na outra, porque
+   `rede` — e portanto a planilha de destino — é diferente. */
+const LOTE_CFG={
+  sla:{rede:'SLA',area:'sla',grid:'slaGrid',classe:'sla-selecao-sla',btn:'btnSelModoSla',
+       st:()=>AppState.sla,recarregar:()=>carregarSla,
+       rotulo:i=>`${i.rede||'—'} · ${i.tipo||'Acionamento'}${i.alvo?' · '+_slaAlvoCard(i):''}`},
+  tim:{rede:'TIM',area:'tim',grid:'tcSlaFilas',classe:'sla-selecao-tim',btn:'btnSelModoTim',
+       st:()=>AppState.tcSla,recarregar:()=>carregarTcSla,
+       rotulo:i=>`${i.protocolo||'Aguardando AU'} · ${i.resumo||'Sem assunto'}`}
+};
+const SlaSel={sla:{modo:false,ids:new Set(),ancora:''},
+              tim:{modo:false,ids:new Set(),ancora:''}};
+
+/* qual seleção a barra fixa comanda: a da aba em primeiro plano. Em NOTAS
+   não há chamado nem lote, então devolve vazio e a barra se esconde. */
+function _loteChaveAtiva(){
+  if(AppState.slaAba==='acionamentos')return 'sla';
+  if(AppState.slaAba==='emails')return 'tim';
+  return '';
+}
+/* chamado já encerrado fica fora do lote: o backend recusaria, e o card
+   inteiro está a 5 min de sumir da tela */
+function _loteSelecionavel(item){return !!item&&!item.encerramentoMs}
+
+/* O checkbox nasce em TODO card e fica escondido por CSS. Renderizá-lo só
+   no modo seleção obrigaria a refazer o HTML dos cards ao ligar e desligar
+   o modo — e refazer card reinicia a animação de entrada de todos eles. */
+function _loteCheckHTML(item){
+  return `<span class="sla-card-check" role="checkbox" aria-checked="false" tabindex="0"`
+       + ` aria-label="Selecionar este chamado" title="Selecionar este chamado" data-id="${_esc(item.id)}"><i class="sla-chk"></i></span>`;
+}
+
+/* ordem VISUAL dos cards, que é a que o shift+clique tem de seguir. Na aba
+   Acionamentos a reordenação é feita pela propriedade CSS `order`, não
+   mexendo no DOM, então a ordem dos nós não serve. Sem `order` (aba de
+   E-mail's), a posição no DOM já é a visual. */
+function _loteIdsVisiveis(chave){
+  const grid=$(LOTE_CFG[chave].grid);
+  if(!grid)return [];
+  return Array.from(grid.querySelectorAll('.sla-card'))
+    .map((c,i)=>({id:c.dataset.id,ord:c.style.order===''?i:(Number(c.style.order)||0)}))
+    .sort((a,b)=>a.ord-b.ord)
+    .map(x=>x.id)
+    .filter(Boolean);
+}
+
+function alternarModoSelecao(chave){
+  chave=chave||_loteChaveAtiva();
+  if(!chave)return;
+  const s=SlaSel[chave];
+  s.modo=!s.modo;
+  if(!s.modo){s.ids.clear();s.ancora=''}
+  _loteSincronizar(chave);
+}
+function sairModoSelecao(chave){
+  chave=chave||_loteChaveAtiva();
+  if(!chave)return;
+  const s=SlaSel[chave];
+  s.modo=false;s.ids.clear();s.ancora='';
+  _loteSincronizar(chave);
+}
+function _loteSairDeTudo(){['sla','tim'].forEach(k=>{
+  const s=SlaSel[k];s.modo=false;s.ids.clear();s.ancora='';
+  document.body.classList.remove(LOTE_CFG[k].classe);
+});_loteBarra()}
+
+/* Único lugar que escreve na tela o que está selecionado. É chamado depois
+   de todo render: os cards podem ter sido recriados pelo polling, e o
+   `checked` do input voltaria em branco sem isto. Aproveita para PODAR ids
+   que saíram da lista (encerrados por outro operador, sumidos após 5 min) —
+   caso contrário o contador prometeria encerrar card que não existe mais. */
+function _loteSincronizar(chave){
+  const cfg=LOTE_CFG[chave],s=SlaSel[chave];
+  document.body.classList.toggle(cfg.classe,s.modo);
+  const btn=$(cfg.btn);
+  if(btn){
+    btn.classList.toggle('ativo',s.modo);
+    btn.textContent=s.modo?'Cancelar seleção':'Selecionar';
+    btn.setAttribute('aria-pressed',String(s.modo));
+  }
+  const itens=cfg.st().itens||[];
+  const validos={};
+  itens.forEach(i=>{if(_loteSelecionavel(i))validos[i.id]=true});
+  Array.from(s.ids).forEach(id=>{if(!validos[id])s.ids.delete(id)});
+  const grid=$(cfg.grid);
+  if(grid)Array.from(grid.querySelectorAll('.sla-card')).forEach(card=>{
+    const marcado=s.modo&&s.ids.has(card.dataset.id);
+    card.classList.toggle('selecionado',marcado);
+    const box=card.querySelector('.sla-card-check');
+    if(box)box.setAttribute('aria-checked',String(marcado));
+  });
+  _loteBarra();
+}
+
+function _loteBarra(){
+  const barra=$('slaLoteBarra');
+  if(!barra)return;
+  const chave=_loteChaveAtiva();
+  const s=chave?SlaSel[chave]:null;
+  const ligado=!!(s&&s.modo&&painelSlaAberto());
+  barra.classList.toggle('ativa',ligado);
+  if(!ligado)return;
+  const n=s.ids.size;
+  const cont=$('slaLoteCont');
+  if(cont)cont.textContent=n===1?'1 selecionado':`${n} selecionados`;
+  const b=$('btnLoteEncerrar');
+  if(b){
+    b.disabled=n===0;
+    b.textContent=n>1?`Encerrar ${n} chamados`:'Encerrar selecionado';
+  }
+}
+
+function _loteMarcar(chave,id,shift){
+  const cfg=LOTE_CFG[chave],s=SlaSel[chave];
+  const itens=cfg.st().itens||[];
+  const item=itens.find(i=>i.id===id);
+  if(!_loteSelecionavel(item)){
+    showToast('Chamado já encerrado — fica fora do lote.','error',2500);
+    return;
+  }
+  /* shift+clique marca o INTERVALO desde a última âncora, como em qualquer
+     lista de arquivos. Só ADICIONA: intervalo que desmarca deixa o operador
+     sem saber o que sobrou marcado no meio da grade. */
+  if(shift&&s.ancora&&s.ancora!==id){
+    const ordem=_loteIdsVisiveis(chave);
+    const a=ordem.indexOf(s.ancora),b=ordem.indexOf(id);
+    if(a!==-1&&b!==-1){
+      const ini=Math.min(a,b),fim=Math.max(a,b);
+      for(let k=ini;k<=fim;k++){
+        if(_loteSelecionavel(itens.find(i=>i.id===ordem[k])))s.ids.add(ordem[k]);
+      }
+      s.ancora=id;
+      _loteSincronizar(chave);
+      return;
+    }
+  }
+  if(s.ids.has(id))s.ids.delete(id);else s.ids.add(id);
+  s.ancora=id;
+  _loteSincronizar(chave);
+}
+
+/* clique em qualquer lugar do card marca — é o alvo grande, e uma caixa de
+   13px seria uma mira ruim num painel que se olha de longe, de pé. Botões e
+   links tratam o clique deles e saem antes. */
+function _loteCliqueNoCard(chave,e){
+  if(!SlaSel[chave].modo)return;
+  if(e.target.closest('button')||e.target.closest('a'))return;
+  const card=e.target.closest('.sla-card');
+  if(!card||!card.dataset.id)return;
+  _loteMarcar(chave,card.dataset.id,e.shiftKey);
+}
+
+/* a caixa é um span com role="checkbox": espaço e Enter não vêm de graça
+   como viriam num input, então chegam por aqui */
+function _loteTeclaNoCard(chave,e){
+  if(!SlaSel[chave].modo)return;
+  if(e.key!==' '&&e.key!=='Spacebar'&&e.key!=='Enter')return;
+  const box=e.target.closest&&e.target.closest('.sla-card-check');
+  if(!box)return;
+  const card=box.closest('.sla-card');
+  if(!card||!card.dataset.id)return;
+  e.preventDefault();
+  _loteMarcar(chave,card.dataset.id,e.shiftKey);
+}
+
+function _loteTodos(){
+  const chave=_loteChaveAtiva();
+  if(!chave||!SlaSel[chave].modo)return;
+  const cfg=LOTE_CFG[chave],s=SlaSel[chave];
+  const itens=cfg.st().itens||[];
+  /* "visíveis" e não "todos os itens": na aba de E-mail's o filtro de texto
+     esconde cards, e marcar o que não está na tela é o oposto do esperado */
+  const eleg=_loteIdsVisiveis(chave).filter(id=>_loteSelecionavel(itens.find(i=>i.id===id)));
+  const jaTodos=eleg.length>0&&eleg.every(id=>s.ids.has(id));
+  if(jaTodos)s.ids.clear();else eleg.forEach(id=>s.ids.add(id));
+  s.ancora='';
+  _loteSincronizar(chave);
+}
+
+function _loteLimpar(){
+  const chave=_loteChaveAtiva();
+  if(!chave)return;
+  SlaSel[chave].ids.clear();
+  SlaSel[chave].ancora='';
+  _loteSincronizar(chave);
+}
+
+function abrirModalEncerrarLote(){
+  const chave=_loteChaveAtiva();
+  if(!chave)return;
+  const cfg=LOTE_CFG[chave],s=SlaSel[chave];
+  const itens=cfg.st().itens||[];
+  const alvos=Array.from(s.ids).map(id=>itens.find(i=>i.id===id)).filter(_loteSelecionavel);
+  if(!alvos.length){showToast('Selecione ao menos um chamado.','error',3000);return}
+  $('loteEncerrarSla').value=chave;
+  $('idEncerrarSla').value='';
+  $('redeEncerrarSla').value=cfg.rede;
+  const box=$('loteResumoEncerrar');
+  box.classList.remove('hidden');
+  box.innerHTML=`<div class="lote-resumo-rot">&#9888; ${alvos.length} chamado${alvos.length>1?'s':''} ser&atilde;o encerrados com a MESMA data/hora e a MESMA justificativa</div>`
+    +`<ul class="lote-resumo-lista">${alvos.map(i=>`<li>${_esc(cfg.rotulo(i))}</li>`).join('')}</ul>`;
+  _prepararModalEncerrar();
+  $('tituloEncerrarSla').textContent=(chave==='tim'?'NORMALIZAR / ENCERRAR EM LOTE (TIM)':'ENCERRAR EM LOTE')
+    +' · '+alvos.length;
+  $('modalEncerrarSla').classList.add('active');
+  $('justificativaEncerrarSla').focus();
+}
+
+/* SEQUENCIAL de propósito. O Apps Script atende uma chamada por usuário e
+   cada encerramento escreve na planilha: sete requisições em paralelo não
+   ficariam sete vezes mais rápidas, ficariam enfileiradas no servidor, cada
+   uma correndo contra o próprio timeout de 25 s. Uma a uma o operador ainda
+   vê o progresso no botão, e uma falha isolada não contamina as outras. */
+function _encerrarLote(chave,just,dataNorm){
+  const cfg=LOTE_CFG[chave],s=SlaSel[chave],st=cfg.st();
+  const alvos=Array.from(s.ids)
+    .map(id=>(st.itens||[]).find(i=>i.id===id))
+    .filter(_loteSelecionavel)
+    .map(i=>i.id);
+  if(!alvos.length){showToast('Nenhum chamado válido no lote.','error',3000);return}
+
+  const btn=$('btnConfirmarEncerrarSla');
+  const erroEl=$('erroEncerrarSla');
+  btn.disabled=true;
+  const falhas=[];
+  let ok=0,ultima=null;
+
+  const passo=k=>{
+    if(k>=alvos.length)return Promise.resolve();
+    const id=alvos[k];
+    btn.textContent=`ENCERRANDO ${k+1}/${alvos.length}...`;
+    return jsonp({acao:'encerrarAdminSla',id:id,rede:cfg.rede,
+                  justificativa:just,dataNormalizacao:dataNorm},25000)
+      .then(r=>{
+        if(r&&r.ok){
+          ok++;ultima=r;
+          /* marca ANTES de aplicar qualquer lista: consulta disparada antes
+             deste clique ainda pode estar em voo e voltaria com o card vivo */
+          _marcarEncerradoLocal(st,id,r.encerramentoMs||Date.now(),r.email||'');
+          s.ids.delete(id);
+        }else{
+          falhas.push(id+': '+((r&&r.erro)||'erro'));
+        }
+      })
+      .catch(e=>{falhas.push(id+': '+(e.message||'falha de conexão'))})
+      .then(()=>passo(k+1));
+  };
+
+  passo(0).then(()=>{
+    /* a última resposta bem-sucedida já traz a lista inteira atualizada:
+       não precisa de uma segunda viagem por card */
+    if(ultima)_concluir(ultima,cfg.area,cfg.recarregar());
+    else cfg.recarregar()(true);
+    if(!falhas.length){
+      showToast(`✓ ${ok} chamado${ok>1?'s':''} encerrado${ok>1?'s':''} em lote.`);
+      fecharModalEncerrarSla();
+      sairModoSelecao(chave);
+      _resetBotaoConfirmarEncerrar();
+    }else{
+      /* os que falharam CONTINUAM selecionados: basta clicar de novo em
+         Encerrar para tentar só eles, sem redigitar nada */
+      _loteSincronizar(chave);
+      erroEl.textContent=`${ok} encerrado(s), ${falhas.length} com falha `
+        +`(seguem selecionados para nova tentativa) — ${falhas.join(' · ')}`;
+      erroEl.style.display='block';
+      showToast(`${falhas.length} de ${alvos.length} não foram encerrados.`,'error',6000);
+      _resetBotaoConfirmarEncerrar();
+    }
+  });
+}
+
 function _slaCardHTML(item){
   const c=_slaCalc(item);
   const tecnicos=item.tecnicos?item.tecnicos.replace(/@\d+\s*/g,''):'';
   return `<div class="sla-card-faixa"></div>
 <div class="sla-card-corpo">
   <div class="sla-card-topo">
+    ${_loteCheckHTML(item)}
     <span class="sla-badge-rede">${_esc(item.rede||'—')}</span>
     <span class="sla-abertura" title="Quando a falha começou">Falha ${_slaFmtHora(_slaBase(item))}</span>
   </div>
@@ -3695,15 +4115,15 @@ function renderSla(){
 
   if(st.status==='erro'&&!st.itens.length){
     grid.innerHTML=`<div class="sla-aviso erro" style="grid-column:1/-1"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
-    st.nodes.clear();renderResumoSla();return;
+    st.nodes.clear();_loteSincronizar('sla');renderResumoSla();return;
   }
   if(st.status==='carregando'&&!st.itens.length){
     grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#8987;</div><div class="sla-aviso-txt">Carregando chamados...</div></div>`;
-    st.nodes.clear();renderResumoSla();return;
+    st.nodes.clear();_loteSincronizar('sla');renderResumoSla();return;
   }
   if(!st.itens.length){
     grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum acionamento em aberto.<br>Os chamados aparecem aqui assim que uma Ordem de Servi&ccedil;o for gerada.</div></div>`;
-    st.nodes.clear();renderResumoSla();return;
+    st.nodes.clear();_loteSincronizar('sla');renderResumoSla();return;
   }
 
   /* Se a lista de chamados é a mesma de antes, atualiza só os dados e deixa
@@ -3721,6 +4141,7 @@ function renderSla(){
          para sempre, porque o ID não mudou e o rebuild não acontece. */
       n.card.classList.toggle('pendente',!!item._pendente);
     });
+    _loteSincronizar('sla');
     tickSla();return;
   }
 
@@ -3740,6 +4161,9 @@ function renderSla(){
       botao:card.querySelector('.sla-btn-encerrar')
     });
   });
+  /* cards recriados vêm com o checkbox em branco: reaplica o que está
+     selecionado antes de o operador ver a grade */
+  _loteSincronizar('sla');
   tickSla();
 }
 
@@ -3820,17 +4244,20 @@ function _resetBotaoConfirmarEncerrar() {
   const btn = $('btnConfirmarEncerrarSla');
   if (!btn) return;
   btn.disabled = false;
-  btn.textContent = 'ENCERRAR';
+  /* em lote o rótulo diz QUANTOS: o modal é o mesmo, e "ENCERRAR" sozinho
+     não deixa claro que o clique vai fechar sete chamados de uma vez */
+  const campoLote = $('loteEncerrarSla');
+  const chave = campoLote ? campoLote.value : '';
+  const n = (chave && SlaSel[chave]) ? SlaSel[chave].ids.size : 0;
+  btn.textContent = chave ? `ENCERRAR ${n}` : 'ENCERRAR';
 }
 
-function abrirModalEncerrarSla(id, rede) {
-  $('idEncerrarSla').value = id;
-  $('redeEncerrarSla').value = rede || 'SLA';
+/* o que os dois modos (um card / lote) têm em comum: limpar o erro anterior,
+   zerar a justificativa e semear a data/hora com AGORA */
+function _prepararModalEncerrar() {
   $('justificativaEncerrarSla').value = '';
   $('erroEncerrarSla').style.display = 'none';
   $('erroEncerrarSla').textContent = '';
-  _resetBotaoConfirmarEncerrar();
-
   /* A data/hora de normalização vale para os DOIS painéis. O momento do
      clique já fica gravado sozinho; o que faltava era registrar quando o
      problema normalizou de fato — muitas vezes de madrugada, com o
@@ -3839,6 +4266,19 @@ function abrirModalEncerrarSla(id, rede) {
   const agoraLocalISO = new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   $('dataNormalizacaoEncerrarSla').value = agoraLocalISO;
   $('dataNormalizacaoEncerrarSla').max = agoraLocalISO;
+  _resetBotaoConfirmarEncerrar();
+}
+
+function abrirModalEncerrarSla(id, rede) {
+  /* zera a marca de lote ANTES do reset: é ela que decide o rótulo do botão,
+     e sobra de uma abertura anterior faria o modal de um card exibir
+     "ENCERRAR 6" */
+  $('loteEncerrarSla').value = '';
+  $('loteResumoEncerrar').classList.add('hidden');
+  $('loteResumoEncerrar').innerHTML = '';
+  $('idEncerrarSla').value = id;
+  $('redeEncerrarSla').value = rede || 'SLA';
+  _prepararModalEncerrar();
 
   $('tituloEncerrarSla').textContent = rede === 'TIM'
     ? 'NORMALIZAR / ENCERRAR (TIM)'
@@ -3853,6 +4293,7 @@ function fecharModalEncerrarSla() {
 function confirmarEncerrarSla() {
   const id = $('idEncerrarSla').value;
   const rede = $('redeEncerrarSla').value;
+  const lote = $('loteEncerrarSla').value;
   const just = $('justificativaEncerrarSla').value.trim();
   const dataNorm = $('dataNormalizacaoEncerrarSla').value;
   const erroEl = $('erroEncerrarSla');
@@ -3870,6 +4311,10 @@ function confirmarEncerrarSla() {
     showToast('A data/hora de normalização não pode ser no futuro.', 'error', 4000);
     return;
   }
+
+  /* as validações acima valem para os dois modos — data no futuro e
+     justificativa vazia são erro igual seja um card ou dez */
+  if (lote) { _encerrarLote(lote, just, dataNorm); return; }
 
   // mantém o modal aberto (com os dados preenchidos) até a resposta do servidor,
   // em vez de fechar antes de saber se deu certo — assim, se falhar, o operador
@@ -3937,6 +4382,9 @@ function abrirPainelSla(aba){
   selecionarAbaSla(aba||'acionamentos');
 }
 function fecharPainelSla(){
+  /* fechar o painel descarta a seleção: reabrir depois com seis cards
+     marcados de um evento que já passou é convite a encerrar o errado */
+  _loteSairDeTudo();
   document.body.classList.remove('sla-aberto');
   document.body.classList.remove('aba-emails');
   Object.values(SLA_ABAS).forEach(id=>{const el=$(id);if(el)el.classList.remove('ativo')});
@@ -3972,6 +4420,9 @@ function selecionarAbaSla(aba){
   if(aba==='acionamentos')_ativarAbaAcionamentos();
   else if(aba==='emails')_ativarAbaEmails();
   else _ativarAbaNotas();
+  /* a barra de lote é uma só para as duas abas: aqui ela passa a comandar a
+     seleção da aba que entrou, ou se esconde se a aba não tem chamados */
+  _loteBarra();
 }
 
 function _pausarAbaNotas(){
@@ -4233,8 +4684,10 @@ function _ativarAbaEmails(){
   AppState.tcSla.aberto=true;
   renderTcSla();
   /* mostra na hora o que já está na planilha e só então varre o Gmail,
-     para a aba não abrir em branco esperando a busca */
-  carregarTcSla(true).then(()=>carregarTcSla(false,true));
+     para a aba não abrir em branco esperando a busca. Da primeira
+     varredura em diante quem manda é a corrente automática: ela reagenda a
+     si mesma enquanto a aba estiver à frente. */
+  carregarTcSla(true).then(()=>varrerGmailAgora());
   clearInterval(AppState.tcSla.timerTick);
   AppState.tcSla.timerTick=setInterval(tickTcSla,1000);
   _reprogramarPollTcSla();
@@ -4243,13 +4696,25 @@ function _pausarAbaEmails(){
   AppState.tcSla.aberto=false;
   clearInterval(AppState.tcSla.timerTick);
   AppState.tcSla.timerTick=null;
+  /* sair da aba corta a varredura: ela é a chamada mais cara do app e
+     ninguém está olhando o resultado */
+  _tcVarreParar();
   _reprogramarPollTcSla();
 }
 /* um único "Atualizar" no topo: recarrega a aba que está à frente */
 function atualizarAbaSlaAtiva(){
   if(AppState.slaAba==='emails'){
-    carregarTcSla(false,true);
-    showToast('↻ Varrendo o Gmail — pode levar alguns segundos...');
+    /* O clique agora entra na MESMA corrente da varredura automática, em
+       vez de disparar uma segunda varredura por fora dela: duas em voo
+       para o mesmo usuário só fazem a segunda esperar a primeira na fila
+       do Apps Script e dobrar a espera do operador. */
+    if(AppState.tcSla.varrendo){
+      showToast('Varredura já em andamento — o painel atualiza ao terminar.');
+    }else{
+      AppState.tcSla.varreduraErro='';
+      _tcVarreAgendar(0);
+      showToast('↻ Varrendo o Gmail — pode levar alguns segundos...');
+    }
   }else{
     carregarSla();
     showToast('↻ Buscando chamados...');
@@ -4295,10 +4760,43 @@ function bindEventsSla(){
   });
   $('slaGrid').addEventListener('click',e=>{
     const b=e.target.closest('.sla-btn-encerrar');
-    if(b&&!b.disabled)abrirModalEncerrarSla(b.dataset.id, 'SLA');
+    if(b&&!b.disabled){abrirModalEncerrarSla(b.dataset.id, 'SLA');return}
+    _loteCliqueNoCard('sla',e);
   });
-  /* Esc fecha o painel inteiro, esteja em qualquer aba */
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&painelSlaAberto())fecharPainelSla()});
+
+  /* ── seleção múltipla: os dois botões de modo e a barra de lote ── */
+  $('slaGrid').addEventListener('keydown',e=>_loteTeclaNoCard('sla',e));
+  $('tcSlaFilas').addEventListener('keydown',e=>_loteTeclaNoCard('tim',e));
+  $('btnSelModoSla').addEventListener('click',()=>alternarModoSelecao('sla'));
+  $('btnSelModoTim').addEventListener('click',()=>alternarModoSelecao('tim'));
+  $('btnLoteTodos').addEventListener('click',_loteTodos);
+  $('btnLoteLimpar').addEventListener('click',_loteLimpar);
+  $('btnLoteEncerrar').addEventListener('click',abrirModalEncerrarLote);
+  $('btnLoteSair').addEventListener('click',()=>sairModoSelecao());
+
+  /* Esc fecha o painel inteiro, esteja em qualquer aba — mas se o modo de
+     seleção estiver ligado, o primeiro Esc só sai dele. Fechar o painel
+     inteiro no meio de uma seleção de oito cards é perda de trabalho por
+     tecla errada. */
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape'||!painelSlaAberto())return;
+    const chave=_loteChaveAtiva();
+    if(chave&&SlaSel[chave].modo){sairModoSelecao(chave);return}
+    fecharPainelSla();
+  });
+  /* Ctrl+A dentro do modo de seleção marca todos os visíveis, e não o texto
+     da página. Fora do modo, o atalho do navegador continua valendo. */
+  document.addEventListener('keydown',e=>{
+    if(!painelSlaAberto())return;
+    if(!(e.ctrlKey||e.metaKey)||String(e.key).toLowerCase()!=='a')return;
+    const chave=_loteChaveAtiva();
+    if(!chave||!SlaSel[chave].modo)return;
+    if(document.querySelector('.copy-modal.active'))return;
+    const alvo=e.target;
+    if(alvo&&(alvo.tagName==='INPUT'||alvo.tagName==='TEXTAREA'))return;
+    e.preventDefault();
+    _loteTodos();
+  });
   // primeira carga em segundo plano, sem atrapalhar o carregamento da tela
   setTimeout(()=>{carregarSla(true);_reprogramarPollSla();carregarNotas();_reprogramarPollNotas()},1200);
 
@@ -4320,12 +4818,21 @@ function bindEventsSla(){
     const b=e.target.closest('.sla-btn-encerrar');
     if(b&&!b.disabled){abrirModalEncerrarSla(b.dataset.id,'TIM');return}
     const esc=e.target.closest('.tc-btn-escalonar');
-    if(esc&&!esc.disabled)registrarEscalonamentoTim(esc.dataset.id,esc);
+    if(esc&&!esc.disabled){registrarEscalonamentoTim(esc.dataset.id,esc);return}
+    _loteCliqueNoCard('tim',e);
   });
   $('tcSlaFiltro').addEventListener('input',e=>{
     AppState.tcSla.filtro=e.target.value||'';
     renderTcSla();
   });
+  /* Voltar para a aba do navegador retoma a varredura na hora: é o momento
+     em que o operador quer dado novo, e é também quando o navegador
+     devolve os timers que tinha congelado. */
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)_tcVarreParar();
+    else if(AppState.tcSla.aberto&&!AppState.tcSla.varrendo)_tcVarreAgendar(1200);
+  });
+  _tcVarreVigiar();
   setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},2500);
 }
 
@@ -4366,6 +4873,120 @@ function carregarTcSla(silencioso, varrerGmail=false){
     return null;
   });
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   VARREDURA AUTOMÁTICA DO GMAIL
+   ═══════════════════════════════════════════════════════════════════
+   O PROBLEMA QUE ISTO RESOLVE. A varredura do Gmail (`listarTcSla`) era a
+   única coisa capaz de descobrir chamado NOVO — o resto do painel só relê
+   a aba TIM-CHAMADOS. E ela rodava em apenas dois momentos: quando o
+   operador abria a aba E-MAIL'S SLA e quando clicava em Atualizar. Fora
+   disso, quem dependia da atualização automática era o gatilho de tempo
+   do lado do servidor (`configurarGatilhoTim`, de 5 em 5 min) — que só
+   existe se alguém tiver executado essa função uma vez no editor do Apps
+   Script. Sem o gatilho instalado, chamado aberto agora não aparecia
+   NUNCA sozinho: o polling perguntava "mudou?" e a resposta era sempre
+   não, porque ninguém tinha ido ao Gmail buscar a novidade.
+
+   POR QUE NÃO É UM setInterval DE 15s. A varredura abre a caixa, lê
+   dezenas de conversas e grava na planilha: leva de poucos segundos a
+   quase um minuto. O Apps Script atende UMA requisição por vez para o
+   mesmo usuário, e a cota diária de execução é finita. Um intervalo fixo
+   de 15s empilharia varreduras na fila — cada uma esperando a anterior,
+   todas competindo com o painel de acionamentos — e queimaria a cota até
+   o app parar de responder por completo.
+
+   COMO FICOU. Uma corrente que só agenda a próxima volta DEPOIS de a
+   anterior terminar, com o espaçamento saindo da duração medida da última
+   varredura: rápida, roda no piso de 15s que a operação pediu; lenta, se
+   afasta sozinha em vez de afundar a fila. Rodando apenas com a aba em
+   primeiro plano — varrer o Gmail para uma tela que ninguém está olhando
+   é gastar cota sem ninguém ganhar nada. */
+const TC_VARRE_PISO_MS  = 15000;    // o mínimo pedido pela operação
+const TC_VARRE_FOLGA    = 3;        // próxima volta = 3× o que a última levou
+const TC_VARRE_TETO_MS  = 300000;   // 5 min: teto quando a varredura está lenta
+const TC_VARRE_ERRO_MS  = 60000;    // depois de falhar, espera antes de insistir
+
+/* Quanto esperar até a próxima volta. Piso de 15s, teto de 5 min, e no
+   meio o que a última varredura custou vezes a folga. */
+function _tcVarreIntervalo(){
+  const st=AppState.tcSla;
+  if(st.varreduraErro)return TC_VARRE_ERRO_MS;
+  const dur=Number(st.varreduraDur)||0;
+  return Math.min(TC_VARRE_TETO_MS,Math.max(TC_VARRE_PISO_MS,dur*TC_VARRE_FOLGA));
+}
+/* Varre só com a aba à frente e a página visível. Aba em segundo plano do
+   navegador não recebe timer confiável mesmo, e a cota é compartilhada. */
+function _tcVarreDeveRodar(){
+  return !document.hidden&&AppState.tcSla.aberto;
+}
+function _tcVarreAgendar(ms){
+  clearTimeout(AppState.tcSla.timerVarredura);
+  AppState.tcSla.timerVarredura=setTimeout(varrerGmailAgora,
+    (ms==null?_tcVarreIntervalo():ms));
+}
+function _tcVarreParar(){
+  clearTimeout(AppState.tcSla.timerVarredura);
+  AppState.tcSla.timerVarredura=null;
+}
+/* Uma volta da corrente. Sempre reagenda no fim — inclusive quando falha,
+   senão um erro de rede calaria a atualização automática para sempre. */
+function varrerGmailAgora(){
+  const st=AppState.tcSla;
+  if(st.varrendo)return;                      // trava de não-sobreposição
+  if(!_tcVarreDeveRodar()){_tcVarreParar();return}
+  st.varrendo=true;
+  renderResumoTcSla();
+  const t0=Date.now();
+  /* quem já estava na tela antes desta volta: o que sobrar de fora é
+     chamado novo, e é isso que merece um aviso ao operador */
+  const antes=new Set((st.itens||[]).map(i=>i.id));
+  return carregarTcSla(true,true).then(itens=>{
+    st.varreduraDur=Date.now()-t0;
+    st.varreduraMs=Date.now();
+    /* carregarTcSla engole a falha e devolve null — não há catch a esperar */
+    if(itens===null){
+      st.varreduraErro=st.erro||'a varredura não respondeu';
+      st.varreduraNovos=0;
+    }else{
+      st.varreduraErro='';
+      const novos=(itens||[]).filter(i=>!antes.has(i.id)&&!i.encerramentoMs);
+      st.varreduraNovos=novos.length;
+      /* antes.size===0 é a primeira carga da aba: tudo seria "novo" e o
+         aviso não diria nada ao operador que acabou de abrir o painel */
+      if(novos.length&&antes.size){
+        showToast(novos.length===1
+          ?'1 chamado novo da TIM entrou no painel.'
+          :`${novos.length} chamados novos da TIM entraram no painel.`,'ok',5000);
+      }
+    }
+  }).catch(e=>{
+    st.varreduraDur=Date.now()-t0;
+    st.varreduraMs=Date.now();
+    st.varreduraErro=(e&&e.message)||String(e);
+    st.varreduraNovos=0;
+  }).then(()=>{
+    st.varrendo=false;
+    renderResumoTcSla();
+    if(_tcVarreDeveRodar())_tcVarreAgendar();else _tcVarreParar();
+  });
+}
+/* CÃO DE GUARDA, mesma ideia do Sync.vigiar: a corrente é uma sequência de
+   setTimeout e basta o navegador descartar um timer de aba adormecida para
+   ela arrebentar — e aí o painel volta a exibir dado velho em silêncio,
+   que é exatamente a queixa que originou este bloco. */
+function _tcVarreVigiar(){
+  setInterval(()=>{
+    const st=AppState.tcSla;
+    if(!_tcVarreDeveRodar()||st.varrendo)return;
+    const parado=Date.now()-(st.varreduraMs||0);
+    if(!st.timerVarredura||parado>Math.max(3*TC_VARRE_PISO_MS,_tcVarreIntervalo()*3)){
+      console.warn('[TC] corrente da varredura parada há %ss — reiniciando',Math.round(parado/1000));
+      _tcVarreAgendar(0);
+    }
+  },30000);
+}
+
 function _aplicarItensTcSla(brutos,versaoMs){
   if(_listaVelha(AppState.tcSla,versaoMs))return AppState.tcSla.itens;
   {
@@ -4764,6 +5385,7 @@ function _tcSlaCardHTML(item,ctx){
   return `<div class="sla-card-faixa"></div>
 <div class="sla-card-corpo">
   <div class="sla-card-topo">
+    ${_loteCheckHTML(item)}
     <span class="sla-badge-rede">${_esc(_tcRotuloEstado(c.estado))}</span>
     <span class="sla-abertura" title="Quando o chamado foi aberto e há quantos dias está em aberto">Aberto ${_slaFmtHora(item.aberturaMs)}${_tcDiasAberto(item)}</span>
   </div>
@@ -4948,15 +5570,15 @@ function renderTcSla(){
      apaga a tela — quem avisa é a tarja de conexão, lá embaixo */
   if(st.status==='erro'&&!st.itens.length){
     wrap.innerHTML=`<div class="sla-aviso erro"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados do Gmail.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
-    st.nodes.clear();st.assinatura='';renderResumoTcSla();return;
+    st.nodes.clear();st.assinatura='';_loteSincronizar('tim');renderResumoTcSla();return;
   }
   if(st.status==='carregando'&&!st.itens.length){
     wrap.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#8987;</div><div class="sla-aviso-txt">Carregando chamados da TIM...</div></div>`;
-    st.nodes.clear();st.assinatura='';renderResumoTcSla();return;
+    st.nodes.clear();st.assinatura='';_loteSincronizar('tim');renderResumoTcSla();return;
   }
   if(!st.itens.length){
     wrap.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum chamado TIM em aberto.</div></div>`;
-    st.nodes.clear();st.assinatura='';renderResumoTcSla();return;
+    st.nodes.clear();st.assinatura='';_loteSincronizar('tim');renderResumoTcSla();return;
   }
 
   const agora=Date.now();
@@ -4982,6 +5604,7 @@ function renderTcSla(){
                    +'#'+(st.filaFoco||'')+'#'+(st.filtro||'');
   if(st.assinatura===assinatura&&st.nodes.size){
     visiveis.forEach(i=>{const n=st.nodes.get(i.id);if(n)n.item=i});
+    _loteSincronizar('tim');
     tickTcSla();return;
   }
   st.assinatura=assinatura;
@@ -5015,6 +5638,8 @@ function renderTcSla(){
     if(st.filaFoco)partes.push(`${TC_FILA_NOME[st.filaFoco]} · clique de novo no indicador para ver tudo`);
     info.textContent=partes.join(' · ');
   }
+  /* idem Acionamentos: o `checked` não sobrevive ao rebuild do DOM */
+  _loteSincronizar('tim');
   tickTcSla();
 }
 
@@ -5069,13 +5694,25 @@ function tickTcSla(){
   atualizarBadgeTcSla();
 }
 
+/* O rodapé é o único lugar onde a varredura automática é visível. Sem ele
+   o operador não tem como distinguir "está rodando sozinho" de "travou de
+   novo" — e essa dúvida é metade do problema original. */
 function renderResumoTcSla(){
   const rod=$('tcSlaRodape');
-  if(rod){
-    rod.textContent=AppState.tcSla.ultimaAtualizacao
-      ? `Atualizado às ${_slaFmtHora(AppState.tcSla.ultimaAtualizacao).split(' ')[1]}`
-      : '';
+  if(!rod)return;
+  const st=AppState.tcSla;
+  const hora=ms=>_slaFmtHora(ms).split(' ')[1];
+  const partes=[];
+  if(st.ultimaAtualizacao)partes.push(`Atualizado às ${hora(st.ultimaAtualizacao)}`);
+  if(st.varrendo){
+    partes.push('varrendo o Gmail...');
+  }else if(st.varreduraErro){
+    partes.push(`varredura falhou (${st.varreduraErro}) — nova tentativa em ${Math.round(TC_VARRE_ERRO_MS/1000)}s`);
+  }else if(st.varreduraMs){
+    partes.push(`varredura às ${hora(st.varreduraMs)} em ${(st.varreduraDur/1000).toFixed(1)}s`
+      +` · próxima em ${Math.round(_tcVarreIntervalo()/1000)}s`);
   }
+  rod.textContent=partes.join(' · ');
 }
 
 /* registra o escalonamento das 8h: o chamado sai da fila de ação e passa
