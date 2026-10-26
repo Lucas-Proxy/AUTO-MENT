@@ -1041,6 +1041,21 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 
 /* Fechar do Painel de SLA: só o símbolo de casa (tela inicial) */
 #btnSlaFechar{padding:10px 12px;gap:0;justify-content:center}
+
+/* Tema fica logo acima de Música, no canto inferior direito */
+.m-dock{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+
+/* Tema: aba discreta como a de Música; o seletor só aparece ao tocar nela */
+.m-dock .theme-toggle.tema-painel{display:none}
+.m-dock.tema-aberto .theme-toggle.tema-painel{display:flex}
+.tema-dock-ico{font-size:13px;line-height:1;color:#f59e0b}
+
+/* Notas · Painel: card 5% mais estreito (largura) e 2% mais baixo (altura mínima) */
+.tv-nota-card{width:95%;justify-self:center;min-height:323.4px}
+
+/* Acionamentos · Painel: título ALVO e conteúdo do ALVO 4% maiores */
+#slaPainelGrid .sla-info .sla-linha-rot{font-size:calc(0.5625rem * 1.04)}
+#slaPainelGrid .sla-info .sla-linha-val,#slaPainelGrid .sla-alvo-lista li,#slaPainelGrid .sla-alvo-loc{font-size:calc(0.7825rem * 1.04)}
 </style>
 </head>
 <body>
@@ -1061,11 +1076,6 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 </button>
 <button class="ozmap-btn btn-pill so-sla" id="btnNoc" aria-expanded="false" title="Mostrar Acionamentos e Notas" aria-label="NOC"><span>NOC</span></button>
-<button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-<span id="themeIcon" style="font-size:13px">&#9728;</span>
-<div class="toggle-track"><div class="toggle-thumb"></div></div>
-<span class="toggle-label" id="toggleLabel">Tema</span>
-</button>
 <button class="ozmap-btn so-sla btn-sla-fechar" id="btnSlaFechar" title="Voltar para a tela inicial (Esc)" aria-label="Voltar para a tela inicial">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
 </button>
@@ -1111,6 +1121,15 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 <canvas id="audioVisualizer" class="ambient-visualizer"></canvas>
 
 <div class="m-dock" id="mDock">
+<button class="m-dock-tab tema-dock-tab" id="temaDockTab" type="button" aria-expanded="false" aria-controls="themeToggle" title="Tema">
+<span class="tema-dock-ico" aria-hidden="true">&#9728;</span>
+<span class="m-dock-tab-txt">Tema</span>
+</button>
+<button class="theme-toggle tema-painel" id="themeToggle" aria-label="Alternar tema">
+<span id="themeIcon" style="font-size:13px">&#9728;</span>
+<div class="toggle-track"><div class="toggle-thumb"></div></div>
+<span class="toggle-label" id="toggleLabel">Tema</span>
+</button>
 <button class="m-dock-tab" id="mDockTab" title="Abrir player de música">
 <span class="m-eq"><i></i><i></i><i></i><i></i></span>
 <span class="m-dock-tab-txt" id="mDockTabTxt">M&uacute;sica</span>
@@ -2303,6 +2322,14 @@ const THEME_ORDER=['light','dark','ben10','got','fav'];
 const THEME_LABELS={light:'Tema Claro',dark:'Tema Escuro',ben10:'Ben 10',got:'Game of Thrones',fav:'Rio de Janeiro'};
 const THEME_ICONS={light:'\u2600',dark:'\u263D',ben10:'\u231A',got:'\u2694',fav:'\u25B2'};
 const THEME_ICON_COR={light:'#f59e0b',dark:'#94a3b8',ben10:'#00e639',got:'#c9a84c',fav:'#e8940c'};
+/* aba Tema do dock: abre/fecha o seletor, como a aba Música */
+function alternarTemaDock(){
+  const d=$('mDock'),b=$('temaDockTab');
+  if(!d||!b)return;
+  const abrir=!d.classList.contains('tema-aberto');
+  d.classList.toggle('tema-aberto',abrir);
+  b.setAttribute('aria-expanded',String(abrir));
+}
 function applyThemeUI(t){$('toggleLabel').textContent='Tema';const i=$('themeIcon');if(i){i.textContent=THEME_ICONS[t]||'\u2600';i.style.color=THEME_ICON_COR[t]||'#f59e0b'}}
 (function(){const s=localStorage.getItem('noc-theme')||'light';document.documentElement.setAttribute('data-theme',s);applyThemeUI(s)})();
 function toggleTheme(){const c=document.documentElement.getAttribute('data-theme'),i=THEME_ORDER.indexOf(c),n=THEME_ORDER[(i+1)%THEME_ORDER.length];document.documentElement.setAttribute('data-theme',n);applyThemeUI(n);try{localStorage.setItem('noc-theme',n)}catch(e){}}
@@ -4882,6 +4909,11 @@ function _reprogramarPollSla(){
 function bindEventsSla(){
   $('btnSla').addEventListener('click',alternarPainelSla);
   $('btnSlaFechar').addEventListener('click',fecharPainelSla);
+  $('temaDockTab').addEventListener('click',e=>{e.stopPropagation();alternarTemaDock()});
+  document.addEventListener('click',e=>{
+    const d=$('mDock');
+    if(d&&!e.target.closest('#mDock'))d.classList.remove('tema-aberto');
+  });
   $('btnNoc').addEventListener('click',()=>{
     const aberto=$('slaTopo').classList.contains('noc-ativo');
     selecionarAbaSla(aberto?'acionamentosPainel':(AppState.slaAba==='notas'?'notas':'acionamentos'));
