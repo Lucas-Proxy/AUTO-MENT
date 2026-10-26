@@ -641,7 +641,7 @@ body.sla-aberto .so-sla {display:flex!important}
    texto para ler, não número para bater o olho. 420px é a largura em que
    uma linha de nota fecha um pensamento inteiro em vez de picotar. Escala
    pensada para leitura em pé, a alguns metros do monitor do NOC. */
-.notas-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:18px;align-items:stretch;grid-auto-rows:470px}
+.notas-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:18px;align-items:stretch;grid-auto-rows:540px}
 .notas-grid .sla-aviso{grid-column:1/-1}
 .nota-card .sla-card-corpo{gap:14px;padding:18px 22px 20px}
 .nota-card .tc-selo{font-size:.66rem;letter-spacing:1.3px;padding:3px 10px}
@@ -651,7 +651,7 @@ body.sla-aberto .so-sla {display:flex!important}
 .nota-card.vencendo .sla-card-faixa{background:var(--amber)}
 .nota-titulo{font-family:'Bebas Neue',cursive;font-size:1.7rem;letter-spacing:2.2px;color:var(--text);line-height:1.08;text-transform:uppercase;
   padding-bottom:11px;border-bottom:1px solid var(--border)}
-.nota-texto{font-size:1.0625rem;line-height:1.6;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.nota-texto{font-size:1.125rem;font-weight:500;line-height:1.6;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .nota-rodape{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:11px;border-top:1px solid var(--border);
   font-family:'Share Tech Mono',monospace;font-size:0.74rem;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase}
 .nota-rodape-sep{opacity:.5}
@@ -672,6 +672,22 @@ body.sla-aberto .so-sla {display:flex!important}
 .nota-ultima-rot{font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:1.3px;color:var(--text3);text-transform:uppercase}
 .nota-ultima-meta{font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.6px;color:var(--text2);overflow-wrap:anywhere}
 .nota-ultima-texto{font-size:0.95rem;line-height:1.45;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nota-ultima{background:rgba(245,158,11,.16);border:1px solid rgba(217,119,6,.55)}
+.nota-ultima.penult{background:rgba(245,158,11,.07);border-style:dashed;border-color:rgba(217,119,6,.35)}
+.nota-ultima.penult .nota-ultima-texto{-webkit-line-clamp:2}
+.nota-busca{width:100%;max-width:520px;margin:0 auto 14px;display:block;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.9rem;font-family:inherit}
+.nota-busca:focus{outline:2px solid var(--blue2);outline-offset:1px}
+/* letreiro tipo painel de aeroporto: fundo escuro, letras âmbar, leitura de relance */
+.solari{background:#0c1016;border:1px solid #232b36;border-radius:6px;padding:9px 11px;display:flex;flex-direction:column;gap:5px;box-shadow:inset 0 0 0 1px rgba(255,176,0,.06),0 2px 6px rgba(0,0,0,.25)}
+.solari-rot{font-family:'Share Tech Mono',monospace;font-size:0.66rem;font-weight:700;letter-spacing:2.2px;color:#ffb000;text-transform:uppercase}
+.solari-meta{font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:1px;color:#f5a524;text-transform:uppercase;overflow-wrap:anywhere}
+.solari-txt{font-family:'Share Tech Mono',monospace;font-size:0.82rem;line-height:1.4;letter-spacing:.5px;color:#ffc24d;text-transform:uppercase;white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
+.solari.penult{opacity:.62;border-style:dashed}
+.solari.vazia{justify-content:center;opacity:.5}
+.solari.vazia .solari-rot{color:#a06f12}
+
+.nota-ultima{}
+
 /* conversa da nota (WhatsApp-like): bolhas à esquerda, uma por entrada */
 #modalAtualizacoes .copy-modal-content{max-width:720px;height:min(80vh,680px)}
 .nota-chat-lista{flex:1;min-height:0;overflow-y:auto;padding:16px 18px;background:var(--bg3);display:flex;flex-direction:column;gap:10px}
@@ -696,6 +712,7 @@ body.sla-aberto .so-sla {display:flex!important}
 .tv-nota-card .sla-card-faixa{height:8px;background:var(--border2)}
 .tv-nota-card.fixada .sla-card-faixa{background:var(--blue)}
 .tv-nota-card .sla-card-corpo{gap:13px;padding:21px 24px 22px}
+.tv-nota-registro{font-family:'Share Tech Mono',monospace;font-size:0.8rem;letter-spacing:.8px;color:var(--text2);text-transform:uppercase;overflow-wrap:anywhere}
 .tv-nota-titulo{font-family:'Bebas Neue',cursive;font-size:2.08rem;letter-spacing:1.8px;color:var(--text);line-height:1.05;text-transform:uppercase;padding-bottom:14px;border-bottom:1px solid var(--border);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tv-nota-texto{font-size:1.04rem;line-height:1.5;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
 .tv-nota-ultima{margin-top:auto;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;flex-direction:column;gap:6px}
@@ -703,6 +720,14 @@ body.sla-aberto .so-sla {display:flex!important}
 .tv-nota-ultima-rot{font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:1.3px;color:var(--text3);text-transform:uppercase}
 .tv-nota-ultima-meta{font-family:'Share Tech Mono',monospace;font-size:0.76rem;letter-spacing:0.6px;color:var(--text2);overflow-wrap:anywhere}
 .tv-nota-ultima-texto{font-size:0.92rem;line-height:1.45;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
+.tv-nota-ultima{background:rgba(245,158,11,.16);border:1px solid rgba(217,119,6,.55)}
+.tv-nota-ultima.penult{background:rgba(245,158,11,.07);border-style:dashed;border-color:rgba(217,119,6,.35)}
+.tv-nota-ultima.solari{background:#0c1016;border:1px solid #232b36;border-radius:6px;padding:10px 13px;gap:6px;margin-top:0}
+.tv-nota-ultima.solari.penult{background:#0c1016;border:1px dashed #232b36}
+.tv-nota-ultima.solari.vazia{justify-content:center}
+.tv-nota-ultima.solari .solari-rot{font-size:0.74rem}
+.tv-nota-ultima.solari .solari-meta{font-size:0.8rem}
+.tv-nota-ultima.solari .solari-txt{font-size:0.98rem}
 @media(max-width:1024px){
 .tv-notas-grid{grid-template-columns:1fr;grid-auto-rows:auto;gap:11px}
 .tv-nota-titulo{font-size:1.68rem}
@@ -922,7 +947,7 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 .notas-grid{grid-template-columns:1fr;gap:14px;grid-auto-rows:auto}
 .nota-card .sla-card-corpo{padding:16px 16px 18px}
 .nota-titulo{font-size:1.45rem}
-.nota-texto{font-size:1rem}
+.nota-texto{font-size:1.0625rem}
 .sla-header{padding-right:0;gap:12px}
 .sla-titulo{font-size:1.7625rem}
 /* no celular as abas não cabem lado a lado com margem larga */
@@ -936,6 +961,24 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 @media(prefers-reduced-motion:reduce){
 *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 }
+
+/* ── caixas de atualização: estilo profissional (limpo, faixa de destaque azul) ── */
+.nota-ultima.solari,.tv-nota-ultima.solari{background:var(--bg2);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:8px;padding:10px 12px;gap:6px;color:var(--text);box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.nota-ultima.solari .solari-rot,.tv-nota-ultima.solari .solari-rot{align-self:flex-start;background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b);border-radius:4px;padding:2px 8px;font-family:'Share Tech Mono',monospace;font-size:0.64rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;transform:none;box-shadow:none}
+.nota-ultima.solari .solari-meta,.tv-nota-ultima.solari .solari-meta{font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:.5px;text-transform:none;color:var(--text3);opacity:1}
+.nota-ultima.solari .solari-txt,.tv-nota-ultima.solari .solari-txt{font-family:Inter,system-ui,sans-serif;font-size:0.98rem;font-weight:500;font-style:normal;line-height:1.5;letter-spacing:0;text-transform:none;color:var(--text);text-align:justify}
+.tv-nota-ultima.solari .solari-txt{font-size:1.05rem}
+.nota-ultima.solari.penult,.tv-nota-ultima.solari.penult{background:transparent;border:1px solid var(--border);border-left:4px solid var(--border2);box-shadow:none;color:var(--text2)}
+.nota-ultima.solari.penult .solari-rot,.tv-nota-ultima.solari.penult .solari-rot{background:transparent;color:var(--text3);border-color:var(--border2)}
+.nota-ultima.solari.penult .solari-meta,.tv-nota-ultima.solari.penult .solari-meta{color:var(--text3)}
+.nota-ultima.solari.penult .solari-txt,.tv-nota-ultima.solari.penult .solari-txt{color:var(--text);font-size:0.94rem;font-weight:500}
+.nota-ultima.solari.vazia,.tv-nota-ultima.solari.vazia{background:transparent;border:1px dashed var(--border2);border-left:4px solid var(--border2);box-shadow:none;color:var(--text3)}
+.nota-ultima.solari.vazia .solari-rot,.tv-nota-ultima.solari.vazia .solari-rot{background:transparent;color:var(--text3);border-color:var(--border2)}
+
+/* ── balões do chat de atualizações: ponta no canto superior esquerdo, como app de mensagens ── */
+.nota-msg{position:relative}
+.nota-msg::before{content:'';position:absolute;left:-9px;top:0;width:0;height:0;border-style:solid;border-width:0 10px 10px 0;border-color:transparent var(--border) transparent transparent;pointer-events:none}
+.nota-msg::after{content:'';position:absolute;left:-7px;top:1px;width:0;height:0;border-style:solid;border-width:0 8px 9px 0;border-color:transparent var(--bg2) transparent transparent;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1415,13 +1458,14 @@ IDENTIFICA&#199;&#195;O
 <button class="btn-add-sla" id="btnOpenNota" onclick="abrirModalNota()" title="Criar uma nota de informa&ccedil;&atilde;o ou orienta&ccedil;&atilde;o">+</button>
 <span class="sla-aba-acoes-rot">Nova nota</span>
 </div>
+<input type="search" id="notaBusca" class="nota-busca" placeholder="Buscar em qualquer conteúdo da nota ou atualização..." oninput="renderNotas()" autocomplete="off">
 <div class="notas-grid" id="notasGrid"></div>
 <div class="sla-rodape" id="notasRodape"></div>
 </section>
 
 <section id="notasPainelView" role="tabpanel" aria-labelledby="abaNotasPainel">
 <div class="sla-aba-acoes">
-<span class="sla-aba-acoes-rot">Somente leitura &middot; atualiza sozinho &middot; para deixar aberto na TV</span>
+
 </div>
 <div class="tv-notas-grid" id="notasPainelGrid"></div>
 <div class="sla-rodape" id="notasPainelRodape"></div>
@@ -4335,10 +4379,14 @@ function renderNotas(){
   }
   /* redesenhar à toa apagaria o "Confirmar?" do botão de arquivar debaixo
      da mão de quem está clicando */
-  const ass=_notaAssinatura(st.itens);
+  const q=_notaNorm(($('notaBusca')||{}).value||'');
+  const lista=q?st.itens.filter(i=>_notaContem(i,q)):st.itens;
+  const ass=_notaAssinatura(lista)+'|q:'+q;
   if(ass===st.assinatura)return;
   st.assinatura=ass;
-  grid.innerHTML=st.itens.map(i=>_notaCardHTML(i,agora)).join('');
+  grid.innerHTML=lista.length
+    ?lista.map(i=>_notaCardHTML(i,agora)).join('')
+    :`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-txt">Nenhuma nota com &ldquo;${_esc(q)}&rdquo;.</div></div>`;
 }
 
 function _notaDataHora(ms){
@@ -4347,6 +4395,15 @@ function _notaDataHora(ms){
   return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+/* busca: ignora maiúsculas e acentos, e olha título, descrição e as duas últimas atualizações */
+function _notaNorm(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+function _notaContem(item,q){
+  const partes=[item.titulo,item.texto,item.autor,item.ultima&&item.ultima.texto,item.ultima&&item.ultima.autor,
+    item.penultima&&item.penultima.texto,item.penultima&&item.penultima.autor];
+  return _notaNorm(partes.filter(Boolean).join(' ')).includes(q);
+}
 function _notaCardHTML(item,agora){
   const restante=_notaVenceEm(item,agora);
   const vencendo=restante>=0&&restante<=24*3600000;
@@ -4358,23 +4415,24 @@ function _notaCardHTML(item,agora){
   if(item.validadeMs)selos.push(`<span class="tc-selo${vencendo?' escalonado':''}">Vale at&eacute; ${_esc(_notaDataCurta(item.validadeMs))}</span>`);
   const total=Number(item.totalAtualizacoes||0);
   const ult=item.ultima;
+  const bloco=(rot,a,penult)=>a?`<div class="nota-ultima solari${penult?' penult':''}">
+      <div class="solari-rot">${rot}</div>
+      <div class="solari-meta">${_esc(a.autor||'—')} · ${a.em?_esc(_notaDataHora(a.em)):''}</div>
+      <div class="solari-txt">${_esc(a.texto||'')}</div>
+    </div>`:'';
   const ultimaHTML=ult
-    ?`<div class="nota-ultima">
-      <div class="nota-ultima-rot">&Uacute;ltima atualiza&ccedil;&atilde;o</div>
-      <div class="nota-ultima-meta">${_esc(ult.autor||'—')} · ${ult.em?_esc(_notaDataHora(ult.em)):''}</div>
-      <div class="nota-ultima-texto">${_esc(ult.texto||'')}</div>
-    </div>`
-    :`<div class="nota-ultima vazia"><div class="nota-ultima-rot">Sem atualiza&ccedil;&otilde;es ainda</div></div>`;
+    ?bloco('&Uacute;ltima atualiza&ccedil;&atilde;o',ult,false)+(item.penultima?bloco('Pen&uacute;ltima atualiza&ccedil;&atilde;o',item.penultima,true):'')
+    :'';
   return `<div class="${classes.join(' ')}">
   <div class="sla-card-faixa"></div>
   <div class="sla-card-corpo">
     ${selos.length?`<div class="tc-card-selos">${selos.join('')}</div>`:''}
-    <div class="nota-titulo" title="${_esc(item.titulo||'')}">${_esc(item.titulo||'Sem título')}</div>
-    <div class="nota-texto">${_esc(item.texto||'')}</div>
     <div class="nota-rodape">
       ${item.autor?`<span>${_esc(item.autor)}</span><span class="nota-rodape-sep">&middot;</span>`:''}
       <span>${item.criadoMs?'criada '+_esc(_notaDataHora(item.criadoMs)):''}</span>
     </div>
+    <div class="nota-titulo" title="${_esc(item.titulo||'')}">${_esc(item.titulo||'Sem título')}</div>
+    <div class="nota-texto">${_esc(item.texto||'')}</div>
     ${ultimaHTML}
     <div class="nota-acoes">
       <button class="nota-btn nota-btn-chat" data-id="${_esc(item.id)}">Atualiza&ccedil;&otilde;es (${total})</button>
@@ -4509,17 +4567,19 @@ function renderNotasPainel(){
   grid.innerHTML=st.itens.map(_notaPainelCardHTML).join('');
 }
 function _notaPainelCardHTML(item){
-  const ult=item.ultima;
+  const ult=item.ultima, pen=item.penultima;
+  const bloco=(rot,a,penult)=>`<div class="tv-nota-ultima solari${penult?' penult':''}">
+      <div class="solari-rot">${rot}</div>
+      <div class="solari-meta">${_esc(a.autor||'—')} · ${a.em?_esc(_notaDataHora(a.em)):''}</div>
+      <div class="solari-txt">${_esc(a.texto||'')}</div>
+    </div>`;
   const ultimaHTML=ult
-    ?`<div class="tv-nota-ultima">
-      <div class="tv-nota-ultima-rot">&Uacute;ltima atualiza&ccedil;&atilde;o</div>
-      <div class="tv-nota-ultima-meta">${_esc(ult.autor||'—')} · ${ult.em?_esc(_notaDataHora(ult.em)):''}</div>
-      <div class="tv-nota-ultima-texto">${_esc(ult.texto||'')}</div>
-    </div>`
-    :`<div class="tv-nota-ultima vazia"><div class="tv-nota-ultima-rot">Sem atualiza&ccedil;&otilde;es ainda</div></div>`;
+    ?bloco('&Uacute;ltima atualiza&ccedil;&atilde;o',ult,false)+(pen?bloco('Pen&uacute;ltima atualiza&ccedil;&atilde;o',pen,true):'')
+    :'';
   return `<div class="sla-card tv-nota-card${item.fixada?' fixada':''}">
   <div class="sla-card-faixa"></div>
   <div class="sla-card-corpo">
+    <div class="tv-nota-registro">${item.autor?_esc(item.autor)+' &middot; ':''}criada ${item.criadoMs?_esc(_notaDataHora(item.criadoMs)):'—'}</div>
     <div class="tv-nota-titulo">${_esc(item.titulo||'Sem título')}</div>
     <div class="tv-nota-texto">${_esc(item.texto||'')}</div>
     ${ultimaHTML}
