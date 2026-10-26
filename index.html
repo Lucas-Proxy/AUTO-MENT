@@ -994,6 +994,15 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 /* linha ALVO (página 1 do cartão) centralizada, incluindo o rótulo */
 .sla-deslizante>.sla-pagina:first-child .sla-linha{align-items:center;text-align:center}
 .sla-deslizante>.sla-pagina:first-child .sla-linha-rot{text-align:center}
+/* botão de copiar do alvo: aparece ao passar o mouse sobre o alvo */
+.sla-copiar{display:none;margin:4px auto 0;padding:2px 9px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--blue);font-family:'Share Tech Mono',monospace;font-size:0.6rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.sla-copiar:hover{border-color:var(--blue);background:var(--blue-l)}
+.sla-linha:hover .sla-copiar,.sla-copiar:focus-visible{display:inline-block}
+@media (hover:none){.sla-copiar{display:inline-block}}
+/* Localização empurrada para a parte de baixo da área de informações, para o cartão ficar padronizado */
+.sla-deslizante>.sla-pagina:first-child>.sla-linha{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.sla-deslizante>.sla-pagina:first-child>.sla-linha>.sla-linha-val{display:flex;flex-direction:column;flex:1 1 auto}
+.sla-alvo-seg:has(.sla-alvo-loc){margin-top:auto;padding-top:10px}
 </style>
 </head>
 <body>
@@ -3952,6 +3961,15 @@ document.addEventListener('scroll',e=>{
   const d=e.target;
   if(d&&d.classList&&d.classList.contains('sla-deslizante'))_slaAtualizarPagina(d);
 },true);
+/* copia o alvo completo do acionamento para a área de transferência */
+function _slaCopiarAlvo(btn){
+  const txt=btn.dataset.alvo||'';
+  const ok=()=>showToast('✓ Alvo copiado.');
+  const falha=()=>showToast('Não foi possível copiar.','error');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(ok).catch(falha);
+  }else falha();
+}
 function _slaCardHTML(item){
   const c=_slaCalc(item);
   const tecnicos=item.tecnicos?item.tecnicos.replace(/@\d+\s*/g,''):'';
@@ -3978,7 +3996,7 @@ function _slaCardHTML(item){
   </div>
   <div class="sla-info sla-deslizante">
     <div class="sla-pagina">
-    ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Alvo</span><span class="sla-linha-val destaque" title="${_esc(item.alvo)}">${_slaAlvoLinhas(_slaAlvoCard(item))}</span></div>`:''}
+    ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Alvo</span><button class="sla-copiar" data-alvo="${_esc(item.alvo)}" onclick="event.stopPropagation();_slaCopiarAlvo(this)" title="Copiar o alvo">Copiar alvo</button><span class="sla-linha-val destaque" title="${_esc(item.alvo)}">${_slaAlvoLinhas(_slaAlvoCard(item))}</span></div>`:''}
     </div>
     <div class="sla-pagina">
       ${(Number(item.inicioMs)&&Number(item.inicioMs)<Number(item.aberturaMs)-60000)?`<div class="sla-linha"><span class="sla-linha-rot">Registrado</span><span class="sla-linha-val">${_slaFmtHora(item.aberturaMs)}</span></div>`:''}
