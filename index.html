@@ -603,7 +603,9 @@ body.sla-aberto .so-normal {display:none!important}
 body.sla-aberto .so-sla {display:flex!important}
 
 /* ── abas do painel: discretas, logo abaixo do título ── */
-.sla-abas{display:flex;gap:4px;border-bottom:1px solid var(--border);width:100%;max-width:1600px}
+.sla-abas{display:flex;gap:4px;border-bottom:1px solid var(--border);width:100%;max-width:1600px;opacity:0;transition:opacity .3s ease}
+#slaTopo:hover .sla-abas,.sla-abas:focus-within{opacity:1}
+@media (hover:none){.sla-abas{opacity:1}}
 .sla-aba{display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:2px solid transparent;
   padding:9px 2px;margin-right:22px;cursor:pointer;color:var(--text3);
   font-family:'Share Tech Mono',monospace;font-size:0.7425rem;letter-spacing:2px;text-transform:uppercase;
@@ -1003,6 +1005,14 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 .sla-deslizante>.sla-pagina:first-child>.sla-linha{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
 .sla-deslizante>.sla-pagina:first-child>.sla-linha>.sla-linha-val{display:flex;flex-direction:column;flex:1 1 auto}
 .sla-alvo-seg:has(.sla-alvo-loc){margin-top:auto;padding-top:10px}
+
+/* Acionamentos · Painel: visão só de leitura (TV). Mesmos cards da aba Acionamentos, sem botões. */
+#slaPainelView{display:none;position:relative;z-index:1;min-height:70vh;padding:0 40px 90px}
+#slaPainelView.ativo{display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
+@media (max-width:700px){#slaPainelView{padding:0 12px 90px}}
+#slaPainelGrid{grid-auto-rows:auto;align-items:start}
+#slaPainelGrid .sla-card-corpo{padding-bottom:14px}
+#slaPainelGrid .sla-info{margin-top:10px}
 </style>
 </head>
 <body>
@@ -1463,6 +1473,9 @@ IDENTIFICA&#199;&#195;O
 <button class="sla-aba" id="abaNotasPainel" role="tab" aria-controls="notasPainelView" aria-selected="false">
 <span>Notas &middot; Painel</span>
 </button>
+<button class="sla-aba" id="abaAcionamentosPainel" role="tab" aria-controls="slaPainelView" aria-selected="false">
+<span>Acionamentos &middot; Painel</span>
+</button>
 </div>
 </div>
 </div>
@@ -1475,6 +1488,10 @@ IDENTIFICA&#199;&#195;O
 </div>
 <div class="sla-grid" id="slaGrid"></div>
 <div class="sla-rodape" id="slaRodape"></div>
+</section>
+
+<section id="slaPainelView" role="tabpanel" aria-labelledby="abaAcionamentosPainel">
+<div class="sla-grid" id="slaPainelGrid"></div>
 </section>
 
 <section id="notasView" role="tabpanel" aria-labelledby="abaNotas">
@@ -2806,6 +2823,7 @@ const SLA_RING_C=2*Math.PI*SLA_RING_R;
    encerradosLocais = o que ESTE operador acabou de encerrar. Enquanto o
      servidor não confirmar em todas as respostas em voo, o encerramento
      local vence: card que o operador fechou não volta vivo na cara dele. */
+AppState.slaPainelTimer=null;
 AppState.sla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
   listaMs:0,encerradosLocais:new Map(),
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,jaAvisado:{}};
@@ -4017,6 +4035,7 @@ function _slaCardHTML(item){
 }
 
 function renderSla(){
+  renderSlaPainel();
   const grid=$('slaGrid');if(!grid)return;
   const st=AppState.sla;
 
@@ -4276,7 +4295,7 @@ function confirmarEncerrarSla() {
    de re-render e cadência do poll), então o resto do código continua
    valendo sem alteração. A aba em segundo plano fica no poll de fundo,
    que é o que mantém os badges vivos. */
-const SLA_ABAS={acionamentos:'slaView',notas:'notasView',notasPainel:'notasPainelView'};
+const SLA_ABAS={acionamentos:'slaView',acionamentosPainel:'slaPainelView',notas:'notasView',notasPainel:'notasPainelView'};
 
 function painelSlaAberto(){return document.body.classList.contains('sla-aberto')}
 
@@ -4292,6 +4311,7 @@ function fecharPainelSla(){
   document.body.classList.remove('sla-aberto');
   Object.values(SLA_ABAS).forEach(id=>{const el=$(id);if(el)el.classList.remove('ativo')});
   _pausarAbaAcionamentos();
+  _pausarAbaSlaPainel();
   AppState.slaAba=null;
 }
 function alternarPainelSla(){painelSlaAberto()?fecharPainelSla():abrirPainelSla()}
@@ -4306,7 +4326,7 @@ function selecionarAbaSla(aba){
   });
   /* Com mais de uma aba, o par de ifs não serve: virou tabela. Estado novo
      esquecido aqui deixava duas abas marcadas como ativas ao mesmo tempo. */
-  const BOTOES={acionamentos:'abaAcionamentos',notas:'abaNotas',notasPainel:'abaNotasPainel'};
+  const BOTOES={acionamentos:'abaAcionamentos',acionamentosPainel:'abaAcionamentosPainel',notas:'abaNotas',notasPainel:'abaNotasPainel'};
   Object.entries(BOTOES).forEach(([k,id])=>{
     const b=$(id);if(!b)return;
     b.classList.toggle('ativa',k===aba);
@@ -4315,9 +4335,11 @@ function selecionarAbaSla(aba){
   /* pausa TODAS as outras ANTES de ativar a escolhida: sem isso os
      setInterval de 1s ficariam rodando juntos depois de algumas idas e
      vindas entre as abas */
-  if(aba!=='acionamentos')_pausarAbaAcionamentos();
+  if(aba!=='acionamentos'&&aba!=='acionamentosPainel')_pausarAbaAcionamentos();
+  if(aba!=='acionamentosPainel')_pausarAbaSlaPainel();
   if(aba!=='notas'&&aba!=='notasPainel')_pausarAbaNotas();
   if(aba==='acionamentos')_ativarAbaAcionamentos();
+  else if(aba==='acionamentosPainel')_ativarAbaSlaPainel();
   else _ativarAbaNotas();
   /* a barra de lote passa a comandar a
      seleção da aba que entrou, ou se esconde se a aba não tem chamados */
@@ -4735,6 +4757,84 @@ function _pausarAbaAcionamentos(){
   AppState.sla.timerTick=null;
   _reprogramarPollSla();
 }
+/* Acionamentos · Painel: mesma fonte de dados (AppState.sla), sem botões.
+   Cards compactos no visual da aba Acionamentos: título, tempo de
+   indisponibilidade (no anel), falha e ALVO. Só chamados em aberto. */
+/* Nos cards de troca de poste e fiscalização a Localização (coordenada →
+   link do Maps) não aparece no painel de TV. Nos demais, fica igual à aba. */
+function _slaPainelAlvo(item){
+  let alvo=_slaAlvoCard(item);
+  if(/poste|fiscaliza/i.test(String(item.tipo||''))){
+    alvo=String(alvo).split(' · ').filter(seg=>
+      !/^(?:(?:coord[^:]*|localiza[çc][ãa]o):\s*)?-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/i.test(seg.trim())
+    ).join(' · ');
+  }
+  if(!alvo)return '';
+  return `<div class="sla-info"><div class="sla-linha"><span class="sla-linha-rot">Alvo</span><span class="sla-linha-val destaque" title="${_esc(alvo)}">${_slaAlvoLinhas(alvo)}</span></div></div>`;
+}
+function _slaPainelCardHTML(item){
+  return `<div class="sla-card-faixa"></div>
+<div class="sla-card-corpo">
+  <div class="sla-card-topo">
+    <span class="sla-badge-rede">${_esc(item.rede||'—')}</span>
+  </div>
+  <div class="sla-card-tipo">${_esc(item.tipo||'Acionamento')}</div>
+  <div class="sla-relogio">
+    <div class="sla-ring-wrap">
+      <svg class="sla-ring" viewBox="0 0 160 160">
+        <circle class="anel-fundo" cx="80" cy="80" r="${SLA_RING_R}"></circle>
+        <circle class="anel-frente" cx="80" cy="80" r="${SLA_RING_R}"
+                stroke-dasharray="${SLA_RING_C.toFixed(1)}" stroke-dashoffset="${SLA_RING_C.toFixed(1)}"></circle>
+      </svg>
+      <div class="sla-ring-centro">
+        <div class="sla-tempo" data-tempo="${_esc(item.id)}">00:00:00</div>
+      </div>
+    </div>
+    <div class="sla-tempo-rot" title="Quando a falha começou">Falha às ${_slaFmtHora(_slaBase(item))}</div>
+  </div>
+  ${_slaPainelAlvo(item)}
+</div>`;
+}
+function renderSlaPainel(){
+  const grid=$('slaPainelGrid');if(!grid)return;
+  if(AppState.slaAba!=='acionamentosPainel')return;
+  const itens=_slaOrdenar(AppState.sla.itens.filter(i=>!i.encerramentoMs));
+  if(!itens.length){
+    grid.innerHTML=`<div class="sla-aviso" style="grid-column:1/-1"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum acionamento em aberto.</div></div>`;
+    return;
+  }
+  grid.innerHTML=itens.map(item=>`<article class="sla-card sla-painel-card" data-id="${_esc(item.id)}">${_slaPainelCardHTML(item)}</article>`).join('');
+  tickSlaPainel();
+}
+function tickSlaPainel(){
+  if(AppState.slaAba!=='acionamentosPainel')return;
+  const porId=new Map(AppState.sla.itens.map(i=>[String(i.id),i]));
+  document.querySelectorAll('#slaPainelGrid .sla-painel-card').forEach(card=>{
+    const item=porId.get(card.dataset.id);if(!item)return;
+    const c=_slaCalc(item);
+    const classe='estado-'+c.estado;
+    if(!card.classList.contains(classe)){
+      card.classList.remove('estado-DENTRO','estado-ATENCAO','estado-ESTOURADO','estado-FINALIZADO');
+      card.classList.add(classe);
+    }
+    const tempo=card.querySelector('[data-tempo]');
+    if(tempo)_slaPintaTempo(tempo,_slaFmtDur(c.decorrido));
+    const anel=card.querySelector('.anel-frente');
+    if(anel)anel.setAttribute('stroke-dashoffset',(SLA_RING_C*(1-Math.min(c.pct,1))).toFixed(1));
+  });
+}
+function _ativarAbaSlaPainel(){
+  AppState.sla.aberto=true;
+  renderSlaPainel();
+  carregarSla();
+  clearInterval(AppState.slaPainelTimer);
+  AppState.slaPainelTimer=setInterval(tickSlaPainel,1000);
+  _reprogramarPollSla();
+}
+function _pausarAbaSlaPainel(){
+  clearInterval(AppState.slaPainelTimer);
+  AppState.slaPainelTimer=null;
+}
 /* um único "Atualizar" no topo: recarrega a aba que está à frente */
 function atualizarAbaSlaAtiva(){
   carregarSla();
@@ -4755,6 +4855,7 @@ function bindEventsSla(){
   $('btnSlaFechar').addEventListener('click',fecharPainelSla);
   $('btnSlaAtualizar').addEventListener('click',atualizarAbaSlaAtiva);
   $('abaAcionamentos').addEventListener('click',()=>selecionarAbaSla('acionamentos'));
+  $('abaAcionamentosPainel').addEventListener('click',()=>selecionarAbaSla('acionamentosPainel'));
   $('abaNotas').addEventListener('click',()=>selecionarAbaSla('notas'));
   $('abaNotasPainel').addEventListener('click',()=>selecionarAbaSla('notasPainel'));
   $('notasGrid').addEventListener('click',e=>{
@@ -4774,12 +4875,12 @@ function bindEventsSla(){
     if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
     if(!e.target.classList.contains('sla-aba'))return;
     e.preventDefault();
-    const ordem=['acionamentos','notas','notasPainel'];
+    const ordem=['acionamentos','notas','notasPainel','acionamentosPainel'];
     const i=Math.max(0,ordem.indexOf(AppState.slaAba));
     const passo=e.key==='ArrowRight'?1:-1;
     const proxima=ordem[(i+passo+ordem.length)%ordem.length];
     selecionarAbaSla(proxima);
-    const foco={acionamentos:'abaAcionamentos',notas:'abaNotas',notasPainel:'abaNotasPainel'}[proxima];
+    const foco={acionamentos:'abaAcionamentos',acionamentosPainel:'abaAcionamentosPainel',notas:'abaNotas',notasPainel:'abaNotasPainel'}[proxima];
     const el=$(foco);if(el)el.focus();
   });
   $('slaGrid').addEventListener('click',e=>{
