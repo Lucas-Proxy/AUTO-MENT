@@ -603,9 +603,7 @@ body.sla-aberto .so-normal {display:none!important}
 body.sla-aberto .so-sla {display:flex!important}
 
 /* ── abas do painel: discretas, logo abaixo do título ── */
-.sla-abas{display:flex;gap:4px;border-bottom:1px solid var(--border);width:100%;max-width:1600px;opacity:0;transition:opacity .3s ease}
-#slaTopo:hover .sla-abas,.sla-abas:focus-within{opacity:1}
-@media (hover:none){.sla-abas{opacity:1}}
+.sla-abas{display:flex;gap:4px;border-bottom:1px solid var(--border);width:100%;max-width:1600px}
 .sla-aba{display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:2px solid transparent;
   padding:9px 2px;margin-right:22px;cursor:pointer;color:var(--text3);
   font-family:'Share Tech Mono',monospace;font-size:0.7425rem;letter-spacing:2px;text-transform:uppercase;
@@ -716,7 +714,7 @@ body.sla-aberto .so-sla {display:flex!important}
 .tv-nota-card .sla-card-corpo{gap:13px;padding:21px 24px 22px}
 .tv-nota-registro{font-family:'Share Tech Mono',monospace;font-size:0.8rem;letter-spacing:.8px;color:var(--text2);text-transform:uppercase;overflow-wrap:anywhere}
 .tv-nota-titulo{font-family:'Bebas Neue',cursive;font-size:2.08rem;letter-spacing:1.8px;color:var(--text);line-height:1.05;text-transform:uppercase;padding-bottom:14px;border-bottom:1px solid var(--border);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.tv-nota-texto{font-size:1.04rem;line-height:1.5;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
+.tv-nota-texto{font-size:calc(1.04rem + 1px);line-height:1.5;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
 .tv-nota-ultima{margin-top:auto;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;flex-direction:column;gap:6px}
 .tv-nota-ultima.vazia{justify-content:center;border-style:dashed}
 .tv-nota-ultima-rot{font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:1.3px;color:var(--text3);text-transform:uppercase}
@@ -733,7 +731,7 @@ body.sla-aberto .so-sla {display:flex!important}
 @media(max-width:1024px){
 .tv-notas-grid{grid-template-columns:1fr;grid-auto-rows:auto;gap:11px}
 .tv-nota-titulo{font-size:1.68rem}
-.tv-nota-texto{font-size:0.88rem}
+.tv-nota-texto{font-size:calc(0.88rem + 1px)}
 .tv-nota-ultima-texto{font-size:0.8rem}
 }
 .sla-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;box-shadow:var(--shadow2);display:flex;flex-direction:column;position:relative;transition:border-color .3s,box-shadow .3s,opacity .4s,transform .4s;animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both}
@@ -1013,6 +1011,30 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 #slaPainelGrid{grid-auto-rows:auto;align-items:start}
 #slaPainelGrid .sla-card-corpo{padding-bottom:14px}
 #slaPainelGrid .sla-info{margin-top:10px}
+
+/* Engrenagem: Acionamentos e Notas ficam num menu ao lado das abas do painel */
+.sla-eng-wrap{position:relative;display:inline-flex;align-items:center;margin-left:10px;padding-bottom:8px}
+.sla-engrenagem{background:none;border:1px solid var(--border);border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:15px;line-height:1;transition:color .2s,border-color .2s,background .2s}
+.sla-engrenagem:hover,.sla-engrenagem[aria-expanded="true"],.sla-engrenagem.ativa{color:var(--blue);border-color:var(--blue);background:var(--blue-l)}
+.sla-menu-eng{display:none;position:absolute;top:100%;right:0;z-index:70;flex-direction:column;min-width:200px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow2);padding:6px}
+.sla-menu-eng.aberto{display:flex}
+.sla-menu-eng .sla-aba{margin:0;border:0;border-radius:6px;padding:10px 12px;justify-content:space-between;width:100%}
+.sla-menu-eng .sla-aba.ativa{background:var(--blue-l);color:var(--blue)}
+
+.sla-menu-eng-titulo{font-family:'Share Tech Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:8px 12px 4px}
+#slaTopo{z-index:30}
+
+#slaTopo .sla-noc-abas{display:none;border-bottom:1px solid var(--border)}
+#slaTopo.noc-ativo .sla-noc-abas{display:flex}
+.sla-menu-eng .sla-noc-btn{font-weight:700;letter-spacing:1.5px;justify-content:flex-start}
+
+/* Notas · Painel: card um pouco mais alto, com respiro interno maior */
+.tv-nota-card{min-height:330px}
+.tv-nota-card .sla-card-corpo{gap:16px;padding:30px 24px 30px}
+
+/* Acionamentos · Painel: cards 5% maiores (largura 248→260px, altura 490→514px) */
+#slaPainelGrid{max-width:1680px;grid-template-columns:repeat(auto-fill,minmax(260.4px,1fr));grid-auto-rows:514.5px}
+@media (max-width:700px){#slaPainelGrid{grid-template-columns:1fr;grid-auto-rows:auto}}
 </style>
 </head>
 <body>
@@ -1037,6 +1059,7 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 <span>Atualizar</span>
 </button>
+<button class="ozmap-btn btn-pill so-sla" id="btnNoc" aria-expanded="false" title="Mostrar Acionamentos e Notas" aria-label="NOC"><span>NOC</span></button>
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
 <span id="themeIcon" style="font-size:13px">&#9728;</span>
 <div class="toggle-track"><div class="toggle-thumb"></div></div>
@@ -1464,17 +1487,19 @@ IDENTIFICA&#199;&#195;O
 <div class="sla-titulo"><span class="hl">Painel</span> de SLA</div>
 </div>
 <div class="sla-abas" role="tablist" aria-label="Se&ccedil;&otilde;es do painel de SLA">
+<button class="sla-aba" id="abaAcionamentosPainel" role="tab" aria-controls="slaPainelView" aria-selected="false">
+<span>Acionamentos &middot; Painel</span>
+</button>
+<button class="sla-aba" id="abaNotasPainel" role="tab" aria-controls="notasPainelView" aria-selected="false">
+<span>Notas &middot; Painel</span>
+</button>
+</div>
+<div class="sla-abas sla-noc-abas" id="slaNocAbas" role="tablist" aria-label="NOC">
 <button class="sla-aba" id="abaAcionamentos" role="tab" aria-controls="slaView" aria-selected="true">
 <span>Acionamentos</span><span class="sla-aba-badge hidden" id="abaAcionamentosBadge" title="Chamados com SLA estourado">0</span>
 </button>
 <button class="sla-aba" id="abaNotas" role="tab" aria-controls="notasView" aria-selected="false">
 <span>Notas</span><span class="sla-aba-badge hidden" id="abaNotasBadge" title="Notas ativas no painel">0</span>
-</button>
-<button class="sla-aba" id="abaNotasPainel" role="tab" aria-controls="notasPainelView" aria-selected="false">
-<span>Notas &middot; Painel</span>
-</button>
-<button class="sla-aba" id="abaAcionamentosPainel" role="tab" aria-controls="slaPainelView" aria-selected="false">
-<span>Acionamentos &middot; Painel</span>
 </button>
 </div>
 </div>
@@ -4332,6 +4357,10 @@ function selecionarAbaSla(aba){
     b.classList.toggle('ativa',k===aba);
     b.setAttribute('aria-selected',String(k===aba));
   });
+  const noc=aba==='acionamentos'||aba==='notas';
+  $('slaTopo').classList.toggle('noc-ativo',noc);
+  const bNoc=$('btnNoc');
+  if(bNoc){bNoc.classList.toggle('ativa',noc);bNoc.setAttribute('aria-expanded',String(noc))}
   /* pausa TODAS as outras ANTES de ativar a escolhida: sem isso os
      setInterval de 1s ficariam rodando juntos depois de algumas idas e
      vindas entre as abas */
@@ -4854,6 +4883,10 @@ function bindEventsSla(){
   $('btnSla').addEventListener('click',alternarPainelSla);
   $('btnSlaFechar').addEventListener('click',fecharPainelSla);
   $('btnSlaAtualizar').addEventListener('click',atualizarAbaSlaAtiva);
+  $('btnNoc').addEventListener('click',()=>{
+    const aberto=$('slaTopo').classList.contains('noc-ativo');
+    selecionarAbaSla(aberto?'acionamentosPainel':(AppState.slaAba==='notas'?'notas':'acionamentos'));
+  });
   $('abaAcionamentos').addEventListener('click',()=>selecionarAbaSla('acionamentos'));
   $('abaAcionamentosPainel').addEventListener('click',()=>selecionarAbaSla('acionamentosPainel'));
   $('abaNotas').addEventListener('click',()=>selecionarAbaSla('notas'));
