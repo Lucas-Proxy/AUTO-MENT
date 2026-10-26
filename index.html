@@ -789,7 +789,7 @@ body.sla-aberto .so-sla {display:flex!important}
 .sla-alvo-seg:first-child{margin-top:0}
 .sla-alvo-rot{display:block;margin-bottom:4px;font-family:'Share Tech Mono',monospace;font-size:0.6625rem;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
 .sla-alvo-lista{list-style:none;margin:2px 0 0;padding:0;display:grid;grid-template-columns:1fr;gap:1px 12px}
-.sla-alvo-lista.cols2{grid-template-columns:1fr 1fr}
+.sla-alvo-lista.cols2{grid-template-columns:auto auto;grid-template-rows:repeat(var(--linhas,1),auto);grid-auto-flow:column;column-gap:16px;justify-content:start}
 .sla-alvo-loc{display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:0.7825rem;font-weight:600;color:var(--blue);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;line-height:1.3;word-break:break-all}
 .sla-alvo-loc:hover{color:var(--text)}
 .sla-alvo-lista li{font-size:0.7825rem;font-weight:600;color:var(--text);line-height:1.3;word-break:break-word}
@@ -979,6 +979,21 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 .nota-msg{position:relative}
 .nota-msg::before{content:'';position:absolute;left:-9px;top:0;width:0;height:0;border-style:solid;border-width:0 10px 10px 0;border-color:transparent var(--border) transparent transparent;pointer-events:none}
 .nota-msg::after{content:'';position:absolute;left:-7px;top:1px;width:0;height:0;border-style:solid;border-width:0 8px 9px 0;border-color:transparent var(--bg2) transparent transparent;pointer-events:none}
+/* o tempo além do SLA já aparece no próprio anel: a linha abaixo da falha saiu do cartão */
+.sla-excedente{display:none}
+/* lista em duas colunas centralizada no cartão (o texto de cada item segue alinhado à esquerda) */
+.sla-alvo-lista.cols2{width:100%;justify-content:center}
+/* informações do ALVO centralizadas no cartão */
+.sla-alvo-seg{text-align:center}
+.sla-alvo-rot{display:block}
+.sla-alvo-lista li{text-align:center}
+.sla-alvo-lista.cols2{justify-items:center}
+.sla-alvo-loc{margin-left:auto;margin-right:auto}
+/* tópicos do ALVO centralizados (teste) */
+.sla-alvo-rot{text-align:center}
+/* linha ALVO (página 1 do cartão) centralizada, incluindo o rótulo */
+.sla-deslizante>.sla-pagina:first-child .sla-linha{align-items:center;text-align:center}
+.sla-deslizante>.sla-pagina:first-child .sla-linha-rot{text-align:center}
 </style>
 </head>
 <body>
@@ -2874,7 +2889,8 @@ function _slaAlvoLinhas(txt){
     const rot=m?`<span class="sla-alvo-rot">${_esc(m[1])}</span>`:'';
     /* até 8 caracteres (contando o hífen) cabe em duas colunas */
     const duas=itens.length>1 && itens.every(x=>x.length<=8);
-    return `<div class="sla-alvo-seg">${rot}<ul class="sla-alvo-lista${duas?' cols2':''}">`+
+    const linhas=Math.ceil(itens.length/2);
+    return `<div class="sla-alvo-seg">${rot}<ul class="sla-alvo-lista${duas?' cols2':''}"${duas?` style="--linhas:${linhas}"`:''}>`+
       itens.map(x=>`<li>${_esc(x)}</li>`).join('')+`</ul></div>`;
   }).join('');
 }
