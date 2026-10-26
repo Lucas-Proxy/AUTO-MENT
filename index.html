@@ -6,7 +6,6 @@
 <title>ANALISTA DE REDES — NOC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 [data-theme="light"]{--bg:#eef2f7;--bg2:#fff;--bg3:#f5f8fc;--bg4:#e8f0fd;--blue:#1a6fdb;--blue2:#2d84f0;--blue-l:#e8f0fd;--blue-b:#c7dcfb;--teal:#0b8066;--teal-l:#e6f7f3;--amber:#ab5e05;--amber-l:#fef3c7;--red:#dc2626;--red-l:#fee2e2;--border:#d1dce9;--border2:#b8ccdf;--text:#1a2636;--text2:#4a647d;--text3:#557592;--shadow:0 1px 3px rgba(26,111,219,.08),0 4px 16px rgba(26,111,219,.06);--shadow2:0 2px 8px rgba(26,111,219,.12),0 8px 32px rgba(26,111,219,.08);--music-bg:#fff;--grafite:#5f5b55;--grafite-l:#edebe8;--grafite-b:#d6d2cc;--red-grave:#8c1414;--red-brando:#d9695c}
 [data-theme="dark"]{--bg:#050c14;--bg2:#0a1828;--bg3:#0e2038;--bg4:#122848;--blue:#3b9eff;--blue2:#60b4ff;--blue-l:rgba(59,158,255,.12);--blue-b:rgba(59,158,255,.25);--teal:#2dd4a4;--teal-l:rgba(45,212,164,.1);--amber:#fbbf24;--amber-l:rgba(251,191,36,.1);--red:#f87171;--red-l:rgba(248,113,113,.1);--border:rgba(59,158,255,.14);--border2:rgba(59,158,255,.28);--text:#cce8f4;--text2:#6aafcc;--text3:#468dba;--shadow:0 1px 3px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);--shadow2:0 2px 8px rgba(0,0,0,.5),0 8px 32px rgba(0,0,0,.4);--music-bg:#0a1828;--grafite:#9c968c;--grafite-l:rgba(156,150,140,.13);--grafite-b:rgba(156,150,140,.30);--red-grave:#cf3b3b;--red-brando:#ffb3a8}
@@ -591,8 +590,8 @@ body.sla-aberto #slaTopo{display:block}
    não deixa a aba quebrada de um jeito visível: a seção simplesmente
    nunca é escondida — aparece em todas as abas — e, sem o z-index, a
    seção da aba ativa pinta por cima e engole o clique nos botões dela. */
-#slaView, #tcSlaView, #notasView {display:none;position:relative;z-index:1;min-height:70vh;padding:0 40px 90px}
-#slaView.ativo, #tcSlaView.ativo, #notasView.ativo {display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
+#slaView, #notasView, #notasPainelView {display:none;position:relative;z-index:1;min-height:70vh;padding:0 40px 90px}
+#slaView.ativo, #notasView.ativo, #notasPainelView.ativo {display:block;animation:panelFadeSlide .4s cubic-bezier(.22,1,.36,1)}
 body.sla-aberto main {display:none}
 /* alternância dos botões da barra fixa: uma barra só, conteúdo por modo —
    evita ter dois "Atualizar" na tela e a colisão com o ícone de volume.
@@ -602,9 +601,6 @@ body.sla-aberto main {display:none}
 
 body.sla-aberto .so-normal {display:none!important}
 body.sla-aberto .so-sla {display:flex!important}
-/* Relatório é da aba E-mail's: nas outras ele nem aparece na barra */
-body.sla-aberto .so-emails {display:none!important}
-body.sla-aberto.aba-emails .so-emails {display:flex!important}
 
 /* ── abas do painel: discretas, logo abaixo do título ── */
 .sla-abas{display:flex;gap:4px;border-bottom:1px solid var(--border);width:100%;max-width:1600px}
@@ -623,8 +619,6 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-aba-acoes .btn-add-sla{margin-left:0;width:30px;height:30px}
 .sla-aba-acoes-rot{font-family:'Share Tech Mono',monospace;font-size:0.6425rem;letter-spacing:1.6px;
   color:var(--text3);text-transform:uppercase;margin-left:10px}
-.sla-btn-relatorio{width:auto;padding:0 12px;height:34px;font-size:0.7625rem;font-weight:700;margin-left:auto;
-  font-family:'Share Tech Mono',monospace;letter-spacing:1.4px;text-transform:uppercase}
 .btn-sla-fechar:hover{border-color:var(--red)!important;color:var(--red)!important;background:var(--red-l)!important}
 /* cabeçalho empilhado à esquerda: a coluna da direita fica livre para a
    barra fixa e o controle de volume, sem sobreposição em nenhuma largura */
@@ -641,13 +635,13 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-kpi.critico .sla-kpi-dot{background:var(--red);box-shadow:0 0 8px var(--red)}
 .sla-kpi.alerta  .sla-kpi-dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
 .sla-kpi.ok      .sla-kpi-dot{background:var(--teal);box-shadow:0 0 8px var(--teal)}
-.sla-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(233px,1fr));gap:13px;align-items:start}
+.sla-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:13px;align-items:stretch;grid-auto-rows:490px}
 /* ── NOTAS ──
    Cartão bem mais largo que o de chamado, de propósito: aqui o conteúdo é
    texto para ler, não número para bater o olho. 420px é a largura em que
    uma linha de nota fecha um pensamento inteiro em vez de picotar. Escala
    pensada para leitura em pé, a alguns metros do monitor do NOC. */
-.notas-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:18px;align-items:start}
+.notas-grid{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:18px;align-items:stretch;grid-auto-rows:470px}
 .notas-grid .sla-aviso{grid-column:1/-1}
 .nota-card .sla-card-corpo{gap:14px;padding:18px 22px 20px}
 .nota-card .tc-selo{font-size:.66rem;letter-spacing:1.3px;padding:3px 10px}
@@ -657,19 +651,64 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .nota-card.vencendo .sla-card-faixa{background:var(--amber)}
 .nota-titulo{font-family:'Bebas Neue',cursive;font-size:1.7rem;letter-spacing:2.2px;color:var(--text);line-height:1.08;text-transform:uppercase;
   padding-bottom:11px;border-bottom:1px solid var(--border)}
-.nota-texto{font-size:1.0625rem;line-height:1.6;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
+.nota-texto{font-size:1.0625rem;line-height:1.6;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .nota-rodape{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:11px;border-top:1px solid var(--border);
   font-family:'Share Tech Mono',monospace;font-size:0.74rem;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase}
 .nota-rodape-sep{opacity:.5}
-.nota-acoes{display:flex;align-items:center;gap:16px}
-.nota-btn{background:none;border:0;padding:3px 0;cursor:pointer;color:var(--text3);
-  font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:1.4px;text-transform:uppercase;
-  border-bottom:1px dotted var(--border2);transition:color .18s}
-.nota-btn:hover{color:var(--blue)}
+.nota-acoes{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:auto}
+.nota-btn{background:transparent;border:1px solid transparent;border-radius:6px;padding:4px 9px;cursor:pointer;color:var(--text3);
+  font-family:'Share Tech Mono',monospace;font-size:0.68rem;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;
+  transition:all .2s}
+.nota-btn:hover{color:var(--blue);border-color:var(--blue);background:var(--blue-l)}
 .nota-btn.perigo:hover{color:var(--red)}
-.nota-btn.confirmando{color:var(--red);border-bottom-color:var(--red)}
+.nota-btn.confirmando{color:var(--red);border-color:var(--red);background:var(--red-l)}
 .nota-btn-arquivar{margin-left:auto}
 .nota-btn:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
+.nota-titulo{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nota-btn-chat{color:var(--text2)}
+/* bloco da última atualização dentro do cartão: altura fixa, texto cortado */
+.nota-ultima{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;display:flex;flex-direction:column;gap:5px;min-height:0;overflow:hidden}
+.nota-ultima.vazia{justify-content:center;border-style:dashed}
+.nota-ultima-rot{font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:1.3px;color:var(--text3);text-transform:uppercase}
+.nota-ultima-meta{font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.6px;color:var(--text2);overflow-wrap:anywhere}
+.nota-ultima-texto{font-size:0.95rem;line-height:1.45;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* conversa da nota (WhatsApp-like): bolhas à esquerda, uma por entrada */
+#modalAtualizacoes .copy-modal-content{max-width:720px;height:min(80vh,680px)}
+.nota-chat-lista{flex:1;min-height:0;overflow-y:auto;padding:16px 18px;background:var(--bg3);display:flex;flex-direction:column;gap:10px}
+.nota-msg{align-self:flex-start;max-width:85%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;border-top-left-radius:3px;padding:9px 12px 7px;box-shadow:var(--shadow)}
+.nota-msg.primeira{border-left:3px solid var(--blue)}
+.nota-msg-autor{font-family:'Share Tech Mono',monospace;font-size:0.7rem;font-weight:700;letter-spacing:0.8px;color:var(--blue);overflow-wrap:anywhere}
+.nota-msg-texto{font-size:0.98rem;line-height:1.5;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere;margin-top:4px}
+.nota-msg-hora{font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:0.5px;color:var(--text3);margin-top:5px;text-align:right}
+.nota-chat-aviso{align-self:center;font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:1px;color:var(--text3);padding:6px 0}
+.nota-chat-aviso.erro{color:var(--red)}
+.nota-chat-form{padding:12px 18px 16px;border-top:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:8px}
+.nota-chat-rot{font-family:'Share Tech Mono',monospace;font-size:0.66rem;letter-spacing:1.3px;color:var(--text2);text-transform:uppercase}
+.nota-chat-form textarea{width:100%;min-height:64px;resize:vertical;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:0.95rem;line-height:1.45}
+.nota-chat-form textarea:focus{outline:none;border-color:var(--blue)}
+.nota-chat-linha{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.nota-chat-quem{font-family:'Share Tech Mono',monospace;font-size:0.68rem;letter-spacing:0.6px;color:var(--text3);overflow-wrap:anywhere}
+.nota-chat-contador{font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:var(--text3)}
+.nota-chat-acoes{display:flex;justify-content:flex-end}
+/* NOTAS · PAINEL: a mesma lista para a TV, só leitura, letra maior */
+.tv-notas-grid{max-width:1800px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(416px,1fr));gap:18px;align-items:stretch;grid-auto-rows:auto}
+.tv-notas-grid .sla-aviso{grid-column:1/-1}
+.tv-nota-card .sla-card-faixa{height:8px;background:var(--border2)}
+.tv-nota-card.fixada .sla-card-faixa{background:var(--blue)}
+.tv-nota-card .sla-card-corpo{gap:13px;padding:21px 24px 22px}
+.tv-nota-titulo{font-family:'Bebas Neue',cursive;font-size:2.08rem;letter-spacing:1.8px;color:var(--text);line-height:1.05;text-transform:uppercase;padding-bottom:14px;border-bottom:1px solid var(--border);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tv-nota-texto{font-size:1.04rem;line-height:1.5;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
+.tv-nota-ultima{margin-top:auto;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;flex-direction:column;gap:6px}
+.tv-nota-ultima.vazia{justify-content:center;border-style:dashed}
+.tv-nota-ultima-rot{font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:1.3px;color:var(--text3);text-transform:uppercase}
+.tv-nota-ultima-meta{font-family:'Share Tech Mono',monospace;font-size:0.76rem;letter-spacing:0.6px;color:var(--text2);overflow-wrap:anywhere}
+.tv-nota-ultima-texto{font-size:0.92rem;line-height:1.45;color:var(--text);white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
+@media(max-width:1024px){
+.tv-notas-grid{grid-template-columns:1fr;grid-auto-rows:auto;gap:11px}
+.tv-nota-titulo{font-size:1.68rem}
+.tv-nota-texto{font-size:0.88rem}
+.tv-nota-ultima-texto{font-size:0.8rem}
+}
 .sla-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;box-shadow:var(--shadow2);display:flex;flex-direction:column;position:relative;transition:border-color .3s,box-shadow .3s,opacity .4s,transform .4s;animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both}
 /* card já na tela, ainda não confirmado pelo servidor */
 .sla-card.pendente{opacity:.72}
@@ -682,7 +721,7 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-card-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .sla-badge-rede{font-family:'Share Tech Mono',monospace;font-size:0.6125rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border-radius:20px;background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b);white-space:nowrap}
 .sla-abertura{font-family:'Share Tech Mono',monospace;font-size:0.7375rem;color:var(--text3);letter-spacing:1px;white-space:nowrap}
-.sla-card-tipo{font-size:0.8225rem;font-weight:700;color:var(--text);line-height:1.3;letter-spacing:.2px}
+.sla-card-tipo{font-size:0.8225rem;font-weight:700;color:var(--text);line-height:1.3;letter-spacing:.2px;text-align:center}
 .sla-relogio{display:flex;flex-direction:column;align-items:center;gap:2px;padding:2px 0 0}
 .sla-ring-wrap{position:relative;width:118px;height:118px}
 .sla-ring{width:100%;height:100%;transform:rotate(-90deg)}
@@ -695,13 +734,25 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-tempo{font-family:'Share Tech Mono',monospace;font-size:1.2125rem;font-weight:700;color:var(--text);letter-spacing:.2px;line-height:1;font-variant-numeric:tabular-nums}
 /* o rótulo do prazo saiu de dentro do anel: 118px não comportam
    "CICLO DE REFORÇO · 1H". Fora dele tem a largura do card. */
-.sla-tempo-rot{font-family:'Share Tech Mono',monospace;font-size:0.5625rem;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase;text-align:center;margin-top:7px;line-height:1.35}
+.sla-tempo-rot{font-family:'Share Tech Mono',monospace;font-size:0.8825rem;font-weight:700;letter-spacing:1px;color:var(--text);text-transform:uppercase;text-align:center;margin-top:9px;line-height:1.35}
 /* chamado de dias marca 3 dígitos de hora e transbordava o anel */
 .sla-tempo.longo{font-size:0.9825rem;letter-spacing:0}
 .sla-tempo.extenso{font-size:0.8425rem;letter-spacing:0}
 .sla-excedente{font-family:'Share Tech Mono',monospace;font-size:0.6225rem;font-weight:700;letter-spacing:1px;color:var(--red);text-transform:uppercase}
 .sla-info{display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--border);padding-top:9px}
-.sla-linha{display:flex;flex-direction:column;gap:2px}
+.sla-linha{display:flex;flex-direction:column;gap:4px}
+.sla-card-corpo{min-height:0}
+.sla-deslizante{flex:1 1 auto;min-height:0;display:flex;flex-direction:row;gap:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;touch-action:pan-x;cursor:grab;overscroll-behavior-x:contain}
+.sla-deslizante::-webkit-scrollbar{display:none}
+.sla-deslizante.arrastando{cursor:grabbing;scroll-snap-type:none}
+.sla-paginador{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2px}
+.sla-seta{background:none;border:1px solid var(--border);border-radius:50%;width:18px;height:18px;padding:0;line-height:1;font-size:12px;color:var(--text3);opacity:.5;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:opacity .2s,color .2s,border-color .2s}
+.sla-seta:hover{opacity:1;color:var(--blue);border-color:var(--blue)}
+.sla-pontos{display:inline-flex;gap:5px}
+.sla-pontos i{display:block;width:6px;height:6px;border-radius:50%;background:var(--border2)}
+.sla-pontos i.on{background:var(--blue)}
+.sla-pag-rot{font-family:'Share Tech Mono',monospace;font-size:0.5825rem;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;min-width:58px;text-align:center;opacity:.45}
+.sla-pagina{flex:0 0 100%;width:100%;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:thin;scroll-snap-align:start;padding-right:2px}
 .sla-linha-rot{font-family:'Share Tech Mono',monospace;font-size:0.5625rem;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
 .sla-linha-val{font-size:0.7825rem;font-weight:600;color:var(--text2);line-height:1.3;word-break:break-word}
 .sla-linha-val.destaque{color:var(--text)}
@@ -709,18 +760,16 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
    circuito está fora: 2px acima do resto do bloco, de propósito */
 .sla-linha.linha-falha .sla-linha-rot{font-size:0.6875rem}
 .sla-linha.linha-falha .sla-linha-val{font-size:0.9075rem}
-/* Bloco de identificação do card de E-mail's: maior que o resto do card de
-   propósito — é por FALHA EM, PROTOCOLO e DESIGNAÇÃO que o operador acha o
-   chamado na tela. Vale só aqui; o painel de Acionamentos fica como estava. */
-.tc-info-chave{gap:8px;padding-top:11px}
-.tc-info-chave .sla-linha-rot{font-size:0.625rem;letter-spacing:1.6px}
-.tc-info-chave .sla-linha-val{font-size:0.955rem;line-height:1.25}
-.tc-info-chave .sla-linha.linha-falha .sla-linha-rot{font-size:0.625rem}
-.tc-info-chave .sla-linha.linha-falha .sla-linha-val{font-size:1.02rem;font-weight:700}
-/* campo sem dado não pode ter o mesmo peso visual de um preenchido */
-.tc-info-chave .sla-linha-val.vazio{color:var(--text3);font-weight:600}
+.sla-alvo-seg{display:block;margin-top:12px}
+.sla-alvo-seg:first-child{margin-top:0}
+.sla-alvo-rot{display:block;margin-bottom:4px;font-family:'Share Tech Mono',monospace;font-size:0.6625rem;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.sla-alvo-lista{list-style:none;margin:2px 0 0;padding:0;display:grid;grid-template-columns:1fr;gap:1px 12px}
+.sla-alvo-lista.cols2{grid-template-columns:1fr 1fr}
+.sla-alvo-loc{display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:0.7825rem;font-weight:600;color:var(--blue);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;line-height:1.3;word-break:break-all}
+.sla-alvo-loc:hover{color:var(--text)}
+.sla-alvo-lista li{font-size:0.7825rem;font-weight:600;color:var(--text);line-height:1.3;word-break:break-word}
 .sla-alvo-extra{font-family:'Share Tech Mono',monospace;font-size:0.6625rem;color:var(--text3);margin-top:2px}
-.sla-btn-encerrar{width:100%;margin-top:auto;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;background:var(--bg3);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:0.6625rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.sla-btn-encerrar{width:100%;margin-top:auto;padding:3px 8px;border:none;border-radius:6px;background:transparent;color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:0.6625rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .sla-btn-encerrar:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-l)}
 .sla-btn-encerrar.confirmando{border-color:var(--red);color:var(--red);background:var(--red-l);animation:selectPop .3s cubic-bezier(.34,1.56,.64,1)}
 .sla-btn-encerrar:disabled{opacity:.5;cursor:not-allowed}
@@ -759,9 +808,7 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 
    O modo de seleção liga um checkbox em cada card e uma barra fixa com a
    ação em lote. Fora do modo, o painel fica exatamente como era: o
-   checkbox nasce com display:none e só as duas classes no <body> o
-   revelam, uma por aba — a seleção da aba Acionamentos não vaza para a de
-   E-mail's e vice-versa.
+   checkbox nasce com display:none e só a classe no <body> o revela.
 
    O checkbox entra DENTRO de .sla-card-topo, na frente do selo da rede, em
    vez de flutuar absoluto sobre o card. Absoluto exigiria abrir espaço com
@@ -770,21 +817,18 @@ body.sla-aberto.aba-emails .so-emails {display:flex!important}
 .sla-card-check{display:none;flex:0 0 auto;align-items:center;justify-content:center;
   width:20px;height:20px;border-radius:6px;background:var(--bg3);
   border:1px solid var(--border2);cursor:pointer;transition:background .18s,border-color .18s}
-body.sla-selecao-sla #slaGrid .sla-card-check,
-body.sla-selecao-tim #tcSlaFilas .sla-card-check{display:inline-flex}
+body.sla-selecao-sla #slaGrid .sla-card-check{display:inline-flex}
 /* .sla-card-topo é space-between com dois filhos. Com o checkbox virando o
    terceiro, o espaço seria repartido em três e abriria um vão entre o
    checkbox e o selo da rede. No modo seleção o topo passa a alinhar à
    esquerda e é a hora da falha que vai sozinha para a direita — o layout
    que já se lia, com o checkbox encostado no selo. */
-body.sla-selecao-sla #slaGrid .sla-card-topo,
-body.sla-selecao-tim #tcSlaFilas .sla-card-topo{justify-content:flex-start}
-body.sla-selecao-sla #slaGrid .sla-card-topo>.sla-abertura,
-body.sla-selecao-tim #tcSlaFilas .sla-card-topo>.sla-abertura{margin-left:auto}
+body.sla-selecao-sla #slaGrid .sla-card-topo{justify-content:flex-start}
+body.sla-selecao-sla #slaGrid .sla-card-topo>.sla-abertura{margin-left:auto}
+.sla-card-topo{justify-content:center}
 /* card já encerrado não entra em lote: sem checkbox para não prometer o que
    o backend vai recusar */
-body.sla-selecao-sla #slaGrid .sla-card.estado-FINALIZADO .sla-card-check,
-body.sla-selecao-tim #tcSlaFilas .sla-card.estado-FINALIZADO .sla-card-check{display:none}
+body.sla-selecao-sla #slaGrid .sla-card.estado-FINALIZADO .sla-card-check{display:none}
 /* Caixa DESENHADA, não <input type="checkbox">. Com input nativo, o clique
    no card e o clique na caixa são o mesmo evento e o navegador já alterna o
    `checked` antes do nosso handler; cancelar o evento com preventDefault faz
@@ -799,8 +843,7 @@ body.sla-selecao-tim #tcSlaFilas .sla-card.estado-FINALIZADO .sla-card-check{dis
   display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;
   font-size:9px;font-weight:700;color:#fff;line-height:1}
 .sla-card-check:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
-body.sla-selecao-sla #slaGrid .sla-card,
-body.sla-selecao-tim #tcSlaFilas .sla-card{cursor:pointer}
+body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 /* !important porque os estados (ATENCAO/ESTOURADO) também pintam borda e
    sombra: a marca de "selecionado" tem de vencer sem apagar a cor do estado,
    que continua na faixa e no anel */
@@ -862,227 +905,21 @@ body.sla-selecao-tim #tcSlaFilas .sla-card{cursor:pointer}
 .sla-aviso.erro .sla-aviso-txt{color:var(--red)}
 .sla-rodape{max-width:1600px;margin:22px auto 0;font-family:'Share Tech Mono',monospace;font-size:0.6425rem;color:var(--text3);letter-spacing:1.5px;text-align:center}
 
-/* ══════════════════════════════════════════════════════════
-   E-MAIL’S SLA v3 — FILAS DE TRABALHO
-   ══════════════════════════════════════════════════════════
-   O painel antigo era um grid único ordenado por percentual de SLA. Com
-   prazo de 30 min, tudo que passava de meia hora ficava com percentual
-   acima de 1 — a ordenação virava empate, os cards ficavam todos
-   vermelhos e o painel parava de dizer o que fazer. Aqui cada chamado
-   entra numa fila com um verbo, e o vermelho volta a significar
-   "alguém precisa agir agora".                                        */
-.tc-filtro-wrap{max-width:1600px;margin:0 auto 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-/* compacta quando ociosa e cresce ao focar: o rótulo curto basta para achar
-   o campo, mas quem está digitando precisa enxergar o que digitou */
-/* qualificado com input. de propósito: a regra global input[type="text"]
-   traz width:100% e tem mais especificidade que uma classe sozinha */
-input.tc-filtro{flex:0 0 auto;margin-left:auto;width:108px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:0.8625rem;color:var(--text);transition:width .2s ease}
-input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
-@media(max-width:1024px){input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:100%}}
-.tc-filtro:focus{border-color:var(--blue2);outline:none;box-shadow:0 0 0 3px rgba(59,158,255,.15)}
-.tc-filtro-info{font-family:'Share Tech Mono',monospace;font-size:0.6425rem;letter-spacing:1.4px;color:var(--text3);text-transform:uppercase}
-
-/* grid único: os cards ficam um do lado do outro, como antes. A fila a
-   que cada um pertence aparece no selo colorido do próprio card e nos
-   indicadores do topo, que filtram ao clique. */
-.tc-filas{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(233px,1fr));gap:13px;align-items:start}
-.tc-filas .sla-aviso{grid-column:1/-1}
-.sla-card.tc-COBRAR .sla-badge-rede,.sla-card.tc-ESCALONAR .sla-badge-rede{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.35)}
-.sla-card.tc-AGUARDANDO_AU .sla-badge-rede{background:var(--red-l);color:var(--red-brando);border-color:var(--red-brando)}
-.sla-card.tc-EM_TRATATIVA .sla-badge-rede{background:var(--blue-l);color:var(--blue);border-color:var(--blue-b)}
-/* tc-REFORCAR entra aqui junto com AGUARDANDO_NORM: os dois são o mesmo estado
-   de chamado — escalonado, esperando a TIM normalizar — e o selo do topo diz
-   exatamente isso nos dois. O que muda entre eles é a etiqueta de ação, e é só
-   ela que fica âmbar. Divisão de cores do card escalonado: roxo nomeia o
-   estado, âmbar chama a ação. */
-.sla-card.tc-AGUARDANDO_NORM .sla-badge-rede,.sla-card.tc-REFORCAR .sla-badge-rede{background:var(--grafite-l);color:var(--grafite);border-color:var(--grafite-b)}
-.sla-card.tc-NORMALIZADO .sla-badge-rede{background:var(--bg3);color:var(--text3);border-color:var(--border)}
 .sla-card-topo{flex-wrap:wrap;row-gap:4px}
 .sla-card-topo .sla-badge-rede{max-width:100%}
-.tc-fila{display:block}
-.tc-fila.vazia{display:none}
-.tc-fila-cab{display:flex;align-items:center;gap:10px;margin-bottom:11px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.tc-fila-pino{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.tc-fila-nome{font-family:'Bebas Neue',cursive;font-size:1.0825rem;letter-spacing:3.4px;color:var(--text);text-transform:uppercase;line-height:1}
-.tc-fila-cont{font-family:'Share Tech Mono',monospace;font-size:0.6625rem;color:var(--text3);letter-spacing:1.4px;border:1px solid var(--border);border-radius:20px;padding:1px 8px}
-.tc-fila-dica{font-family:'Share Tech Mono',monospace;font-size:0.6225rem;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase;margin-left:auto;text-align:right}
-.tc-fila-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(233px,1fr));gap:13px;align-items:start}
-
-/* cores por fila — o pino do cabeçalho e a faixa do card falam a mesma língua */
-.tc-fila[data-fila="COBRAR"] .tc-fila-pino{background:var(--red);box-shadow:0 0 8px var(--red)}
-.tc-fila[data-fila="COBRAR"] .tc-fila-nome{color:var(--red)}
-.tc-fila[data-fila="ESCALONAR"] .tc-fila-pino{background:var(--red);box-shadow:0 0 8px var(--red)}
-.tc-fila[data-fila="ESCALONAR"] .tc-fila-nome{color:var(--red)}
-.tc-fila[data-fila="REFORCAR"] .tc-fila-pino{background:var(--amber);box-shadow:0 0 8px var(--amber)}
-.tc-fila[data-fila="REFORCAR"] .tc-fila-nome{color:var(--amber)}
-.tc-fila[data-fila="RESPONDER_TIM"] .tc-fila-pino{background:var(--red-grave);box-shadow:0 0 8px var(--red-grave)}
-.tc-fila[data-fila="RESPONDER_TIM"] .tc-fila-nome{color:var(--red-grave)}
-.tc-fila[data-fila="AGUARDANDO_AU"] .tc-fila-pino{background:var(--red-brando);box-shadow:0 0 8px var(--red-brando)}
-.tc-fila[data-fila="AGUARDANDO_AU"] .tc-fila-nome{color:var(--red-brando)}
-.tc-fila[data-fila="EM_TRATATIVA"] .tc-fila-pino{background:var(--blue);box-shadow:0 0 8px var(--blue)}
-.tc-fila[data-fila="AGUARDANDO_NORM"] .tc-fila-pino{background:var(--grafite)}
-.tc-fila[data-fila="NORMALIZADO"] .tc-fila-pino{background:var(--teal);box-shadow:0 0 8px var(--teal)}
-
-/* estados do card. Só COBRAR e ESCALONAR pulsam: são as duas únicas
-   situações em que existe ação humana pendente. */
-.sla-card.tc-COBRAR{border-color:var(--red);box-shadow:var(--shadow2),0 0 0 1px var(--red);animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both,slaPulsar 1.6s ease-in-out infinite}
-.sla-card.tc-COBRAR .sla-card-faixa,.sla-card.tc-ESCALONAR .sla-card-faixa{background:var(--red)}
-.sla-card.tc-COBRAR .anel-frente,.sla-card.tc-ESCALONAR .anel-frente{stroke:var(--red)}
-.sla-card.tc-COBRAR .sla-tempo,.sla-card.tc-ESCALONAR .sla-tempo{color:var(--red)}
-.sla-card.tc-ESCALONAR{border-color:var(--red);box-shadow:var(--shadow2),0 0 0 1px var(--red);animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both,slaPulsar 1.6s ease-in-out infinite}
-/* Aguardando AU é o vermelho brando: mesmíssimo relógio do COBRAR, ainda dentro
-   dos 30 min. Pintá-lo do mesmo vermelho cheio de quem já estourou dizia que os
-   dois pediam a mesma coisa agora, e não pedem — aqui não há nada a fazer até a
-   janela vencer. Quando vence, o card vira COBRAR e o vermelho fecha sozinho. */
-.sla-card.tc-AGUARDANDO_AU{border-color:var(--red-brando)}
-.sla-card.tc-AGUARDANDO_AU .sla-card-faixa{background:var(--red-brando)}
-.sla-card.tc-AGUARDANDO_AU .anel-frente{stroke:var(--red-brando)}
-.sla-card.tc-AGUARDANDO_AU .sla-tempo{color:var(--red-brando)}
-/* O card em reforço é o mesmo card grafite: mesmo estado, mesmo relógio, mesma
-   moldura. O âmbar entra só em três pontos, e todos apontam para a ação — a
-   borda, a faixa da lateral e a etiqueta REFORÇAR CHAMADO. Pintar o anel de
-   âmbar junto era colorir o tempo em aberto, que não é alarme nenhum: ele
-   corre igual nos dois cards. O cronômetro fica em contraste cheio aqui e
-   grafite no card sem pendência — é a hierarquia sem gastar outra cor.
-   O card não pulsa: o pulsar segue reservado ao COBRAR e ao ESCALONAR, porque
-   escalonado fica dias no painel e card piscando por dias vira ruído. */
-.sla-card.tc-REFORCAR{border-color:rgba(217,119,6,.45)}
-.sla-card.tc-REFORCAR .sla-card-faixa{background:var(--amber)}
-.sla-card.tc-REFORCAR .anel-fundo{stroke:var(--grafite-l)}
-.sla-card.tc-REFORCAR .anel-frente{stroke:var(--grafite)}
-.sla-card.tc-REFORCAR .sla-tempo{color:var(--text)}
-/* Responder a TIM é o extremo escuro da rampa — vinho. É a primeira fila do
-   painel: a única em que alguém do outro lado está literalmente parado à espera
-   de nós, e a única que some no minuto em que o e-mail é respondido. Prazo
-   estourado é grave; tratativa travada esperando a gente é mais grave ainda, e
-   a cor mais fechada diz isso sem inventar um matiz novo.
-   Pulsa junto com COBRAR e ESCALONAR. O escalonado não pulsa porque fica dias
-   na tela, e card piscando por dias vira ruído; este não fica. */
-.sla-card.tc-RESPONDER_TIM{border-color:var(--red-grave);box-shadow:var(--shadow2),0 0 0 1px var(--red-grave);animation:cardEnter .45s cubic-bezier(.22,1,.36,1) both,slaPulsar 1.6s ease-in-out infinite}
-.sla-card.tc-RESPONDER_TIM .sla-card-faixa{background:var(--red-grave)}
-.sla-card.tc-RESPONDER_TIM .anel-frente{stroke:var(--red-grave)}
-.sla-card.tc-RESPONDER_TIM .sla-tempo{color:var(--red-grave)}
-.sla-card.tc-RESPONDER_TIM .sla-badge-rede{background:var(--red-l);color:var(--red-grave);border-color:var(--red-grave)}
-.sla-card.tc-EM_TRATATIVA .sla-card-faixa{background:var(--blue)}
-.sla-card.tc-EM_TRATATIVA .anel-frente{stroke:var(--blue)}
-.sla-card.tc-EM_TRATATIVA .sla-tempo{color:var(--blue)}
-/* Grafite, e não mais uma cor de estado. O painel escalonado só precisa de duas
-   coisas: dizer que o tempo corre há muito e mostrar quando há reforço a fazer.
-   Cor nenhuma descreve bem "parado do lado da TIM" — vermelho é prazo correndo
-   contra nós, azul é tratativa nossa, verde é dentro do SLA — e cada cor a mais
-   na grade cobra atenção que esses cards não merecem. Fica o metal: neutro,
-   levemente quente para não recair no azul.
-   A troca vale no anel INTEIRO, traço de fundo incluído. Foi ele, herdando
-   --border (azulado em todos os temas), que segurava o azul depois que a cor da
-   frente saiu.
-   E o card parou de ser rebaixado a 82% de opacidade: nada a fazer não é a
-   mesma coisa que menos importante — são os chamados mais antigos da tela. */
-.sla-card.tc-AGUARDANDO_NORM{opacity:.94}
-.sla-card.tc-AGUARDANDO_NORM .sla-card-faixa{background:var(--grafite)}
-.sla-card.tc-AGUARDANDO_NORM .anel-fundo{stroke:var(--grafite-l)}
-.sla-card.tc-AGUARDANDO_NORM .anel-frente{stroke:var(--grafite)}
-.sla-card.tc-AGUARDANDO_NORM .sla-tempo{color:var(--grafite)}
-.sla-card.tc-NORMALIZADO{opacity:.5;filter:grayscale(1)}
-.sla-card.tc-NORMALIZADO .sla-card-faixa{background:var(--text3)}
-.sla-card.tc-NORMALIZADO .anel-frente{stroke:var(--text3)}
-
-/* linha de ação: o que fazer e quando */
-/* flex-wrap: rótulos longos como "Reforçar escalonamento" empurravam o
-   cronômetro para fora da caixa, que tem white-space:nowrap e cortava o
-   tempo justamente no dígito que importa */
-.tc-acao{display:flex;align-items:center;flex-wrap:wrap;gap:2px 7px;border-radius:8px;padding:7px 9px;font-family:'Share Tech Mono',monospace;font-size:0.6425rem;letter-spacing:1.1px;text-transform:uppercase;line-height:1.4}
-.tc-acao.urgente{background:var(--red-l);color:var(--red);border:1px solid rgba(220,38,38,.3);font-weight:700}
-/* a linha de ação usa o vermelho do próprio card, não o vermelho genérico:
-   vinho em RESPONDER A TIM, brando em AGUARDANDO AU */
-.sla-card.tc-RESPONDER_TIM .tc-acao.urgente{color:var(--red-grave);border-color:var(--red-grave)}
-.sla-card.tc-AGUARDANDO_AU .tc-acao.espera{color:var(--red-brando)}
-/* Espera e calma perderam a caixa: a moldura tomava a largura inteira do
-   card para dizer um dado que cabe em meia linha, e disputava atenção com
-   o vermelho — que é o único que precisa saltar. Vira texto solto, e a
-   caixa passa a significar "isto exige ação agora". */
-.tc-acao.espera,.tc-acao.calma{background:none;border:0;padding:1px 0;flex-wrap:nowrap;font-size:0.6125rem}
-.tc-acao.espera{color:var(--red)}
-.tc-acao.calma{color:var(--text3)}
-.tc-acao.tratativa{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b)}
-.tc-acao-cron{font-weight:700;white-space:nowrap}
-/* orientação do próximo passo: discreta, abaixo da barra de ação */
-.tc-acao-dica{font-family:'Inter',sans-serif;font-size:0.7225rem;line-height:1.45;color:var(--text3);margin-top:6px}
-.tc-acao-dica.hidden{display:none}
-
 .tc-selo{font-family:'Share Tech Mono',monospace;font-size:0.5825rem;letter-spacing:1.2px;text-transform:uppercase;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--text3);white-space:nowrap}
-.tc-selo.cobrancas{background:var(--red-l);color:var(--red);border-color:rgba(220,38,38,.28)}
 .tc-selo.escalonado{background:var(--amber-l);color:var(--amber);border-color:rgba(217,119,6,.35)}
 .tc-selo.vinculo{background:var(--blue-l);color:var(--blue);border-color:var(--blue-b);font-weight:700}
-/* As duas etiquetas do card escalonado são âmbar, e a hierarquia entre elas é
-   o preenchimento: ESCALONADO é contorno (um fato), REFORÇAR CHAMADO é âmbar
-   cheio e pulsando (uma ação). Texto em var(--bg2) para o contraste virar junto
-   com o tema — âmbar escuro pede texto claro, âmbar claro pede texto escuro.
-   drop-shadow em vez de box-shadow fixo pelo mesmo motivo: o brilho acompanha
-   o âmbar de cada tema. */
-.tc-selo.reforcar{background:var(--amber);color:var(--bg2);border-color:var(--amber);font-weight:700;animation:seloReforcar 1.8s ease-in-out infinite}
-@keyframes seloReforcar{0%,100%{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}50%{filter:drop-shadow(0 0 7px var(--amber))}}
-@media (prefers-reduced-motion:reduce){.tc-selo.reforcar{animation:none;filter:drop-shadow(0 0 5px var(--amber))}}
-.tc-vinculo-nota{font-family:'Inter',sans-serif;font-size:0.7225rem;line-height:1.45;color:var(--blue);
-  background:var(--blue-l);border:1px solid var(--blue-b);border-radius:7px;padding:7px 9px}
 
-/* ══ TABELA DO RELATÓRIO ═══════════════════════════════════════════
-   Chamado e cobranças formam um bloco. A régua grossa marca o começo de
-   cada chamado; entre ele e suas cobranças não há régua nenhuma, então o
-   grupo se lê como uma unidade. Antes toda linha tinha a mesma borda e não
-   dava para saber de quem era a cobrança. */
-.rel-abas{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border)}
-.rel-aba{background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;cursor:pointer;
-  font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
-  color:var(--text3);transition:color .2s,border-color .2s}
-.rel-aba:hover{color:var(--blue)}
-.rel-aba.ativa{color:var(--blue);border-bottom-color:var(--blue)}
-/* IR — abre a conversa no Gmail, em aba nova */
-.btn-ir{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);
-  background:var(--bg3);color:var(--blue);font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;
-  letter-spacing:.6px;text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s}
-.btn-ir:hover{background:var(--blue-l);border-color:var(--blue2)}
-.rel-tabela{width:100%;border-collapse:collapse;font-size:.85rem;text-align:left}
-.rel-tabela th{padding:8px;color:var(--text3);border-bottom:2px solid var(--border2);
-  font-family:'Share Tech Mono',monospace;font-size:.68rem;letter-spacing:1px;text-transform:uppercase;font-weight:700}
-.rel-tabela td{padding:9px 8px}
-.rel-tabela tr.rel-chamado>td{border-top:2px solid var(--border2)}
-.rel-tabela tbody tr.rel-chamado:first-child>td{border-top:0}
-.rel-tabela tr.rel-chamado:hover>td{background:var(--bg3)}
-/* a cobrança é filha: recuada, com um fio vertical ligando-a ao chamado */
-.rel-tabela tr.rel-cobranca>td{padding:5px 8px 5px 30px;color:var(--text3);font-size:.8rem;
-  background:var(--bg3);box-shadow:inset 4px 0 0 var(--border2)}
-.rel-cobranca-tag{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:.6rem;
-  letter-spacing:1px;text-transform:uppercase;color:var(--amber);border:1px solid rgba(217,119,6,.35);
-  border-radius:20px;padding:1px 7px;margin-right:7px}
-/* bloco expansível: o que não decide a próxima ação sai do primeiro olhar */
-.tc-btn-detalhes,.tc-btn-ir{align-self:flex-start;background:none;border:0;padding:2px 0;cursor:pointer;color:var(--text3);
-  font-family:'Share Tech Mono',monospace;font-size:0.6125rem;letter-spacing:1.4px;text-transform:uppercase;
-  border-bottom:1px dotted var(--border2);transition:color .18s}
-.tc-btn-detalhes:hover,.tc-btn-ir:hover{color:var(--blue)}
-.tc-btn-detalhes:focus-visible,.tc-btn-ir:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
-/* os dois na mesma linha; o IR encostado na direita do card */
-.tc-card-acoes{display:flex;align-items:center;gap:12px}
-.tc-btn-ir{margin-left:auto;text-decoration:none;white-space:nowrap}
-.tc-detalhes{display:flex;flex-direction:column;gap:8px;animation:tcAbre .2s ease both}
-.tc-detalhes.hidden{display:none}
-@keyframes tcAbre{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .tc-card-selos{display:flex;gap:5px;flex-wrap:wrap}
-.tc-btn-secundario{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:0.6425rem;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-.tc-btn-secundario:hover{border-color:var(--red);color:var(--red);background:var(--red-l)}
-.tc-btn-secundario:disabled{opacity:.45;cursor:default}
-.sla-kpi.tc-kpi{cursor:pointer;transition:transform .18s,border-color .18s}
-.sla-kpi.tc-kpi:hover{transform:translateY(-2px);border-color:var(--border2)}
-.sla-kpi.tc-kpi.selecionado{border-color:var(--blue2);box-shadow:0 0 0 2px var(--blue-b)}
 .sla-kpi.neutro .sla-kpi-dot{background:var(--text3)}
 .sla-kpi.info .sla-kpi-dot{background:var(--blue);box-shadow:0 0 8px var(--blue)}
 
 @media(max-width:1024px){
-.tc-filas{grid-template-columns:1fr;gap:14px}
-.tc-fila-dica{display:none}
 #slaTopo{padding:74px 12px 0}
-#slaView,#tcSlaView,#notasView{padding:0 12px 90px}
-.sla-grid{grid-template-columns:1fr;gap:14px}
-.notas-grid{grid-template-columns:1fr;gap:14px}
+#slaView,#notasView,#notasPainelView{padding:0 12px 90px}
+.sla-grid{grid-template-columns:1fr;gap:14px;grid-auto-rows:auto}
+.notas-grid{grid-template-columns:1fr;gap:14px;grid-auto-rows:auto}
 .nota-card .sla-card-corpo{padding:16px 16px 18px}
 .nota-titulo{font-size:1.45rem}
 .nota-texto{font-size:1rem}
@@ -1118,10 +955,6 @@ input.tc-filtro:focus,input.tc-filtro:not(:placeholder-shown){width:290px}
 <button class="ozmap-btn btn-pill so-normal" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 <span>Atualizar</span>
-</button>
-<button class="ozmap-btn btn-pill so-sla so-emails" id="btnRelatorioTim" onclick="abrirModalRelatorioTim()" title="Relat&oacute;rio do per&iacute;odo dos e-mails da TIM" aria-label="Relat&oacute;rio E-MAIL&rsquo;s SLA">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
-<span>Relat&oacute;rio</span>
 </button>
 <button class="ozmap-btn btn-pill so-sla" id="btnSlaAtualizar" title="Recarregar a aba aberta" aria-label="Atualizar a aba aberta">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -1557,11 +1390,11 @@ IDENTIFICA&#199;&#195;O
 <button class="sla-aba" id="abaAcionamentos" role="tab" aria-controls="slaView" aria-selected="true">
 <span>Acionamentos</span><span class="sla-aba-badge hidden" id="abaAcionamentosBadge" title="Chamados com SLA estourado">0</span>
 </button>
-<button class="sla-aba" id="abaEmails" role="tab" aria-controls="tcSlaView" aria-selected="false">
-<span>E-mail&rsquo;s</span><span class="sla-aba-badge hidden" id="abaEmailsBadge" title="Chamados aguardando a&ccedil;&atilde;o">0</span>
-</button>
 <button class="sla-aba" id="abaNotas" role="tab" aria-controls="notasView" aria-selected="false">
 <span>Notas</span><span class="sla-aba-badge hidden" id="abaNotasBadge" title="Notas ativas no painel">0</span>
+</button>
+<button class="sla-aba" id="abaNotasPainel" role="tab" aria-controls="notasPainelView" aria-selected="false">
+<span>Notas &middot; Painel</span>
 </button>
 </div>
 </div>
@@ -1586,19 +1419,16 @@ IDENTIFICA&#199;&#195;O
 <div class="sla-rodape" id="notasRodape"></div>
 </section>
 
-<section id="tcSlaView" role="tabpanel" aria-labelledby="abaEmails">
-<div class="tc-filtro-wrap">
-<button class="btn-sel-modo" id="btnSelModoTim" aria-pressed="false" title="Selecionar v&aacute;rios chamados para normalizar/encerrar de uma vez, com a mesma data/hora e a mesma justificativa">Selecionar</button>
-<span class="tc-filtro-info" id="tcSlaFiltroInfo"></span>
-<input type="text" class="tc-filtro" id="tcSlaFiltro" placeholder="Filtro" autocomplete="off" title="Filtra por designa&ccedil;&atilde;o, AU, solicitante, assunto ou nome da fila">
+<section id="notasPainelView" role="tabpanel" aria-labelledby="abaNotasPainel">
+<div class="sla-aba-acoes">
+<span class="sla-aba-acoes-rot">Somente leitura &middot; atualiza sozinho &middot; para deixar aberto na TV</span>
 </div>
-<div class="tc-filas" id="tcSlaFilas"></div>
-<div class="sla-rodape" id="tcSlaRodape"></div>
+<div class="tv-notas-grid" id="notasPainelGrid"></div>
+<div class="sla-rodape" id="notasPainelRodape"></div>
 </section>
 
-<!-- Barra de ações em lote — uma só, serve às duas abas: qual seleção ela
-     comanda vem da aba em primeiro plano (_loteChaveAtiva). Duas barras
-     fixas no mesmo canto se sobreporiam na troca de aba. -->
+
+<!-- Barra de ações em lote da aba Acionamentos. -->
 <div class="sla-lote-barra" id="slaLoteBarra" role="region" aria-label="A&ccedil;&otilde;es em lote">
 <span class="sla-lote-cont" id="slaLoteCont">0 selecionados</span>
 <button class="sla-lote-btn" id="btnLoteTodos" title="Marcar ou desmarcar todos os chamados vis&iacute;veis">Todos</button>
@@ -1612,62 +1442,6 @@ IDENTIFICA&#199;&#195;O
 <span class="signature-name">Lucas Paes</span>
 <div class="signature-line"></div>
 <span class="signature-role">ANALYST &#183; NOC</span>
-</div>
-<div class="copy-modal" id="modalRelatorioTim">
-<div class="copy-modal-content" style="max-width:min(1180px, 95vw); max-height: 90vh; display: flex; flex-direction: column;">
-<div class="copy-modal-header">
-<span>RELATÓRIO E-MAIL’S SLA (TIM)</span>
-<button onclick="fecharModalRelatorioTim()">&#10005;</button>
-</div>
-<div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
-<div class="rel-abas" role="tablist">
-  <button class="rel-aba ativa" id="abaRelChamados" onclick="trocarAbaRelatorio('chamados')">Chamados</button>
-  <button class="rel-aba" id="abaRelEmails" onclick="trocarAbaRelatorio('emails')">E-mail&rsquo;s com o corporate</button>
-</div>
-
-<div id="relViewChamados">
-<div style="display:flex; gap:12px; margin-bottom:16px; align-items:flex-end;">
-  <div class="form-group" style="margin-bottom:0">
-    <label>Data Início</label>
-    <input type="date" id="relatorioTimInicio">
-  </div>
-  <div class="form-group" style="margin-bottom:0">
-    <label>Data Fim</label>
-    <input type="date" id="relatorioTimFim">
-  </div>
-  <button class="btn btn-main" style="padding:8px 16px; height:38px" onclick="gerarRelatorioTim()">Buscar</button>
-  <button class="btn btn-outline" style="padding:8px 16px; height:38px; display:none" id="btnExportarPDF" onclick="exportarRelatorioPDF()">Exportar PDF</button>
-  <button class="btn btn-outline" style="padding:8px 16px; height:38px; display:none" id="btnExportarTXT" onclick="exportarRelatorioTXT()">Exportar TXT</button>
-</div>
-<div id="relatorioTimConteudo" style="background:var(--bg); border-radius:6px; padding:12px; min-height: 200px">
-  <div class="info-msg">Selecione o período e clique em Gerar.</div>
-</div>
-</div>
-
-<div id="relViewEmails" style="display:none">
-<div style="display:flex; gap:12px; margin-bottom:10px; align-items:flex-end; flex-wrap:wrap">
-  <div class="form-group" style="margin-bottom:0">
-    <label>Data Início</label>
-    <input type="date" id="relEmailInicio">
-  </div>
-  <div class="form-group" style="margin-bottom:0">
-    <label>Data Fim</label>
-    <input type="date" id="relEmailFim">
-  </div>
-  <div class="form-group" style="margin-bottom:0; flex:1; min-width:240px">
-    <label>Assunto espec&iacute;fico <span style="text-transform:none;font-weight:400;color:var(--text3)">(opcional)</span></label>
-    <input type="text" id="relEmailAssunto" placeholder="Ex: indisponibilidade, janela programada, MNSAL..." autocomplete="off">
-  </div>
-  <button class="btn btn-main" style="padding:8px 16px; height:38px" onclick="gerarRelatorioEmails()">Buscar</button>
-  <button class="btn btn-outline" style="padding:8px 16px; height:38px; display:none" id="btnExportarEmailsTXT" onclick="exportarRelatorioEmailsTXT()">Exportar TXT</button>
-</div>
-<div class="info-msg" style="margin-bottom:12px">&#9432; L&ecirc; a caixa direto no Gmail: <b>toda</b> conversa trocada com as caixas da TIM no per&iacute;odo, tenha virado chamado ou n&atilde;o. O bot&atilde;o IR abre a conversa.</div>
-<div id="relEmailConteudo" style="background:var(--bg); border-radius:6px; padding:12px; min-height: 200px">
-  <div class="info-msg">Selecione o per&iacute;odo e clique em Buscar.</div>
-</div>
-</div>
-</div>
-</div>
 </div>
 <div class="copy-modal" id="modalEncerrarSla">
 <div class="copy-modal-content">
@@ -1688,7 +1462,7 @@ IDENTIFICA&#199;&#195;O
 <div id="erroEncerrarSla" style="display:none; color:var(--red); font-size:.78rem; margin-top:2px"></div>
 <input type="hidden" id="idEncerrarSla">
 <input type="hidden" id="redeEncerrarSla">
-<!-- vazio = encerramento de um card; 'sla'/'tim' = lote da aba correspondente -->
+<!-- vazio = encerramento de um card; 'sla' = lote da aba Acionamentos -->
 <input type="hidden" id="loteEncerrarSla">
 </div>
 <div class="copy-modal-footer">
@@ -1721,10 +1495,6 @@ IDENTIFICA&#199;&#195;O
 <textarea id="notaTexto" rows="6" maxlength="1500" placeholder="O que a pr&oacute;xima pessoa do turno precisa saber para agir certo."></textarea>
 <div id="notaTextoContador" style="margin-top:6px;font-size:.72rem;color:var(--text3);font-family:'Share Tech Mono',monospace"></div>
 </div>
-<div class="form-group" id="wrap-notaAutor">
-<label>AUTOR <span style="color:var(--red)">*</span></label>
-<select id="notaAutor"><option value="" disabled selected>Selecione...</option></select>
-</div>
 <div class="form-group hidden" id="wrap-notaValidade">
 <label>VALE AT&Eacute; <span style="color:var(--text3);font-weight:400">(a nota sai do painel sozinha no dia seguinte)</span></label>
 <input type="date" id="notaValidade">
@@ -1734,6 +1504,27 @@ IDENTIFICA&#199;&#195;O
 <div class="copy-modal-footer">
 <button class="btn btn-outline" style="min-width:120px" onclick="fecharModalNota()">CANCELAR</button>
 <button class="btn btn-main" style="min-width:140px" id="btnSalvarNota" onclick="salvarNotaModal()">SALVAR</button>
+</div>
+</div>
+</div>
+
+<div class="copy-modal" id="modalAtualizacoes">
+<div class="copy-modal-content">
+<div class="copy-modal-header">
+<span id="tituloModalAtualizacoes">ATUALIZA&Ccedil;&Otilde;ES</span>
+<button onclick="fecharModalAtualizacoes()" title="Fechar">&#10005;</button>
+</div>
+<div class="nota-chat-lista" id="atualizacoesLista" aria-live="polite"></div>
+<div class="nota-chat-form">
+<label class="nota-chat-rot" for="atualizacaoTexto">Nova atualiza&ccedil;&atilde;o</label>
+<textarea id="atualizacaoTexto" maxlength="1000" rows="3" placeholder="O que mudou, o que foi feito ou o que a pr&oacute;xima pessoa precisa saber."></textarea>
+<div class="nota-chat-linha">
+<span class="nota-chat-quem" id="atualizacaoQuem">Enviando como: Sua conta</span>
+<span class="nota-chat-contador" id="atualizacaoContador">0/1000</span>
+</div>
+<div class="nota-chat-acoes">
+<button class="btn btn-main" style="min-width:140px" id="btnEnviarAtualizacao" onclick="enviarAtualizacaoNota()">ENVIAR</button>
+</div>
 </div>
 </div>
 </div>
@@ -2951,22 +2742,12 @@ AppState.sla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
   listaMs:0,encerradosLocais:new Map(),
               ultimaAtualizacao:0,timerTick:null,timerPoll:null,jaAvisado:{}};
 
-/* varredura* = estado da varredura automática do Gmail (ver o bloco
-   VARREDURA AUTOMÁTICA). varrendo é a trava de não-sobreposição: sem ela,
-   uma varredura de 40s com agenda de 15s empilharia três pedidos na fila
-   do Apps Script, que atende um por vez — o painel afundaria sozinho. */
-AppState.tcSla={itens:[],nodes:new Map(),aberto:false,status:'idle',erro:'',
-  listaMs:0,encerradosLocais:new Map(),
-              ultimaAtualizacao:0,timerTick:null,timerPoll:null,
-              filtro:'',filaFoco:'',assinatura:'',
-              varrendo:false,varreduraMs:0,varreduraDur:0,varreduraErro:'',
-              varreduraNovos:0,timerVarredura:null};
 /* Notas não têm cronômetro, então não existe timerTick aqui — só o poll.
    A assinatura evita redesenhar a lista quando nada mudou: sem ela, o
    redesenho a cada 60s apagaria o "Confirmar?" do botão de arquivar
    debaixo da mão de quem estava clicando. */
 AppState.notas={itens:[],aberto:false,status:'idle',erro:'',
-              ultimaAtualizacao:0,timerPoll:null,assinatura:''};
+              ultimaAtualizacao:0,timerPoll:null,assinatura:'',assinaturaPainel:''};
 const NOTAS_POLL_ABERTO_MS=60000;
 const NOTAS_POLL_FUNDO_MS=300000;
 
@@ -3022,6 +2803,36 @@ function _slaAlvoCard(item){
   if(String(item&&item.rede||'').trim().toUpperCase()!=='BACKBONE')return alvo;
   const i=alvo.indexOf(' · OTDR:');
   return i>0?alvo.slice(0,i).trim():alvo;
+}
+
+/* Cada informação do alvo (trecho, CTOs, coordenada, OLT...) numa linha
+   própria, para o cartão ser lido de relance. O texto gravado não muda. */
+function _slaAlvoLinhas(txt){
+  return String(txt||'').split(' · ').filter(Boolean)
+    .filter(seg=>!/^OLT\b/i.test(seg)).map(seg=>{
+    /* coordenada (com ou sem rótulo) vira o tópico Localização, com link
+       para o Maps. Só entra se for par numérico, para não abrir nada estranho */
+    const mc=seg.match(/^(?:(?:coord[^:]*|localiza[çc][ãa]o):\s*)?(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/i);
+    if(mc){
+      const lat=mc[1], lng=mc[2];
+      const url=`https://www.google.com/maps?q=${lat},${lng}`;
+      return `<div class="sla-alvo-seg"><span class="sla-alvo-rot">Localização</span>`+
+        `<a class="sla-alvo-loc" href="${url}" target="_blank" rel="noopener" title="Abrir no Google Maps">https://www.google.com/maps?</a></div>`;
+    }
+    const m=seg.match(/^([^:]{1,24}):\s*(.+)$/);
+    const val=m?m[2]:seg;
+    /* POP e observação são texto corrido: não se quebram em lista */
+    if(m && /pop|obs/i.test(m[1]))
+      return `<div class="sla-alvo-seg"><span class="sla-alvo-rot">${_esc(m[1])}:</span> ${_esc(val)}</div>`;
+    const itens=val.split(/,\s*/).filter(Boolean);
+    /* texto simples, sem vírgula, não vira lista */
+    if(!m && itens.length<2) return `<div class="sla-alvo-seg">${_esc(seg)}</div>`;
+    const rot=m?`<span class="sla-alvo-rot">${_esc(m[1])}</span>`:'';
+    /* até 8 caracteres (contando o hífen) cabe em duas colunas */
+    const duas=itens.length>1 && itens.every(x=>x.length<=8);
+    return `<div class="sla-alvo-seg">${rot}<ul class="sla-alvo-lista${duas?' cols2':''}">`+
+      itens.map(x=>`<li>${_esc(x)}</li>`).join('')+`</ul></div>`;
+  }).join('');
 }
 
 /* chamada JSONP genérica, com timeout e limpeza do callback */
@@ -3159,7 +2970,7 @@ const JSONP_MAX_SIMULTANEO=2;
    um carregador) viram uma requisição só. `cabosBuscar` fica de fora de
    propósito — é a única em que o operador está parado esperando, e por
    isso vai na frente da fila. */
-const JSONP_LEITURAS=['listarSla','listarNotas','listarTcSlaCache','listarTcSla','rev','ping','dados'];
+const JSONP_LEITURAS=['listarSla','listarNotas','rev','ping','dados','historicoNota'];
 let _jsonpAtivos=0;
 const _jsonpFila=[];
 const _jsonpEmVoo=new Map();
@@ -3285,27 +3096,11 @@ function _slaDurCurta(ms){
   if(min<60)return min+'min';
   return Math.floor(min/60)+'h'+String(min%60).padStart(2,'0');
 }
-function _tcRotuloPrazo(estado,limite){
-  if(estado==='RESPONDER_TIM')return 'TIM aguarda resposta';
-  /* REFORCAR e AGUARDANDO_NORM saíram deste mapa: depois do escalonamento o
-     anel não mede mais ciclo nenhum, e sem limite a função cai no rótulo
-     genérico — 'Tempo total em aberto', que é o que o relógio marca. */
-  const nome={
-    COBRAR:'Janela de cobrança',
-    AGUARDANDO_AU:'Janela de cobrança',
-    EM_TRATATIVA:'Prazo p/ escalonar',
-    ESCALONAR:'Prazo p/ escalonar'
-  }[estado];
-  if(!nome||!limite)return 'Tempo total em aberto';
-  return `${nome} · ${_slaDurCurta(limite)}`;
-}
 function _slaCalc(item){
   const fim=item.encerramentoMs||Date.now();
   const decorrido=Math.max(0,fim-_slaBase(item));
   let limite=(Number(item.slaHoras)||SLA_HORAS_PADRAO)*3600000;
   
-  // Regra herdada do painel da TIM, que não usa mais esta função —
-  // ele tem o próprio cálculo em _tcCalc, com os dois relógios separados.
   if(item.respostaMs && !item.encerramentoMs) {
     limite = 8 * 3600000;
   }
@@ -3379,7 +3174,7 @@ const SYNC_DIRETO_ATIVO_MS  = 15000;
 const SYNC_DIRETO_PARADO_MS = 45000;
 
 const Sync = {
-  rev:{sla:0,notas:0,tim:0},
+  rev:{sla:0,notas:0},
   timer:null,
   ultimaInteracao:Date.now(),
   emVoo:false,
@@ -3397,11 +3192,11 @@ const Sync = {
      que estamos justamente eliminando. */
   aceitar(rev){
     if(!rev)return;
-    ['sla','notas','tim'].forEach(k=>{if(rev[k])Sync.rev[k]=Number(rev[k])||0});
+    ['sla','notas'].forEach(k=>{if(rev[k])Sync.rev[k]=Number(rev[k])||0});
   },
   intervalo(){
     if(document.hidden)return 0;                      // 0 = não agenda nada
-    const algumAberto=AppState.sla.aberto||AppState.tcSla.aberto||AppState.notas.aberto;
+    const algumAberto=AppState.sla.aberto||AppState.notas.aberto;
     const ativo=Date.now()-Sync.ultimaInteracao<SYNC_INATIVO_MS;
     let base;
     if(!algumAberto)base=SYNC_FECHADO_MS;
@@ -3420,7 +3215,6 @@ const Sync = {
   async direto(){
     const tarefas=[carregarSla(true)];
     if(AppState.notas.aberto)tarefas.push(carregarNotas());
-    if(AppState.tcSla.aberto)tarefas.push(carregarTcSla(true));
     await Promise.all(tarefas);
   },
   reprogramar(){
@@ -3456,12 +3250,10 @@ const Sync = {
          algo mudou, a lista volta NESTA MESMA resposta — sem isso seriam
          duas viagens (perguntar e depois buscar) e o outro operador
          esperaria o dobro. SLA e notas entram sempre porque alimentam os
-         contadores do topo; a lista da TIM, mais pesada, só com a aba
-         aberta. */
+          contadores do topo. */
       const quero=['sla','notas'];
-      if(AppState.tcSla.aberto)quero.push('tim');
       const r=await jsonp({acao:'rev',quero:quero.join(','),
-        sla:Sync.rev.sla,notas:Sync.rev.notas,tim:Sync.rev.tim},15000);
+        sla:Sync.rev.sla,notas:Sync.rev.notas},15000);
       /* Servidor não conhece a ação: Apps Script ainda não republicado.
          Cai no modo direto AGORA e avisa uma vez — em vez de não atualizar
          mais nada e o operador achar que o painel travou. */
@@ -3490,11 +3282,6 @@ const Sync = {
         Sync.rev.notas=Number(r.notas);
         if(Array.isArray(listas.notas))_aplicarItensNotas(listas.notas);
         else tarefas.push(carregarNotas(true));
-      }
-      if(Number(r.tim||0)>Sync.rev.tim){
-        Sync.rev.tim=Number(r.tim);
-        if(Array.isArray(listas.tim))_aplicarItensTcSla(listas.tim);
-        else if(AppState.tcSla.aberto)tarefas.push(carregarTcSla(true));
       }
       if(tarefas.length)await Promise.all(tarefas);
     }catch(e){/* rede instável: a próxima passada tenta de novo */}
@@ -3548,12 +3335,10 @@ const Sync = {
         if(Array.isArray(d.itens)){
           if(d.area==='sla')_aplicarItensSla(d.itens);
           else if(d.area==='notas')_aplicarItensNotas(d.itens);
-          else if(d.area==='tim')_aplicarItensTcSla(d.itens);
           return;
         }
         if(d.area==='sla')carregarSla(true);
         else if(d.area==='notas')carregarNotas(true);
-        else if(d.area==='tim'&&AppState.tcSla.aberto)carregarTcSla(true);
       };
     }catch(e){/* navegador sem BroadcastChannel: segue só com o polling */}
     /* interação do operador reacelera a cadência */
@@ -3583,7 +3368,6 @@ function _concluir(r,area,recarregar,idConfirmado){
   if(r&&Array.isArray(r.itens)){
     if(area==='sla')_aplicarItensSla(r.itens);
     else if(area==='notas')_aplicarItensNotas(r.itens);
-    else if(area==='tim')_aplicarItensTcSla(r.itens);
   }else if(typeof recarregar==='function'){
     recarregar(true);
   }
@@ -3592,7 +3376,7 @@ function _concluir(r,area,recarregar,idConfirmado){
 
 function registrarSla(d){
   const operador=_slaOperadorAtual();
-  const rede=_slaCap(d.rede,40),tipo=_slaCap(d.tipo,140),alvo=_slaCap(d.alvo,240);
+  const rede=_slaCap(d.rede,40),tipo=_slaCap(d.tipo,140),alvo=_slaCap(d.alvo,320);
   const empresa=_slaCap(d.empresa,60),tecnicos=_slaCap(d.tecnicos,200);
   const resumo=_slaCap(`[${rede}] ${tipo}${alvo?' · '+alvo:''}${empresa?' · '+empresa:''}`,500);
   const id='OS'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,6).toUpperCase();
@@ -3798,25 +3582,18 @@ function atualizarBadgeSla(){
    chamado uma vez por card, com data e justificativa idênticas. Nada muda
    no backend, e um card que falhe não derruba os outros.
 
-   Vale nas duas abas de chamado (Acionamentos e E-mail's). Cada uma tem
-   seleção própria: o que está marcado numa não aparece na outra, porque
-   `rede` — e portanto a planilha de destino — é diferente. */
+   Vale para a aba Acionamentos. */
 const LOTE_CFG={
   sla:{rede:'SLA',area:'sla',grid:'slaGrid',classe:'sla-selecao-sla',btn:'btnSelModoSla',
        st:()=>AppState.sla,recarregar:()=>carregarSla,
-       rotulo:i=>`${i.rede||'—'} · ${i.tipo||'Acionamento'}${i.alvo?' · '+_slaAlvoCard(i):''}`},
-  tim:{rede:'TIM',area:'tim',grid:'tcSlaFilas',classe:'sla-selecao-tim',btn:'btnSelModoTim',
-       st:()=>AppState.tcSla,recarregar:()=>carregarTcSla,
-       rotulo:i=>`${i.protocolo||'Aguardando AU'} · ${i.resumo||'Sem assunto'}`}
+       rotulo:i=>`${i.rede||'—'} · ${i.tipo||'Acionamento'}${i.alvo?' · '+_slaAlvoCard(i):''}`}
 };
-const SlaSel={sla:{modo:false,ids:new Set(),ancora:''},
-              tim:{modo:false,ids:new Set(),ancora:''}};
+const SlaSel={sla:{modo:false,ids:new Set(),ancora:''}};
 
 /* qual seleção a barra fixa comanda: a da aba em primeiro plano. Em NOTAS
    não há chamado nem lote, então devolve vazio e a barra se esconde. */
 function _loteChaveAtiva(){
   if(AppState.slaAba==='acionamentos')return 'sla';
-  if(AppState.slaAba==='emails')return 'tim';
   return '';
 }
 /* chamado já encerrado fica fora do lote: o backend recusaria, e o card
@@ -3833,8 +3610,8 @@ function _loteCheckHTML(item){
 
 /* ordem VISUAL dos cards, que é a que o shift+clique tem de seguir. Na aba
    Acionamentos a reordenação é feita pela propriedade CSS `order`, não
-   mexendo no DOM, então a ordem dos nós não serve. Sem `order` (aba de
-   E-mail's), a posição no DOM já é a visual. */
+   mexendo no DOM, então a ordem dos nós não serve. Sem `order`,
+   a posição no DOM já é a visual. */
 function _loteIdsVisiveis(chave){
   const grid=$(LOTE_CFG[chave].grid);
   if(!grid)return [];
@@ -3860,7 +3637,7 @@ function sairModoSelecao(chave){
   s.modo=false;s.ids.clear();s.ancora='';
   _loteSincronizar(chave);
 }
-function _loteSairDeTudo(){['sla','tim'].forEach(k=>{
+function _loteSairDeTudo(){['sla'].forEach(k=>{
   const s=SlaSel[k];s.modo=false;s.ids.clear();s.ancora='';
   document.body.classList.remove(LOTE_CFG[k].classe);
 });_loteBarra()}
@@ -3969,8 +3746,7 @@ function _loteTodos(){
   if(!chave||!SlaSel[chave].modo)return;
   const cfg=LOTE_CFG[chave],s=SlaSel[chave];
   const itens=cfg.st().itens||[];
-  /* "visíveis" e não "todos os itens": na aba de E-mail's o filtro de texto
-     esconde cards, e marcar o que não está na tela é o oposto do esperado */
+   /* "visíveis" e não "todos os itens": marcar o que não está na tela é o oposto do esperado */
   const eleg=_loteIdsVisiveis(chave).filter(id=>_loteSelecionavel(itens.find(i=>i.id===id)));
   const jaTodos=eleg.length>0&&eleg.every(id=>s.ids.has(id));
   if(jaTodos)s.ids.clear();else eleg.forEach(id=>s.ids.add(id));
@@ -4001,7 +3777,7 @@ function abrirModalEncerrarLote(){
   box.innerHTML=`<div class="lote-resumo-rot">&#9888; ${alvos.length} chamado${alvos.length>1?'s':''} ser&atilde;o encerrados com a MESMA data/hora e a MESMA justificativa</div>`
     +`<ul class="lote-resumo-lista">${alvos.map(i=>`<li>${_esc(cfg.rotulo(i))}</li>`).join('')}</ul>`;
   _prepararModalEncerrar();
-  $('tituloEncerrarSla').textContent=(chave==='tim'?'NORMALIZAR / ENCERRAR EM LOTE (TIM)':'ENCERRAR EM LOTE')
+  $('tituloEncerrarSla').textContent='ENCERRAR EM LOTE'
     +' · '+alvos.length;
   $('modalEncerrarSla').classList.add('active');
   $('justificativaEncerrarSla').focus();
@@ -4070,6 +3846,52 @@ function _encerrarLote(chave,just,dataNorm){
   });
 }
 
+/* Arrastar o bloco de informações do cartão para o lado (mouse ou toque).
+   Depois de arrastar, o clique que vem junto não seleciona o cartão. */
+(function(){
+  let el=null, x0=0, s0=0, moveu=false;
+  document.addEventListener('pointerdown',e=>{
+    const d=e.target.closest&&e.target.closest('.sla-deslizante');
+    if(!d||e.button>0)return;
+    el=d; x0=e.clientX; s0=d.scrollLeft; moveu=false;
+  });
+  document.addEventListener('pointermove',e=>{
+    if(!el)return;
+    const dx=e.clientX-x0;
+    if(!moveu && Math.abs(dx)>5){moveu=true; el.classList.add('arrastando');}
+    if(moveu) el.scrollLeft=s0-dx;
+  });
+  const fim=()=>{
+    if(el){el.classList.remove('arrastando');}
+    el=null;
+  };
+  document.addEventListener('pointerup',fim);
+  document.addEventListener('pointercancel',fim);
+  document.addEventListener('click',e=>{
+    if(!moveu)return;
+    if(e.target.closest&&e.target.closest('.sla-deslizante')){e.stopPropagation();e.preventDefault();}
+    moveu=false;
+  },true);
+})();
+/* Setas do cartão: vão para a página anterior ou seguinte */
+function _slaPaginar(btn,dir){
+  const card=btn.closest('.sla-card'), d=card&&card.querySelector('.sla-deslizante');
+  if(!d)return;
+  const w=d.clientWidth, atual=Math.round(d.scrollLeft/w);
+  d.scrollTo({left:Math.max(0,Math.min(1,atual+dir))*w,behavior:'smooth'});
+}
+/* mantém pontos e nome da página de acordo com o que está visível */
+function _slaAtualizarPagina(d){
+  const card=d.closest('.sla-card'); if(!card)return;
+  const p=d.clientWidth?Math.round(d.scrollLeft/d.clientWidth):0;
+  card.querySelectorAll('.sla-pontos i').forEach((x,k)=>x.classList.toggle('on',k===p));
+  const rot=card.querySelector('.sla-pag-rot');
+  if(rot) rot.textContent=p?'Detalhes':'Alvo';
+}
+document.addEventListener('scroll',e=>{
+  const d=e.target;
+  if(d&&d.classList&&d.classList.contains('sla-deslizante'))_slaAtualizarPagina(d);
+},true);
 function _slaCardHTML(item){
   const c=_slaCalc(item);
   const tecnicos=item.tecnicos?item.tecnicos.replace(/@\d+\s*/g,''):'';
@@ -4078,7 +3900,6 @@ function _slaCardHTML(item){
   <div class="sla-card-topo">
     ${_loteCheckHTML(item)}
     <span class="sla-badge-rede">${_esc(item.rede||'—')}</span>
-    <span class="sla-abertura" title="Quando a falha começou">Falha ${_slaFmtHora(_slaBase(item))}</span>
   </div>
   <div class="sla-card-tipo">${_esc(item.tipo||'Acionamento')}</div>
   <div class="sla-relogio">
@@ -4092,18 +3913,26 @@ function _slaCardHTML(item){
         <div class="sla-tempo">00:00:00</div>
       </div>
     </div>
-    <div class="sla-tempo-rot">SLA do acionamento &middot; ${_slaDurCurta(c.limite)}</div>
+    <div class="sla-tempo-rot" title="Quando a falha começou">Falha às ${_slaFmtHora(_slaBase(item))}</div>
     <div class="sla-excedente"></div>
   </div>
-  <div class="sla-info">
-    ${/* o início da falha subiu para o topo do card ("Falha 16/08 17:06"),
-          então repetir aqui era a mesma data duas vezes no mesmo cartão */''}
-    ${(Number(item.inicioMs)&&Number(item.inicioMs)<Number(item.aberturaMs)-60000)?`<div class="sla-linha"><span class="sla-linha-rot">Registrado</span><span class="sla-linha-val">${_slaFmtHora(item.aberturaMs)}</span></div>`:''}
-    ${Number(item.normalizacaoMs)?`<div class="sla-linha"><span class="sla-linha-rot">Normalizado</span><span class="sla-linha-val destaque">${_slaFmtHora(item.normalizacaoMs)}</span></div>`:''}
-    ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Alvo</span><span class="sla-linha-val destaque" title="${_esc(item.alvo)}">${_esc(_slaAlvoCard(item))}</span></div>`:''}
-    ${item.empresa?`<div class="sla-linha"><span class="sla-linha-rot">Empresa</span><span class="sla-linha-val">${_esc(item.empresa)}</span></div>`:''}
-    ${tecnicos?`<div class="sla-linha"><span class="sla-linha-rot">T&eacute;cnicos</span><span class="sla-linha-val">${_esc(tecnicos)}</span></div>`:''}
-    ${item.operador?`<div class="sla-linha"><span class="sla-linha-rot">Aberto por</span><span class="sla-linha-val">${_esc(item.operador)}</span></div>`:''}
+  <div class="sla-info sla-deslizante">
+    <div class="sla-pagina">
+    ${item.alvo?`<div class="sla-linha"><span class="sla-linha-rot">Alvo</span><span class="sla-linha-val destaque" title="${_esc(item.alvo)}">${_slaAlvoLinhas(_slaAlvoCard(item))}</span></div>`:''}
+    </div>
+    <div class="sla-pagina">
+      ${(Number(item.inicioMs)&&Number(item.inicioMs)<Number(item.aberturaMs)-60000)?`<div class="sla-linha"><span class="sla-linha-rot">Registrado</span><span class="sla-linha-val">${_slaFmtHora(item.aberturaMs)}</span></div>`:''}
+      ${Number(item.normalizacaoMs)?`<div class="sla-linha"><span class="sla-linha-rot">Normalizado</span><span class="sla-linha-val destaque">${_slaFmtHora(item.normalizacaoMs)}</span></div>`:''}
+      ${item.empresa?`<div class="sla-linha"><span class="sla-linha-rot">Empresa</span><span class="sla-linha-val">${_esc(item.empresa)}</span></div>`:''}
+      ${tecnicos?`<div class="sla-linha"><span class="sla-linha-rot">T&eacute;cnicos</span><span class="sla-linha-val">${_esc(tecnicos)}</span></div>`:''}
+      ${item.operador?`<div class="sla-linha"><span class="sla-linha-rot">Aberto por</span><span class="sla-linha-val">${_esc(item.operador)}</span></div>`:''}
+    </div>
+  </div>
+  <div class="sla-paginador">
+    <button class="sla-seta" onclick="event.stopPropagation();_slaPaginar(this,-1)" aria-label="Página anterior">&#8249;</button>
+    <span class="sla-pontos"><i class="on"></i><i></i></span>
+    <span class="sla-pag-rot">Alvo</span>
+    <button class="sla-seta" onclick="event.stopPropagation();_slaPaginar(this,1)" aria-label="Próxima página">&#8250;</button>
   </div>
   <button class="sla-btn-encerrar" data-id="${_esc(item.id)}">Encerrar chamado</button>
 </div>`;
@@ -4280,9 +4109,7 @@ function abrirModalEncerrarSla(id, rede) {
   $('redeEncerrarSla').value = rede || 'SLA';
   _prepararModalEncerrar();
 
-  $('tituloEncerrarSla').textContent = rede === 'TIM'
-    ? 'NORMALIZAR / ENCERRAR (TIM)'
-    : 'NORMALIZAR / ENCERRAR';
+  $('tituloEncerrarSla').textContent = 'NORMALIZAR / ENCERRAR';
 
   $('modalEncerrarSla').classList.add('active');
   $('justificativaEncerrarSla').focus();
@@ -4339,11 +4166,10 @@ function confirmarEncerrarSla() {
            consulta disparada antes deste clique ainda pode estar em voo e
            voltaria trazendo o card vivo. Enquanto o servidor não confirmar
            em todas as respostas, o que este operador fez vale. */
-        _marcarEncerradoLocal(rede === 'TIM' ? AppState.tcSla : AppState.sla,
+        _marcarEncerradoLocal(AppState.sla,
           id, r.encerramentoMs || Date.now(), r.email || '');
         /* a resposta da gravação já traz a lista: sem segunda viagem */
-        _concluir(r, rede === 'TIM' ? 'tim' : 'sla',
-                  rede === 'TIM' ? carregarTcSla : carregarSla);
+        _concluir(r, 'sla', carregarSla);
       } else {
         _resetBotaoConfirmarEncerrar();
         const msg = 'Não foi possível encerrar: ' + ((r && r.erro) || 'erro');
@@ -4363,16 +4189,16 @@ function confirmarEncerrarSla() {
 
 /* ── abrir / fechar o painel e navegar entre as abas ────────────────
    Antes eram DOIS painéis de tela cheia que se fechavam um ao outro, cada
-   um com seu próprio par de botões no topo. Agora é UM painel com duas
+   um com seu próprio par de botões no topo. Agora é UM painel com
    abas; o que muda entre elas é apenas qual seção fica visível e qual
    relógio/poll está rodando.
 
-   AppState.sla.aberto e AppState.tcSla.aberto passam a significar "esta
+   AppState.sla.aberto e AppState.notas.aberto passam a significar "esta
    ABA está em primeiro plano" — é exatamente o uso que já faziam (guardas
    de re-render e cadência do poll), então o resto do código continua
    valendo sem alteração. A aba em segundo plano fica no poll de fundo,
-   que é o que mantém os badges vivos sem varrer o Gmail à toa. */
-const SLA_ABAS={acionamentos:'slaView',emails:'tcSlaView',notas:'notasView'};
+   que é o que mantém os badges vivos. */
+const SLA_ABAS={acionamentos:'slaView',notas:'notasView',notasPainel:'notasPainelView'};
 
 function painelSlaAberto(){return document.body.classList.contains('sla-aberto')}
 
@@ -4386,10 +4212,8 @@ function fecharPainelSla(){
      marcados de um evento que já passou é convite a encerrar o errado */
   _loteSairDeTudo();
   document.body.classList.remove('sla-aberto');
-  document.body.classList.remove('aba-emails');
   Object.values(SLA_ABAS).forEach(id=>{const el=$(id);if(el)el.classList.remove('ativo')});
   _pausarAbaAcionamentos();
-  _pausarAbaEmails();
   AppState.slaAba=null;
 }
 function alternarPainelSla(){painelSlaAberto()?fecharPainelSla():abrirPainelSla()}
@@ -4402,10 +4226,9 @@ function selecionarAbaSla(aba){
   Object.entries(SLA_ABAS).forEach(([k,id])=>{
     const el=$(id);if(el)el.classList.toggle('ativo',k===aba);
   });
-  document.body.classList.toggle('aba-emails',aba==='emails');
-  /* Com três abas o par de ifs não serve mais: virou tabela. Estado novo
+  /* Com mais de uma aba, o par de ifs não serve: virou tabela. Estado novo
      esquecido aqui deixava duas abas marcadas como ativas ao mesmo tempo. */
-  const BOTOES={acionamentos:'abaAcionamentos',emails:'abaEmails',notas:'abaNotas'};
+  const BOTOES={acionamentos:'abaAcionamentos',notas:'abaNotas',notasPainel:'abaNotasPainel'};
   Object.entries(BOTOES).forEach(([k,id])=>{
     const b=$(id);if(!b)return;
     b.classList.toggle('ativa',k===aba);
@@ -4415,12 +4238,10 @@ function selecionarAbaSla(aba){
      setInterval de 1s ficariam rodando juntos depois de algumas idas e
      vindas entre as abas */
   if(aba!=='acionamentos')_pausarAbaAcionamentos();
-  if(aba!=='emails')_pausarAbaEmails();
-  if(aba!=='notas')_pausarAbaNotas();
+  if(aba!=='notas'&&aba!=='notasPainel')_pausarAbaNotas();
   if(aba==='acionamentos')_ativarAbaAcionamentos();
-  else if(aba==='emails')_ativarAbaEmails();
   else _ativarAbaNotas();
-  /* a barra de lote é uma só para as duas abas: aqui ela passa a comandar a
+  /* a barra de lote passa a comandar a
      seleção da aba que entrou, ou se esconde se a aba não tem chamados */
   _loteBarra();
 }
@@ -4486,16 +4307,19 @@ function _aplicarItensNotas(brutos){
   const st=AppState.notas;
   st.itens=brutos||[];st.erro='';st.falhaMs=0;st.ultimaAtualizacao=Date.now();
   renderNotas();atualizarBadgeNotas();
+  /* conversa aberta: traz as mensagens novas sem mexer na rolagem */
+  if(modalAtualizacoesAberto())carregarHistoricoNota(false);
 }
 
 function atualizarBadgeNotas(){_pintaBadgeSla('abaNotasBadge',AppState.notas.itens.length)}
 
 /* o que, mudando, obriga a redesenhar */
 function _notaAssinatura(itens){
-  return itens.map(i=>[i.id,i.atualizadoMs||0,i.fixada?1:0,i.validadeMs||0,(i.titulo||'').length,(i.texto||'').length].join(':')).join('|');
+  return itens.map(i=>[i.id,i.atualizadoMs||0,i.fixada?1:0,i.validadeMs||0,(i.titulo||'').length,(i.texto||'').length,i.totalAtualizacoes||0].join(':')).join('|');
 }
 
 function renderNotas(){
+  renderNotasPainel();
   const grid=$('notasGrid');if(!grid)return;
   const st=AppState.notas,agora=Date.now();
   const rod=$('notasRodape');
@@ -4517,6 +4341,12 @@ function renderNotas(){
   grid.innerHTML=st.itens.map(i=>_notaCardHTML(i,agora)).join('');
 }
 
+function _notaDataHora(ms){
+  if(!ms)return '';
+  const d=new Date(ms),p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 function _notaCardHTML(item,agora){
   const restante=_notaVenceEm(item,agora);
   const vencendo=restante>=0&&restante<=24*3600000;
@@ -4526,18 +4356,28 @@ function _notaCardHTML(item,agora){
   const selos=[];
   if(item.fixada)selos.push('<span class="tc-selo vinculo">Fixada</span>');
   if(item.validadeMs)selos.push(`<span class="tc-selo${vencendo?' escalonado':''}">Vale at&eacute; ${_esc(_notaDataCurta(item.validadeMs))}</span>`);
-  const quando=item.atualizadoMs||item.criadoMs||0;
+  const total=Number(item.totalAtualizacoes||0);
+  const ult=item.ultima;
+  const ultimaHTML=ult
+    ?`<div class="nota-ultima">
+      <div class="nota-ultima-rot">&Uacute;ltima atualiza&ccedil;&atilde;o</div>
+      <div class="nota-ultima-meta">${_esc(ult.autor||'—')} · ${ult.em?_esc(_notaDataHora(ult.em)):''}</div>
+      <div class="nota-ultima-texto">${_esc(ult.texto||'')}</div>
+    </div>`
+    :`<div class="nota-ultima vazia"><div class="nota-ultima-rot">Sem atualiza&ccedil;&otilde;es ainda</div></div>`;
   return `<div class="${classes.join(' ')}">
   <div class="sla-card-faixa"></div>
   <div class="sla-card-corpo">
     ${selos.length?`<div class="tc-card-selos">${selos.join('')}</div>`:''}
-    <div class="nota-titulo">${_esc(item.titulo||'Sem título')}</div>
+    <div class="nota-titulo" title="${_esc(item.titulo||'')}">${_esc(item.titulo||'Sem título')}</div>
     <div class="nota-texto">${_esc(item.texto||'')}</div>
     <div class="nota-rodape">
       ${item.autor?`<span>${_esc(item.autor)}</span><span class="nota-rodape-sep">&middot;</span>`:''}
-      <span>${quando?_esc(_slaFmtHora(quando)):''}</span>
+      <span>${item.criadoMs?'criada '+_esc(_notaDataHora(item.criadoMs)):''}</span>
     </div>
+    ${ultimaHTML}
     <div class="nota-acoes">
+      <button class="nota-btn nota-btn-chat" data-id="${_esc(item.id)}">Atualiza&ccedil;&otilde;es (${total})</button>
       <button class="nota-btn nota-btn-editar" data-id="${_esc(item.id)}">Editar</button>
       <button class="nota-btn perigo nota-btn-arquivar" data-id="${_esc(item.id)}">Arquivar</button>
     </div>
@@ -4578,21 +4418,6 @@ function abrirModalNota(id){
   const bf=$('btnTgg-notaFixar'),fix=!!(nota&&nota.fixada);
   bf.classList.toggle('active',fix);bf.setAttribute('aria-pressed',String(fix));
 
-  const sel=$('notaAutor');
-  if(sel){
-    if(nota&&nota.autor){
-      /* autor de nota antiga pode não estar mais na lista de operadores:
-         entra como opção própria, senão a edição trocaria o nome de quem
-         escreveu sem avisar ninguém */
-      if(!Array.from(sel.options).some(o=>o.value===nota.autor)){
-        const o=document.createElement('option');o.value=nota.autor;o.textContent=nota.autor;sel.appendChild(o);
-      }
-      sel.value=nota.autor;
-    }else{
-      const nome=(localStorage.getItem('noc-operador')||'').split('|||')[0]||'';
-      sel.value=Array.from(sel.options).some(o=>o.value===nome)?nome:'';
-    }
-  }
   $('tituloModalNota').textContent=nota?'EDITAR NOTA':'NOVA NOTA';
   const btn=$('btnSalvarNota');btn.disabled=false;btn.textContent='SALVAR';
   _notaContador();
@@ -4608,10 +4433,8 @@ function salvarNotaModal(){
 
   const titulo=$('notaTitulo').value.trim();
   const texto=$('notaTexto').value.trim();
-  const autor=$('notaAutor').value;
   if(!titulo)return mostrar('O título é obrigatório.');
   if(!texto)return mostrar('O texto da nota é obrigatório.');
-  if(!autor)return mostrar('Selecione o autor.');
 
   let validadeMs=0;
   const wrapVal=$('wrap-notaValidade');
@@ -4624,7 +4447,7 @@ function salvarNotaModal(){
 
   const btn=$('btnSalvarNota');btn.disabled=true;btn.textContent='SALVANDO...';
   jsonp({acao:'salvarNota',id:$('notaId').value,titulo:titulo,texto:texto,
-         autor:autor,validadeMs:validadeMs,fixada:fixada?'SIM':''},25000)
+         validadeMs:validadeMs,fixada:fixada?'SIM':''},25000)
     .then(r=>{
       btn.disabled=false;btn.textContent='SALVAR';
       if(r&&r.ok){
@@ -4666,6 +4489,144 @@ function arquivarNotaCard(btn){
 }
 
 
+/* ── NOTAS · PAINEL (TV): só leitura, mesma lista, sem botões ── */
+function renderNotasPainel(){
+  const grid=$('notasPainelGrid');if(!grid)return;
+  const st=AppState.notas;
+  const rod=$('notasPainelRodape');
+  if(rod)rod.textContent=st.ultimaAtualizacao?`Atualizado às ${_slaFmtHora(st.ultimaAtualizacao).split(' ')[1]}`:'';
+  if(st.erro){
+    grid.innerHTML=`<div class="sla-aviso erro"><div class="sla-aviso-icone">!</div><div class="sla-aviso-txt">${_esc(st.erro)}</div></div>`;
+    st.assinaturaPainel='erro:'+st.erro;return;
+  }
+  if(!st.itens.length){
+    grid.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#9633;</div><div class="sla-aviso-txt">Nenhuma nota ativa.</div></div>`;
+    st.assinaturaPainel='vazio';return;
+  }
+  const ass=_notaAssinatura(st.itens);
+  if(ass===st.assinaturaPainel)return;
+  st.assinaturaPainel=ass;
+  grid.innerHTML=st.itens.map(_notaPainelCardHTML).join('');
+}
+function _notaPainelCardHTML(item){
+  const ult=item.ultima;
+  const ultimaHTML=ult
+    ?`<div class="tv-nota-ultima">
+      <div class="tv-nota-ultima-rot">&Uacute;ltima atualiza&ccedil;&atilde;o</div>
+      <div class="tv-nota-ultima-meta">${_esc(ult.autor||'—')} · ${ult.em?_esc(_notaDataHora(ult.em)):''}</div>
+      <div class="tv-nota-ultima-texto">${_esc(ult.texto||'')}</div>
+    </div>`
+    :`<div class="tv-nota-ultima vazia"><div class="tv-nota-ultima-rot">Sem atualiza&ccedil;&otilde;es ainda</div></div>`;
+  return `<div class="sla-card tv-nota-card${item.fixada?' fixada':''}">
+  <div class="sla-card-faixa"></div>
+  <div class="sla-card-corpo">
+    <div class="tv-nota-titulo">${_esc(item.titulo||'Sem título')}</div>
+    <div class="tv-nota-texto">${_esc(item.texto||'')}</div>
+    ${ultimaHTML}
+  </div>
+</div>`;
+}
+
+/* ── ATUALIZAÇÕES DA NOTA: a conversa (estilo grupo de mensagens) ── */
+const ATUALIZ={id:'',itens:null,erro:'',enviando:false,quem:''};
+
+function modalAtualizacoesAberto(){
+  const m=$('modalAtualizacoes');
+  return !!(m&&m.classList.contains('active'));
+}
+
+function abrirModalAtualizacoes(id){
+  const nota=AppState.notas.itens.find(i=>String(i.id)===String(id));
+  if(!nota)return;
+  ATUALIZ.id=String(nota.id);ATUALIZ.itens=null;ATUALIZ.erro='';
+  $('tituloModalAtualizacoes').textContent='ATUALIZAÇÕES · '+(nota.titulo||'Sem título');
+  $('atualizacaoTexto').value='';
+  _atualizacaoContador();_atualizacaoQuemRender();
+  $('modalAtualizacoes').classList.add('active');
+  _atualizacoesRender(true);
+  carregarHistoricoNota(true);
+  setTimeout(()=>{const t=$('atualizacaoTexto');if(t)t.focus()},60);
+}
+function fecharModalAtualizacoes(){
+  $('modalAtualizacoes').classList.remove('active');
+  ATUALIZ.id='';ATUALIZ.itens=null;ATUALIZ.erro='';
+}
+
+/* irAoFim: true ao abrir ou enviar; false nas atualizações de fundo, para
+   não arrastar a rolagem de quem está lendo mais acima */
+function carregarHistoricoNota(irAoFim){
+  const id=ATUALIZ.id;if(!id)return Promise.resolve();
+  return jsonp({acao:'historicoNota',id:id},20000).then(r=>{
+    if(ATUALIZ.id!==id)return;
+    if(r&&r.ok){ATUALIZ.itens=r.itens||[];ATUALIZ.erro=''}
+    else{ATUALIZ.itens=ATUALIZ.itens||[];ATUALIZ.erro=(r&&r.erro)||'Não foi possível carregar as atualizações.'}
+    _atualizacoesRender(irAoFim);
+  }).catch(e=>{
+    if(ATUALIZ.id!==id)return;
+    ATUALIZ.itens=ATUALIZ.itens||[];ATUALIZ.erro='Falha ao carregar ('+e.message+').';
+    _atualizacoesRender(irAoFim);
+  });
+}
+
+/* primeira bolha = descrição inicial (autor = criador, hora = CRIADO EM);
+   as demais vêm do histórico, em ordem cronológica */
+function _atualizacoesRender(irAoFim){
+  const lista=$('atualizacoesLista');if(!lista)return;
+  const nota=AppState.notas.itens.find(i=>String(i.id)===ATUALIZ.id);
+  if(!nota){lista.innerHTML='<div class="nota-chat-aviso">Esta nota não está mais no painel.</div>';return}
+  const bolhas=[`<div class="nota-msg primeira">
+      <div class="nota-msg-autor">${_esc(nota.autor||'—')}</div>
+      <div class="nota-msg-texto">${_esc(nota.texto||'')}</div>
+      <div class="nota-msg-hora">${_esc(_notaDataHora(nota.criadoMs))}</div>
+    </div>`];
+  (ATUALIZ.itens||[]).forEach(it=>bolhas.push(`<div class="nota-msg">
+      <div class="nota-msg-autor">${_esc(it.autor||'—')}</div>
+      <div class="nota-msg-texto">${_esc(it.texto||'')}</div>
+      <div class="nota-msg-hora">${_esc(_notaDataHora(it.em))}</div>
+    </div>`));
+  let aviso='';
+  if(ATUALIZ.itens===null)aviso='<div class="nota-chat-aviso">Carregando atualizações...</div>';
+  else if(ATUALIZ.erro)aviso=`<div class="nota-chat-aviso erro">${_esc(ATUALIZ.erro)}</div>`;
+  lista.innerHTML=bolhas.join('')+aviso;
+  if(irAoFim)lista.scrollTop=lista.scrollHeight;
+}
+
+function _atualizacaoContador(){
+  const tx=$('atualizacaoTexto'),el=$('atualizacaoContador');
+  if(!tx||!el)return;
+  const n=tx.value.length;
+  el.textContent=n+'/1000';
+  el.style.color=n>950?'var(--amber)':'var(--text3)';
+}
+function _atualizacaoQuemRender(){
+  const el=$('atualizacaoQuem');
+  if(el)el.textContent='Enviando como: '+(ATUALIZ.quem||'Sua conta');
+}
+
+function enviarAtualizacaoNota(){
+  const campo=$('atualizacaoTexto'),btn=$('btnEnviarAtualizacao');
+  if(ATUALIZ.enviando||!ATUALIZ.id)return;
+  const texto=campo.value.trim();
+  if(!texto){showToast('Escreva a atualização antes de enviar.','error',3000);return}
+  const id=ATUALIZ.id;
+  /* o autor de verdade é decidido pelo servidor (e-mail da conta); o nome
+     do operador só entra se o servidor não conseguir o e-mail */
+  const nome=(localStorage.getItem('noc-operador')||'').split('|||')[0]||'';
+  ATUALIZ.enviando=true;btn.disabled=true;btn.textContent='ENVIANDO...';
+  const fim=()=>{ATUALIZ.enviando=false;btn.disabled=false;btn.textContent='ENVIAR'};
+  jsonp({acao:'atualizarNota',id:id,texto:texto,autor:nome},25000).then(r=>{
+    fim();
+    if(r&&r.ok){
+      if(r.autor)ATUALIZ.quem=r.autor;
+      if(ATUALIZ.id===id){campo.value='';_atualizacaoContador();_atualizacaoQuemRender()}
+      showToast('✓ Atualização enviada.');
+      AppState.notas.assinatura='';
+      _concluir(r,'notas',carregarNotas);
+      carregarHistoricoNota(true);
+    }else showToast('Não foi possível enviar: '+((r&&r.erro)||'erro'),'error',4000);
+  }).catch(e=>{fim();showToast('Falha ao enviar ('+e.message+').','error',4000)});
+}
+
 function _ativarAbaAcionamentos(){
   AppState.sla.aberto=true;
   renderSla();
@@ -4680,45 +4641,10 @@ function _pausarAbaAcionamentos(){
   AppState.sla.timerTick=null;
   _reprogramarPollSla();
 }
-function _ativarAbaEmails(){
-  AppState.tcSla.aberto=true;
-  renderTcSla();
-  /* mostra na hora o que já está na planilha e só então varre o Gmail,
-     para a aba não abrir em branco esperando a busca. Da primeira
-     varredura em diante quem manda é a corrente automática: ela reagenda a
-     si mesma enquanto a aba estiver à frente. */
-  carregarTcSla(true).then(()=>varrerGmailAgora());
-  clearInterval(AppState.tcSla.timerTick);
-  AppState.tcSla.timerTick=setInterval(tickTcSla,1000);
-  _reprogramarPollTcSla();
-}
-function _pausarAbaEmails(){
-  AppState.tcSla.aberto=false;
-  clearInterval(AppState.tcSla.timerTick);
-  AppState.tcSla.timerTick=null;
-  /* sair da aba corta a varredura: ela é a chamada mais cara do app e
-     ninguém está olhando o resultado */
-  _tcVarreParar();
-  _reprogramarPollTcSla();
-}
 /* um único "Atualizar" no topo: recarrega a aba que está à frente */
 function atualizarAbaSlaAtiva(){
-  if(AppState.slaAba==='emails'){
-    /* O clique agora entra na MESMA corrente da varredura automática, em
-       vez de disparar uma segunda varredura por fora dela: duas em voo
-       para o mesmo usuário só fazem a segunda esperar a primeira na fila
-       do Apps Script e dobrar a espera do operador. */
-    if(AppState.tcSla.varrendo){
-      showToast('Varredura já em andamento — o painel atualiza ao terminar.');
-    }else{
-      AppState.tcSla.varreduraErro='';
-      _tcVarreAgendar(0);
-      showToast('↻ Varrendo o Gmail — pode levar alguns segundos...');
-    }
-  }else{
-    carregarSla();
-    showToast('↻ Buscando chamados...');
-  }
+  carregarSla();
+  showToast('↻ Buscando chamados...');
 }
 /* com o painel aberto busca com mais frequência; fechado, só o suficiente
    para manter o contador de estourados do botão do topo em dia */
@@ -4735,9 +4661,11 @@ function bindEventsSla(){
   $('btnSlaFechar').addEventListener('click',fecharPainelSla);
   $('btnSlaAtualizar').addEventListener('click',atualizarAbaSlaAtiva);
   $('abaAcionamentos').addEventListener('click',()=>selecionarAbaSla('acionamentos'));
-  $('abaEmails').addEventListener('click',()=>selecionarAbaSla('emails'));
   $('abaNotas').addEventListener('click',()=>selecionarAbaSla('notas'));
+  $('abaNotasPainel').addEventListener('click',()=>selecionarAbaSla('notasPainel'));
   $('notasGrid').addEventListener('click',e=>{
+    const ch=e.target.closest('.nota-btn-chat');
+    if(ch){abrirModalAtualizacoes(ch.dataset.id);return}
     const ed=e.target.closest('.nota-btn-editar');
     if(ed){abrirModalNota(ed.dataset.id);return}
     const ar=e.target.closest('.nota-btn-arquivar');
@@ -4745,17 +4673,19 @@ function bindEventsSla(){
   });
   const tx=$('notaTexto');
   if(tx)tx.addEventListener('input',_notaContador);
+  const atx=$('atualizacaoTexto');
+  if(atx)atx.addEventListener('input',_atualizacaoContador);
   /* setas ← → navegam entre as abas quando o foco está nelas (padrão ARIA) */
   $('slaTopo').addEventListener('keydown',e=>{
     if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
     if(!e.target.classList.contains('sla-aba'))return;
     e.preventDefault();
-    const ordem=['acionamentos','emails','notas'];
+    const ordem=['acionamentos','notas','notasPainel'];
     const i=Math.max(0,ordem.indexOf(AppState.slaAba));
     const passo=e.key==='ArrowRight'?1:-1;
     const proxima=ordem[(i+passo+ordem.length)%ordem.length];
     selecionarAbaSla(proxima);
-    const foco={acionamentos:'abaAcionamentos',emails:'abaEmails',notas:'abaNotas'}[proxima];
+    const foco={acionamentos:'abaAcionamentos',notas:'abaNotas',notasPainel:'abaNotasPainel'}[proxima];
     const el=$(foco);if(el)el.focus();
   });
   $('slaGrid').addEventListener('click',e=>{
@@ -4766,9 +4696,7 @@ function bindEventsSla(){
 
   /* ── seleção múltipla: os dois botões de modo e a barra de lote ── */
   $('slaGrid').addEventListener('keydown',e=>_loteTeclaNoCard('sla',e));
-  $('tcSlaFilas').addEventListener('keydown',e=>_loteTeclaNoCard('tim',e));
   $('btnSelModoSla').addEventListener('click',()=>alternarModoSelecao('sla'));
-  $('btnSelModoTim').addEventListener('click',()=>alternarModoSelecao('tim'));
   $('btnLoteTodos').addEventListener('click',_loteTodos);
   $('btnLoteLimpar').addEventListener('click',_loteLimpar);
   $('btnLoteEncerrar').addEventListener('click',abrirModalEncerrarLote);
@@ -4800,1778 +4728,8 @@ function bindEventsSla(){
   // primeira carga em segundo plano, sem atrapalhar o carregamento da tela
   setTimeout(()=>{carregarSla(true);_reprogramarPollSla();carregarNotas();_reprogramarPollNotas()},1200);
 
-  // TC-SLA
-  $('tcSlaFilas').addEventListener('click',e=>{
-    const det=e.target.closest('.tc-btn-detalhes');
-    if(det){
-      const id=String(det.dataset.id);
-      const abrir=!TC_EXPANDIDOS.has(id);
-      abrir?TC_EXPANDIDOS.add(id):TC_EXPANDIDOS.delete(id);
-      /* o botão agora vive dentro de .tc-card-acoes, então o bloco de
-         detalhes não é mais irmão dele: procura a partir do card */
-      const box=(det.closest('.sla-card')||det.parentElement).querySelector('.tc-detalhes');
-      if(box)box.classList.toggle('hidden',!abrir);
-      det.setAttribute('aria-expanded',String(abrir));
-      det.textContent=abrir?'Menos detalhes':'Detalhes';
-      return;
-    }
-    const b=e.target.closest('.sla-btn-encerrar');
-    if(b&&!b.disabled){abrirModalEncerrarSla(b.dataset.id,'TIM');return}
-    const esc=e.target.closest('.tc-btn-escalonar');
-    if(esc&&!esc.disabled){registrarEscalonamentoTim(esc.dataset.id,esc);return}
-    _loteCliqueNoCard('tim',e);
-  });
-  $('tcSlaFiltro').addEventListener('input',e=>{
-    AppState.tcSla.filtro=e.target.value||'';
-    renderTcSla();
-  });
-  /* Voltar para a aba do navegador retoma a varredura na hora: é o momento
-     em que o operador quer dado novo, e é também quando o navegador
-     devolve os timers que tinha congelado. */
-  document.addEventListener('visibilitychange',()=>{
-    if(document.hidden)_tcVarreParar();
-    else if(AppState.tcSla.aberto&&!AppState.tcSla.varrendo)_tcVarreAgendar(1200);
-  });
-  _tcVarreVigiar();
-  setTimeout(()=>{carregarTcSla(true);_reprogramarPollTcSla()},2500);
 }
 
-/* ════════════════════════════════════════════════════════
-   PAINEL E-MAIL’S SLA (TIM)
-   ════════════════════════════════════════════════════════ */
-/* carregarTcSla(silencioso, varrerGmail)
-
-   varrerGmail = false  → lê só a aba TIM-CHAMADOS (resposta em ~1s).
-   varrerGmail = true   → varredura completa do Gmail (dezenas de segundos).
-
-   A varredura pesada ficava rodando a cada 2 min mesmo com o painel
-   painel fechado. Como o Apps Script atende uma requisição por vez para
-   o mesmo usuário, o painel de SLA ficava na fila atrás dela — era a
-   causa principal do carregamento de quase um minuto. Agora o Gmail só é
-   varrido sob comando (botão Atualizar) e pelo gatilho de tempo do lado
-   do servidor, que mantém a aba TIM-CHAMADOS em dia. */
-function carregarTcSla(silencioso, varrerGmail=false){
-  if(!silencioso&&AppState.tcSla.status!=='carregando'){
-    AppState.tcSla.status='carregando';
-    if(AppState.tcSla.aberto&&!AppState.tcSla.itens.length)renderTcSla();
-  }
-  const acao=varrerGmail?'listarTcSla':'listarTcSlaCache';
-  return jsonp({acao:acao},varrerGmail?90000:20000).then(r=>{
-    if(!r||r.ok===false)throw new Error((r&&r.erro)||'resposta inválida');
-    if(r.rev)Sync.aceitar(r.rev);
-    _aplicarItensTcSla(r.itens);
-    return AppState.tcSla.itens;
-  }).catch(e=>{
-    /* retentativa: ver Conexão. Aqui só o que a tela faz com a falha */
-    AppState.tcSla.erro=e.message||String(e);
-    if(AppState.tcSla.itens.length){
-      AppState.tcSla.status='ok';AppState.tcSla.falhaMs=Date.now();
-    }else{
-      AppState.tcSla.status='erro';
-    }
-    if(AppState.tcSla.aberto)renderTcSla();
-    return null;
-  });
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   VARREDURA AUTOMÁTICA DO GMAIL
-   ═══════════════════════════════════════════════════════════════════
-   O PROBLEMA QUE ISTO RESOLVE. A varredura do Gmail (`listarTcSla`) era a
-   única coisa capaz de descobrir chamado NOVO — o resto do painel só relê
-   a aba TIM-CHAMADOS. E ela rodava em apenas dois momentos: quando o
-   operador abria a aba E-MAIL'S SLA e quando clicava em Atualizar. Fora
-   disso, quem dependia da atualização automática era o gatilho de tempo
-   do lado do servidor (`configurarGatilhoTim`, de 5 em 5 min) — que só
-   existe se alguém tiver executado essa função uma vez no editor do Apps
-   Script. Sem o gatilho instalado, chamado aberto agora não aparecia
-   NUNCA sozinho: o polling perguntava "mudou?" e a resposta era sempre
-   não, porque ninguém tinha ido ao Gmail buscar a novidade.
-
-   POR QUE NÃO É UM setInterval DE 15s. A varredura abre a caixa, lê
-   dezenas de conversas e grava na planilha: leva de poucos segundos a
-   quase um minuto. O Apps Script atende UMA requisição por vez para o
-   mesmo usuário, e a cota diária de execução é finita. Um intervalo fixo
-   de 15s empilharia varreduras na fila — cada uma esperando a anterior,
-   todas competindo com o painel de acionamentos — e queimaria a cota até
-   o app parar de responder por completo.
-
-   COMO FICOU. Uma corrente que só agenda a próxima volta DEPOIS de a
-   anterior terminar, com o espaçamento saindo da duração medida da última
-   varredura: rápida, roda no piso de 15s que a operação pediu; lenta, se
-   afasta sozinha em vez de afundar a fila. Rodando apenas com a aba em
-   primeiro plano — varrer o Gmail para uma tela que ninguém está olhando
-   é gastar cota sem ninguém ganhar nada. */
-const TC_VARRE_PISO_MS  = 15000;    // o mínimo pedido pela operação
-const TC_VARRE_FOLGA    = 3;        // próxima volta = 3× o que a última levou
-const TC_VARRE_TETO_MS  = 300000;   // 5 min: teto quando a varredura está lenta
-const TC_VARRE_ERRO_MS  = 60000;    // depois de falhar, espera antes de insistir
-
-/* Quanto esperar até a próxima volta. Piso de 15s, teto de 5 min, e no
-   meio o que a última varredura custou vezes a folga. */
-function _tcVarreIntervalo(){
-  const st=AppState.tcSla;
-  if(st.varreduraErro)return TC_VARRE_ERRO_MS;
-  const dur=Number(st.varreduraDur)||0;
-  return Math.min(TC_VARRE_TETO_MS,Math.max(TC_VARRE_PISO_MS,dur*TC_VARRE_FOLGA));
-}
-/* Varre só com a aba à frente e a página visível. Aba em segundo plano do
-   navegador não recebe timer confiável mesmo, e a cota é compartilhada. */
-function _tcVarreDeveRodar(){
-  return !document.hidden&&AppState.tcSla.aberto;
-}
-function _tcVarreAgendar(ms){
-  clearTimeout(AppState.tcSla.timerVarredura);
-  AppState.tcSla.timerVarredura=setTimeout(varrerGmailAgora,
-    (ms==null?_tcVarreIntervalo():ms));
-}
-function _tcVarreParar(){
-  clearTimeout(AppState.tcSla.timerVarredura);
-  AppState.tcSla.timerVarredura=null;
-}
-/* Uma volta da corrente. Sempre reagenda no fim — inclusive quando falha,
-   senão um erro de rede calaria a atualização automática para sempre. */
-function varrerGmailAgora(){
-  const st=AppState.tcSla;
-  if(st.varrendo)return;                      // trava de não-sobreposição
-  if(!_tcVarreDeveRodar()){_tcVarreParar();return}
-  st.varrendo=true;
-  renderResumoTcSla();
-  const t0=Date.now();
-  /* quem já estava na tela antes desta volta: o que sobrar de fora é
-     chamado novo, e é isso que merece um aviso ao operador */
-  const antes=new Set((st.itens||[]).map(i=>i.id));
-  return carregarTcSla(true,true).then(itens=>{
-    st.varreduraDur=Date.now()-t0;
-    st.varreduraMs=Date.now();
-    /* carregarTcSla engole a falha e devolve null — não há catch a esperar */
-    if(itens===null){
-      st.varreduraErro=st.erro||'a varredura não respondeu';
-      st.varreduraNovos=0;
-    }else{
-      st.varreduraErro='';
-      const novos=(itens||[]).filter(i=>!antes.has(i.id)&&!i.encerramentoMs);
-      st.varreduraNovos=novos.length;
-      /* antes.size===0 é a primeira carga da aba: tudo seria "novo" e o
-         aviso não diria nada ao operador que acabou de abrir o painel */
-      if(novos.length&&antes.size){
-        showToast(novos.length===1
-          ?'1 chamado novo da TIM entrou no painel.'
-          :`${novos.length} chamados novos da TIM entraram no painel.`,'ok',5000);
-      }
-    }
-  }).catch(e=>{
-    st.varreduraDur=Date.now()-t0;
-    st.varreduraMs=Date.now();
-    st.varreduraErro=(e&&e.message)||String(e);
-    st.varreduraNovos=0;
-  }).then(()=>{
-    st.varrendo=false;
-    renderResumoTcSla();
-    if(_tcVarreDeveRodar())_tcVarreAgendar();else _tcVarreParar();
-  });
-}
-/* CÃO DE GUARDA, mesma ideia do Sync.vigiar: a corrente é uma sequência de
-   setTimeout e basta o navegador descartar um timer de aba adormecida para
-   ela arrebentar — e aí o painel volta a exibir dado velho em silêncio,
-   que é exatamente a queixa que originou este bloco. */
-function _tcVarreVigiar(){
-  setInterval(()=>{
-    const st=AppState.tcSla;
-    if(!_tcVarreDeveRodar()||st.varrendo)return;
-    const parado=Date.now()-(st.varreduraMs||0);
-    if(!st.timerVarredura||parado>Math.max(3*TC_VARRE_PISO_MS,_tcVarreIntervalo()*3)){
-      console.warn('[TC] corrente da varredura parada há %ss — reiniciando',Math.round(parado/1000));
-      _tcVarreAgendar(0);
-    }
-  },30000);
-}
-
-function _aplicarItensTcSla(brutos,versaoMs){
-  if(_listaVelha(AppState.tcSla,versaoMs))return AppState.tcSla.itens;
-  {
-    const agoraMs=Date.now();
-    AppState.tcSla.itens=_aplicarEncerradosLocais(AppState.tcSla,_tcConsolidar((brutos||[]).map(x=>({
-      ...x,
-      aberturaMs:Number(x.aberturaMs)||0,
-      encerramentoMs:Number(x.encerramentoMs)||0,
-      slaHoras:Number(x.slaHoras)||0.5
-    })))).filter(x=>x.aberturaMs>0)
-    .filter(x=>!x.encerramentoMs
-                || (agoraMs-x.encerramentoMs)<=SLA_SUMIR_APOS_ENCERRAR_MS
-                || AppState.tcSla.nodes.has(x.id));
-    AppState.tcSla.status='ok';AppState.tcSla.erro='';AppState.tcSla.falhaMs=0;
-    AppState.tcSla.ultimaAtualizacao=Date.now();
-    if(AppState.tcSla.aberto)renderTcSla();
-    atualizarBadgeTcSla();
-    return AppState.tcSla.itens;
-  }
-}
-
-/* ── regras de acompanhamento (espelham as do Apps Script) ──
-   O backend já manda o estado pronto, mas o painel fica aberto por horas
-   entre uma varredura e outra. Se ele não recalculasse, um chamado
-   gravado às 09h como AGUARDANDO AU continuaria assim às 11h e a
-   cobrança vencida nunca apareceria na tela. */
-const TC_CADENCIA_MS = 30*60*1000;        // cobrar a cada 30 min sem AU
-const TC_PRAZO_AU_MS = 30*60*1000;        // prazo da TIM devolver o AU
-const TC_ESCALONAMENTO_MS = 8*60*60*1000; // 8h = último escalonamento
-/* Depois do escalonamento acabou o que o NOC pode fazer sozinho: resta
-   reforçar o MESMO escalonamento com a TIM e manter a supervisão do setor
-   ciente. Isso é de hora em hora, não a cada 30 min — a janela de 30 min
-   existia para arrancar o AU, e esse trem já passou. */
-const TC_REFORCO_MS = 60*60*1000;         // 1h entre reforços após escalonar
-
-const TC_FILAS=[
-  /* Primeira da lista: é a única em que alguém do outro lado está
-     literalmente esperando uma resposta nossa. */
-  {id:'RESPONDER_TIM',   nome:'Responder a TIM',         dica:'A TIM escreveu depois de nós — a tratativa está parada esperando retorno'},
-  {id:'COBRAR',          nome:'Cobrar agora',            dica:'30 min sem AU desde a abertura ou a última cobrança'},
-  {id:'ESCALONAR',       nome:'Escalonar',               dica:'8h corridas — é o último escalonamento que existe'},
-  {id:'REFORCAR',        nome:'Reforçar escalonamento',  dica:'Já escalonado — reforçar com a TIM a cada 1h e manter a supervisão ciente'},
-  {id:'AGUARDANDO_AU',   nome:'Aguardando AU',           dica:'Dentro da janela; o card avisa quando cobrar'},
-  {id:'EM_TRATATIVA',    nome:'Em tratativa',            dica:'AU recebido, dentro das 8h'},
-  {id:'AGUARDANDO_NORM', nome:'Aguardando normalização', dica:'Escalonado e reforçado — a bola está com a TIM'},
-  {id:'NORMALIZADO',     nome:'Normalizados',            dica:'Encerrados há pouco'}
-];
-const TC_FILA_NOME={};TC_FILAS.forEach(f=>TC_FILA_NOME[f.id]=f.nome);
-
-/* ── IR: abre a conversa no Gmail em outra aba ──────────────────
-   Sem /u/N/ na URL de propósito: assim cada um abre na conta em que já
-   está logado, em vez de o painel decidir por todos.
-
-   ATENÇÃO, e é um limite real: o ID de conversa do Gmail é POR CAIXA. Ele
-   vem da caixa que executa o script, então o link direto só resolve para
-   quem estiver logado NAQUELA caixa. Para os outros o Gmail responde
-   "conversa não encontrada". A busca, ao contrário, funciona em qualquer
-   caixa que tenha as mensagens — é por isso que existe a chave abaixo:
-   ligue-a e todo IR passa a ser busca, que é o modo portátil. */
-const TC_GMAIL_BASE='https://mail.google.com/mail/';
-const TC_IR_SEMPRE_BUSCA=false;
-
-function _tcUrlGmail(item){
-  const ths=((item&&item.threads)||[]).map(t=>String(t||'').trim()).filter(Boolean);
-  /* uma conversa só: vai direto nela */
-  if(!TC_IR_SEMPRE_BUSCA&&ths.length===1)
-    return TC_GMAIL_BASE+'#all/'+encodeURIComponent(ths[0]);
-  /* mais de uma (a TIM abre thread própria, com o assunto "Atendimento
-     Business Contact Center"): a busca mostra todas juntas, senão o IR
-     levaria sempre para uma delas e a resposta poderia estar na outra */
-  const termo=String((item&&item.protocolo)||'').trim()
-           || String((item&&item.designacao)||'').trim();
-  if(termo) return TC_GMAIL_BASE+'#search/'+encodeURIComponent(termo);
-  const assunto=_tcAssuntoBase((item&&item.resumo)||'');
-  if(assunto&&assunto.length>=10) return TC_GMAIL_BASE+'#search/'+encodeURIComponent('"'+assunto+'"');
-  /* nada que identifique: melhor não oferecer um link que abre a caixa toda */
-  return ths.length?TC_GMAIL_BASE+'#all/'+encodeURIComponent(ths[0]):'';
-}
-
-function _tcTemAu(item){return !!String(item.protocolo||'').trim()}
-function _tcNormAu(v){return String(v||'').replace(/[^0-9A-Za-z]/g,'').toUpperCase()}
-/* O protocolo costuma estar escrito no próprio assunto, como sufixo
-   depois da designação: "INDISPONIBILIDADE DE SWAP - MNSALQCAP480164 -
-   2026101745729". Quando o card chega sem protocolo mas com o número no
-   título, é o mesmo chamado que já está aberto com aquele AU. A
-   designação não confunde: ela é alfanumérica, e aqui só entra um bloco
-   de 10 a 16 dígitos puros. */
-function _tcAuDoTitulo(s){
-  const t=String(s||'');
-  const m=t.match(/[-–—]\s*(\d{10,16})(?!\d)/)||t.match(/(?:^|[\s(\[])(\d{10,16})(?!\d)/);
-  return m?m[1]:'';
-}
-function _tcResumoRuim(s){const t=String(s||'').trim();
-  return !t||t==='Sem Assunto'||/business contact center|contact center|^(re|res|enc|fwd)\s*:/i.test(t)}
-function _tcFalhaMs(v){
-  const m=String(v||'').match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
-  if(!m)return 0;
-  const t=new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5]).getTime();
-  return isNaN(t)?0:t;
-}
-
-/* ── uma tratativa por protocolo, também na tela ──
-   O AU é a identidade do chamado: nasce quando o corporate devolve o
-   protocolo e vive até a normalização. Se por qualquer motivo chegarem
-   dois registros com o MESMO AU — linha antiga da aba, thread que a TIM
-   abriu à parte, cobrança que virou card — o painel mostra UM card só,
-   com o que há de melhor nos dois. É rede de segurança: mesmo com a aba
-   suja, o NOC não vê card repetido enquanto a varredura não limpa.
-
-   Aproveita para descartar abertura anterior à falha que o próprio
-   chamado relata — é o que fazia um chamado da manhã marcar 102h. */
-function _tcConsolidar(itens){
-  const lista=(itens||[]).map(it=>{
-    const f=_tcFalhaMs(it.dataHoraFalha);
-    if(f&&it.aberturaMs&&it.aberturaMs<f-600000)it.aberturaMs=f;
-    /* card "Aguardando AU" com o protocolo escrito no título: o número
-       está ali, é só ler. Rede de segurança para o caso de a varredura
-       ainda não ter passado. */
-    if(!String(it.protocolo||'').trim()){
-      const doTitulo=_tcAuDoTitulo(it.resumo);
-      if(doTitulo){it.protocolo=doTitulo;it.alvo='Protocolo: '+doTitulo;it.auDoAssunto=true}
-    }
-    return it;
-  });
-
-  /* devolve ao chamado o AU que ficou preso na thread da resposta da TIM,
-     para o agrupamento logo abaixo enxergar que são o mesmo chamado */
-  _tcHerdarAu(lista);
-
-  /* Agrupa pelo AU e, na falta dele, pelo código de evento da TIM
-     (EVE...) — que é o que amarra a conversa da caixa de escalonamento
-     quando o corporate não devolveu o nosso protocolo inicial. Quem não
-     tem nenhum dos dois é um chamado por si. */
-  const grupos=new Map(),saida=[];
-  lista.forEach(it=>{
-    const au=_tcNormAu(it.protocolo);
-    const chave=au||(it.evento?'EVE:'+String(it.evento).toUpperCase():'');
-    if(!chave){saida.push(it);return}
-    if(!grupos.has(chave))grupos.set(chave,[]);
-    grupos.get(chave).push(it);
-  });
-
-  grupos.forEach(g=>{
-    if(g.length===1){saida.push(g[0]);return}
-    /* andamento: o melhor de todos */
-    const base=g.reduce((a,b)=>(_tcPeso(b)>_tcPeso(a)?b:a));
-    g.forEach(o=>{
-      if(o===base)return;
-      base.recobrancas=Math.max(Number(base.recobrancas)||0,Number(o.recobrancas)||0);
-      base.ultimaCobrancaMs=Math.max(Number(base.ultimaCobrancaMs)||0,Number(o.ultimaCobrancaMs)||0);
-      base.ultimoContatoMs=Math.max(Number(base.ultimoContatoMs)||0,Number(o.ultimoContatoMs)||0);
-      base.escalonadoMs=Number(base.escalonadoMs)||Number(o.escalonadoMs)||0;
-      base.encerramentoMs=Number(base.encerramentoMs)||Number(o.encerramentoMs)||0;
-      const resp=[base.respostaMs,o.respostaMs].map(Number).filter(Boolean);
-      base.respostaMs=resp.length?Math.min.apply(null,resp):0;
-      /* respostaMs é a PRIMEIRA mensagem da TIM (o automático do AU) e vale
-         a menor; ultimaTimMs é a mais recente e vale a maior. Trocar uma
-         pela outra apagaria justamente o sinal de que há resposta a dar. */
-      base.ultimaTimMs=Math.max(Number(base.ultimaTimMs)||0,Number(o.ultimaTimMs)||0);
-      base.threads=(base.threads||[]).concat(o.threads||[]);
-    });
-    /* descrição: a abertura nossa, quando existir no grupo. É ela que
-       diz qual é a falha e quando o chamado começou — não o aviso
-       automático da TIM, que fala de outra ocorrência. */
-    const desc=g.filter(x=>x.solicitante&&!_tcResumoRuim(x.resumo))
-                .sort((a,b)=>(a.aberturaMs||0)-(b.aberturaMs||0))[0];
-    const fonte=desc||g.find(x=>!_tcResumoRuim(x.resumo))||base;
-    if(fonte!==base){
-      base.resumo=fonte.resumo||base.resumo;
-      if(fonte.solicitante)base.solicitante=fonte.solicitante;
-      if(fonte.designacao)base.designacao=fonte.designacao;
-      if(fonte.dataHoraFalha)base.dataHoraFalha=fonte.dataHoraFalha;
-      const fa=_tcFalhaMs(base.dataHoraFalha);
-      if(fonte.aberturaMs&&(!fa||fonte.aberturaMs>=fa-600000))base.aberturaMs=fonte.aberturaMs;
-    }
-    base.registrosUnificados=g.length;
-    saida.push(base);
-  });
-  return saida;
-}
-/* quanto o registro avançou na tratativa — decide quem carrega o andamento */
-function _tcPeso(x){
-  let p=0;
-  if(x.encerramentoMs)p+=1000;
-  if(x.escalonadoMs)p+=40;
-  if(x.respostaMs)p+=20;
-  p+=(Number(x.recobrancas)||0)*5;
-  if(x.solicitante)p+=8;
-  if(x.dataHoraFalha)p+=6;
-  return p;
-}
-
-/* Espelha _timBolaComONoc do backend. A TIM não para no AU: depois do
-   e-mail automático ela volta a escrever pedindo curva .SOR, endereço das
-   pontas, confirmação de teste — e isso chegava ao painel só como "último
-   contato", sem nada dizendo que havia resposta a dar.
-   Três condições, todas necessárias:
-     1) o chamado já tem AU (antes dele só existe o e-mail automático);
-     2) a TIM falou DEPOIS desse automático — respostaMs guarda o horário
-        dele, então mensagem única não conta;
-     3) a TIM falou depois de nós; se já respondemos, a bola voltou.      */
-function _tcBolaComONoc(item){
-  if(!item||!_tcTemAu(item))return false;
-  const tim=Number(item.ultimaTimMs)||0;
-  if(!tim)return false;
-  const automatico=Number(item.respostaMs)||0;
-  if(automatico&&tim<=automatico)return false;
-  const nosso=Math.max(Number(item.aberturaMs)||0,Number(item.ultimaCobrancaMs)||0);
-  return tim>nosso;
-}
-
-function _tcEstado(item,agora){
-  if(item.encerramentoMs)return 'NORMALIZADO';
-  /* Vence o ciclo de reforço: reforçar escalonamento é insistir numa carta
-     já jogada e pode esperar a próxima hora; pergunta da TIM sem resposta
-     trava a tratativa inteira. */
-  if(_tcBolaComONoc(item))return 'RESPONDER_TIM';
-  /* O escalonamento vem ANTES de tudo. Antes, esta checagem só existia no
-     ramo de quem já tinha AU: chamado escalonado que nunca recebeu AU caía
-     de volta em COBRAR e ficava eternamente marcado como atrasado, como se
-     o operador não estivesse cobrando — quando na verdade não havia mais
-     cobrança de AU a fazer. Escalonado tem vida própria: ciclo de reforço
-     de 1h, reiniciado a cada cobrança registrada. */
-  if(Number(item.escalonadoMs)){
-    const base=Math.max(Number(item.escalonadoMs),Number(item.ultimaCobrancaMs)||0);
-    return (agora-base)>=TC_REFORCO_MS?'REFORCAR':'AGUARDANDO_NORM';
-  }
-  if(!_tcTemAu(item)){
-    const base=Math.max(Number(item.aberturaMs)||0,Number(item.ultimaCobrancaMs)||0);
-    return (agora-base)>=TC_CADENCIA_MS?'COBRAR':'AGUARDANDO_AU';
-  }
-  const decorrido=agora-(Number(item.aberturaMs)||0);
-  if(decorrido<TC_ESCALONAMENTO_MS)return 'EM_TRATATIVA';
-  return 'ESCALONAR';
-}
-
-/* Dois relógios, nunca os dois ao mesmo tempo:
-   • sem AU  → conta a janela de cobrança (30 min), reiniciada a cada
-     cobrança. É esse relógio que diz "cobre de novo".
-   • com AU  → conta até o escalonamento das 8h.
-   • depois do escalonamento o anel para de correr: continuar marcando
-     "+101h além do SLA" não informa nada e só apaga o que é urgente. */
-function _tcCalc(item,agora){
-  agora=agora||Date.now();
-  const estado=_tcEstado(item,agora);
-  const abertura=Number(item.aberturaMs)||0;
-  const fim=Number(item.encerramentoMs)||agora;
-  const total=Math.max(0,fim-abertura);
-  let base=abertura,limite=0,decorrido=total;
-
-  if(estado==='AGUARDANDO_AU'||estado==='COBRAR'){
-    base=Math.max(abertura,Number(item.ultimaCobrancaMs)||0);
-    limite=TC_CADENCIA_MS;
-    decorrido=Math.max(0,agora-base);
-  /* Escalonado (REFORCAR e AGUARDANDO_NORM) não entra em nenhum ramo daqui de
-     propósito: fica com a base e o decorrido do topo da função, ou seja, o
-     tempo total em aberto, e sem limite — o anel completa e para. O ciclo de
-     1h continua existindo em _tcEstado, mas só para acender a etiqueta
-     REFORÇAR CHAMADO. Ele deixou de ocupar o cronômetro porque o número
-     grande do card zerava a cada hora e se lia como se a indisponibilidade
-     tivesse acabado de começar. */
-  }else if(estado==='EM_TRATATIVA'||estado==='ESCALONAR'){
-    limite=TC_ESCALONAMENTO_MS;
-    decorrido=total;
-  }else if(estado==='RESPONDER_TIM'){
-    /* o anel mede há quanto tempo a TIM está esperando. Sem limite de
-       propósito: não existe prazo acordado para responder, e inventar um
-       aqui criaria compromisso que o NOC não assumiu. A cor vem do estado,
-       não do percentual. */
-    base=Number(item.ultimaTimMs)||abertura;
-    limite=0;
-    decorrido=Math.max(0,agora-base);
-  }
-  const pct=limite>0?decorrido/limite:1;
-  return{estado,total,decorrido,limite,base,pct,
-         restante:limite>0?Math.max(0,limite-decorrido):0,
-         excedente:limite>0?Math.max(0,decorrido-limite):0};
-}
-
-/* o badge do topo conta AÇÃO PENDENTE, não "estourado". Chamado
-   escalonado e aguardando a TIM não é pendência nossa. */
-function atualizarBadgeTcSla(){
-  const agora=Date.now();
-  const n=AppState.tcSla.itens.filter(i=>{
-    const e=_tcEstado(i,agora);return e==='RESPONDER_TIM'||e==='COBRAR'||e==='ESCALONAR'||e==='REFORCAR';
-  }).length;
-  /* agora mora na aba E-mail's — é o que avisa que tem pendência ali sem
-     precisar entrar na aba para descobrir */
-  _pintaBadgeSla('abaEmailsBadge',n);
-}
-
-function _tcDiasAberto(item){
-  const dias=Math.floor((Date.now()-Number(item.aberturaMs||0))/86400000);
-  if(dias<1)return '';
-  return ` <span style="color:var(--amber)">· ${dias}d</span>`;
-}
-function _tcDesde(ms){
-  if(!ms)return '';
-  const d=Date.now()-Number(ms);
-  if(d<60000)return 'agora há pouco';
-  if(d<3600000)return `há ${Math.floor(d/60000)} min`;
-  if(d<86400000)return `há ${Math.floor(d/3600000)}h${String(Math.floor((d%3600000)/60000)).padStart(2,'0')}`;
-  const dias=Math.floor(d/86400000);
-  return `há ${dias} dia${dias>1?'s':''}`;
-}
-
-/* A linha que diz o que fazer — é o motivo de o painel existir.
-
-   O texto descreve o CHAMADO, nunca o operador. "Atrasado" e "sem cobrar"
-   liam como cobrança de quem está olhando a tela, ainda mais em chamado
-   já escalonado, onde não sobrou cobrança de AU para fazer. O relógio
-   vencido é do prazo, e é assim que ele é nomeado. */
-function _tcAcao(item,c){
-  switch(c.estado){
-    /* RESPONDER_TIM não ganha linha de ação, pelo mesmo motivo já aplicado
-       a REFORCAR logo abaixo: o selo do topo já diz "Responder a TIM" e o
-       anel já mostra esse mesmo tempo correndo. A linha "Responder a TIM
-       há 01:10:24" repetia as duas coisas embaixo do contador. */
-    case 'RESPONDER_TIM':
-      return null;
-    case 'COBRAR':
-      return{classe:'urgente',rot:'Cobrar AU',cron:`vencida há ${_slaFmtDur(c.excedente)}`};
-    case 'AGUARDANDO_AU':
-      return{classe:'espera',rot:'Cobrar em:',cron:_slaFmtDur(c.restante)};
-    case 'EM_TRATATIVA':
-      return{classe:'tratativa',rot:'Escalonar em',cron:_slaFmtDur(c.restante)};
-    case 'ESCALONAR':
-      return{classe:'urgente',rot:'Escalonar',cron:`${_slaFmtDur(c.excedente)} além das 8h`};
-    /* Escalonado não ganha linha de ação: o selo do topo já nomeia o estado
-       e o anel já mostra o ciclo de 1h correndo. Uma terceira repetição do
-       mesmo tempo só ocupava espaço. Retornar null remove a linha inteira. */
-    case 'REFORCAR':
-      return null;
-    case 'AGUARDANDO_NORM':
-      return Number(item.escalonadoMs)
-        ?null
-        :{classe:'calma',rot:'Aguardando a TIM',cron:_slaFmtDur(c.total)};
-    default:
-      return{classe:'calma',rot:'Normalizado',cron:_slaFmtDur(c.total)};
-  }
-}
-
-/* o que fazer agora, em uma linha, para quem já escalonou e não sabe o que
-   mais lhe cabe — a resposta é: reforçar o mesmo escalonamento e manter a
-   supervisão do setor ciente */
-/* quais cards estão com o bloco de detalhes aberto. Precisa viver FORA do
-   card: renderTcSla redesenha a lista a cada varredura, e sem isso o que o
-   operador abriu fechava sozinho no meio da leitura. */
-const TC_EXPANDIDOS=new Set();
-
-
-function _tcDica(item,c){
-  if(c.estado==='RESPONDER_TIM')
-    return 'A TIM escreveu e está aguardando retorno. Responda no próprio e-mail do chamado, com o grupo do NOC em cópia.';
-  if(c.estado==='REFORCAR')
-    return 'Reforce o mesmo escalonamento com a TIM e mantenha a supervisão do NOC ciente.';
-  if(c.estado==='AGUARDANDO_NORM'&&Number(item.escalonadoMs))
-    return 'Escalonado e reforçado — a ação está com a TIM. Nada pendente daqui até o próximo ciclo.';
-  return '';
-}
-
-/* O selo do topo nomeia o ESTADO do chamado. Em REFORCAR ele repetia com
-   outras palavras o que a etiqueta âmbar passou a dizer, e o estado do chamado
-   — escalonado, esperando a TIM normalizar — sumia da tela. */
-function _tcRotuloEstado(estado){
-  if(estado==='REFORCAR')return TC_FILA_NOME.AGUARDANDO_NORM;
-  return TC_FILA_NOME[estado]||'TIM';
-}
-
-function _tcSlaCardHTML(item,ctx){
-  const c=_tcCalc(item);
-  const acao=_tcAcao(item,c);
-  /* todo prazo de SLA correndo é vermelho; azul só na tratativa dentro das
-     8h e cinza no que já saiu da nossa mão */
-  const anelCor=(c.estado==='RESPONDER_TIM'||c.estado==='COBRAR'||c.estado==='ESCALONAR'||
-                 c.estado==='AGUARDANDO_AU'||c.estado==='REFORCAR')?'var(--red)'
-              :(c.estado==='EM_TRATATIVA')?'var(--blue)':'var(--text3)';
-  const dica=_tcDica(item,c);
-  /* "escalonado" virou selo em vez de linha no rodapé: saber SE foi
-     escalonado muda o que dá para fazer, e isso tem que estar no primeiro
-     olhar. A data exata é detalhe e desceu para o bloco expansível. */
-  const seloEscalonado=Number(item.escalonadoMs)
-    ?`<span class="tc-selo escalonado" title="Escalonamento das 8h j\u00e1 registrado com a TIM">Escalonado</span>`:'';
-  /* a ação que sobrou depois do escalonamento, dita onde dá para ver de longe */
-  const seloReforcar=c.estado==='REFORCAR'
-    ?`<span class="tc-selo reforcar" title="Passou 1h desde o escalonamento ou desde a \u00faltima cobran\u00e7a registrada \u2014 refor\u00e7ar com a TIM e manter a supervis\u00e3o ciente">Refor\u00e7ar chamado</span>`:'';
-  /* aviso, não fusão: os dois cards continuam na tela */
-  const vinculo=(ctx&&ctx.vinculos&&ctx.vinculos[item.id])||null;
-  const seloVinculo=vinculo
-    ?`<span class="tc-selo vinculo" title="Mesmo assunto de um chamado j&aacute; aberto e sem falha diferente entre os dois">Poss&iacute;vel resposta</span>`:'';
-  const selos=(seloReforcar||seloEscalonado||seloVinculo)
-    ?`<div class="tc-card-selos">${seloReforcar}${seloEscalonado}${seloVinculo}</div>`:'';
-  const aberto=TC_EXPANDIDOS.has(String(item.id));
-  const urlIr=_tcUrlGmail(item);
-
-  return `<div class="sla-card-faixa"></div>
-<div class="sla-card-corpo">
-  <div class="sla-card-topo">
-    ${_loteCheckHTML(item)}
-    <span class="sla-badge-rede">${_esc(_tcRotuloEstado(c.estado))}</span>
-    <span class="sla-abertura" title="Quando o chamado foi aberto e há quantos dias está em aberto">Aberto ${_slaFmtHora(item.aberturaMs)}${_tcDiasAberto(item)}</span>
-  </div>
-  <div class="sla-card-tipo" style="font-size:.8825rem;line-height:1.3">${_esc(item.resumo||'Sem Assunto')}</div>
-  <div class="sla-relogio">
-    <div class="sla-ring-wrap">
-      <svg class="sla-ring" viewBox="0 0 160 160">
-        <circle class="anel-fundo" cx="80" cy="80" r="${SLA_RING_R}"></circle>
-        <circle class="anel-frente" cx="80" cy="80" r="${SLA_RING_R}"
-                stroke-dasharray="${SLA_RING_C.toFixed(1)}" stroke-dashoffset="${SLA_RING_C.toFixed(1)}"
-                style="stroke:${anelCor}"></circle>
-      </svg>
-      <div class="sla-ring-centro">
-        <div class="sla-tempo">00:00:00</div>
-      </div>
-    </div>
-    <div class="sla-tempo-rot">${_esc(_tcRotuloPrazo(c.estado,c.limite))}</div>
-  </div>
-  ${acao?`<div class="tc-acao ${acao.classe}"><span class="tc-acao-rot">${acao.rot}</span><span class="tc-acao-cron">${acao.cron}</span></div>`:''}
-  ${selos}
-  <!-- Os três campos que identificam o chamado, na ordem em que se lê:
-       FALHA EM, PROTOCOLO, DESIGNAÇÃO. Aparecem SEMPRE, nesta ordem, mesmo
-       vazios: numa grade com muitos cards, linha que aparece e desaparece
-       empurra as outras de lugar e obriga a reler o card inteiro. Posição
-       fixa deixa o olho ir direto. E "—" também informa: sem designação
-       não há circuito para casar. -->
-  <div class="sla-info tc-info-chave">
-    <div class="sla-linha linha-falha"><span class="sla-linha-rot">Falha em</span><span class="sla-linha-val${item.dataHoraFalha?' destaque':' vazio'}">${_esc(item.dataHoraFalha||'—')}</span></div>
-    <div class="sla-linha"><span class="sla-linha-rot">Protocolo</span><span class="sla-linha-val${_tcTemAu(item)?' destaque':' vazio'}">${_esc(item.protocolo||'Aguardando AU')}</span></div>
-    <div class="sla-linha"><span class="sla-linha-rot">Designação</span><span class="sla-linha-val${item.designacao?' destaque':' vazio'}">${_esc(item.designacao||'—')}</span></div>
-  </div>
-  <div class="tc-card-acoes">
-    <button class="tc-btn-detalhes" data-id="${_esc(item.id)}" aria-expanded="${aberto}">${aberto?'Menos detalhes':'Detalhes'}</button>
-    ${urlIr?`<a class="tc-btn-ir" href="${_esc(urlIr)}" target="_blank" rel="noopener noreferrer" title="Abrir a conversa desta tratativa no Gmail, em outra aba">Ir &#8599;</a>`:''}
-  </div>
-  <div class="tc-detalhes${aberto?'':' hidden'}">
-    ${vinculo?`<div class="tc-vinculo-nota">Mesmo assunto do chamado aberto em <strong>${_slaFmtHora(vinculo.aberturaMs)}</strong>${vinculo.mesmaFalha?', com a mesma data de falha':''}. Pode ser resposta no e-mail que j&aacute; existe, e n&atilde;o chamado novo &mdash; confira antes de tratar como ocorr&ecirc;ncia separada.</div>`:''}
-    <div class="tc-acao-dica${dica?'':' hidden'}">${_esc(dica)}</div>
-    <div class="sla-info">
-      <div class="sla-linha"><span class="sla-linha-rot">Solicitante</span><span class="sla-linha-val">${_esc(item.solicitante||'—')}</span></div>
-      ${item.evento?`<div class="sla-linha"><span class="sla-linha-rot">Evento TIM</span><span class="sla-linha-val">${_esc(item.evento)}</span></div>`:''}
-      ${Number(item.recobrancas)>0?`<div class="sla-linha"><span class="sla-linha-rot">Cobran&ccedil;as</span><span class="sla-linha-val">${Number(item.recobrancas)}${item.ultimaCobrancaMs?' &middot; &uacute;ltima em '+_slaFmtHora(item.ultimaCobrancaMs):''}</span></div>`:''}
-      <div class="sla-linha"><span class="sla-linha-rot">&Uacute;ltimo contato</span><span class="sla-linha-val">${_esc(_tcDesde(item.ultimoContatoMs||item.ultimaCobrancaMs||item.aberturaMs)||'—')}</span></div>
-      ${item.escalonadoMs?`<div class="sla-linha"><span class="sla-linha-rot">Escalonado em</span><span class="sla-linha-val">${_slaFmtHora(item.escalonadoMs)}</span></div>`:''}
-    </div>
-  </div>
-  ${c.estado==='ESCALONAR'?`<button class="tc-btn-escalonar tc-btn-secundario" data-id="${_esc(item.id)}">Registrar escalonamento</button>`:''}
-  <button class="sla-btn-encerrar" data-id="${_esc(item.id)}">Normalizar / Encerrar</button>
-</div>`;
-}
-
-/* ── filtro e contexto ── */
-function _tcFiltrar(itens){
-  const q=String(AppState.tcSla.filtro||'').trim().toLowerCase();
-  if(!q)return itens;
-  const agora=Date.now();
-  /* o nome da fila entra na busca: sem os quadrantes clicáveis, é assim
-     que se recorta o painel por estado — digitar "cobrar", "escalonar" */
-  return itens.filter(i=>[i.designacao,i.protocolo,i.evento,i.solicitante,i.resumo,
-                          TC_FILA_NOME[_tcEstado(i,agora)]]
-    .some(v=>String(v||'').toLowerCase().indexOf(q)!==-1));
-}
-
-/* ── possível resposta dentro de um chamado que já existe ────────────
-   Regra da operação: chamado só se abre com o circuito OFFLINE. Duas falhas
-   em data/hora diferentes significam que o circuito voltou entre uma e
-   outra — são ocorrências distintas e cada uma tem card próprio, mesmo que
-   o assunto e a designação sejam idênticos. Por isso a data da falha é a
-   primeira coisa checada aqui, e não o texto do título.
-
-   O que esta função procura é o contrário: duas conversas com o MESMO
-   assunto e SEM falha diferente entre elas. Quase sempre é alguém
-   respondendo a todos no e-mail que já existe em vez de abrir chamado novo
-   — foi assim que a resposta da TIM ("RE: ...", ou com o cabeçalho do
-   Business Contact Center) virou um segundo card.
-
-   NADA é fundido de propósito: os dois cards continuam, e quem decide é o
-   NOC. Fusão automática por semelhança de título esconderia chamado real,
-   que é pior do que ver um card a mais. */
-const TC_VINCULO_JANELA_MS = 7*24*3600000;
-
-/* Tira o que é embrulho de e-mail e não faz parte do assunto.
-
-   O QUE ESTAVA ERRADO. O cabeçalho do Business Contact Center só era
-   removido na forma completa, "Atendimento Business Contact Center - TIM
-   S.A. - <assunto>". Mas o corporate também responde com
-   "Atendimento Business Contact Center -RE: <assunto>", SEM o "TIM S.A."
-   — e nessa forma nada era removido: o assunto-base saía
-   "ATENDIMENTO BUSINESS CONTACT CENTER -RE: DEGRADAÇÃO" em vez de
-   "DEGRADAÇÃO". Como _tcMesmaConversa compara assunto-base, a resposta da
-   TIM nunca casava com a nossa abertura, o AU não era herdado e o painel
-   mostrava dois cards do mesmo chamado — um "Aguardando AU" e outro "Em
-   tratativa" com o protocolo, ambos na designação MNSDIP450562.
-
-   COMO FICOU. Os prefixos se empilham em qualquer ordem ("RE: Atendimento
-   Business Contact Center -RES: ..."), então em vez de um passe fixo isto
-   descasca em laço: separadores soltos, depois um prefixo de resposta,
-   depois o cabeçalho da TIM — repetindo enquanto houver o que tirar. A
-   parte "- TIM S.A." virou opcional, que é a correção de fato. */
-function _tcAssuntoBase(s){
-  let t=String(s||''),antes;
-  do{
-    antes=t;
-    t=t.replace(/^[\s\-–—:·|>]+/,'');
-    t=t.replace(/^(?:re|res|resp|enc|fw|fwd|em|encaminhar)\s*:\s*/i,'');
-    t=t.replace(/^atendimento\s+business\s+contact\s+center\b(?:\s*[-–—]?\s*tim\s*s\.?\s*a\.?)?/i,'');
-  }while(t!==antes&&t);
-  return t.replace(/[\s.·|]+$/,'')
-    .replace(/\s+/g,' ')
-    .trim().toUpperCase();
-}
-
-/* velho e novo são a MESMA conversa? Ordem das checagens é a da operação:
-   falha primeiro, título por último. */
-function _tcMesmaConversa(velho,novo){
-  if((novo.aberturaMs||0)<=(velho.aberturaMs||0))return false;
-  if((novo.aberturaMs||0)-(velho.aberturaMs||0)>TC_VINCULO_JANELA_MS)return false;
-
-  /* 1) falhas declaradas e diferentes ⇒ o circuito voltou no meio:
-        são ocorrências distintas */
-  const fv=_tcFalhaMs(velho.dataHoraFalha),fn=_tcFalhaMs(novo.dataHoraFalha);
-  if(fv&&fn&&Math.abs(fv-fn)>600000)return false;
-
-  /* 2) dois AUs diferentes ⇒ a TIM protocolou dois chamados */
-  const av=_tcNormAu(velho.protocolo),an=_tcNormAu(novo.protocolo);
-  if(av&&an&&av!==an)return false;
-
-  /* 3) designações diferentes ⇒ circuitos diferentes */
-  const dv=String(velho.designacao||'').trim().toUpperCase();
-  const dn=String(novo.designacao||'').trim().toUpperCase();
-  if(dv&&dn&&dv!==dn)return false;
-
-  /* 4) e só então o assunto: precisa ser o mesmo e ter substância —
-        título curto demais não identifica nada */
-  const sv=_tcAssuntoBase(velho.resumo),sn=_tcAssuntoBase(novo.resumo);
-  if(!sv||sv.length<10||sv!==sn)return false;
-  return {mesmaFalha:!!(fv&&fn)};
-}
-
-/* O AU da resposta da TIM É o AU do chamado. Quando o corporate responde
-   sem repetir a designação, o backend não consegue casar a resposta com a
-   abertura (_timDonoDoEvento desiste sem designação) e o protocolo fica
-   preso na thread da resposta — o chamado segue "Aguardando AU" com o
-   número já em mãos. Aqui esse número volta para o chamado a que pertence.
-   Não é palpite de layout: é o mesmo par que _tcMesmaConversa reconhece,
-   com as travas de falha, designação e AU conflitante. Depois disso a
-   fusão por AU, que já existia, junta os dois — não por semelhança de
-   título, mas porque o protocolo prova que são o mesmo chamado. */
-function _tcHerdarAu(lista){
-  const abertos=lista.filter(i=>!i.encerramentoMs);
-  abertos.forEach(velho=>{
-    if(String(velho.protocolo||'').trim())return;
-    let melhor=null;
-    abertos.forEach(novo=>{
-      if(novo===velho)return;
-      if(!String(novo.protocolo||'').trim())return;
-      if(!_tcMesmaConversa(velho,novo))return;
-      if(!melhor||(novo.aberturaMs||0)<(melhor.aberturaMs||0))melhor=novo;
-    });
-    if(melhor){
-      velho.protocolo=melhor.protocolo;
-      velho.auHerdadoDe=melhor.id;
-      if(!velho.evento&&melhor.evento)velho.evento=melhor.evento;
-    }
-  });
-  return lista;
-}
-
-function _tcVinculos(itens){
-  const lista=(itens||[]).filter(i=>!i.encerramentoMs);
-  const marca={};
-  for(let a=0;a<lista.length;a++){
-    for(let b=0;b<lista.length;b++){
-      if(a===b)continue;
-      const velho=lista[a],novo=lista[b];
-      const r=_tcMesmaConversa(velho,novo);
-      if(!r)continue;
-      const anterior=marca[novo.id];
-      if(anterior&&(anterior.aberturaMs||0)>=(velho.aberturaMs||0))continue;
-      marca[novo.id]={id:velho.id,resumo:velho.resumo,aberturaMs:velho.aberturaMs,
-                      mesmaFalha:r.mesmaFalha};
-    }
-  }
-  return marca;
-}
-
-/* Prioridade de exibição: a ação humana pendente vem primeiro.
-   REFORCAR entra depois de ESCALONAR — escalonar é a última carta que ainda
-   temos na mão; reforçar é insistir numa carta já jogada. E vem antes de
-   AGUARDANDO_AU, onde nada venceu: é contagem regressiva dentro do prazo. */
-const TC_ORDEM={RESPONDER_TIM:0,COBRAR:1,ESCALONAR:2,REFORCAR:3,AGUARDANDO_AU:4,EM_TRATATIVA:5,AGUARDANDO_NORM:6,NORMALIZADO:7};
-/* Estado novo sem entrada aqui devolvia undefined, e "undefined - 0" é NaN:
-   o comparador desistia e a grade saía em ordem aleatória, com card calmo no
-   meio de dois vencidos. O fallback garante que o pior caso seja "vai para o
-   fim", nunca "embaralha tudo". */
-function _tcRank(estado){return estado in TC_ORDEM?TC_ORDEM[estado]:99}
-
-function renderTcSla(){
-  const wrap=$('tcSlaFilas');if(!wrap)return;
-  const st=AppState.tcSla;
-
-  /* &&!st.itens.length: com chamados na mão, falha de atualização não
-     apaga a tela — quem avisa é a tarja de conexão, lá embaixo */
-  if(st.status==='erro'&&!st.itens.length){
-    wrap.innerHTML=`<div class="sla-aviso erro"><div class="sla-aviso-icone">&#9888;</div><div class="sla-aviso-txt">Falha ao carregar os chamados do Gmail.<br>${_esc(st.erro)}<br><br>Use o bot&atilde;o Atualizar para tentar de novo.</div></div>`;
-    st.nodes.clear();st.assinatura='';_loteSincronizar('tim');renderResumoTcSla();return;
-  }
-  if(st.status==='carregando'&&!st.itens.length){
-    wrap.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#8987;</div><div class="sla-aviso-txt">Carregando chamados da TIM...</div></div>`;
-    st.nodes.clear();st.assinatura='';_loteSincronizar('tim');renderResumoTcSla();return;
-  }
-  if(!st.itens.length){
-    wrap.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#10003;</div><div class="sla-aviso-txt">Nenhum chamado TIM em aberto.</div></div>`;
-    st.nodes.clear();st.assinatura='';_loteSincronizar('tim');renderResumoTcSla();return;
-  }
-
-  const agora=Date.now();
-  const ctx={vinculos:_tcVinculos(st.itens)};
-  const visiveis=_tcFiltrar(st.itens).filter(i=>!st.filaFoco||_tcEstado(i,agora)===st.filaFoco);
-
-  /* cobrar > escalonar > reforçar > aguardando AU > tratativa > aguardando
-     norm. Dentro de cada grupo, o mais vencido primeiro; empatou, o mais
-     antigo. Nenhuma comparação pode devolver NaN: é o que quebra a grade. */
-  const ordenados=visiveis.slice().sort((a,b)=>{
-    const ea=_tcRank(_tcEstado(a,agora)),eb=_tcRank(_tcEstado(b,agora));
-    if(ea!==eb)return ea-eb;
-    const ca=_tcCalc(a,agora),cb=_tcCalc(b,agora);
-    const pa=Number.isFinite(ca.pct)?ca.pct:0,pb=Number.isFinite(cb.pct)?cb.pct:0;
-    if(pb!==pa)return pb-pa;
-    return (a.aberturaMs||0)-(b.aberturaMs||0);
-  });
-
-  /* só refaz o DOM quando a ordem ou a composição muda; nos demais ciclos
-     o tick apenas atualiza cronômetro, anel e linha de ação */
-  const assinatura=ordenados.map(i=>i.id+'~'+_tcEstado(i,agora)+'~'+(i.protocolo||'')
-                   +'~'+(i.recobrancas||0)+'~'+(i.escalonadoMs?1:0)).join('|')
-                   +'#'+(st.filaFoco||'')+'#'+(st.filtro||'');
-  if(st.assinatura===assinatura&&st.nodes.size){
-    visiveis.forEach(i=>{const n=st.nodes.get(i.id);if(n)n.item=i});
-    _loteSincronizar('tim');
-    tickTcSla();return;
-  }
-  st.assinatura=assinatura;
-
-  wrap.innerHTML='';st.nodes.clear();
-  if(!ordenados.length){
-    wrap.innerHTML=`<div class="sla-aviso"><div class="sla-aviso-icone">&#128269;</div><div class="sla-aviso-txt">Nenhum chamado nesse filtro.</div></div>`;
-  }
-  ordenados.forEach(item=>{
-    const fila=_tcEstado(item,agora);
-    const card=document.createElement('article');
-    card.className='sla-card tc-'+fila;
-    card.dataset.id=item.id;
-    card.innerHTML=_tcSlaCardHTML(item,ctx);
-    wrap.appendChild(card);
-    st.nodes.set(item.id,{
-      card,item,fila,
-      tempo:card.querySelector('.sla-tempo'),
-      anel:card.querySelector('.anel-frente'),
-      acaoBox:card.querySelector('.tc-acao'),
-      acaoRot:card.querySelector('.tc-acao-rot'),
-      acaoCron:card.querySelector('.tc-acao-cron'),
-      acaoDica:card.querySelector('.tc-acao-dica')
-    });
-  });
-
-  const info=$('tcSlaFiltroInfo');
-  if(info){
-    const partes=[];
-    if(st.filtro)partes.push(`${ordenados.length} de ${st.itens.length} chamados`);
-    if(st.filaFoco)partes.push(`${TC_FILA_NOME[st.filaFoco]} · clique de novo no indicador para ver tudo`);
-    info.textContent=partes.join(' · ');
-  }
-  /* idem Acionamentos: o `checked` não sobrevive ao rebuild do DOM */
-  _loteSincronizar('tim');
-  tickTcSla();
-}
-
-function tickTcSla(){
-  const st=AppState.tcSla;
-  if(!st.aberto||!st.nodes.size)return;
-  const agora=Date.now();
-  let mudouFila=false;
-  const paraRemover=[];
-
-  st.nodes.forEach((n,id)=>{
-    const item=n.item;if(!item)return;
-    if(item.encerramentoMs&&(agora-item.encerramentoMs)>SLA_SUMIR_APOS_ENCERRAR_MS){paraRemover.push(id);return}
-    const c=_tcCalc(item,agora);
-    if(c.estado!==n.fila){mudouFila=true;return}
-
-    if(n.tempo)_slaPintaTempo(n.tempo,_slaFmtDur(c.decorrido));
-    if(n.anel)n.anel.setAttribute('stroke-dashoffset',(SLA_RING_C*(1-Math.min(c.pct,1))).toFixed(1));
-    /* _tcAcao devolve null nos estados que não têm linha de ação (escalonado);
-       nesses o card nem cria o elemento, então os guardas abaixo bastam. Uma
-       troca de estado força re-render antes de chegar aqui (mudouFila). */
-    const acao=_tcAcao(item,c);
-    if(acao){
-      if(n.acaoCron)n.acaoCron.textContent=acao.cron;
-      if(n.acaoRot)n.acaoRot.textContent=acao.rot;
-      if(n.acaoBox)n.acaoBox.className='tc-acao '+acao.classe;
-    }
-    if(n.acaoDica){
-      const d=_tcDica(item,c);
-      n.acaoDica.textContent=d;
-      n.acaoDica.classList.toggle('hidden',!d);
-    }
-  });
-
-  if(paraRemover.length){
-    paraRemover.forEach(id=>{
-      const n=st.nodes.get(id);
-      if(n){n.card.classList.add('saindo');setTimeout(()=>{if(n.card.parentNode)n.card.parentNode.removeChild(n.card)},400)}
-      st.nodes.delete(id);
-      st.itens=st.itens.filter(i=>i.id!==id);
-    });
-    st.assinatura='';
-    setTimeout(renderTcSla,450);
-  }else if(mudouFila){
-    /* um chamado mudou de fila (a cobrança venceu, as 8h estouraram):
-       redesenha para ele aparecer no lugar certo */
-    st.assinatura='';
-    renderTcSla();
-    return;
-  }
-  renderResumoTcSla();
-  atualizarBadgeTcSla();
-}
-
-/* O rodapé é o único lugar onde a varredura automática é visível. Sem ele
-   o operador não tem como distinguir "está rodando sozinho" de "travou de
-   novo" — e essa dúvida é metade do problema original. */
-function renderResumoTcSla(){
-  const rod=$('tcSlaRodape');
-  if(!rod)return;
-  const st=AppState.tcSla;
-  const hora=ms=>_slaFmtHora(ms).split(' ')[1];
-  const partes=[];
-  if(st.ultimaAtualizacao)partes.push(`Atualizado às ${hora(st.ultimaAtualizacao)}`);
-  if(st.varrendo){
-    partes.push('varrendo o Gmail...');
-  }else if(st.varreduraErro){
-    partes.push(`varredura falhou (${st.varreduraErro}) — nova tentativa em ${Math.round(TC_VARRE_ERRO_MS/1000)}s`);
-  }else if(st.varreduraMs){
-    partes.push(`varredura às ${hora(st.varreduraMs)} em ${(st.varreduraDur/1000).toFixed(1)}s`
-      +` · próxima em ${Math.round(_tcVarreIntervalo()/1000)}s`);
-  }
-  rod.textContent=partes.join(' · ');
-}
-
-/* registra o escalonamento das 8h: o chamado sai da fila de ação e passa
-   a só aguardar a normalização, que é o que o NOC descreveu */
-function registrarEscalonamentoTim(id,btn){
-  if(btn){btn.disabled=true;btn.textContent='Registrando...'}
-  jsonp({acao:'escalonarTim',id:id},20000).then(r=>{
-    if(r&&r.ok){
-      const it=AppState.tcSla.itens.find(i=>i.id===id);
-      if(it)it.escalonadoMs=r.escalonadoMs||Date.now();
-      showToast('Escalonamento registrado. O chamado agora só aguarda a normalização.');
-      AppState.tcSla.assinatura='';renderTcSla();
-      _concluir(r,'tim',null);
-    }else{
-      if(btn){btn.disabled=false;btn.textContent='Registrar escalonamento'}
-      showToast('Não foi possível registrar: '+((r&&r.erro)||'erro'),'error',5000);
-    }
-  }).catch(e=>{
-    if(btn){btn.disabled=false;btn.textContent='Registrar escalonamento'}
-    showToast('Falha ao registrar o escalonamento ('+e.message+').','error',5000);
-  });
-}
-
-/* O painel de e-mails virou a aba "E-mail's" — abrir/fechar/alternar agora
-   é responsabilidade de selecionarAbaSla(). Mantidos como atalhos porque
-   ainda são um jeito legítimo de cair direto nessa aba. */
-function abrirPainelTcSla(){abrirPainelSla('emails')}
-function fecharPainelTcSla(){fecharPainelSla()}
-function alternarPainelTcSla(){
-  (painelSlaAberto()&&AppState.slaAba==='emails')?fecharPainelSla():abrirPainelSla('emails');
-}
-
-function _reprogramarPollTcSla(){
-  clearInterval(AppState.tcSla.timerPoll);
-  Sync.agora();
-}
-
-let _relatorioTimData = null; // guarda os dados já calculados do último relatório, para exportar em PDF/TXT sem depender do HTML renderizado
-
-function abrirModalRelatorioTim(){
-  const hoje = new Date();
-  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  $('relatorioTimInicio').value = primeiroDia.toISOString().split('T')[0];
-  $('relatorioTimFim').value = hoje.toISOString().split('T')[0];
-  $('relatorioTimConteudo').innerHTML = '<div class="info-msg">Selecione o período e clique em Gerar.</div>';
-  $('btnExportarPDF').style.display = 'none';
-  $('btnExportarTXT').style.display = 'none';
-  _relatorioTimData = null;
-  /* a aba de e-mails abre com o mesmo período e sempre do zero */
-  $('relEmailInicio').value = primeiroDia.toISOString().split('T')[0];
-  $('relEmailFim').value = hoje.toISOString().split('T')[0];
-  $('relEmailConteudo').innerHTML = '<div class="info-msg">Selecione o período e clique em Buscar.</div>';
-  $('btnExportarEmailsTXT').style.display = 'none';
-  _relEmailsData = null;
-  trocarAbaRelatorio('chamados');
-  /* .copy-modal só abre com a classe "active" — este modal usava "visible",
-     que o CSS ignora, então o Relatório nunca abria. Bug antigo, descoberto
-     ao testar o clique depois que o botão mudou de lugar. */
-  $('modalRelatorioTim').classList.add('active');
-  /* Enter no campo de assunto dispara a busca, como em toda busca da tela */
-  const _ass=$('relEmailAssunto');
-  if(_ass&&!_ass.dataset.ligado){
-    _ass.dataset.ligado='1';
-    _ass.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();gerarRelatorioEmails()}});
-  }
-}
-
-function fecharModalRelatorioTim(){
-  $('modalRelatorioTim').classList.remove('active');
-}
-
-/* ── datas do relatório ─────────────────────────────────────────────
-   A coluna "Falha em" vinha crua da aba e aparecia em três formatos
-   diferentes na mesma tabela: ISO em UTC ("2026-08-10T13:36:00.000Z", que
-   ainda por cima mostrava a hora de Greenwich como se fosse a nossa),
-   "2026-08-12 ÀS 09:11:31" e, às vezes, DD/MM. Aqui tudo vira DD/MM/AAAA
-   HH:MM no horário de Manaus. O que não for data reconhecível volta como
-   veio, em vez de virar "Invalid Date". */
-function _relDataMs(v){
-  if(v===null||v===undefined||v==='')return 0;
-  if(v instanceof Date)return v.getTime();
-  if(typeof v==='number')return v;
-  const t=String(v).trim();
-  if(!t||t==='-')return 0;
-  /* ISO com fuso: o instante é absoluto, o navegador converte para Manaus */
-  if(/^\d{4}-\d{2}-\d{2}T/.test(t)){const d=new Date(t);return isNaN(d)?0:d.getTime()}
-  /* "2026-08-12 ÀS 09:11:31" e "2026-08-12 09:11" — sem fuso, é hora local */
-  let m=t.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(?:ÀS|AS)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?)?/i);
-  if(m)return new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0)).getTime();
-  /* "12/08/2026 09:11" */
-  m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
-  if(m)return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)).getTime();
-  const d=new Date(t);
-  return isNaN(d)?0:d.getTime();
-}
-function _relFmtData(v,comAno){
-  const ms=_relDataMs(v);
-  if(!ms)return '-';
-  const d=new Date(ms),p=n=>String(n).padStart(2,'0');
-  const dia=`${p(d.getDate())}/${p(d.getMonth()+1)}${comAno?'/'+d.getFullYear():''}`;
-  return `${dia} ${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-function _relFmtDuracao(min){
-  if(min===null||min===undefined)return '-';
-  const m=Math.max(0,Math.round(min));
-  const dias=Math.floor(m/1440),h=Math.floor((m%1440)/60),mm=m%60;
-  if(dias)return `${dias}d ${h}h${String(mm).padStart(2,'0')}`;
-  if(h)return `${h}h${String(mm).padStart(2,'0')}`;
-  return `${mm}min`;
-}
-
-/* Uma linha da aba NÃO é um chamado: a varredura grava um registro por
-   e-mail, então a abertura e cada cobrança do mesmo AU viram linhas
-   separadas. O painel já consolida isso por AU; o relatório não fazia, e
-   por isso 9 linhas viravam "9 chamados" e distorciam a média de resposta,
-   contando o mesmo chamado várias vezes. Aqui agrupa pelo mesmo critério.
-   Registro sem AU é um chamado por si — é o que a TIM ainda não protocolou. */
-/* Uma linha da aba NÃO é um chamado: a varredura grava um registro por
-   e-mail e, quando funde dois do mesmo AU, marca o absorvido com
-   STATUS = DUPLICADO para ele não voltar no ciclo seguinte. Isso é
-   escrituração interna do backend — todo o resto do Apps Script pula essas
-   linhas, só o relatório não pulava, e elas apareciam como se fossem
-   chamados novos. Aqui cada AU vira UM chamado (o registro mais antigo) e
-   os demais viram cobranças daquele chamado, em linha própria e compacta.
-   Registro sem AU é chamado por si — é o que a TIM ainda não protocolou. */
-function _relStatusInterno(st){return /^DUPLICAD/i.test(String(st||'').trim())}
-
-/* Mesmos critérios que o painel usa para montar os cards (_tcConsolidar).
-   Antes o relatório só agrupava pelo campo protocolo, e por isso um mesmo
-   chamado aparecia partido: o registro que chegou sem o campo preenchido,
-   mas com o AU escrito no assunto ("... - 2026101745729"), virava um
-   chamado à parte com AU "-". O painel já lia esse número do título; aqui
-   passa a ler também.
-
-   Duas diferenças conscientes em relação ao painel:
-   • a data da falha aqui vem em vários formatos (ISO, "ÀS", DD/MM), então
-     usa _relDataMs, que cobre todos, em vez do _tcFalhaMs, restrito a um;
-   • o painel também agrupa pelo código de evento da TIM (EVE...). O
-     endpoint relatorioTim passou a devolver esse campo (coluna T), então
-     a regra deixou de faltar aqui: quando não há AU, o evento serve de
-     chave e mantém junto o que a TIM tratou como uma ocorrência só. */
-function _relChaveChamado(it){
-  const au=_tcNormAu(it.protocolo)||_tcNormAu(_tcAuDoTitulo(it.assunto||it.resumo));
-  if(au) return au;
-  const eve=_tcNormAu(it.evento);
-  return eve?('EVE:'+eve):'';
-}
-
-function _relAgruparChamados(linhas){
-  /* abertura anterior à falha que o próprio chamado relata é ruído de
-     varredura — é o que fazia um chamado da manhã marcar horas a mais */
-  const lista=(linhas||[]).map(it=>{
-    const copia=Object.assign({},it);
-    const f=_relDataMs(copia.dataHoraFalha);
-    if(f&&copia.aberturaMs&&copia.aberturaMs<f-600000)copia.aberturaMs=f;
-    /* AU escrito no assunto vale como protocolo, igual ao painel */
-    if(!String(copia.protocolo||'').trim()){
-      const doTitulo=_tcAuDoTitulo(copia.assunto||copia.resumo);
-      if(doTitulo)copia.protocolo=doTitulo;
-    }
-    return copia;
-  });
-
-  const grupos=new Map(),saida=[];
-  lista.forEach(it=>{
-    const chave=_relChaveChamado(it);
-    if(!chave){saida.push(Object.assign({},it,{registros:1,cobrancasLista:[],
-      /* sem linha irmã, mas o contador da aba pode conhecer cobranças */
-      cobrancas:Number(it.recobrancas)||0,
-      status:_relStatusInterno(it.status)?'ABERTO':it.status}));return}
-    if(!grupos.has(chave))grupos.set(chave,[]);
-    grupos.get(chave).push(it);
-  });
-
-  grupos.forEach(g=>{
-    const ordenado=g.slice().sort((a,b)=>(a.aberturaMs||0)-(b.aberturaMs||0));
-    const base=Object.assign({},ordenado[0]);
-    /* quem abriu e o que houve: a abertura NOSSA, quando existir no grupo —
-       não o aviso automático da TIM, que fala de outra ocorrência. Mesmo
-       critério de _tcConsolidar. */
-    const nosso=ordenado.filter(x=>String(x.solicitante||'').trim()&&!_tcResumoRuim(x.assunto))[0]
-             || ordenado.filter(x=>String(x.solicitante||'').trim())[0];
-    if(nosso){
-      base.solicitante=nosso.solicitante;
-      if(nosso.designacao)base.designacao=nosso.designacao;
-      if(nosso.dataHoraFalha)base.dataHoraFalha=nosso.dataHoraFalha;
-    }
-    ordenado.forEach(o=>{
-      if(!base.protocolo||base.protocolo==='-')base.protocolo=o.protocolo;
-      if(!base.designacao||base.designacao==='-')base.designacao=o.designacao;
-      if(!base.dataHoraFalha)base.dataHoraFalha=o.dataHoraFalha;
-      const r=[base.respostaMs,o.respostaMs].map(Number).filter(Boolean);
-      base.respostaMs=r.length?Math.min.apply(null,r):0;
-      const n=[base.dataNormalizacao,o.dataNormalizacao].map(Number).filter(Boolean);
-      base.dataNormalizacao=n.length?Math.max.apply(null,n):0;
-      /* DUPLICADO nunca deve aparecer como status do chamado: é a marca que
-         o backend põe na linha absorvida, não um estado operacional. */
-      if(_relStatusInterno(base.status)&&!_relStatusInterno(o.status))base.status=o.status;
-      if(!base.status||base.status==='-')base.status=o.status;
-      if(/FINALIZ|ENCERR/i.test(String(o.status||'')))base.status=o.status;
-    });
-    if(_relStatusInterno(base.status))base.status='ABERTO';
-    base.registros=g.length;
-    base.cobrancasLista=ordenado.slice(1).map(o=>({
-      ms:Number(o.aberturaMs)||_relDataMs(o.abertura)
-    })).sort((x,y)=>x.ms-y.ms);
-    base.cobrancas=Math.max(base.cobrancasLista.length,
-                            Math.max.apply(null,g.map(x=>Number(x.recobrancas)||0)));
-    saida.push(base);
-  });
-  return saida.sort((a,b)=>(a.aberturaMs||0)-(b.aberturaMs||0));
-}
-
-/* "-" numa coluna de tempo é ambíguo: não dá para saber se o dado falta ou
-   se ainda não aconteceu. Nestas duas colunas é sempre a segunda coisa —
-   ou a TIM não respondeu, ou o chamado não foi dado como normalizado. */
-const REL_AGUARDANDO='<span style="color:var(--amber)">Aguardando</span>';
-
-
-/* ═══════════════════════════════════════════════════════════════════
-   RELATÓRIO · ABA "E-MAIL'S COM O CORPORATE"
-   ───────────────────────────────────────────────────────────────────
-   A aba Chamados lê a aba TIM-CHAMADOS, ou seja: só o que a varredura
-   conseguiu transformar em chamado. Esta aqui vai direto ao Gmail e
-   devolve TODA conversa trocada com as caixas da TIM no período — pedido
-   de posição, dúvida, assunto que a varredura não classificou —, com
-   protocolo (AU/EVE), hora da falha declarada, quando escrevemos, quando
-   a TIM respondeu e o botão IR, que abre a conversa no Gmail.
-   ═══════════════════════════════════════════════════════════════════ */
-let _relEmailsData=null;
-
-function trocarAbaRelatorio(qual){
-  const emails=qual==='emails';
-  $('relViewChamados').style.display=emails?'none':'';
-  $('relViewEmails').style.display=emails?'':'none';
-  $('abaRelChamados').classList.toggle('ativa',!emails);
-  $('abaRelEmails').classList.toggle('ativa',emails);
-}
-window.trocarAbaRelatorio=trocarAbaRelatorio;
-
-function gerarRelatorioEmails(){
-  const inicio=$('relEmailInicio').value;
-  const fim=$('relEmailFim').value;
-  const assunto=($('relEmailAssunto').value||'').trim();
-  const div=$('relEmailConteudo');
-  if(!inicio||!fim){
-    div.innerHTML='<div class="info-msg" style="color:var(--red)">Preencha as duas datas.</div>';
-    return;
-  }
-  div.innerHTML='<div class="info-msg">Lendo a caixa no Gmail — pode levar até um minuto...</div>';
-  $('btnExportarEmailsTXT').style.display='none';
-  _relEmailsData=null;
-
-  /* a leitura do Gmail é mais lenta que a da planilha: 90 s de folga */
-  jsonp({acao:'relatorioEmails',dataInicio:inicio,dataFim:fim,assunto:assunto},90000).then(r=>{
-    if(!r||!r.ok){
-      div.innerHTML=`<div class="info-msg" style="color:var(--red)">Erro ao ler os e-mails: ${_esc((r&&r.erro)||'falha')}</div>`;
-      return;
-    }
-    const itens=r.itens||[];
-    if(!itens.length){
-      div.innerHTML='<div class="info-msg">Nenhuma conversa com as caixas da TIM neste período'+(assunto?` com o assunto "${_esc(assunto)}"`:'')+'.</div>';
-      return;
-    }
-    const PRAZO_AU_MIN=(Number(r.prazoAuMs)||30*60*1000)/60000;
-
-    const linhas=itens.map(it=>{
-      const nosso=Number(it.nossoMs)||Number(it.primeiroMs)||0;
-      const tim=Number(it.timMs)||0;
-      /* só conta como resposta a mensagem da TIM que veio DEPOIS da nossa;
-         thread aberta pela TIM não tem tempo de resposta a cobrar */
-      const respMin=(tim&&nosso&&tim>=nosso)?(tim-nosso)/60000:null;
-      return {
-        assunto:String(it.assunto||'(sem assunto)'),
-        protocolo:String(it.protocolo||''),
-        evento:String(it.evento||''),
-        designacao:String(it.designacao||''),
-        falha:String(it.falha||''),
-        quem:String(it.quem||''),
-        link:String(it.link||''),
-        mensagens:Number(it.mensagens)||0,
-        nossoMs:nosso, timMs:tim,
-        respMin:respMin,
-        atrasado:respMin!==null&&respMin>PRAZO_AU_MIN,
-        semResposta:!tim
-      };
-    });
-
-    const semProt=linhas.filter(l=>!l.protocolo&&!l.evento);
-    const semResp=linhas.filter(l=>l.semResposta);
-    const atrasadas=linhas.filter(l=>l.atrasado);
-    const tempos=linhas.filter(l=>l.respMin!==null).map(l=>l.respMin).sort((a,b)=>a-b);
-    const mediana=v=>{if(!v.length)return null;const m=Math.floor(v.length/2);return v.length%2?v[m]:(v[m-1]+v[m])/2};
-    const metrica=(rot,val,alerta)=>`
-      <div style="flex:1 1 150px;padding:10px 12px;border-radius:8px;background:var(--bg3);
-                  border-left:3px solid ${alerta?'var(--red)':'var(--border)'}">
-        <div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.4px">${rot}</div>
-        <div style="font-size:1.15rem;font-weight:700;color:${alerta?'var(--red)':'var(--text)'}">${val}</div>
-      </div>`;
-    const placar=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-      ${metrica('Conversas no período',linhas.length,false)}
-      ${metrica('Sem protocolo (AU/EVE)',semProt.length,semProt.length>0)}
-      ${metrica('Sem resposta da TIM',semResp.length,semResp.length>0)}
-      ${metrica(`1ª resposta fora dos ${Math.round(PRAZO_AU_MIN)} min`,atrasadas.length,atrasadas.length>0)}
-      ${metrica('Até a 1ª resposta · mediana',tempos.length?_relFmtDuracao(mediana(tempos)):'—',false)}
-    </div>`;
-
-    const aviso=(r.parcial||r.limiteAtingido)
-      ? `<div class="info-msg" style="color:var(--amber);margin-bottom:10px">&#9888; A leitura parou no teto de ${r.maxThreads||200} conversas${r.parcial?' / tempo de execução':''}. Estreite o período ou informe um assunto para ver o resto.</div>`
-      : '';
-
-    const corpo=linhas.map(l=>{
-      const celProt=(l.protocolo||l.evento)
-        ? `<div style="font-weight:700">${_esc(l.protocolo||'—')}</div>`+
-          (l.evento?`<div style="font-size:.72rem;color:var(--text3)">${_esc(l.evento)}</div>`:'')
-        : '<span style="color:var(--red);font-weight:700">SEM PROTOCOLO</span>';
-      const celResp=l.semResposta
-        ? '<span style="color:var(--red);font-weight:700">Sem resposta</span>'
-        : `<div style="font-weight:700;color:${l.atrasado?'var(--red)':'var(--teal)'}">${_esc(l.respMin===null?'—':_relFmtDuracao(l.respMin))}</div>`+
-          `<div style="font-size:.72rem;color:var(--text3)">${_esc(_relFmtData(l.timMs,true))}</div>`;
-      const ir=l.link
-        ? `<a class="btn-ir" href="${_esc(l.link)}" target="_blank" rel="noopener" title="Abrir esta conversa no Gmail">IR &#8599;</a>`
-        : '<span style="color:var(--text3)">—</span>';
-      return `<tr class="rel-chamado">
-        <td style="min-width:230px">${_esc(l.assunto)}
-          ${l.designacao?`<div style="font-size:.72rem;color:var(--text3)">${_esc(l.designacao)}</div>`:''}</td>
-        <td style="white-space:nowrap">${celProt}</td>
-        <td style="white-space:nowrap">${_esc(l.falha||'—')}</td>
-        <td style="white-space:nowrap">${_esc(_relFmtData(l.nossoMs,true))}
-          ${l.quem?`<div style="font-size:.72rem;color:var(--text3)">${_esc(l.quem)}</div>`:''}</td>
-        <td style="white-space:nowrap">${celResp}</td>
-        <td style="text-align:center">${l.mensagens}</td>
-        <td style="text-align:center">${ir}</td>
-      </tr>`;
-    }).join('');
-
-    div.innerHTML=placar+aviso+`
-      <div style="overflow-x:auto">
-        <table class="rel-tabela">
-          <thead><tr>
-            <th>Assunto</th>
-            <th style="white-space:nowrap">Protocolo</th>
-            <th style="white-space:nowrap">Falha em</th>
-            <th style="white-space:nowrap">Nosso envio</th>
-            <th style="white-space:nowrap">1&ordf; resposta TIM</th>
-            <th style="text-align:center">Msgs</th>
-            <th style="text-align:center">Abrir</th>
-          </tr></thead>
-          <tbody>${corpo}</tbody>
-        </table>
-      </div>`;
-
-    _relEmailsData={linhas,inicio,fim,assunto,
-      resumo:{total:linhas.length,semProt:semProt.length,semResp:semResp.length,
-              atrasadas:atrasadas.length,medianaResp:mediana(tempos)}};
-    $('btnExportarEmailsTXT').style.display='inline-block';
-  }).catch(e=>{
-    div.innerHTML=`<div class="info-msg" style="color:var(--red)">Falha de conexão: ${_esc(e.message)}</div>`;
-  });
-}
-window.gerarRelatorioEmails=gerarRelatorioEmails;
-
-function exportarRelatorioEmailsTXT(){
-  const d=_relEmailsData;
-  if(!d||!d.linhas.length){showToast('Gere o relatório primeiro.','error');return}
-  const l=[];
-  l.push('RELATORIO DE E-MAILS COM O CORPORATE (TIM)');
-  l.push('Periodo: '+d.inicio+' a '+d.fim+(d.assunto?('  |  Assunto: '+d.assunto):''));
-  l.push('Gerado em: '+_relCabecalhoRelatorio(d));
-  l.push('');
-  l.push('Conversas: '+d.resumo.total+'  |  Sem protocolo: '+d.resumo.semProt+
-         '  |  Sem resposta da TIM: '+d.resumo.semResp+'  |  1a resposta fora do prazo: '+d.resumo.atrasadas);
-  l.push('');
-  d.linhas.forEach((x,i)=>{
-    l.push((i+1)+') '+x.assunto);
-    l.push('   Protocolo: '+(x.protocolo||'SEM PROTOCOLO')+(x.evento?('  /  '+x.evento):''));
-    if(x.designacao)l.push('   Designacao: '+x.designacao);
-    l.push('   Falha em: '+(x.falha||'-'));
-    l.push('   Nosso envio: '+_relFmtData(x.nossoMs,true)+(x.quem?('  ('+x.quem+')'):''));
-    l.push('   1a resposta TIM: '+(x.semResposta?'SEM RESPOSTA':(_relFmtData(x.timMs,true)+'  ('+_relFmtDuracao(x.respMin)+')')));
-    l.push('   Mensagens: '+x.mensagens);
-    if(x.link)l.push('   Conversa: '+x.link);
-    l.push('');
-  });
-  try{
-    const blob=new Blob([l.join('\n')],{type:'text/plain;charset=utf-8'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download=`emails_corporate_${d.inicio}_a_${d.fim}.txt`;
-    document.body.appendChild(a);a.click();
-    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-    showToast('✓ TXT exportado.');
-  }catch(e){showToast('Não foi possível exportar: '+e.message,'error',4000)}
-}
-window.exportarRelatorioEmailsTXT=exportarRelatorioEmailsTXT;
-
-function gerarRelatorioTim(){
-  const inicio = $('relatorioTimInicio').value;
-  const fim = $('relatorioTimFim').value;
-  const div = $('relatorioTimConteudo');
-
-  if(!inicio || !fim){
-    div.innerHTML = '<div class="info-msg erro" style="color:var(--red)">Preencha ambas as datas.</div>';
-    return;
-  }
-
-  div.innerHTML = '<div class="info-msg">Gerando relatório, aguarde...</div>';
-  $('btnExportarPDF').style.display = 'none';
-  $('btnExportarTXT').style.display = 'none';
-  _relatorioTimData = null;
-
-  jsonp({acao:'relatorioTim', dataInicio: inicio, dataFim: fim}, 30000).then(r => {
-    if(!r || !r.ok){
-      div.innerHTML = `<div class="info-msg erro" style="color:var(--red)">Erro ao gerar relatório: ${r && r.erro || 'Falha'}</div>`;
-      return;
-    }
-    if(!r.relatorio || r.relatorio.length === 0){
-      div.innerHTML = '<div class="info-msg">Nenhum chamado encontrado no período.</div>';
-      return;
-    }
-
-    /* prazos vêm do backend para não repetir número mágico aqui */
-    const PRAZO_AU_MIN  = (Number(r.prazoAuMs) || 30*60*1000)/60000;
-    const PRAZO_ESC_MIN = (Number(r.prazoEscalonamentoMs) || 8*60*60*1000)/60000;
-
-    const registros = r.relatorio.length;
-    const chamados = _relAgruparChamados(r.relatorio);
-
-    /* ── uma leitura por chamado, respondendo às três perguntas do
-       relatório: quando a designação falhou, se a TIM protocolou (AU) e
-       se precisamos cobrar ─────────────────────────────────────────── */
-    const linhasObj = chamados.map(item => {
-      const abMs      = Number(item.aberturaMs) || _relDataMs(item.abertura);
-      const protocolo = String(item.protocolo || '').replace(/^-$/,'').trim();
-      const temAu     = !!protocolo;
-      const auMs      = Number(item.respostaMs) || 0;
-      const auMin     = auMs ? Math.max(0,(auMs - abMs)/60000) : null;
-      const auAtrasado= auMin !== null && auMin > PRAZO_AU_MIN;
-      const normMs    = Number(item.dataNormalizacao) || 0;
-      const normMin   = normMs ? Math.max(0,(normMs - abMs)/60000) : null;
-      const cobrancas = Number(item.cobrancas) || 0;
-      const escMs     = Number(item.escalonadoMs) || 0;
-
-      /* Ordenação por gravidade, não por data: o que interessa é ver
-         primeiro onde a TIM deixou a desejar. Sem AU é o pior caso —
-         significa que a abertura simplesmente não virou protocolo. */
-      let gravidade = 0;
-      if(!temAu)            gravidade += 10000;
-      if(escMs)             gravidade += 2000;
-      if(auAtrasado)        gravidade += 1000;
-      if(normMin === null)  gravidade += 500;
-      gravidade += Math.min(cobrancas, 50) * 20;
-      gravidade += Math.min((auMin || 0)/60, 100);
-
-      return {
-        gravidade, temAu, auAtrasado, auMin, normMin, cobrancas,
-        escalonado: !!escMs,
-        abMs,
-        designacao:   item.designacao || '-',
-        falhaEm:      _relFmtData(item.dataHoraFalha, true),
-        abertura:     _relFmtData(abMs, true),
-        solicitante:  item.solicitante || '-',
-        protocolo:    protocolo || '',
-        evento:       String(item.evento || '').trim(),
-        auQuando:     auMs ? _relFmtData(auMs, true) : '',
-        tempoAu:      auMin === null ? null : _relFmtDuracao(auMin),
-        tempoNorm:    normMin === null ? null : _relFmtDuracao(normMin),
-        normQuando:   normMs ? _relFmtData(normMs, true) : '',
-        escalonadoEm: escMs ? _relFmtData(escMs, true) : '',
-        escalonadoPor: item.escalonadoPor || '',
-        cobrancasLista: (item.cobrancasLista||[]).map(c=>({ quando:_relFmtData(c.ms,true) })),
-        status:       item.status || '-',
-        assunto:      String(item.assunto || item.resumo || '').trim()
-      };
-    }).sort((a,b)=> b.gravidade - a.gravidade || b.abMs - a.abMs);
-
-    /* ── placar ────────────────────────────────────────────────────── */
-    const semAu        = linhasObj.filter(l=>!l.temAu);
-    const auAtrasados  = linhasObj.filter(l=>l.auAtrasado);
-    const comCobranca  = linhasObj.filter(l=>l.cobrancas>0);
-    const escalonados  = linhasObj.filter(l=>l.escalonado);
-    const naoNorm      = linhasObj.filter(l=>l.normMin===null);
-    const totalCobr    = linhasObj.reduce((s,l)=>s+l.cobrancas,0);
-
-    const temposAu   = linhasObj.filter(l=>l.auMin!==null).map(l=>l.auMin).sort((a,b)=>a-b);
-    const temposNorm = linhasObj.filter(l=>l.normMin!==null).map(l=>l.normMin).sort((a,b)=>a-b);
-    const media   = v => v.length ? v.reduce((s,x)=>s+x,0)/v.length : null;
-    /* mediana entra junto com a média porque um único chamado esquecido
-       por dias distorce a média e esconde o comportamento típico */
-    const mediana = v => { if(!v.length) return null;
-      const m=Math.floor(v.length/2);
-      return v.length%2 ? v[m] : (v[m-1]+v[m])/2; };
-    const dur = x => x===null ? '—' : _relFmtDuracao(x);
-    const pct = n => linhasObj.length ? Math.round(n*100/linhasObj.length) : 0;
-
-    const metrica = (rot,val,alerta) => `
-      <div style="flex:1 1 150px;padding:10px 12px;border-radius:8px;background:var(--bg3);
-                  border-left:3px solid ${alerta?'var(--red)':'var(--border)'}">
-        <div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.4px">${rot}</div>
-        <div style="font-size:1.15rem;font-weight:700;color:${alerta?'var(--red)':'var(--text)'}">${val}</div>
-      </div>`;
-
-    const placar = `
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-        ${metrica('Chamados no período', linhasObj.length + (registros!==linhasObj.length?` <span style="font-size:.7rem;font-weight:400;color:var(--text3)">de ${registros} registros</span>`:''), false)}
-        ${metrica('Sem AU (não protocolado)', `${semAu.length} <span style="font-size:.8rem">(${pct(semAu.length)}%)</span>`, semAu.length>0)}
-        ${metrica(`AU fora dos ${Math.round(PRAZO_AU_MIN)} min`, `${auAtrasados.length} <span style="font-size:.8rem">(${pct(auAtrasados.length)}%)</span>`, auAtrasados.length>0)}
-        ${metrica('Precisaram de cobrança', `${comCobranca.length} <span style="font-size:.8rem">(${totalCobr} no total)</span>`, comCobranca.length>0)}
-        ${metrica(`Escalonados (${Math.round(PRAZO_ESC_MIN/60)}h)`, escalonados.length, escalonados.length>0)}
-        ${metrica('Ainda não normalizados', naoNorm.length, naoNorm.length>0)}
-        ${metrica('Até o AU · mediana / média', `${dur(mediana(temposAu))} <span style="font-size:.8rem;color:var(--text3)">/ ${dur(media(temposAu))}</span>`, false)}
-        ${metrica('Até normalizar · mediana / média', `${dur(mediana(temposNorm))} <span style="font-size:.8rem;color:var(--text3)">/ ${dur(media(temposNorm))}</span>`, false)}
-      </div>`;
-
-    /* ── reincidência por designação ───────────────────────────────── */
-    const porDesig = {};
-    linhasObj.forEach(l=>{
-      const k = l.designacao;
-      if(!k || k==='-') return;
-      if(!porDesig[k]) porDesig[k] = { desig:k, n:0, semAu:0, cobr:0 };
-      porDesig[k].n++;
-      if(!l.temAu) porDesig[k].semAu++;
-      porDesig[k].cobr += l.cobrancas;
-    });
-    const reincidentes = Object.values(porDesig).filter(d=>d.n>1).sort((a,b)=>b.n-a.n);
-    const blocoReinc = !reincidentes.length ? '' : `
-      <div style="margin-bottom:14px">
-        <div style="font-weight:700;margin-bottom:6px">Designações com mais de uma ocorrência no período</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
-          ${reincidentes.map(d=>`
-            <div style="padding:7px 11px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);font-size:.82rem">
-              <strong>${_esc(d.desig)}</strong> · ${d.n}x
-              ${d.semAu?` · <span style="color:var(--red)">${d.semAu} sem AU</span>`:''}
-              ${d.cobr?` · ${d.cobr} cobrança(s)`:''}
-            </div>`).join('')}
-        </div>
-      </div>`;
-
-    /* ── tabela ────────────────────────────────────────────────────── */
-    const COLS_REL = 9;
-    const SEM_AU = '<span style="color:var(--red);font-weight:700">NÃO GEROU</span>';
-
-    const linhas = linhasObj.map(l => {
-      const celAu = !l.temAu ? SEM_AU :
-        `<div style="font-weight:700">${_esc(l.protocolo)}</div>` +
-        (l.auQuando?`<div style="font-size:.74rem;color:var(--text3)">${_esc(l.auQuando)}</div>`:'');
-      const celTempoAu = l.tempoAu
-        ? `<span style="font-weight:700;color:${l.auAtrasado?'var(--red)':'var(--teal)'}">${_esc(l.tempoAu)}</span>`
-        : REL_AGUARDANDO;
-      const celNorm = l.tempoNorm
-        ? `<div style="font-weight:700">${_esc(l.tempoNorm)}</div>` +
-          (l.normQuando?`<div style="font-size:.74rem;color:var(--text3)">${_esc(l.normQuando)}</div>`:'')
-        : REL_AGUARDANDO;
-      const celEsc = l.escalonado
-        ? `<div style="color:var(--amber);font-weight:700">Sim</div>` +
-          `<div style="font-size:.74rem;color:var(--text3)">${_esc(l.escalonadoEm)}</div>`
-        : '<span style="color:var(--text3)">—</span>';
-
-      return `
-        <tr class="rel-chamado">
-          <td style="white-space:nowrap;font-weight:700">${_esc(l.designacao)}
-            ${l.evento?`<div style="font-size:.72rem;font-weight:400;color:var(--text3)">${_esc(l.evento)}</div>`:''}</td>
-          <td style="white-space:nowrap">${_esc(l.falhaEm)}
-            <div style="font-size:.72rem;color:var(--text3)">abriu ${_esc(l.abertura)}</div></td>
-          <td style="white-space:nowrap">${celAu}</td>
-          <td style="white-space:nowrap;text-align:center">${celTempoAu}</td>
-          <td style="text-align:center;font-weight:${l.cobrancas?'700':'400'}">${l.cobrancas || '—'}</td>
-          <td style="white-space:nowrap;text-align:center">${celEsc}</td>
-          <td style="white-space:nowrap">${celNorm}</td>
-          <td>${_esc(l.solicitante)}</td>
-          <td style="color:${/FINALIZ|ENCERR/i.test(l.status)?'var(--teal)':'var(--amber)'}">${_esc(l.status)}</td>
-        </tr>` +
-        l.cobrancasLista.map((c,i) => `
-        <tr class="rel-cobranca">
-          <td colspan="${COLS_REL}">
-            <span class="rel-cobranca-tag">Cobran&ccedil;a ${i+1}/${l.cobrancasLista.length}</span>
-            ${_esc(c.quando)}
-          </td>
-        </tr>`).join('');
-    }).join('');
-
-    div.innerHTML = placar + blocoReinc + `
-      <div style="overflow-x:auto">
-        <table class="rel-tabela">
-          <thead>
-            <tr>
-              <th style="white-space:nowrap">Designa&ccedil;&atilde;o</th>
-              <th style="white-space:nowrap">Falhou em</th>
-              <th style="white-space:nowrap">AU</th>
-              <th style="text-align:center">At&eacute; o AU</th>
-              <th style="text-align:center">Cobran&ccedil;as</th>
-              <th style="text-align:center">Escalonado</th>
-              <th style="white-space:nowrap">Normalizou</th>
-              <th>Quem abriu</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>${linhas}</tbody>
-        </table>
-      </div>`;
-
-    _relatorioTimData = {
-      linhas: linhasObj, inicio, fim, total: linhasObj.length, registros,
-      prazoAuMin: PRAZO_AU_MIN, prazoEscMin: PRAZO_ESC_MIN,
-      resumo: {
-        semAu: semAu.length, auAtrasados: auAtrasados.length,
-        comCobranca: comCobranca.length, totalCobr,
-        escalonados: escalonados.length, naoNorm: naoNorm.length,
-        medianaAu: mediana(temposAu), mediaAu: media(temposAu),
-        medianaNorm: mediana(temposNorm), mediaNorm: media(temposNorm)
-      },
-      reincidentes
-    };
-    $('btnExportarPDF').style.display = 'inline-block';
-    $('btnExportarTXT').style.display = 'inline-block';
-
-  }).catch(e => {
-    div.innerHTML = `<div class="info-msg erro" style="color:var(--red)">Falha de conexão: ${e.message}</div>`;
-  });
-}
-
-function _relCabecalhoRelatorio(d){
-  const agora = new Date(), p = n => String(n).padStart(2,'0');
-  return `${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} ${p(agora.getHours())}:${p(agora.getMinutes())}`;
-}
-
-function _montarTextoRelatorioTim(d){
-  const agoraStr = _relCabecalhoRelatorio(d);
-  const R = d.resumo || {};
-  const dur = x => (x===null||x===undefined) ? '—' : _relFmtDuracao(x);
-  const pct = n => d.total ? Math.round(n*100/d.total) : 0;
-
-  let txt = '';
-  txt += '========================================================\n';
-  txt += 'RELATÓRIO E-MAIL’S SLA (TIM) - GRUPO CLICK IP\n';
-  txt += `Período: ${d.inicio} a ${d.fim}\n`;
-  txt += `Gerado em: ${agoraStr}\n`;
-  txt += '========================================================\n';
-  txt += `Chamados: ${d.total}${d.registros&&d.registros!==d.total?` (de ${d.registros} registros na aba)`:''}\n`;
-  txt += `Sem AU (não protocolado pela TIM): ${R.semAu} (${pct(R.semAu)}%)\n`;
-  txt += `AU fora dos ${Math.round(d.prazoAuMin)} min: ${R.auAtrasados} (${pct(R.auAtrasados)}%)\n`;
-  txt += `Precisaram de cobrança: ${R.comCobranca} (${R.totalCobr} cobranças no total)\n`;
-  txt += `Escalonados (${Math.round(d.prazoEscMin/60)}h): ${R.escalonados}\n`;
-  txt += `Ainda não normalizados: ${R.naoNorm}\n`;
-  txt += `Tempo até o AU — mediana ${dur(R.medianaAu)} / média ${dur(R.mediaAu)}\n`;
-  txt += `Tempo até normalizar — mediana ${dur(R.medianaNorm)} / média ${dur(R.mediaNorm)}\n`;
-  txt += '========================================================\n\n';
-
-  if((d.reincidentes||[]).length){
-    txt += 'DESIGNAÇÕES COM MAIS DE UMA OCORRÊNCIA\n';
-    d.reincidentes.forEach(x=>{
-      txt += `  ${x.desig} · ${x.n}x`;
-      if(x.semAu) txt += ` · ${x.semAu} sem AU`;
-      if(x.cobr)  txt += ` · ${x.cobr} cobrança(s)`;
-      txt += '\n';
-    });
-    txt += '\n--------------------------------------------------------\n\n';
-  }
-
-  txt += 'CHAMADOS (dos mais críticos para os menos)\n\n';
-  d.linhas.forEach((l, i) => {
-    txt += `[${i + 1}] Designação: ${l.designacao}${l.evento?`  ·  Evento TIM: ${l.evento}`:''}\n`;
-    txt += `    Falhou em: ${l.falhaEm}   |   Aberto em: ${l.abertura}\n`;
-    txt += `    AU: ${l.temAu ? l.protocolo : '*** NÃO GEROU ***'}`;
-    if(l.auQuando) txt += `  (recebido em ${l.auQuando})`;
-    txt += '\n';
-    txt += `    Até o AU: ${l.tempoAu || 'Aguardando'}${l.auAtrasado?'   <-- FORA DO PRAZO':''}\n`;
-    txt += `    Cobranças: ${l.cobrancas || 0}\n`;
-    (l.cobrancasLista || []).forEach((c, k) => {
-      txt += `      - Cobrança ${k+1}/${l.cobrancasLista.length} · ${c.quando}\n`;
-    });
-    txt += `    Escalonado: ${l.escalonado ? `Sim, em ${l.escalonadoEm}${l.escalonadoPor?` por ${l.escalonadoPor}`:''}` : 'Não'}\n`;
-    txt += `    Normalizou: ${l.tempoNorm ? `${l.tempoNorm}${l.normQuando?` (em ${l.normQuando})`:''}` : 'Aguardando'}\n`;
-    txt += `    Quem abriu: ${l.solicitante}\n`;
-    txt += `    Status: ${l.status}\n`;
-    if(l.assunto) txt += `    Assunto: ${l.assunto}\n`;
-    txt += '--------------------------------------------------------\n';
-  });
-
-  return txt;
-}
-
-function exportarRelatorioTXT() {
-  if (!_relatorioTimData || !_relatorioTimData.linhas.length) {
-    showToast('Gere o relatório antes de exportar.', 'error', 3000);
-    return;
-  }
-
-  try {
-    const txt = _montarTextoRelatorioTim(_relatorioTimData);
-    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `relatorio_tim_${_relatorioTimData.inicio}_a_${_relatorioTimData.fim}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    showToast('✓ TXT gerado com sucesso.');
-  } catch (e) {
-    showToast('Falha ao gerar TXT (' + ((e && e.message) || e) + ').', 'error', 5000);
-  }
-}
-
-/* ═══ EXPORTAR PDF ═══════════════════════════════════════════════════
-   O botão existia desde sempre no rodapé do modal e chamava uma função
-   que nunca foi escrita — clicar lançava ReferenceError e não acontecia
-   nada. A html2pdf já vinha carregada no topo do arquivo; só faltava isto.
-
-   O PDF é montado num container próprio, em tema claro, em vez de
-   reaproveitar a tabela da tela: o painel é escuro e sairia com fundo
-   preto, gastando toner e ficando ilegível impresso. */
-function exportarRelatorioPDF() {
-  const d = _relatorioTimData;
-  if (!d || !d.linhas.length) {
-    showToast('Gere o relatório antes de exportar.', 'error', 3000);
-    return;
-  }
-  if (typeof html2pdf === 'undefined') {
-    showToast('A biblioteca de PDF não carregou. Use o TXT.', 'error', 5000);
-    return;
-  }
-
-  const btn = $('btnExportarPDF');
-  const rotuloAntes = btn ? btn.innerHTML : '';
-  if (btn) { btn.innerHTML = 'Gerando...'; btn.disabled = true; }
-
-  try {
-    const R = d.resumo || {};
-    const dur = x => (x === null || x === undefined) ? '—' : _relFmtDuracao(x);
-    const pct = n => d.total ? Math.round(n * 100 / d.total) : 0;
-    const agora = new Date(), p = n => String(n).padStart(2, '0');
-    const agoraStr = `${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} ${p(agora.getHours())}:${p(agora.getMinutes())}`;
-
-    const VERM = '#b3261e', AMBAR = '#8a6100', VERDE = '#0b6b3a', CINZA = '#666';
-
-    const card = (rot, val, alerta) => `
-      <td style="padding:6px 8px;border:1px solid #ddd;vertical-align:top">
-        <div style="font-size:8pt;color:#666;text-transform:uppercase">${rot}</div>
-        <div style="font-size:12pt;font-weight:bold;color:${alerta ? VERM : '#111'}">${val}</div>
-      </td>`;
-
-    const linhasHtml = d.linhas.map((l, i) => {
-      const au = l.temAu
-        ? `<strong>${_esc(l.protocolo)}</strong>${l.auQuando ? `<br><span style="font-size:7.5pt;color:${CINZA}">${_esc(l.auQuando)}</span>` : ''}`
-        : `<strong style="color:${VERM}">NÃO GEROU</strong>`;
-      const tAu = l.tempoAu
-        ? `<span style="color:${l.auAtrasado ? VERM : VERDE};font-weight:bold">${_esc(l.tempoAu)}</span>`
-        : `<span style="color:${AMBAR}">Aguardando</span>`;
-      const norm = l.tempoNorm
-        ? `<strong>${_esc(l.tempoNorm)}</strong>${l.normQuando ? `<br><span style="font-size:7.5pt;color:${CINZA}">${_esc(l.normQuando)}</span>` : ''}`
-        : `<span style="color:${AMBAR}">Aguardando</span>`;
-      const esc = l.escalonado
-        ? `<span style="color:${AMBAR};font-weight:bold">Sim</span><br><span style="font-size:7.5pt;color:${CINZA}">${_esc(l.escalonadoEm)}</span>`
-        : '—';
-      const cobr = l.cobrancasLista.length
-        ? `<br><span style="font-size:7.5pt;color:${CINZA}">${l.cobrancasLista.map(c => _esc(c.quando)).join(' · ')}</span>`
-        : '';
-      return `
-        <tr style="page-break-inside:avoid">
-          <td style="border:1px solid #ddd;padding:4px 6px">${i + 1}</td>
-          <td style="border:1px solid #ddd;padding:4px 6px"><strong>${_esc(l.designacao)}</strong>${l.evento ? `<br><span style="font-size:7.5pt;color:${CINZA}">${_esc(l.evento)}</span>` : ''}</td>
-          <td style="border:1px solid #ddd;padding:4px 6px">${_esc(l.falhaEm)}<br><span style="font-size:7.5pt;color:${CINZA}">abriu ${_esc(l.abertura)}</span></td>
-          <td style="border:1px solid #ddd;padding:4px 6px">${au}</td>
-          <td style="border:1px solid #ddd;padding:4px 6px;text-align:center">${tAu}</td>
-          <td style="border:1px solid #ddd;padding:4px 6px;text-align:center">${l.cobrancas || '—'}${cobr}</td>
-          <td style="border:1px solid #ddd;padding:4px 6px;text-align:center">${esc}</td>
-          <td style="border:1px solid #ddd;padding:4px 6px">${norm}</td>
-          <td style="border:1px solid #ddd;padding:4px 6px">${_esc(l.status)}</td>
-        </tr>`;
-    }).join('');
-
-    const reinc = (d.reincidentes || []).length ? `
-      <div style="margin:10px 0 4px;font-weight:bold">Designações com mais de uma ocorrência</div>
-      <div style="font-size:8.5pt;line-height:1.6">
-        ${d.reincidentes.map(x => `${_esc(x.desig)} — ${x.n}x${x.semAu ? ` · <span style="color:${VERM}">${x.semAu} sem AU</span>` : ''}${x.cobr ? ` · ${x.cobr} cobrança(s)` : ''}`).join(' &nbsp;|&nbsp; ')}
-      </div>` : '';
-
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;left:-10000px;top:0;width:1080px;background:#fff;color:#111;' +
-                       'font-family:Arial,Helvetica,sans-serif;font-size:9pt;padding:18px';
-    el.innerHTML = `
-      <div style="border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px">
-        <div style="font-size:14pt;font-weight:bold">Relatório de SLA — chamados TIM</div>
-        <div style="font-size:9pt;color:${CINZA}">Grupo Click IP &nbsp;·&nbsp; Período ${_esc(d.inicio)} a ${_esc(d.fim)} &nbsp;·&nbsp; Gerado em ${agoraStr}</div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><tr>
-        ${card('Chamados', d.total, false)}
-        ${card('Sem AU', `${R.semAu} (${pct(R.semAu)}%)`, R.semAu > 0)}
-        ${card(`AU fora dos ${Math.round(d.prazoAuMin)} min`, `${R.auAtrasados} (${pct(R.auAtrasados)}%)`, R.auAtrasados > 0)}
-        ${card('Com cobrança', `${R.comCobranca} (${R.totalCobr})`, R.comCobranca > 0)}
-        ${card(`Escalonados (${Math.round(d.prazoEscMin / 60)}h)`, R.escalonados, R.escalonados > 0)}
-        ${card('Não normalizados', R.naoNorm, R.naoNorm > 0)}
-      </tr><tr>
-        ${card('Até o AU · mediana / média', `${dur(R.medianaAu)} / ${dur(R.mediaAu)}`, false)}
-        ${card('Até normalizar · mediana / média', `${dur(R.medianaNorm)} / ${dur(R.mediaNorm)}`, false)}
-        <td colspan="4" style="border:1px solid #ddd;padding:6px 8px;font-size:8pt;color:${CINZA};vertical-align:middle">
-          Ordenado por gravidade: primeiro o que a TIM não protocolou, depois o que foi escalonado,
-          o que estourou o prazo do AU e o que exigiu mais cobranças.
-        </td>
-      </tr></table>
-      ${reinc}
-      <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:8px">
-        <thead><tr style="background:#f0f0f0">
-          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">#</th>
-          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">Designação</th>
-          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">Falhou em</th>
-          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">AU</th>
-          <th style="border:1px solid #ddd;padding:5px 6px">Até o AU</th>
-          <th style="border:1px solid #ddd;padding:5px 6px">Cobranças</th>
-          <th style="border:1px solid #ddd;padding:5px 6px">Escalonado</th>
-          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">Normalizou</th>
-          <th style="border:1px solid #ddd;padding:5px 6px;text-align:left">Status</th>
-        </tr></thead>
-        <tbody>${linhasHtml}</tbody>
-      </table>`;
-    document.body.appendChild(el);
-
-    html2pdf().set({
-      margin: [8, 8, 10, 8],
-      filename: `relatorio_tim_${d.inicio}_a_${d.fim}.pdf`,
-      image: { type: 'jpeg', quality: 0.96 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-      pagebreak: { mode: ['css', 'legacy'] }
-    }).from(el).save()
-      .then(() => showToast('✓ PDF gerado com sucesso.'))
-      .catch(err => showToast('Falha ao gerar PDF (' + ((err && err.message) || err) + ').', 'error', 5000))
-      .finally(() => {
-        el.remove();
-        if (btn) { btn.innerHTML = rotuloAntes; btn.disabled = false; }
-      });
-  } catch (e) {
-    showToast('Falha ao gerar PDF (' + ((e && e.message) || e) + ').', 'error', 5000);
-    if (btn) { btn.innerHTML = rotuloAntes; btn.disabled = false; }
-  }
-}
 
 /* ═══ TEMA FAV — RIO ENSOLARADO ═══
    Sol com raios girando, silhueta dos morros (Dois Irmãos, Corcovado com
@@ -7675,7 +5833,7 @@ async function gerarOSMetro(){
 
     registrarSla({
       rede:'METRO',tipo:problema,
-      alvo:`${_slaListaCap(cabos.map(c=>c.nome),170)}${coordRaw?' · '+coordRaw:''}`,
+      alvo:`Cabos: ${_slaListaCap(cabos.map(c=>c.nome),170)}${coordRaw?' · Coord.: '+coordRaw:''}`,
       empresa:empresa,tecnicos:tecsStr
     });
     exibirModal(corpo);
@@ -8292,19 +6450,6 @@ function getOperadorKey(op){return`${op.nome}|||${op.setor||''}`}
 function renderOperadores(){
   const sel=$('operadorSelect');
   const selModal=$('slaManualOperador');
-  /* o AUTOR da nota sai da mesma lista: manter dois cadastros de gente
-     seria criar divergência sem motivo */
-  const selNota=$('notaAutor');
-  if(selNota){
-    const atualNota=selNota.value;
-    selNota.innerHTML='<option value="" disabled selected>Selecione...</option>';
-    AppState.operadores.forEach(op=>{
-      const o=document.createElement('option');
-      o.value=op.nome;o.textContent=op.setor?`${op.nome} - ${op.setor}`:op.nome;
-      selNota.appendChild(o);
-    });
-    if(atualNota)selNota.value=atualNota;
-  }
   const salvo=localStorage.getItem('noc-operador')||'';
   if(sel){
     const atualSel=sel.value||salvo;
@@ -8487,8 +6632,8 @@ function salvarSlaManual() {
   {
       const arr = [];
       if(trechoStr) arr.push('Trecho: ' + trechoStr);
-      if(pop) arr.push(pop);
-      if(desc) arr.push(desc);
+      if(pop) arr.push('POP: ' + pop);
+      if(desc) arr.push('Obs.: ' + desc);
       if(arr.length) alvoText = arr.join(' · ');
   }
 
@@ -8498,7 +6643,7 @@ function salvarSlaManual() {
     resumo: _slaCap(resumo, 500),
     rede: 'MANUAL',
     tipo: _slaCap(prob, 140),
-    alvo: _slaCap(alvoText, 240),
+    alvo: _slaCap(alvoText, 320),
     empresa: _slaCap(emp, 60),
     tecnicos: _slaCap(tec, 200),
     operador: opNome,
@@ -8551,7 +6696,7 @@ async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...'
     if(!rr.length)throw new Error('Não foi possível identificar a rede da CTO. Atualize os dados e selecione a CTO novamente.');
     rede=rr[0];
   }
-  const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;const semCoord=[];ctos.forEach(info=>{const link=linkMapsCTO(info);if(!link)semCoord.push(info.cto);corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link||'Sem coordenadas'}\n\n`});if(semCoord.length){console.warn('[CTO] coordenada inválida na planilha: '+semCoord.join(', '));showToast('Sem coordenada válida: '+semCoord.slice(0,3).join(', ')+(semCoord.length>3?` +${semCoord.length-3}`:''),'error',5000)}corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · ${ctos.length} CTOs: ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas ${portas}`:_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+  const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;const semCoord=[];ctos.forEach(info=>{const link=linkMapsCTO(info);if(!link)semCoord.push(info.cto);corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link||'Sem coordenadas'}\n\n`});if(semCoord.length){console.warn('[CTO] coordenada inválida na planilha: '+semCoord.join(', '));showToast('Sem coordenada válida: '+semCoord.slice(0,3).join(', ')+(semCoord.length>3?` +${semCoord.length-3}`:''),'error',5000)}corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · CTOs (${ctos.length}): ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`CTOs: ${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas: ${portas}`:'CTOs: '+_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 /* gerarOSMetro vive agora no módulo CONSULTA DE CABOS v4, montado a
    partir do ESTADO da busca. A versão que ficava aqui remontava a OS
@@ -8641,14 +6786,14 @@ async function gerarOSBackbone(){
     corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);
     try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error',4000)}
     registrarSla({rede:'BACKBONE',tipo:'ACIONAMENTO DE BACKBONE'+(otdrTipo?' · OTDR '+otdrTipo:''),
-      alvo:_slaListaCap(trechosFinal,190)+(otdrLocal?' · OTDR: '+otdrLocal:''),
+      alvo:'Trecho: '+_slaListaCap(trechosFinal,190)+(otdrLocal?' · OTDR: '+otdrLocal:''),
       empresa:emp,tecnicos:tecsStr});
     exibirModal(corpo);
   }catch(err){showToast(err.message,'error',4000)}
   finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}
 }
 
-async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:`${_slaListaCap(listaFinal.map(g=>g.familia),150)} · OLT ${listaFinal[0].olt}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:`Famílias: ${_slaListaCap(listaFinal.map(g=>g.familia),150)}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}atualizarTodosEstadosAllTec();showToast('✓ Limpo.')}
