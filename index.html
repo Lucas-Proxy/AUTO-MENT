@@ -1035,6 +1035,12 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 /* Acionamentos · Painel: cards 5% maiores (largura 248→260px, altura 490→514px) */
 #slaPainelGrid{max-width:1680px;grid-template-columns:repeat(auto-fill,minmax(260.4px,1fr));grid-auto-rows:514.5px}
 @media (max-width:700px){#slaPainelGrid{grid-template-columns:1fr;grid-auto-rows:auto}}
+
+/* Atualizar (Ações): só o símbolo, sem a palavra */
+#btnAtualizarCache{padding:10px 12px;gap:0;justify-content:center}
+
+/* Fechar do Painel de SLA: só o símbolo de casa (tela inicial) */
+#btnSlaFechar{padding:10px 12px;gap:0;justify-content:center}
 </style>
 </head>
 <body>
@@ -1046,28 +1052,22 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 
 <div class="top-bar-fixed">
 
-<button class="ozmap-btn so-normal" id="btnSla" title="Abrir o painel de SLA dos acionamentos" aria-label="Painel de SLA">
+<button class="ozmap-btn btn-pill so-normal" id="btnSla" title="Abrir o painel de SLA dos acionamentos" aria-label="Painel de SLA">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
 <span>SLA</span>
 <span id="slaBadgeTopo" class="sla-badge-topo hidden">0</span>
 </button>
 <button class="ozmap-btn btn-pill so-normal" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-<span>Atualizar</span>
-</button>
-<button class="ozmap-btn btn-pill so-sla" id="btnSlaAtualizar" title="Recarregar a aba aberta" aria-label="Atualizar a aba aberta">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-<span>Atualizar</span>
 </button>
 <button class="ozmap-btn btn-pill so-sla" id="btnNoc" aria-expanded="false" title="Mostrar Acionamentos e Notas" aria-label="NOC"><span>NOC</span></button>
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
 <span id="themeIcon" style="font-size:13px">&#9728;</span>
 <div class="toggle-track"><div class="toggle-thumb"></div></div>
-<span class="toggle-label" id="toggleLabel">Tema Claro</span>
+<span class="toggle-label" id="toggleLabel">Tema</span>
 </button>
-<button class="ozmap-btn so-sla btn-sla-fechar" id="btnSlaFechar" title="Voltar para o formulário de acionamento (Esc)" aria-label="Fechar painel de SLA">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-<span>Fechar</span>
+<button class="ozmap-btn so-sla btn-sla-fechar" id="btnSlaFechar" title="Voltar para a tela inicial (Esc)" aria-label="Voltar para a tela inicial">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
 </button>
 <button class="acoes-dock" id="btnAcoesDock" aria-controls="btnAtualizarCache themeToggle btnSlaFechar mDock" aria-expanded="true" title="Recolher tema, atualizar, fechar e música">
 <span class="acoes-ico acoes-ico-recolher" aria-hidden="true">&#187;</span>
@@ -2303,7 +2303,7 @@ const THEME_ORDER=['light','dark','ben10','got','fav'];
 const THEME_LABELS={light:'Tema Claro',dark:'Tema Escuro',ben10:'Ben 10',got:'Game of Thrones',fav:'Rio de Janeiro'};
 const THEME_ICONS={light:'\u2600',dark:'\u263D',ben10:'\u231A',got:'\u2694',fav:'\u25B2'};
 const THEME_ICON_COR={light:'#f59e0b',dark:'#94a3b8',ben10:'#00e639',got:'#c9a84c',fav:'#e8940c'};
-function applyThemeUI(t){$('toggleLabel').textContent=THEME_LABELS[t]||t;const i=$('themeIcon');if(i){i.textContent=THEME_ICONS[t]||'\u2600';i.style.color=THEME_ICON_COR[t]||'#f59e0b'}}
+function applyThemeUI(t){$('toggleLabel').textContent='Tema';const i=$('themeIcon');if(i){i.textContent=THEME_ICONS[t]||'\u2600';i.style.color=THEME_ICON_COR[t]||'#f59e0b'}}
 (function(){const s=localStorage.getItem('noc-theme')||'light';document.documentElement.setAttribute('data-theme',s);applyThemeUI(s)})();
 function toggleTheme(){const c=document.documentElement.getAttribute('data-theme'),i=THEME_ORDER.indexOf(c),n=THEME_ORDER[(i+1)%THEME_ORDER.length];document.documentElement.setAttribute('data-theme',n);applyThemeUI(n);try{localStorage.setItem('noc-theme',n)}catch(e){}}
 function setTheme(t){document.documentElement.setAttribute('data-theme',t);applyThemeUI(t);try{localStorage.setItem('noc-theme',t)}catch(e){}}
@@ -4882,7 +4882,6 @@ function _reprogramarPollSla(){
 function bindEventsSla(){
   $('btnSla').addEventListener('click',alternarPainelSla);
   $('btnSlaFechar').addEventListener('click',fecharPainelSla);
-  $('btnSlaAtualizar').addEventListener('click',atualizarAbaSlaAtiva);
   $('btnNoc').addEventListener('click',()=>{
     const aberto=$('slaTopo').classList.contains('noc-ativo');
     selecionarAbaSla(aberto?'acionamentosPainel':(AppState.slaAba==='notas'?'notas':'acionamentos'));
