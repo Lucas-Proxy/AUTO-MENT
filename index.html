@@ -1695,9 +1695,9 @@ IDENTIFICA&#199;&#195;O
 <label for="horaNormEncerrar">NORMALIZAÇÃO <span style="color:var(--red)">*</span></label>
 <div class="enc-quando">
 <div class="enc-campo"><span class="enc-rot">Hora</span><input type="text" id="horaNormEncerrar" class="enc-input enc-hora" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="hh:mm" aria-label="Hora da normalização, formato hh:mm"></div>
-<div class="enc-campo"><span class="enc-rot">Data</span><input type="text" id="dataNormEncerrar" class="enc-input" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="aaaa-mm-dd" aria-label="Data da normalização, formato aaaa-mm-dd"></div>
+<div class="enc-campo"><span class="enc-rot">Data</span><input type="text" id="dataNormEncerrar" class="enc-input" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="dd/mm/aaaa" aria-label="Data da normalização, formato dd/mm/aaaa"></div>
 </div>
-<div class="enc-dica">Digite só os números: <b>1019</b> vira <b>10:19</b> e <b>20260815</b> vira <b>2026-08-15</b>. Já vem com a hora e a data de agora.</div>
+<div class="enc-dica">Digite só os números: <b>1019</b> vira <b>10:19</b> e <b>15082026</b> vira <b>15/08/2026</b>. Já vem com a hora e a data de agora.</div>
 <!-- valor final no formato aaaa-mm-ddThh:mm, o mesmo que o servidor já recebia -->
 <input type="hidden" id="dataNormalizacaoEncerrarSla">
 </div>
@@ -4360,7 +4360,7 @@ function _prepararModalEncerrar() {
   const agora = new Date();
   const dd = _encDoisDig;
   $('horaNormEncerrar').value = dd(agora.getHours()) + ':' + dd(agora.getMinutes());
-  $('dataNormEncerrar').value = agora.getFullYear() + '-' + dd(agora.getMonth() + 1) + '-' + dd(agora.getDate());
+  $('dataNormEncerrar').value = dd(agora.getDate()) + '/' + dd(agora.getMonth() + 1) + '/' + agora.getFullYear();
   $('horaNormEncerrar').classList.remove('invalido');
   $('dataNormEncerrar').classList.remove('invalido');
   _encSincronizar();
@@ -4370,8 +4370,8 @@ function _prepararModalEncerrar() {
 /* ── hora e data da normalização: máscara só com números ─────────────
    Hora: "1019" vira "10:19" (primeiro dígito 3-9 vira 0X: "9" → "09:").
    Com a hora completa e válida o foco pula sozinho para a data; da data,
-   TAB (ou Enter) leva à justificativa. Data no costume da equipe:
-   "20260815" vira "2026-08-15". Os dois campos selecionam tudo ao receber
+   TAB (ou Enter) leva à justificativa. Data em dd/mm/aaaa: "15082026" vira
+   "15/08/2026" (dia 4-9 vira 0X, mês 2-9 vira 0X). Os dois campos selecionam tudo ao receber
    o foco, então é só digitar por cima. O valor final vai para o campo
    oculto no mesmo formato de antes (aaaa-mm-ddThh:mm). */
 function _encDoisDig(n){ return String(n).padStart(2, '0'); }
@@ -4382,25 +4382,33 @@ function _encMascHora(el, inserindo){
   el.value = d.length > 2 ? d.slice(0, 2) + ':' + d.slice(2) : (d.length === 2 && inserindo ? d + ':' : d);
 }
 function _encMascData(el, inserindo){
-  const d = el.value.replace(/\D/g, '').slice(0, 8);
-  let v = d.slice(0, 4);
-  if (d.length > 4) v += '-' + d.slice(4, 6); else if (d.length === 4 && inserindo) v += '-';
-  if (d.length > 6) v += '-' + d.slice(6); else if (d.length === 6 && inserindo) v += '-';
+  let d = el.value.replace(/\D/g, '');
+  if (d && d[0] > '3') d = '0' + d;
+  if (d.length >= 3 && d[2] > '1') d = d.slice(0, 2) + '0' + d.slice(2);
+  d = d.slice(0, 8);
+  let v = d.slice(0, 2);
+  if (d.length > 2) v += '/' + d.slice(2, 4); else if (d.length === 2 && inserindo) v += '/';
+  if (d.length > 4) v += '/' + d.slice(4); else if (d.length === 4 && inserindo) v += '/';
   el.value = v;
 }
 function _encHoraValida(v){
   const m = /^(\d{2}):(\d{2})$/.exec(v || '');
   return !!m && +m[1] <= 23 && +m[2] <= 59;
 }
-function _encDataValida(v){
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
-  if (!m) return false;
-  const dt = new Date(+m[1], +m[2] - 1, +m[3]);
-  return dt.getFullYear() === +m[1] && dt.getMonth() === +m[2] - 1 && dt.getDate() === +m[3];
+/* dd/mm/aaaa → aaaa-mm-dd (ou '' se não for uma data real) */
+function _encDataISO(v){
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v || '');
+  if (!m) return '';
+  const dia = +m[1], mes = +m[2], ano = +m[3];
+  const dt = new Date(ano, mes - 1, dia);
+  if (dt.getFullYear() !== ano || dt.getMonth() !== mes - 1 || dt.getDate() !== dia) return '';
+  return m[3] + '-' + m[2] + '-' + m[1];
 }
+function _encDataValida(v){ return !!_encDataISO(v); }
 function _encSincronizar(){
   const h = $('horaNormEncerrar').value, d = $('dataNormEncerrar').value;
-  $('dataNormalizacaoEncerrarSla').value = (_encHoraValida(h) && _encDataValida(d)) ? d + 'T' + h : '';
+  const iso = _encDataISO(d);
+  $('dataNormalizacaoEncerrarSla').value = (_encHoraValida(h) && iso) ? iso + 'T' + h : '';
 }
 function _encFocarHora(){
   setTimeout(() => { const h = $('horaNormEncerrar'); if (h) { h.focus(); h.select(); } }, 40);
@@ -4466,7 +4474,7 @@ function confirmarEncerrarSla() {
   }
   if (!_encDataValida($('dataNormEncerrar').value)) {
     $('dataNormEncerrar').classList.add('invalido');
-    showToast('Data inválida. Use aaaa-mm-dd, ex.: 2026-08-15.', 'error', 4000);
+    showToast('Data inválida. Use dd/mm/aaaa, ex.: 15/08/2026.', 'error', 4000);
     $('dataNormEncerrar').focus();
     return;
   }
