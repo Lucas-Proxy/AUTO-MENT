@@ -1081,6 +1081,28 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 #modalEncerrarSla .enc-input::placeholder{color:var(--text3);opacity:.45;letter-spacing:2px;font-size:1.1rem}
 @media (max-width:480px){#modalEncerrarSla .enc-quando{grid-template-columns:1fr}}
 
+/* ═══ LIMPEZA AUTOMÁTICA depois de gerar a OS ═══
+   "Bolacha" no meio da tela com contagem regressiva; clique cancela.
+   Fica ABAIXO do modal da OS (z-index 900 < 1000): conta em segundo plano. */
+.auto-limpar{position:fixed;top:50%;left:50%;width:92px;height:92px;margin:-46px 0 0 -46px;padding:0;border-radius:50%;
+  border:1px solid var(--border);background:var(--bg2);box-shadow:var(--shadow2);z-index:900;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text);
+  opacity:0;visibility:hidden;transform:scale(.6);transition:opacity .25s ease,transform .3s cubic-bezier(.34,1.56,.64,1),visibility .25s}
+.auto-limpar.ativo{opacity:1;visibility:visible;transform:scale(1)}
+body.sla-aberto .auto-limpar{display:none}
+.al-anel{position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);transform:rotate(-90deg);pointer-events:none}
+.al-anel circle{fill:none;stroke-width:6;stroke-linecap:round}
+.al-fundo{stroke:var(--blue-l)}
+.al-frente{stroke:var(--blue);stroke-dasharray:276.46;stroke-dashoffset:0;transition:stroke-dashoffset .25s linear}
+.al-num{position:relative;font-family:'Bebas Neue',cursive;font-size:2.1rem;line-height:1;color:var(--text)}
+.al-rot{position:relative;margin-top:1px;font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
+.al-cancelar{position:absolute;inset:0;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:var(--red-l);color:var(--red);opacity:0;transition:opacity .2s;pointer-events:none}
+.al-cancelar b{font-size:1.4rem;line-height:1}
+.al-cancelar small{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:1.5px;text-transform:uppercase}
+.auto-limpar:hover .al-cancelar,.auto-limpar:focus-visible .al-cancelar{opacity:.95}
+.auto-limpar:focus-visible{outline:2px solid var(--blue2);outline-offset:3px}
+
 /* F5 no painel de visualização: sem tela inicial e sem piscar a HOME */
 html.retomar-painel #telaEntrada{display:none!important}
 html.retomar-painel main{display:none!important}
@@ -1204,6 +1226,12 @@ html.retomar-painel main{display:none!important}
 </div>
 
 <div id="toast" class="toast"></div>
+<button type="button" id="autoLimpar" class="auto-limpar" aria-hidden="true" tabindex="-1" title="Limpeza automática do formulário — clique para cancelar">
+<svg class="al-anel" viewBox="0 0 100 100" aria-hidden="true"><circle class="al-fundo" cx="50" cy="50" r="44"/><circle class="al-frente" id="autoLimparAnel" cx="50" cy="50" r="44"/></svg>
+<span class="al-num" id="autoLimparNum">10</span>
+<span class="al-rot">Limpar</span>
+<span class="al-cancelar" aria-hidden="true"><b>&#10005;</b><small>Cancelar</small></span>
+</button>
 <div id="conexaoChip" class="conexao-chip"></div>
 
 <div id="copyModal" class="copy-modal">
@@ -5435,6 +5463,71 @@ function bindTelaEntrada(){
   }));
   document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharTelaEntrada()});
 }
+/* ═══ LIMPEZA AUTOMÁTICA DEPOIS DE GERAR A OS ═══
+   Gerou a OS → começa uma contagem de AUTO_LIMPAR_SEG segundos e, no fim,
+   roda o mesmo "Limpar" do botão manual. A bolacha no meio da tela mostra
+   a contagem; clicar nela cancela.
+   - Conta em segundo plano, inclusive com o modal da OS aberto (ela fica
+     atrás dele). Mas NUNCA limpa com o modal aberto: o "Enviar & Abrir
+     Hubsoft" lê a rede do formulário. Se o tempo acabar com o modal aberto,
+     espera ele fechar e ainda dá AUTO_LIMPAR_GRACA segundos visíveis para
+     cancelar.
+   - Começou a mexer no formulário (digitou, marcou algo) → cancela, para
+     não apagar um acionamento novo pela metade.
+   - "Limpar" manual ou nova OS gerada também zeram a contagem anterior. */
+const AUTO_LIMPAR_SEG = 10;
+const AUTO_LIMPAR_GRACA = 3;
+const AutoLimpar = { tick: null, fim: 0, ultimoModal: 0, fn: null };
+function _autoLimparModalAberto(){ const m = $('copyModal'); return !!(m && m.classList.contains('active')); }
+function _autoLimparTick(){
+  const agora = Date.now();
+  if (_autoLimparModalAberto()) AutoLimpar.ultimoModal = agora;
+  const alvo = Math.max(AutoLimpar.fim, AutoLimpar.ultimoModal ? AutoLimpar.ultimoModal + AUTO_LIMPAR_GRACA * 1000 : 0);
+  const resta = Math.max(0, alvo - agora);
+  const num = $('autoLimparNum'), anel = $('autoLimparAnel');
+  if (num) num.textContent = Math.ceil(resta / 1000);
+  if (anel) anel.style.strokeDashoffset = (276.46 * (1 - Math.min(1, resta / (AUTO_LIMPAR_SEG * 1000)))).toFixed(2);
+  if (resta <= 0 && !_autoLimparModalAberto()) {
+    const f = AutoLimpar.fn;
+    cancelarAutoLimpar(false);
+    if (typeof f === 'function') f();
+  }
+}
+function iniciarAutoLimpar(fn){
+  cancelarAutoLimpar(false);
+  const el = $('autoLimpar');
+  if (!el) return;
+  AutoLimpar.fn = fn;
+  AutoLimpar.fim = Date.now() + AUTO_LIMPAR_SEG * 1000;
+  AutoLimpar.ultimoModal = _autoLimparModalAberto() ? Date.now() : 0;
+  el.classList.add('ativo');
+  el.setAttribute('aria-hidden', 'false');
+  el.tabIndex = 0;
+  _autoLimparTick();
+  AutoLimpar.tick = setInterval(_autoLimparTick, 250);
+}
+function cancelarAutoLimpar(avisar, motivo){
+  const estavaAtivo = !!AutoLimpar.tick;
+  clearInterval(AutoLimpar.tick);
+  AutoLimpar.tick = null; AutoLimpar.fn = null;
+  const el = $('autoLimpar');
+  if (el) { el.classList.remove('ativo'); el.setAttribute('aria-hidden', 'true'); el.tabIndex = -1; }
+  if (avisar && estavaAtivo) showToast(motivo || 'Limpeza automática cancelada.');
+}
+function bindAutoLimpar(){
+  const el = $('autoLimpar');
+  if (el) el.addEventListener('click', () => cancelarAutoLimpar(true));
+  ['btnLimparGpon', 'btnLimparTudo', 'btnLimparTudo2', 'btnLimparBackbone'].forEach(id => {
+    const b = $(id); if (b) b.addEventListener('click', () => cancelarAutoLimpar(false));
+  });
+  const mexeu = e => {
+    if (!AutoLimpar.tick || !e.isTrusted) return;
+    if (e.target && e.target.closest && e.target.closest('main')) cancelarAutoLimpar(true, 'Limpeza automática cancelada: você começou a editar.');
+  };
+  document.addEventListener('input', mexeu, true);
+  document.addEventListener('change', mexeu, true);
+}
+
 /* ═══ F5 / ATUALIZAÇÃO AUTOMÁTICA ═══
    O navegador da TV recarrega a página a cada poucos segundos. Se a tela
    aberta era o PAINEL (NOC - VISUALIZAÇÃO: Acionamentos · Painel ou
@@ -5458,7 +5551,7 @@ function restaurarTelaAoRecarregar(){
   }
   document.documentElement.classList.remove('retomar-painel');
 }
-document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();bindTelaEntrada();bindCamposEncerrar();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();prepararPassosAcion();iniciarDados(false);Sync.iniciar();restaurarTelaAoRecarregar()});
+document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();bindTelaEntrada();bindCamposEncerrar();bindAutoLimpar();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();prepararPassosAcion();iniciarDados(false);Sync.iniciar();restaurarTelaAoRecarregar()});
 
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -6463,6 +6556,7 @@ async function gerarOSMetro(){
       empresa:empresa,tecnicos:tecsStr
     });
     exibirModal(corpo);
+    iniciarAutoLimpar(limparTudo);
   }catch(err){
     showToast(err.message,'error',4000);
   }finally{
@@ -7322,7 +7416,7 @@ async function gerarOS(){const btn=DOM.btnGerarOS;try{btn.innerHTML='Gerando...'
     if(!rr.length)throw new Error('Não foi possível identificar a rede da CTO. Atualize os dados e selecione a CTO novamente.');
     rede=rr[0];
   }
-  const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;const semCoord=[];ctos.forEach(info=>{const link=linkMapsCTO(info);if(!link)semCoord.push(info.cto);corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link||'Sem coordenadas'}\n\n`});if(semCoord.length){console.warn('[CTO] coordenada inválida na planilha: '+semCoord.join(', '));showToast('Sem coordenada válida: '+semCoord.slice(0,3).join(', ')+(semCoord.length>3?` +${semCoord.length-3}`:''),'error',5000)}corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · CTOs (${ctos.length}): ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`CTOs: ${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas: ${portas}`:'CTOs: '+_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+  const problemStr=tipo+(curDet?` - ${curDet}`:'')+(portas?` | Portas: ${portas}`:'');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;if(det==='RAMAL GPON ATENUADO')corpo+=`📍 Ramal: ${DOM.inputFamilia.value.trim()} (${ctos.length} CTOs)\n\n`;const semCoord=[];ctos.forEach(info=>{const link=linkMapsCTO(info);if(!link)semCoord.push(info.cto);corpo+=`📍 CTO: ${info.cto}\n\n🌎 Localização: ${link||'Sem coordenadas'}\n\n`});if(semCoord.length){console.warn('[CTO] coordenada inválida na planilha: '+semCoord.join(', '));showToast('Sem coordenada válida: '+semCoord.slice(0,3).join(', ')+(semCoord.length>3?` +${semCoord.length-3}`:''),'error',5000)}corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:(det==='RAMAL GPON ATENUADO'?`Ramal ${DOM.inputFamilia.value.trim()} · CTOs (${ctos.length}): ${_slaListaCap(ctos.map(c=>c.cto),160)}`:(portas?`CTOs: ${_slaListaCap(ctos.map(c=>c.cto),140)} · Portas: ${portas}`:'CTOs: '+_slaListaCap(ctos.map(c=>c.cto),220))),empresa:emp,tecnicos:tecsStr});exibirModal(corpo);iniciarAutoLimpar(limparTudo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 /* gerarOSMetro vive agora no módulo CONSULTA DE CABOS v4, montado a
    partir do ESTADO da busca. A versão que ficava aqui remontava a OS
@@ -7415,11 +7509,12 @@ async function gerarOSBackbone(){
       alvo:'Trecho: '+_slaListaCap(trechosFinal,190)+(otdrLocal?' · OTDR: '+otdrLocal:''),
       empresa:emp,tecnicos:tecsStr});
     exibirModal(corpo);
+    iniciarAutoLimpar(limparTudo);
   }catch(err){showToast(err.message,'error',4000)}
   finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}
 }
 
-async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:`Famílias: ${_slaListaCap(listaFinal.map(g=>g.familia),150)}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
+async function gerarOSGpon(){const btn=$('btnGerarOSGpon');try{btn.innerHTML='Gerando...';btn.disabled=true;const olt=($('gponInputOlt').value||'').trim(),modelo=($('gponInputModelo').value||'').trim(),gponStr=($('gponInputPorta').value||'').trim(),rede=DOM.gponRede.value,tipo=DOM.gponTipo.value,emp=DOM.gponEmpresa.value;const tecs=Array.from(DOM.gponListaTecs.querySelectorAll('input[name="tCheckGpon"]:checked'));const det=tipo.includes('ATENUACAO')?DOM.gponDetalheAtenuacao.value:'';if(!olt)throw new Error('Identifique a OLT.');if(!modelo)throw new Error('Selecione a OLT na lista de sugestões.');if(!rede)throw new Error('Selecione a rede de atuação.');if(!emp)throw new Error('Selecione a empresa.');if(!tecs.length)throw new Error('Selecione ao menos um técnico.');if(tipo.includes('ATENUACAO')&&!det)throw new Error('Especifique o tipo de atenuação.');const listaFinal=[...AppState.gponLista];if(gponStr){const res0=gponParaProjeto(olt,modelo,gponStr);if(res0.erro)throw new Error(`GPON inválida: ${res0.erro}`);const fam0=gponFormatarFamilia(res0.projeto,gponStr);if(!listaFinal.some(g=>g.gpon===gponStr&&g.olt===olt))listaFinal.push({olt,modelo,gpon:gponStr,projeto:res0.projeto,familia:fam0})}if(!listaFinal.length)throw new Error('Adicione ao menos uma GPON ou preencha o campo GPON.');const tecsStr=tecs.map(t=>t.dataset.nome).join(', ');const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');const problemStr=tipo+(det?` - ${det}`:'');let corpo=`🚧 Acionamento para reparo na rede - REDE: ${rede}\n\n⚠️ Problema: ${problemStr}\n\n📡 OLT: ${listaFinal[0].olt} (${listaFinal[0].modelo})\n`;listaFinal.forEach(g=>{corpo+=`🔌 GPON: ${g.familia}\n`});corpo+=`\n🏢 Empresa: ${emp}\n\n📃 OS interna: \n\n`;corpo+=`🔧 TEC:\n${tecsLista}`;const msgFinal=construirMensagemComOperador(corpo);try{await navigator.clipboard.writeText(msgFinal);showToast('✓ OS copiada!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}registrarSla({rede:rede,tipo:problemStr,alvo:`Famílias: ${_slaListaCap(listaFinal.map(g=>g.familia),150)}`,empresa:emp,tecnicos:tecsStr});exibirModal(corpo);iniciarAutoLimpar(limparGpon)}catch(err){showToast(err.message,'error',4000)}finally{btn.innerHTML='Gerar Ordem de Serviço';btn.disabled=false}}
 
 function limparGpon(){$('gponInputOlt').value='';$('gponInputModelo').value='';$('gponInputPorta').value='';$('gponAC').classList.remove('open');$('gponResultBox').classList.remove('visible');$('btnAdicionarGpon').classList.remove('visible');AppState.gponProjetoAtual=null;AppState.gponLista=[];renderGponLista();DOM.gponRede.value='';const gponItens=getTipoAC('GPON');if(gponItens.length)DOM.gponTipo.value=gponItens[0].valor;else DOM.gponTipo.value='';DOM.gponBoxDetalheAtenuacao.classList.add('hidden');DOM.gponDetalheAtenuacao.value='';const ftg=$('filtroTecGpon');if(ftg)ftg.value='';renderGponEmpresas();DOM.gponListaTecs.innerHTML='<div class="info-msg">Identifique a GPON e selecione a rede.</div>';// Limpar CTO lookup também
 const ctoI=$('ctoLookupInput');if(ctoI)ctoI.value='';const ctoR=$('ctoLookupResult');if(ctoR){ctoR.innerHTML='';ctoR.className='cto-lookup-result';}atualizarTodosEstadosAllTec();showToast('✓ Limpo.')}
