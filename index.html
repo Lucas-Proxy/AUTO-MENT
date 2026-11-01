@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ANALISTA DE REDES — NOC</title>
+<!-- F5 no PAINEL (NOC - VISUALIZAÇÃO) volta direto nele, sem a tela inicial.
+     Roda antes de qualquer desenho para a tela inicial nem piscar. -->
+<script>try{var a=sessionStorage.getItem('noc.retomarPainel');if(a==='acionamentosPainel'||a==='notasPainel')document.documentElement.classList.add('retomar-painel')}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
@@ -1077,6 +1080,10 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 #modalEncerrarSla .enc-input::selection{background:var(--blue);color:#fff}
 #modalEncerrarSla .enc-input::placeholder{color:var(--text3);opacity:.45;letter-spacing:2px;font-size:1.1rem}
 @media (max-width:480px){#modalEncerrarSla .enc-quando{grid-template-columns:1fr}}
+
+/* F5 no painel de visualização: sem tela inicial e sem piscar a HOME */
+html.retomar-painel #telaEntrada{display:none!important}
+html.retomar-painel main{display:none!important}
 
 /* ═══ TELA INICIAL — Central de Comando NOC (antes da HOME) ═══
    Mesmo padrão visual da HOME no tema claro: fundo cinza-azulado desfocado,
@@ -4674,6 +4681,7 @@ function fecharPainelSla(){
   _pausarAbaAcionamentos();
   _pausarAbaSlaPainel();
   AppState.slaAba=null;
+  _lembrarAbaPainel(null);
 }
 function alternarPainelSla(){painelSlaAberto()?fecharPainelSla():abrirPainelSla()}
 
@@ -4682,6 +4690,7 @@ function selecionarAbaSla(aba){
   if(!SLA_ABAS[aba])aba='acionamentos';
   if(AppState.slaAba===aba&&painelSlaAberto())return;
   AppState.slaAba=aba;
+  _lembrarAbaPainel(aba);
   Object.entries(SLA_ABAS).forEach(([k,id])=>{
     const el=$(id);if(el)el.classList.toggle('ativo',k===aba);
   });
@@ -5426,7 +5435,30 @@ function bindTelaEntrada(){
   }));
   document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharTelaEntrada()});
 }
-document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();bindTelaEntrada();bindCamposEncerrar();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();prepararPassosAcion();iniciarDados(false);Sync.iniciar()});
+/* ═══ F5 / ATUALIZAÇÃO AUTOMÁTICA ═══
+   O navegador da TV recarrega a página a cada poucos segundos. Se a tela
+   aberta era o PAINEL (NOC - VISUALIZAÇÃO: Acionamentos · Painel ou
+   Notas · Painel), a recarga volta direto nele, na mesma aba, sem passar
+   pela tela inicial. Em qualquer outra tela (HOME, NOC - EDIÇÃO) a tela
+   inicial aparece normalmente. Fica guardado no sessionStorage: vale só
+   para esta aba do navegador e some quando ela é fechada. */
+function _lembrarAbaPainel(aba){
+  try{
+    if(aba==='acionamentosPainel'||aba==='notasPainel')sessionStorage.setItem('noc.retomarPainel',aba);
+    else sessionStorage.removeItem('noc.retomarPainel');
+  }catch(_){}
+}
+function restaurarTelaAoRecarregar(){
+  let aba=null;
+  try{aba=sessionStorage.getItem('noc.retomarPainel')}catch(_){}
+  if(aba==='acionamentosPainel'||aba==='notasPainel'){
+    const t=$('telaEntrada');
+    if(t){t.classList.add('saindo');t.style.display='none'}
+    abrirPainelSla(aba);
+  }
+  document.documentElement.classList.remove('retomar-painel');
+}
+document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();bindTelaEntrada();bindCamposEncerrar();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();prepararPassosAcion();iniciarDados(false);Sync.iniciar();restaurarTelaAoRecarregar()});
 
 
 /* ═══════════════════════════════════════════════════════════════════
