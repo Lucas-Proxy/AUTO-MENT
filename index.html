@@ -1063,6 +1063,94 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 /* Acionamentos · Painel: título ALVO e conteúdo do ALVO 4% maiores */
 #slaPainelGrid .sla-info .sla-linha-rot{font-size:calc(0.5625rem * 1.04)}
 #slaPainelGrid .sla-info .sla-linha-val,#slaPainelGrid .sla-alvo-lista li,#slaPainelGrid .sla-alvo-loc{font-size:calc(0.7825rem * 1.04)}
+/* ═══ ENCERRAR: hora e data da normalização ═══
+   Campos grandes, hora primeiro (é o que mais muda), com máscara: só números. */
+#modalEncerrarSla .enc-quando{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:12px}
+#modalEncerrarSla .enc-campo{display:flex;flex-direction:column;gap:5px}
+#modalEncerrarSla .enc-rot{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+#modalEncerrarSla .enc-input{width:100%;box-sizing:border-box;height:58px;padding:0 12px;border:1.5px solid var(--border);border-radius:10px;
+  background:var(--bg2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:1.6rem;font-weight:400;letter-spacing:3px;
+  text-align:center;font-variant-numeric:tabular-nums;transition:border-color .2s,box-shadow .2s}
+#modalEncerrarSla .enc-input.enc-hora{font-size:1.95rem}
+#modalEncerrarSla .enc-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l);animation:none}
+#modalEncerrarSla .enc-input.invalido{border-color:var(--red);box-shadow:0 0 0 3px var(--red-l)}
+#modalEncerrarSla .enc-input::placeholder{color:var(--text3);opacity:.45;letter-spacing:2px;font-size:1.1rem}
+#modalEncerrarSla .enc-dica{margin-top:8px;font-size:.72rem;color:var(--text3);line-height:1.45}
+#modalEncerrarSla .enc-dica b{font-family:'Share Tech Mono',monospace;font-weight:400;color:var(--text2);letter-spacing:.5px}
+@media (max-width:480px){#modalEncerrarSla .enc-quando{grid-template-columns:1fr}}
+
+/* ═══ TELA INICIAL — Central de Comando NOC (antes da HOME) ═══
+   Mesmo padrão visual da HOME no tema claro: fundo cinza-azulado desfocado,
+   cards brancos com a faixa azul→verde no topo, títulos em Bebas Neue com
+   destaque azul, chips em Share Tech Mono e botão azul ao passar o mouse.
+   A paleta fica fixa aqui (não muda com o tema escolhido); para ajustar um
+   tom, mude só as variáveis abaixo. */
+#telaEntrada{
+  --ent-fundo:rgba(238,242,247,.86);--ent-card:#ffffff;--ent-card2:#f5f8fc;--ent-card3:#e8f0fd;
+  --ent-azul:#1a6fdb;--ent-azul2:#2d84f0;--ent-azul-l:#e8f0fd;--ent-azul-b:#c7dcfb;--ent-azul-rgb:26,111,219;
+  --ent-verde:#0b8066;--ent-verde-l:#e6f7f3;--ent-verde-rgb:11,128,102;
+  --ent-borda:#d1dce9;--ent-borda2:#b8ccdf;--ent-texto:#1a2636;--ent-texto2:#4a647d;--ent-texto3:#557592;
+  position:fixed;inset:0;z-index:99999;display:flex;justify-content:center;align-items:center;
+  padding:24px;box-sizing:border-box;overflow-y:auto;color:var(--ent-texto);font-family:'Inter',sans-serif;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(var(--ent-azul-rgb),.10) 0%,transparent 65%),
+    radial-gradient(ellipse 40% 30% at 90% 10%,rgba(var(--ent-verde-rgb),.07) 0%,transparent 60%),var(--ent-fundo);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:opacity .5s ease,visibility .5s ease}
+#telaEntrada.saindo{opacity:0;visibility:hidden;pointer-events:none}
+.ent-container{width:90%;max-width:1100px;margin:auto;display:flex;flex-direction:column;align-items:center;gap:38px}
+.ent-header{text-align:center;animation:entSurgir .6s cubic-bezier(.22,1,.36,1) both}
+.ent-logo{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:16px;margin:0 auto 16px;
+  background:linear-gradient(135deg,var(--ent-azul) 0%,var(--ent-verde) 100%);box-shadow:0 4px 20px rgba(var(--ent-azul-rgb),.35)}
+.ent-logo svg{width:34px;height:34px;display:block}
+.ent-titulo{font-family:'Bebas Neue',cursive;font-weight:400;font-size:2.4rem;letter-spacing:6px;color:var(--ent-texto);line-height:1.1;margin:0;text-transform:uppercase}
+.ent-titulo .hl{color:var(--ent-azul)}
+.ent-chips{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.ent-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-family:'Share Tech Mono',monospace;
+  font-size:.68rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.ent-chip-azul{background:var(--ent-azul-l);color:var(--ent-azul)}
+.ent-chip-verde{background:var(--ent-verde-l);color:var(--ent-verde)}
+.ent-chip-ponto{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s ease-in-out infinite}
+.ent-triade{display:flex;align-items:center;justify-content:center;width:100%;gap:15px}
+.ent-card{flex:1;min-width:240px;max-width:300px;background:var(--ent-card);border:1px solid var(--ent-borda);border-radius:14px;
+  padding:34px 22px 28px;display:flex;flex-direction:column;align-items:center;color:var(--ent-texto);
+  font:inherit;text-align:center;position:relative;overflow:hidden;cursor:pointer;
+  box-shadow:0 2px 8px rgba(var(--ent-azul-rgb),.12),0 8px 32px rgba(var(--ent-azul-rgb),.08);
+  transition:transform .35s cubic-bezier(.165,.84,.44,1),box-shadow .35s,border-color .35s;animation:entSurgir .6s cubic-bezier(.22,1,.36,1) both}
+.ent-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--ent-azul),var(--ent-verde),var(--ent-azul));background-size:200% 100%;animation:topBarShift 6s linear infinite}
+.ent-triade>.ent-card:nth-of-type(1){animation-delay:.08s}
+.ent-triade>.ent-card:nth-of-type(2){animation-delay:.16s}
+.ent-triade>.ent-card:nth-of-type(3){animation-delay:.24s}
+@keyframes entSurgir{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ent-card-icone{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:14px;margin-bottom:16px;
+  background:var(--ent-azul-l);color:var(--ent-azul);transition:transform .35s ease,background .35s,color .35s}
+.ent-card-icone svg{display:block;width:30px;height:30px}
+.ent-card-titulo{font-family:'Bebas Neue',cursive;font-size:1.75rem;letter-spacing:4px;line-height:1;margin:0 0 10px;color:var(--ent-texto);text-transform:uppercase}
+.ent-card-selo{display:inline-flex;padding:4px 11px;border-radius:20px;background:var(--ent-azul-l);color:var(--ent-azul);
+  font-family:'Share Tech Mono',monospace;font-size:.68rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:22px}
+.ent-card-acao{width:100%;max-width:200px;padding:11px 16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:700;
+  letter-spacing:.4px;text-transform:uppercase;background:var(--ent-card2);border:1px solid var(--ent-borda);color:var(--ent-texto2);transition:all .25s ease}
+.ent-card:hover,.ent-card:focus-visible{transform:translateY(-8px);border-color:var(--ent-azul-b);outline:none;
+  box-shadow:0 6px 18px rgba(var(--ent-azul-rgb),.16),0 18px 40px rgba(var(--ent-azul-rgb),.14)}
+.ent-card:focus-visible{outline:2px solid var(--ent-azul2);outline-offset:3px}
+.ent-card:hover .ent-card-icone,.ent-card:focus-visible .ent-card-icone{transform:scale(1.08);
+  background:linear-gradient(135deg,var(--ent-azul) 0%,var(--ent-verde) 100%);color:#fff}
+.ent-card:hover .ent-card-acao,.ent-card:focus-visible .ent-card-acao{background:linear-gradient(135deg,var(--ent-azul2) 0%,var(--ent-azul) 100%);
+  border-color:transparent;color:#fff;box-shadow:0 2px 10px rgba(var(--ent-azul-rgb),.4)}
+.ent-divisor{display:flex;flex-direction:column;align-items:center;justify-content:center;height:190px;padding:0 10px;flex:0 0 auto}
+.ent-divisor-linha{width:2px;flex:1;background:linear-gradient(180deg,rgba(var(--ent-azul-rgb),0) 0%,rgba(var(--ent-azul-rgb),.35) 50%,rgba(var(--ent-azul-rgb),0) 100%)}
+.ent-simbolo{width:42px;height:42px;border-radius:50%;background:var(--ent-card);border:1px solid rgba(var(--ent-verde-rgb),.45);color:var(--ent-verde);
+  display:flex;align-items:center;justify-content:center;margin:8px 0;box-shadow:0 2px 10px rgba(var(--ent-verde-rgb),.18)}
+.ent-simbolo svg{width:24px;height:24px;display:block}
+@media (max-width:900px){
+  .ent-container{gap:24px}
+  .ent-titulo{font-size:1.8rem;letter-spacing:4px}
+  .ent-triade{flex-direction:column;gap:6px}
+  .ent-card{width:100%;max-width:340px;min-width:0;padding:26px 18px 22px}
+  .ent-divisor{flex-direction:row;height:auto;width:220px;padding:0}
+  .ent-divisor-linha{width:auto;height:2px;background:linear-gradient(90deg,rgba(var(--ent-azul-rgb),0) 0%,rgba(var(--ent-azul-rgb),.35) 50%,rgba(var(--ent-azul-rgb),0) 100%)}
+  .ent-simbolo{margin:0 8px}
+}
+@media (prefers-reduced-motion:reduce){.ent-header,.ent-card{animation:none}.ent-card::before{animation:none}.ent-card:hover,.ent-card:focus-visible{transform:none}}
 </style>
 </head>
 <body>
@@ -1072,6 +1160,22 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 <canvas id="favPipas"></canvas>
 <canvas id="cursorGlow"></canvas>
 
+<div id="telaEntrada" role="dialog" aria-modal="true" aria-labelledby="entTitulo">
+<div class="ent-container">
+<header class="ent-header">
+<div class="ent-logo" aria-hidden="true"><svg viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="14" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/><circle cx="17" cy="17" r="8" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><circle cx="17" cy="17" r="3" fill="white"/><line x1="17" y1="3" x2="17" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="23" x2="17" y2="31" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="17" x2="11" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="23" y1="17" x2="31" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/><circle cx="24" cy="11" r="2" fill="rgba(255,255,255,.75)"/></svg></div>
+<h1 class="ent-titulo" id="entTitulo"><span class="hl">Central</span> de Comando NOC</h1>
+<div class="ent-chips"><span class="ent-chip ent-chip-azul"><span class="ent-chip-ponto"></span>NOC Online</span><span class="ent-chip ent-chip-verde">Selecione o módulo para iniciar</span></div>
+</header>
+<div class="ent-triade">
+<button type="button" class="ent-card" data-destino="home" title="Abrir a HOME de acionamentos"><span class="ent-card-icone" aria-hidden="true"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="ent-card-titulo">Acionamentos</span><span class="ent-card-selo">Home</span><span class="ent-card-acao">Entrar</span></button>
+<div class="ent-divisor" aria-hidden="true"><span class="ent-divisor-linha"></span><span class="ent-simbolo"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50,10 C42,22 35,38 45,55 C52,65 40,80 30,85 C45,85 55,75 52,60 C50,50 60,35 50,10 Z" fill="currentColor"/><path d="M50,10 C58,22 65,38 55,55 C48,65 60,80 70,85 C55,85 45,75 48,60 C50,50 40,35 50,10 Z" fill="currentColor"/><path d="M50,2 C44,18 50,35 50,50 C50,65 44,80 50,98 C56,80 50,65 50,50 C50,35 56,18 50,2 Z" fill="currentColor"/></svg></span><span class="ent-divisor-linha"></span></div>
+<button type="button" class="ent-card" data-destino="sla" title="Abrir o painel de SLA em NOC - EDIÇÃO"><span class="ent-card-icone" aria-hidden="true"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span><span class="ent-card-titulo">SLA</span><span class="ent-card-selo">NOC - Edição</span><span class="ent-card-acao">Editar</span></button>
+<div class="ent-divisor" aria-hidden="true"><span class="ent-divisor-linha"></span><span class="ent-simbolo"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50,10 C42,22 35,38 45,55 C52,65 40,80 30,85 C45,85 55,75 52,60 C50,50 60,35 50,10 Z" fill="currentColor"/><path d="M50,10 C58,22 65,38 55,55 C48,65 60,80 70,85 C55,85 45,75 48,60 C50,50 40,35 50,10 Z" fill="currentColor"/><path d="M50,2 C44,18 50,35 50,50 C50,65 44,80 50,98 C56,80 50,65 50,50 C50,35 56,18 50,2 Z" fill="currentColor"/></svg></span><span class="ent-divisor-linha"></span></div>
+<button type="button" class="ent-card" data-destino="painel" title="Abrir o painel de SLA em NOC - VISUALIZAÇÃO"><span class="ent-card-icone" aria-hidden="true"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span class="ent-card-titulo">Painel</span><span class="ent-card-selo">NOC - Visualização</span><span class="ent-card-acao">Visualizar</span></button>
+</div>
+</div>
+</div>
 <div class="top-bar-fixed">
 
 <button class="ozmap-btn btn-pill so-normal" id="btnSla" title="Abrir o painel de SLA dos acionamentos" aria-label="Painel de SLA">
@@ -1588,8 +1692,14 @@ IDENTIFICA&#199;&#195;O
 <div style="padding:18px 22px; background:var(--bg3); overflow-y:auto; flex:1">
 <div class="lote-resumo hidden" id="loteResumoEncerrar"></div>
 <div class="form-group" id="wrapDataNormalizacaoEncerrar">
-<label>DATA/HORA NORMALIZAÇÃO <span style="color:var(--red)">*</span></label>
-<input type="datetime-local" id="dataNormalizacaoEncerrarSla">
+<label for="horaNormEncerrar">NORMALIZAÇÃO <span style="color:var(--red)">*</span></label>
+<div class="enc-quando">
+<div class="enc-campo"><span class="enc-rot">Hora</span><input type="text" id="horaNormEncerrar" class="enc-input enc-hora" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="hh:mm" aria-label="Hora da normalização, formato hh:mm"></div>
+<div class="enc-campo"><span class="enc-rot">Data</span><input type="text" id="dataNormEncerrar" class="enc-input" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="aaaa-mm-dd" aria-label="Data da normalização, formato aaaa-mm-dd"></div>
+</div>
+<div class="enc-dica">Digite só os números: <b>1019</b> vira <b>10:19</b> e <b>20260815</b> vira <b>2026-08-15</b>. Já vem com a hora e a data de agora.</div>
+<!-- valor final no formato aaaa-mm-ddThh:mm, o mesmo que o servidor já recebia -->
+<input type="hidden" id="dataNormalizacaoEncerrarSla">
 </div>
 <div class="form-group">
 <label>JUSTIFICATIVA <span style="color:var(--red)">*</span></label>
@@ -3926,7 +4036,7 @@ function abrirModalEncerrarLote(){
   $('tituloEncerrarSla').textContent='ENCERRAR EM LOTE'
     +' · '+alvos.length;
   $('modalEncerrarSla').classList.add('active');
-  $('justificativaEncerrarSla').focus();
+  _encFocarHora();
 }
 
 /* SEQUENCIAL de propósito. O Apps Script atende uma chamada por usuário e
@@ -4248,10 +4358,75 @@ function _prepararModalEncerrar() {
      problema normalizou de fato — muitas vezes de madrugada, com o
      encerramento entrando só no início do turno seguinte. */
   const agora = new Date();
-  const agoraLocalISO = new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  $('dataNormalizacaoEncerrarSla').value = agoraLocalISO;
-  $('dataNormalizacaoEncerrarSla').max = agoraLocalISO;
+  const dd = _encDoisDig;
+  $('horaNormEncerrar').value = dd(agora.getHours()) + ':' + dd(agora.getMinutes());
+  $('dataNormEncerrar').value = agora.getFullYear() + '-' + dd(agora.getMonth() + 1) + '-' + dd(agora.getDate());
+  $('horaNormEncerrar').classList.remove('invalido');
+  $('dataNormEncerrar').classList.remove('invalido');
+  _encSincronizar();
   _resetBotaoConfirmarEncerrar();
+}
+
+/* ── hora e data da normalização: máscara só com números ─────────────
+   Hora: "1019" vira "10:19" (primeiro dígito 3-9 vira 0X: "9" → "09:").
+   Com a hora completa e válida o foco pula sozinho para a data; da data,
+   TAB (ou Enter) leva à justificativa. Data no costume da equipe:
+   "20260815" vira "2026-08-15". Os dois campos selecionam tudo ao receber
+   o foco, então é só digitar por cima. O valor final vai para o campo
+   oculto no mesmo formato de antes (aaaa-mm-ddThh:mm). */
+function _encDoisDig(n){ return String(n).padStart(2, '0'); }
+function _encMascHora(el, inserindo){
+  let d = el.value.replace(/\D/g, '');
+  if (d && d[0] > '2') d = '0' + d;
+  d = d.slice(0, 4);
+  el.value = d.length > 2 ? d.slice(0, 2) + ':' + d.slice(2) : (d.length === 2 && inserindo ? d + ':' : d);
+}
+function _encMascData(el, inserindo){
+  const d = el.value.replace(/\D/g, '').slice(0, 8);
+  let v = d.slice(0, 4);
+  if (d.length > 4) v += '-' + d.slice(4, 6); else if (d.length === 4 && inserindo) v += '-';
+  if (d.length > 6) v += '-' + d.slice(6); else if (d.length === 6 && inserindo) v += '-';
+  el.value = v;
+}
+function _encHoraValida(v){
+  const m = /^(\d{2}):(\d{2})$/.exec(v || '');
+  return !!m && +m[1] <= 23 && +m[2] <= 59;
+}
+function _encDataValida(v){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
+  if (!m) return false;
+  const dt = new Date(+m[1], +m[2] - 1, +m[3]);
+  return dt.getFullYear() === +m[1] && dt.getMonth() === +m[2] - 1 && dt.getDate() === +m[3];
+}
+function _encSincronizar(){
+  const h = $('horaNormEncerrar').value, d = $('dataNormEncerrar').value;
+  $('dataNormalizacaoEncerrarSla').value = (_encHoraValida(h) && _encDataValida(d)) ? d + 'T' + h : '';
+}
+function _encFocarHora(){
+  setTimeout(() => { const h = $('horaNormEncerrar'); if (h) { h.focus(); h.select(); } }, 40);
+}
+function bindCamposEncerrar(){
+  const h = $('horaNormEncerrar'), d = $('dataNormEncerrar'), j = $('justificativaEncerrarSla');
+  if (!h || !d) return;
+  const selecionarTudo = e => { const el = e.target; setTimeout(() => { try { el.select(); } catch (_) {} }, 0); };
+  const inserindo = e => !e.inputType || e.inputType.indexOf('insert') === 0;
+  h.addEventListener('focus', selecionarTudo);
+  d.addEventListener('focus', selecionarTudo);
+  h.addEventListener('input', e => {
+    const ins = inserindo(e);
+    _encMascHora(h, ins);
+    const ok = _encHoraValida(h.value);
+    h.classList.toggle('invalido', h.value.length === 5 && !ok);
+    _encSincronizar();
+    if (ins && ok) { d.focus(); d.select(); }
+  });
+  d.addEventListener('input', e => {
+    _encMascData(d, inserindo(e));
+    d.classList.toggle('invalido', d.value.length === 10 && !_encDataValida(d.value));
+    _encSincronizar();
+  });
+  h.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); d.focus(); d.select(); } });
+  d.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (j) j.focus(); } });
 }
 
 function abrirModalEncerrarSla(id, rede) {
@@ -4268,7 +4443,7 @@ function abrirModalEncerrarSla(id, rede) {
   $('tituloEncerrarSla').textContent = 'NORMALIZAR / ENCERRAR';
 
   $('modalEncerrarSla').classList.add('active');
-  $('justificativaEncerrarSla').focus();
+  _encFocarHora();
 }
 function fecharModalEncerrarSla() {
   $('modalEncerrarSla').classList.remove('active');
@@ -4278,10 +4453,23 @@ function confirmarEncerrarSla() {
   const rede = $('redeEncerrarSla').value;
   const lote = $('loteEncerrarSla').value;
   const just = $('justificativaEncerrarSla').value.trim();
+  _encSincronizar();
   const dataNorm = $('dataNormalizacaoEncerrarSla').value;
   const erroEl = $('erroEncerrarSla');
   erroEl.style.display = 'none';
 
+  if (!_encHoraValida($('horaNormEncerrar').value)) {
+    $('horaNormEncerrar').classList.add('invalido');
+    showToast('Hora inválida. Digite só os números, ex.: 1019 para 10:19.', 'error', 4000);
+    _encFocarHora();
+    return;
+  }
+  if (!_encDataValida($('dataNormEncerrar').value)) {
+    $('dataNormEncerrar').classList.add('invalido');
+    showToast('Data inválida. Use aaaa-mm-dd, ex.: 2026-08-15.', 'error', 4000);
+    $('dataNormEncerrar').focus();
+    return;
+  }
   if (!just) {
     showToast('A justificativa é obrigatória.', 'error', 3000);
     return;
@@ -5108,7 +5296,25 @@ function manterGasAcordado() {
    duas requisições em fila, e o Apps Script atende uma por vez. Agora
    TECNICOS, OPERADOR e OLTs vêm juntos — depois de o cache em disco já
    ter pintado a tela. */
-document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();prepararPassosAcion();iniciarDados(false);Sync.iniciar()});
+/* ═══ TELA INICIAL: as três escolhas antes da HOME ═══ */
+function fecharTelaEntrada(){
+  const t=$('telaEntrada');
+  if(!t||t.classList.contains('saindo'))return;
+  t.classList.add('saindo');
+  setTimeout(()=>{t.style.display='none'},400);
+}
+function bindTelaEntrada(){
+  const t=$('telaEntrada');
+  if(!t)return;
+  t.querySelectorAll('[data-destino]').forEach(b=>b.addEventListener('click',()=>{
+    const d=b.dataset.destino;
+    if(d==='sla')abrirPainelSla('acionamentos');
+    else if(d==='painel')abrirPainelSla('acionamentosPainel');
+    fecharTelaEntrada();
+  }));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharTelaEntrada()});
+}
+document.addEventListener('DOMContentLoaded',()=>{manterGasAcordado();gerarGridPortas();bindEvents();bindEventsSla();bindTelaEntrada();bindCamposEncerrar();renderStatusBar();carregarTipoAC();atualizarVisibilidadeBuscaCTO();prepararPassosAcion();iniciarDados(false);Sync.iniciar()});
 
 
 /* ═══════════════════════════════════════════════════════════════════
