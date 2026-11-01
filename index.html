@@ -1074,9 +1074,8 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 #modalEncerrarSla .enc-input.enc-hora{font-size:1.95rem}
 #modalEncerrarSla .enc-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l);animation:none}
 #modalEncerrarSla .enc-input.invalido{border-color:var(--red);box-shadow:0 0 0 3px var(--red-l)}
+#modalEncerrarSla .enc-input::selection{background:var(--blue);color:#fff}
 #modalEncerrarSla .enc-input::placeholder{color:var(--text3);opacity:.45;letter-spacing:2px;font-size:1.1rem}
-#modalEncerrarSla .enc-dica{margin-top:8px;font-size:.72rem;color:var(--text3);line-height:1.45}
-#modalEncerrarSla .enc-dica b{font-family:'Share Tech Mono',monospace;font-weight:400;color:var(--text2);letter-spacing:.5px}
 @media (max-width:480px){#modalEncerrarSla .enc-quando{grid-template-columns:1fr}}
 
 /* ═══ TELA INICIAL — Central de Comando NOC (antes da HOME) ═══
@@ -1697,7 +1696,6 @@ IDENTIFICA&#199;&#195;O
 <div class="enc-campo"><span class="enc-rot">Hora</span><input type="text" id="horaNormEncerrar" class="enc-input enc-hora" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="hh:mm" aria-label="Hora da normalização, formato hh:mm"></div>
 <div class="enc-campo"><span class="enc-rot">Data</span><input type="text" id="dataNormEncerrar" class="enc-input" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="dd/mm/aaaa" aria-label="Data da normalização, formato dd/mm/aaaa"></div>
 </div>
-<div class="enc-dica">Digite só os números: <b>1019</b> vira <b>10:19</b> e <b>15082026</b> vira <b>15/08/2026</b>. Já vem com a hora e a data de agora.</div>
 <!-- valor final no formato aaaa-mm-ddThh:mm, o mesmo que o servidor já recebia -->
 <input type="hidden" id="dataNormalizacaoEncerrarSla">
 </div>
@@ -4413,28 +4411,134 @@ function _encSincronizar(){
 function _encFocarHora(){
   setTimeout(() => { const h = $('horaNormEncerrar'); if (h) { h.focus(); h.select(); } }, 40);
 }
+/* ── data por partes: DD → MM → AAAA ─────────────────────────────────
+   Ao chegar na data (vindo da hora) o DIA fica marcado em azul. Digitar
+   troca só o dia; TAB passa para o MÊS (mantido, dá para trocar) e outro
+   TAB para o ANO. Se o dia não foi mexido, TAB sai direto para a
+   justificativa — é o caso "a data é hoje". Clique ou ←/→ escolhem a
+   parte; Shift+TAB volta uma parte. Digitar além do tamanho da parte
+   continua na próxima (15082026 preenche tudo). Backspace limpa só a parte
+   marcada. Ano com 2 dígitos vira 20xx. */
+const _ENC_SEG = [[0, 2], [3, 5], [6, 10]];
+const _ENC_TAM = [2, 2, 4];
+const _ENC_VAZIO = ['dd', 'mm', 'aaaa'];
+function _encSegDe(pos){ return pos <= 2 ? 0 : pos <= 5 ? 1 : 2; }
+function _encSelecionarSeg(d, seg){
+  const [a, b] = _ENC_SEG[seg];
+  try { d.setSelectionRange(a, b); } catch (_) {}
+}
+function _encMarcarSeg(d, seg){
+  d._enc.seg = seg; d._enc.buf = '';
+  _encSelecionarSeg(d, seg);
+}
+function _encTrocarSeg(d, seg, texto){
+  const [a, b] = _ENC_SEG[seg];
+  d.value = d.value.slice(0, a) + texto + d.value.slice(b);
+  _encSelecionarSeg(d, seg);
+}
+function _encNormalizarData(d){
+  if (/^.{2}\/.{2}\/.{4}$/.test(d.value)) return;
+  const dig = d.value.replace(/\D/g, '');
+  if (dig.length === 8) { d.value = dig.slice(0, 2) + '/' + dig.slice(2, 4) + '/' + dig.slice(4); return; }
+  const agora = new Date(), dd = _encDoisDig;
+  d.value = dd(agora.getDate()) + '/' + dd(agora.getMonth() + 1) + '/' + agora.getFullYear();
+}
+function _encFecharAno(d){
+  const st = d._enc;
+  if (st.seg === 2 && st.buf.length > 0 && st.buf.length <= 2) _encTrocarSeg(d, 2, String(2000 + +st.buf));
+  st.buf = '';
+}
+function _encAtualizarData(d){
+  d.classList.toggle('invalido', !/[a-z]/.test(d.value) && !_encDataValida(d.value));
+  _encSincronizar();
+}
+function _encDigitoData(d, dig){
+  const st = d._enc;
+  if (st.buf.length >= _ENC_TAM[st.seg]) {
+    if (st.seg < 2) st.seg++;
+    st.buf = '';
+  }
+  st.buf += dig;
+  if (st.buf.length === 1 && ((st.seg === 0 && dig > '3') || (st.seg === 1 && dig > '1'))) st.buf = '0' + dig;
+  _encTrocarSeg(d, st.seg, st.buf.padStart(_ENC_TAM[st.seg], '0'));
+  st.editado = true;
+  _encAtualizarData(d);
+}
+
 function bindCamposEncerrar(){
   const h = $('horaNormEncerrar'), d = $('dataNormEncerrar'), j = $('justificativaEncerrarSla');
   if (!h || !d) return;
-  const selecionarTudo = e => { const el = e.target; setTimeout(() => { try { el.select(); } catch (_) {} }, 0); };
   const inserindo = e => !e.inputType || e.inputType.indexOf('insert') === 0;
-  h.addEventListener('focus', selecionarTudo);
-  d.addEventListener('focus', selecionarTudo);
+
+  /* hora: seleciona tudo e digita por cima; completa e válida → data */
+  h.addEventListener('focus', () => setTimeout(() => { try { h.select(); } catch (_) {} }, 0));
   h.addEventListener('input', e => {
     const ins = inserindo(e);
     _encMascHora(h, ins);
     const ok = _encHoraValida(h.value);
     h.classList.toggle('invalido', h.value.length === 5 && !ok);
     _encSincronizar();
-    if (ins && ok) { d.focus(); d.select(); }
+    if (ins && ok) d.focus();
   });
+  h.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); d.focus(); } });
+
+  /* data por partes */
+  d._enc = { seg: 0, buf: '', editado: false, mouse: false };
+  d.addEventListener('mousedown', () => { d._enc.mouse = true; });
+  d.addEventListener('focus', e => {
+    _encNormalizarData(d);
+    d._enc.editado = false; d._enc.buf = '';
+    if (d._enc.mouse) return;                 /* clique: quem escolhe a parte é o mouseup */
+    _encMarcarSeg(d, e.relatedTarget === j ? 2 : 0);   /* Shift+TAB da justificativa entra no ano */
+    /* o navegador pode selecionar tudo depois do foco por TAB: reaplica a parte */
+    setTimeout(() => { if (document.activeElement === d && !d._enc.buf) _encSelecionarSeg(d, d._enc.seg); }, 0);
+  });
+  d.addEventListener('mouseup', () => {
+    d._enc.mouse = false;
+    setTimeout(() => { _encFecharAno(d); _encMarcarSeg(d, _encSegDe(d.selectionStart || 0)); }, 0);
+  });
+  d.addEventListener('keydown', e => {
+    const st = d._enc;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Enter') { e.preventDefault(); _encFecharAno(d); _encAtualizarData(d); if (j) j.focus(); return; }
+    if (e.key === 'Tab') {
+      _encFecharAno(d); _encAtualizarData(d);
+      if (!e.shiftKey) {
+        if (st.seg === 0 && !st.editado) return;            /* dia intocado: segue para a justificativa */
+        if (st.seg < 2) { e.preventDefault(); _encMarcarSeg(d, st.seg + 1); }
+      } else if (st.seg > 0) { e.preventDefault(); _encMarcarSeg(d, st.seg - 1); }
+      return;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault(); _encFecharAno(d); _encAtualizarData(d);
+      _encMarcarSeg(d, Math.max(0, Math.min(2, st.seg + (e.key === 'ArrowRight' ? 1 : -1))));
+      return;
+    }
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault();
+      _encTrocarSeg(d, st.seg, _ENC_VAZIO[st.seg]); st.buf = ''; st.editado = true;
+      _encAtualizarData(d);
+      return;
+    }
+    if (/^\d$/.test(e.key)) { e.preventDefault(); _encDigitoData(d, e.key); return; }
+    if (e.key.length === 1) e.preventDefault();
+  });
+  d.addEventListener('paste', e => {
+    const t = ((e.clipboardData || window.clipboardData).getData('text') || '').trim();
+    const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(t);
+    const dig = t.replace(/\D/g, '');
+    e.preventDefault();
+    let v = '';
+    if (iso) v = iso[3] + '/' + iso[2] + '/' + iso[1];
+    else if (dig.length === 8) v = dig.slice(0, 2) + '/' + dig.slice(2, 4) + '/' + dig.slice(4);
+    if (v) { d.value = v; d._enc.editado = true; _encMarcarSeg(d, 2); _encAtualizarData(d); }
+  });
+  /* reserva: teclados que não mandam a tecla (alguns celulares) caem aqui */
   d.addEventListener('input', e => {
     _encMascData(d, inserindo(e));
     d.classList.toggle('invalido', d.value.length === 10 && !_encDataValida(d.value));
     _encSincronizar();
   });
-  h.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); d.focus(); d.select(); } });
-  d.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (j) j.focus(); } });
 }
 
 function abrirModalEncerrarSla(id, rede) {
