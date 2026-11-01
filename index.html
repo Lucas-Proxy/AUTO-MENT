@@ -1026,7 +1026,14 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 
 #slaTopo .sla-noc-abas{display:none;border-bottom:1px solid var(--border)}
 #slaTopo.noc-ativo .sla-noc-abas{display:flex}
+/* modo EDIÇÃO (NOC): só a linha Acionamentos/Notas; modo VISUALIZAÇÃO: só a linha · Painel */
+#slaTopo.noc-ativo > .sla-abas:not(.sla-noc-abas){display:none}
 .sla-menu-eng .sla-noc-btn{font-weight:700;letter-spacing:1.5px;justify-content:flex-start}
+/* Modo NOC: uma linha de abas por vez, no mesmo lugar. EDIÇÃO mostra Acionamentos/Notas;
+   VISUALIZAÇÃO mostra · Painel. Em edição a linha de visualização sai do fluxo de vez. */
+#slaTopo.noc-ativo .sla-header .sla-abas:not(.sla-noc-abas){display:none!important}
+#slaTopo:not(.noc-ativo) .sla-noc-abas{display:none!important}
+#btnNoc{white-space:nowrap}
 
 /* Notas · Painel: card um pouco mais alto, com respiro interno maior */
 .tv-nota-card{min-height:330px}
@@ -1075,7 +1082,7 @@ body.sla-selecao-sla #slaGrid .sla-card{cursor:pointer}
 <button class="ozmap-btn btn-pill so-normal" id="btnAtualizarCache" title="Ignorar cache local e buscar dados novos no servidor" aria-label="Atualizar dados em cache">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 </button>
-<button class="ozmap-btn btn-pill so-sla" id="btnNoc" aria-expanded="false" title="Mostrar Acionamentos e Notas" aria-label="NOC"><span>NOC</span></button>
+<button class="ozmap-btn btn-pill so-sla" id="btnNoc" aria-expanded="false" title="Alternar entre visualização e edição" aria-label="NOC - EDIÇÃO"><span>NOC - EDIÇÃO</span></button>
 <button class="ozmap-btn so-sla btn-sla-fechar" id="btnSlaFechar" title="Voltar para a tela inicial (Esc)" aria-label="Voltar para a tela inicial">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
 </button>
@@ -1505,20 +1512,20 @@ IDENTIFICA&#199;&#195;O
 <div class="sla-header-txt">
 <div class="sla-titulo"><span class="hl">Painel</span> de SLA</div>
 </div>
-<div class="sla-abas" role="tablist" aria-label="Se&ccedil;&otilde;es do painel de SLA">
-<button class="sla-aba" id="abaAcionamentosPainel" role="tab" aria-controls="slaPainelView" aria-selected="false">
-<span>Acionamentos &middot; Painel</span>
-</button>
-<button class="sla-aba" id="abaNotasPainel" role="tab" aria-controls="notasPainelView" aria-selected="false">
-<span>Notas &middot; Painel</span>
-</button>
-</div>
 <div class="sla-abas sla-noc-abas" id="slaNocAbas" role="tablist" aria-label="NOC">
 <button class="sla-aba" id="abaAcionamentos" role="tab" aria-controls="slaView" aria-selected="true">
 <span>Acionamentos</span><span class="sla-aba-badge hidden" id="abaAcionamentosBadge" title="Chamados com SLA estourado">0</span>
 </button>
 <button class="sla-aba" id="abaNotas" role="tab" aria-controls="notasView" aria-selected="false">
 <span>Notas</span><span class="sla-aba-badge hidden" id="abaNotasBadge" title="Notas ativas no painel">0</span>
+</button>
+</div>
+<div class="sla-abas" role="tablist" aria-label="Se&ccedil;&otilde;es do painel de SLA">
+<button class="sla-aba" id="abaAcionamentosPainel" role="tab" aria-controls="slaPainelView" aria-selected="false">
+<span>Acionamentos &middot; Painel</span>
+</button>
+<button class="sla-aba" id="abaNotasPainel" role="tab" aria-controls="notasPainelView" aria-selected="false">
+<span>Notas &middot; Painel</span>
 </button>
 </div>
 </div>
@@ -4354,13 +4361,15 @@ function painelSlaAberto(){return document.body.classList.contains('sla-aberto')
 function abrirPainelSla(aba){
   document.body.classList.add('sla-aberto');
   window.scrollTo(0,0);
-  selecionarAbaSla(aba||'acionamentos');
+  /* ao entrar pela HOME o painel abre sempre em VISUALIZAÇÃO (Acionamentos · Painel) */
+  selecionarAbaSla(aba||'acionamentosPainel');
 }
 function fecharPainelSla(){
   /* fechar o painel descarta a seleção: reabrir depois com seis cards
      marcados de um evento que já passou é convite a encerrar o errado */
   _loteSairDeTudo();
   document.body.classList.remove('sla-aberto');
+  $('slaTopo').classList.remove('noc-ativo');
   Object.values(SLA_ABAS).forEach(id=>{const el=$(id);if(el)el.classList.remove('ativo')});
   _pausarAbaAcionamentos();
   _pausarAbaSlaPainel();
@@ -4387,7 +4396,14 @@ function selecionarAbaSla(aba){
   const noc=aba==='acionamentos'||aba==='notas';
   $('slaTopo').classList.toggle('noc-ativo',noc);
   const bNoc=$('btnNoc');
-  if(bNoc){bNoc.classList.toggle('ativa',noc);bNoc.setAttribute('aria-expanded',String(noc))}
+  if(bNoc){
+    const rotulo=noc?'NOC - VISUALIZAÇÃO':'NOC - EDIÇÃO';
+    bNoc.classList.toggle('ativa',noc);
+    bNoc.setAttribute('aria-expanded',String(noc));
+    bNoc.setAttribute('aria-label',rotulo);
+    bNoc.title=noc?'Voltar para a visualização do painel':'Entrar na edição de acionamentos e notas';
+    const sp=bNoc.querySelector('span');if(sp)sp.textContent=rotulo;
+  }
   /* pausa TODAS as outras ANTES de ativar a escolhida: sem isso os
      setInterval de 1s ficariam rodando juntos depois de algumas idas e
      vindas entre as abas */
@@ -4915,8 +4931,9 @@ function bindEventsSla(){
     if(d&&!e.target.closest('#mDock'))d.classList.remove('tema-aberto');
   });
   $('btnNoc').addEventListener('click',()=>{
-    const aberto=$('slaTopo').classList.contains('noc-ativo');
-    selecionarAbaSla(aberto?'acionamentosPainel':(AppState.slaAba==='notas'?'notas':'acionamentos'));
+    const emEdicao=$('slaTopo').classList.contains('noc-ativo');
+    if(emEdicao)selecionarAbaSla(AppState.slaAba==='notas'?'notasPainel':'acionamentosPainel');
+    else selecionarAbaSla(AppState.slaAba==='notasPainel'?'notas':'acionamentos');
   });
   $('abaAcionamentos').addEventListener('click',()=>selecionarAbaSla('acionamentos'));
   $('abaAcionamentosPainel').addEventListener('click',()=>selecionarAbaSla('acionamentosPainel'));
