@@ -6286,7 +6286,7 @@ function _aplicarTecnicos(lista){
 function gerarGridPortas(){DOM.gridPortas.innerHTML=Array.from({length:16},(_,i)=>i+1).map(i=>`<div class="port-item"><input type="checkbox" id="p${i}" value="${i}" style="display:none"><label for="p${i}">${i}</label></div>`).join('')}
 /* ═══ ACIONAMENTO INTERNO — atividade interna do NOC, sem SLA ═══
    Técnicos vêm da aba TECNICOS filtrados pela EMPRESA EXECUTANTE (coluna C),
-   igual Metro e Backbone. Não usa prefixo de CTO e não entra no painel de SLA. */
+   igual Metro e Backbone. Não usa prefixo de CTO. Entra no painel de SLA como os demais. */
 function renderTecnicosInterno(){
   renderEmpresas(DOM.empresaInterno);
   const ft=$('filtroTecInterno');if(ft)ft.value='';
@@ -6339,6 +6339,7 @@ async function gerarOSInterno(){
     const corpo=`Acionamento para atividade interna.\n\n🏢 Empresa: ${emp}\n\n👲🏼Técnico:\n${tecsLista}\n\n🗄️POP: ${pop}\n\n📃 O.S: ${os}\n\n⚠️Atividades:\n${ativLista}`;
     const msgFinal=construirMensagemComOperador(corpo);
     try{await navigator.clipboard.writeText(msgFinal);showToast('✓ Acionamento copiado!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}
+    registrarSla({rede:'INTERNO',tipo:'Atividade interna',alvo:`POP ${pop}${os?' · O.S '+os:''} · ${atividades.join(' / ')}`,empresa:emp,tecnicos:tecs.map(t=>t.dataset.nome).join(', ')});
     exibirModal(corpo);
     iniciarAutoLimpar(limparInterno);
   }catch(err){showToast(err.message,'error',4000)}
@@ -7640,6 +7641,7 @@ const HUBSOFT_URLS={
 /* rede que originou a O.S. exibida no modal (o fluxo GPON usa outro select) */
 function redeAtualOS(){
   if(AppState.modoIdent)return DOM.gponRede.value;
+  if(DOM.rede&&DOM.rede.value==='INTERNO')return 'INTERNO';
   /* no modo REDE DE ACESSO quem manda e a rede da CTO marcada */
   return redeEfetiva()||DOM.rede.value;
 }
@@ -7647,8 +7649,8 @@ function hubsoftUrlParaOS(){
   const rede=redeAtualOS();
   /* BACKBONE sempre abre no Click IP */
   if(rede==='BACKBONE')return HUBSOFT_URLS.WIRE;
-  /* REDE METRO: usa a instancia escolhida nas 3 mini caixas do modal */
-  if(rede==='METRO'){
+  /* METRO e INTERNO: usam a instância escolhida nas 3 mini caixas do modal */
+  if(rede==='METRO'||rede==='INTERNO'){
     const sel=document.querySelector('input[name="hubMetro"]:checked');
     return HUBSOFT_URLS[sel?sel.value:'WIRE']||HUBSOFT_URLS.WIRE;
   }
@@ -7658,9 +7660,8 @@ function hubsoftUrlParaOS(){
 function atualizarRotuloBtnSeguir(){
   const btn=$('btnSeguir');if(!btn)return;
   const rede=redeAtualOS();
-  if(rede==='INTERNO'){btn.innerHTML='&#10003; Copiar e fechar';return}
   let nome='';
-  if(rede==='METRO'){
+  if(rede==='METRO'||rede==='INTERNO'){
     const sel=document.querySelector('input[name="hubMetro"]:checked');
     nome=({WIRE:'Click IP',FIBER:'Fiber Network',INTLINK:'Intlink'})[sel?sel.value:'WIRE']||'';
   }else if(rede==='BACKBONE'){nome='Click IP'}
@@ -7670,8 +7671,10 @@ function atualizarRotuloBtnSeguir(){
 function exibirModal(c){
   AppState.conteudoCopiado=c;
   const box=$('boxHubMetro');
-  if(box)box.classList.toggle('hidden',redeAtualOS()!=='METRO');
+  const rd=redeAtualOS();
+  if(box)box.classList.toggle('hidden',rd!=='METRO'&&rd!=='INTERNO');
   atualizarRotuloBtnSeguir();
+  if(AppState.operadores.length)renderOperadores();else carregarOperadores();
   $('copyModal').classList.add('active');
   atualizarTextoModal();
 }
