@@ -6335,7 +6335,7 @@ async function gerarOSInterno(){
     if(!pop)throw new Error('Informe o POP.');
     if(!atividades.length)throw new Error('Informe ao menos uma atividade.');
     const tecsLista=tecs.map(t=>`@${t.dataset.nome} (${t.value})`).join('\n');
-    const ativLista=atividades.map((a,i)=>`${i+1} ${a}`).join('\n');
+    const ativLista=atividades.map((a,i)=>`${i+1} - ${a}`).join('\n');
     const corpo=`Acionamento para atividade interna.\n\n🏢 Empresa: ${emp}\n\n👲🏼Técnico:\n${tecsLista}\n\n🗄️POP: ${pop}\n\n📃 O.S: ${os}\n\n⚠️Atividades:\n${ativLista}`;
     const msgFinal=construirMensagemComOperador(corpo);
     try{await navigator.clipboard.writeText(msgFinal);showToast('✓ Acionamento copiado!');dispararConfete()}catch{showToast('Não foi possível copiar.','error')}
